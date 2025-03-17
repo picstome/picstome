@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\BrandingForm;
 use App\Models\Team;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
@@ -31,6 +32,8 @@ new class extends Component
         $this->form->update();
 
         $this->team = $this->team->fresh();
+
+        $this->redirectRoute('branding');
     }
 
     public function mount()
@@ -54,6 +57,8 @@ new class extends Component
             <flux:separator class="my-10 mt-6" />
 
             <form wire:submit="save" class="space-y-6">
+                <flux:input wire:model="form.name" :label="__('Studio name')" />
+
                 @if ($team->brand_logo_url)
                     <img src="{{ $team->brand_logo_url }}" style="max-height: 35px" />
                 @endif

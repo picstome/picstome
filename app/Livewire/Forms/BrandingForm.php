@@ -10,6 +10,9 @@ class BrandingForm extends Form
 {
     public Team $team;
 
+    #[Validate(['required'])]
+    public $name;
+
     #[Validate(['nullable', 'image'])]
     public $logo;
 
@@ -29,6 +32,7 @@ class BrandingForm extends Form
     {
         $this->team = $team;
 
+        $this->name = $team->name;
         $this->watermarkPosition = $team->brand_watermark_position;
         $this->color = $team->brand_color;
         $this->font = $team->brand_font;
@@ -39,6 +43,7 @@ class BrandingForm extends Form
         $this->validate();
 
         $this->team->update([
+            'name' => $this->name,
             'brand_watermark_position' => $this->watermarkPosition,
             'brand_color' => $this->color,
             'brand_font' => $this->font,
