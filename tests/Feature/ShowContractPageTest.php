@@ -10,7 +10,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Volt\Volt;
-use Spatie\LaravelPdf\Facades\Pdf;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -49,7 +48,7 @@ test('users cannot view the team contracts of others', function () {
 });
 
 test('contract can be executed once all parties have signed it', function () {
-    Pdf::fake();
+    Storage::fake('public');
     Notification::fake();
 
     $contract = Contract::factory()->for($this->team)->create(['ulid' => '1234ABC', 'title' => 'The Contract']);
@@ -63,9 +62,7 @@ test('contract can be executed once all parties have signed it', function () {
         expect($contract->executed_at)->not->toBeNull();
         expect($contract->pdf_file_path)->not->toBeNull();
         expect($contract->pdf_file_path)->toContain('teams/1/contracts/1234ABC');
-        Pdf::assertSaved(function ($pdf, $path) use ($contract) {
-            return $path === $contract->pdf_file_path;
-        });
+        Storage::disk('public')->assertExists($contract->pdf_file_path);
         Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
             return $notifiable->routes['mail'] === 'john@example.com';
         });

@@ -3,9 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\Contract;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Spatie\LaravelPdf\Facades\Pdf;
 
 class ProcessPdfContract implements ShouldQueue
 {
@@ -25,7 +25,9 @@ class ProcessPdfContract implements ShouldQueue
     public function handle(): void
     {
         $this->contract->updatePdfFile(
-            Pdf::view('pdf.contract', ['contract' => $this->contract])
+            Pdf::setOption(['letter' => 'letter', 'isRemoteEnabled' => true])->loadView('pdf.contract', [
+                'contract' => $this->contract,
+            ])
         );
 
         NotifyContractExecuted::dispatch($this->contract);

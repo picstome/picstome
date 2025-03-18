@@ -110,7 +110,7 @@ new class extends Component
 
                     <x-description.term>{{ __('Terms') }}</x-description.term>
                     <x-description.details>
-                        <div class="prose prose-sm">{!! str()->of($contract->markdown_body)->markdown() !!}</div>
+                        <div class="prose prose-sm">{!! $contract->formatted_markdown_body !!}</div>
                     </x-description.details>
                 </x-description.list>
             </div>

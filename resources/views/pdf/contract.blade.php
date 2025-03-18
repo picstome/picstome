@@ -1,59 +1,126 @@
-<x-guest-layout>
-    <div class="mx-auto max-w-4xl">
-        <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
-            <div class="max-sm:w-full sm:flex-1">
-                <div class="flex items-center gap-4">
-                    <x-heading level="1" size="xl">{{ $contract->title }}</x-heading>
-                </div>
-                <x-subheading class="mt-2">{{ $contract->description }}</x-subheading>
-            </div>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <div class="mt-12">
-            <flux:heading level="2">{{ __('Details') }}</flux:heading>
-            <flux:separator class="mt-4" />
-            <x-description.list>
-                <x-description.term>{{ __('Location') }}</x-description.term>
-                <x-description.details>{{ $contract->location }}</x-description.details>
+    <title>Contract</title>
 
-                <x-description.term>{{ __('Shooting date') }}</x-description.term>
-                <x-description.details>{{ $contract->shooting_date }}</x-description.details>
+    <style>
+        body {
+            background: #fff none;
+            font-family: DejaVu Sans, 'sans-serif';
+            font-size: 12px;
+        }
 
-                <x-description.term>{{ __('Contract terms') }}</x-description.term>
-                <x-description.details>{{ $contract->markdown_body }}</x-description.details>
-            </x-description.list>
-        </div>
+        .container {
+            padding-top: 30px;
+        }
 
-        <div class="mt-12">
-            <div
-                class="grid sm:grid-cols-3 gap-x-6 gap-y-6"
-            >
-                @foreach ($contract->signatures as $signature)
-                    <div class="flex flex-col">
-                        <img src="{{ $signature->signature_image_url }}" class="object-contain mb-6" />
-                        <div>
-                            <flux:heading class="text-center">{{ $signature->legal_name }}</flux:heading>
-                            <flux:separator class="mt-4" />
-                            <x-description.list>
-                                <x-description.term>{{ __('Role') }}</x-description.term>
-                                <x-description.details>{{ $signature->role }}</x-description.details>
+        .table th {
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            padding: 8px 8px 8px 0;
+            vertical-align: bottom;
+        }
 
-                                <x-description.term>{{ __('Birthday') }}</x-description.term>
-                                <x-description.details>{{ $signature->formattedBirthday }}</x-description.details>
+        .table tr.row td {
+            border-bottom: 1px solid #ddd;
+        }
 
-                                <x-description.term>{{ __('Nationality') }}</x-description.term>
-                                <x-description.details>{{ $signature->nationality }}</x-description.details>
+        .table td {
+            padding: 8px 8px 8px 0;
+            vertical-align: top;
+        }
 
-                                <x-description.term>{{ __('Document number') }}</x-description.term>
-                                <x-description.details>{{ $signature->document_number }}</x-description.details>
+        .table th:last-child,
+        .table td:last-child {
+            padding-right: 0;
+        }
 
-                                <x-description.term>{{ __('Email') }}</x-description.term>
-                                <x-description.details>{{ $signature->email }}</x-description.details>
-                            </x-description.list>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</x-guest-layout>
+        .sublte {
+            color: #555;
+        }
+
+        .body p:first-child {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <table style="margin-left: auto; margin-right: auto;" width="100%">
+        <tr valign="top">
+            <td width="180">
+                <span style="font-size: 28px;">
+                    {{ $contract->title }}
+                </span>
+
+                <p>
+                    {{ $contract->description }}
+                </p>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td width="25%">
+                <strong class="sublte">{{ __('Location') }}</strong><br><br>
+
+                <strong class="sublte">{{ __('Shooting date') }}</strong><br><br>
+
+                <strong class="sublte">{{ __('Contract terms') }}</strong><br><br>
+            </td>
+            <td width="75%">
+                {{ $contract->location }}<br><br>
+                {{ $contract->formatted_shooting_date }}<br><br>
+                <div class="body">{!! $contract->formatted_markdown_body !!}</div>
+            </td>
+        </tr>
+        <tr>
+            @foreach ($contract->signatures as $signature)
+                @if($loop->index > 0 && $loop->index % 3 === 0)
+                    </tr><tr>
+                @endif
+                <td width="33%">
+                    <table class="table" border="0">
+                        <tr class="row">
+                            <td style="font-size: 14px;">
+                                <img src="{{ $signature->signature_image_url }}" style="max-width: 200px;" />
+
+                                <div style="text-align: center;">{{ $signature->legal_name }}</div>
+                            </td>
+                        </tr>
+                        <tr class="row">
+                            <td>
+                                <strong class="sublte">{{ __('Role') }}</strong>: {{ $signature->role }}
+                            </td>
+                        </tr>
+                        <tr class="row">
+                            <td>
+                                <strong class="sublte">{{ __('Birthday') }}</strong>: {{ $signature->formattedBirthday }}
+                            </td>
+                        </tr>
+                        <tr class="row">
+                            <td>
+                                <strong class="sublte">{{ __('Nationality') }}</strong>: {{ $signature->nationality }}
+                            </td>
+                        </tr>
+                        <tr class="row">
+                            <td>
+                                <strong class="sublte">{{ __('Document number') }}</strong>: {{ $signature->document_number }}
+                            </td>
+                        </tr>
+                        <tr class="row">
+                            <td>
+                                <strong class="sublte">{{ __('Email') }}</strong>: {{ $signature->email }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            @endforeach
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

@@ -4,13 +4,13 @@ namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPdfContract;
+use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Spatie\LaravelPdf\PdfBuilder;
 
 class Contract extends Model
 {
@@ -78,12 +78,15 @@ class Contract extends Model
         return $this->executed_at !== null;
     }
 
-    public function updatePdfFile(PdfBuilder $pdf)
+    public function updatePdfFile(Pdf $pdf)
     {
         $file_name = Str::random(40);
         $path = "{$this->storage_path}/{$file_name}.pdf";
 
-        $pdf->disk('public')->save($path);
+        Storage::disk('public')->put(
+            path: $path,
+            contents: $pdf->output()
+        );
 
         $this->update(['pdf_file_path' => $path]);
     }
@@ -108,6 +111,16 @@ class Contract extends Model
     {
         return Attribute::get(function () {
             return $this->shooting_date->isoFormat('MMM D, YYYY');
+        });
+    }
+
+    protected function formattedMarkdownBody(): Attribute
+    {
+        return Attribute::get(function () {
+            return Str::of($this->markdown_body)->markdown([
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]);
         });
     }
 

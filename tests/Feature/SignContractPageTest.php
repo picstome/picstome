@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
 use App\Models\Signature;
 use App\Models\User;
@@ -8,9 +9,9 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Volt\Volt;
-use Spatie\LaravelPdf\Facades\Pdf;
 
 use function Pest\Laravel\get;
 
@@ -18,6 +19,7 @@ uses(RefreshDatabase::class);
 
 test('guests can sign a contract', function () {
     Storage::fake('public');
+    Queue::fake();
 
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
 
@@ -42,12 +44,12 @@ test('guests can sign a contract', function () {
         expect($signature->signature_image_path)->not->toBeNull();
         expect($signature->signature_image_url)->not->toBeNull();
         Storage::disk('public')->assertExists($signature->signature_image_path);
+        Queue::assertPushed(ProcessPdfContract::class);
     });
 });
 
 test('contract is executed once the final signature is submitted', function () {
     Storage::fake('public');
-    Pdf::fake();
     Notification::fake();
 
     $contract = Contract::factory()->create(['ulid' => '1234ABC', 'title' => 'The Contract']);
@@ -72,9 +74,7 @@ test('contract is executed once the final signature is submitted', function () {
         expect($contract->executed_at)->not->toBeNull();
         expect($contract->pdf_file_path)->not->toBeNull();
         expect($contract->pdf_file_path)->toContain('teams/1/contracts/1234ABC');
-        Pdf::assertSaved(function ($pdf, $path) use ($contract) {
-            return $path === $contract->pdf_file_path;
-        });
+        Storage::disk('public')->assertExists($contract->pdf_file_path);
         Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
             return $notifiable->routes['mail'] === 'john@example.com';
         });
