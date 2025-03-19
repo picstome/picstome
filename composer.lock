@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "46d5ee64e7781e0e4132d6319a725efa",
+    "content-hash": "59a2711d0b7804afb5e0ff1761381dd1",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -10059,6 +10059,66 @@
                 "source": "https://github.com/thiagocordeiro/laravel-translator/tree/v1.2.3"
             },
             "time": "2023-01-31T11:25:13+00:00"
+        },
+        {
+            "name": "vemcogroup/laravel-translation",
+            "version": "3.0.14",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vemcogroup/laravel-translation.git",
+                "reference": "dc98464bea48f31c3aea9219f6a8010e44cac39a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/vemcogroup/laravel-translation/zipball/dc98464bea48f31c3aea9219f6a8010e44cac39a",
+                "reference": "dc98464bea48f31c3aea9219f6a8010e44cac39a",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.3|^7.0",
+                "laravel/framework": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0|^12.0",
+                "php": "^7.3|^8.0",
+                "symfony/finder": "^4.3|^5.0|^6.0|^7.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Vemcogroup\\Translation\\TranslationServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Vemcogroup\\Translation\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Henrik B Hansen",
+                    "email": "hbh@vemcount.com",
+                    "homepage": "https://www.vemcogroup.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Translation package for Laravel to scan for localisations and up/download to poeditor",
+            "homepage": "https://github.com/vemcogroup/laravel-translation",
+            "keywords": [
+                "Poeditor",
+                "i18n",
+                "laravel",
+                "translations"
+            ],
+            "support": {
+                "issues": "https://github.com/vemcogroup/laravel-translation/issues",
+                "source": "https://github.com/vemcogroup/laravel-translation/tree/3.0.14"
+            },
+            "time": "2025-02-26T18:20:39+00:00"
         }
     ],
     "aliases": [],
