@@ -43,7 +43,7 @@ new class extends Component
                 </flux:radio.group>
 
                 <form wire:submit="save" class="mt-6 space-y-6">
-                    <flux:radio.group wire:model="form.language" label="Select your preferred language">
+                    <flux:radio.group wire:model="form.language" :label="__('Select your preferred language')">
                         <flux:radio value="es" label="Español" />
                         <flux:radio value="en" label="English" />
                     </flux:radio.group>

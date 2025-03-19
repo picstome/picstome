@@ -41,7 +41,7 @@ new class extends Component
                 <div class="flex">
                     <flux:spacer />
 
-                    <flux:button type="submit" variant="primary">Unlock</flux:button>
+                    <flux:button type="submit" variant="primary">{{ __('Unlock') }}</flux:button>
                 </div>
             </form>
         </div>
