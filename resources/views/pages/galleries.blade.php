@@ -96,7 +96,7 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
-                    <flux:switch wire:model="form.keepOrigianlSize" :label="__('Keep photos at their original size')" />
+                    <flux:switch wire:model="form.keepOriginalSize" :label="__('Keep photos at their original size')" />
 
                     <div class="flex">
                         <flux:spacer />
