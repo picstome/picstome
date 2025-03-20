@@ -291,7 +291,7 @@ new class extends Component
                                         .length
                                 "
                             ></span>
-                            {{ __('remaining files') }}
+                            {{ __('remaining files.') }}
                         </div>
 
                         <!-- Upload Queue Display -->
