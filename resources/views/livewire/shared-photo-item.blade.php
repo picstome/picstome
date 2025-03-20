@@ -13,6 +13,10 @@ new class extends Component
     {
         abort_unless($this->photo->gallery->is_share_selectable, 403);
 
+        if ($this->photo->gallery->photos()->favorited()->count() === $this->photo->gallery->share_selection_limit) {
+            $this->dispatch('selection-limit-reached');
+        }
+
         $this->photo->toggleFavorite();
 
         $this->dispatch('photo-favorited');

@@ -50,7 +50,10 @@ new class extends Component
 
 <x-guest-layout :font="$gallery->team->brand_font" :color="$gallery->team->brand_color">
     @volt('pages.shares.show')
-        <div>
+        <div
+            x-data
+            x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
+        >
             <div>
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-9" />
             </div>

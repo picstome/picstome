@@ -57,10 +57,13 @@ new class extends Component
 <x-guest-layout :full-screen="true">
     @volt('pages.shares.photos.show')
         <div
-            x-data="{ zoom: false }"
-            x-on:selection-limit-reached.window="alert('You have reached the limit for photo selection.')"
+            x-data="{ swipe: '', zoom: false }"
+            x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
+            x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
+            @swipeleft="$refs.previous && Livewire.navigate($refs.previous.href)"
+            @swiperight="$refs.next && Livewire.navigate($refs.next.href)"
             @if ($this->photo->gallery->is_share_selectable)
                 @keyup.window.f="$wire.favorite()"
             @endif
@@ -157,5 +160,8 @@ new class extends Component
                 </div>
             </div>
         </div>
+        @assets
+            <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
+        @endassets
     @endvolt
 </x-guest-layout>
