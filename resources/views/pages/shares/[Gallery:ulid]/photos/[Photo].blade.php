@@ -71,7 +71,7 @@ new class extends Component
         >
             <div>
                 <flux:button
-                    :href="route('shares.show', ['gallery' => $photo->gallery])"
+                    :href="route('shares.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
                     wire:navigate.hover
                     icon="chevron-left"
                     variant="subtle"
