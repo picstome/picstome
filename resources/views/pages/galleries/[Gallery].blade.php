@@ -149,7 +149,12 @@ new class extends Component
                         <flux:button icon="ellipsis-horizontal" variant="subtle" />
 
                         <flux:menu>
-                            <flux:menu.item :href="route('galleries.download', ['gallery' => $gallery])" icon="cloud-arrow-down">{{ __('Download') }}</flux:menu.item>
+                            <flux:menu.item
+                                :href="route('galleries.download', ['gallery' => $gallery])"
+                                icon="cloud-arrow-down"
+                            >
+                                {{ __('Download') }}
+                            </flux:menu.item>
 
                             <flux:modal.trigger name="favorite-list">
                                 <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
@@ -161,7 +166,14 @@ new class extends Component
 
                             <flux:menu.separator />
 
-                            <flux:menu.item wire:click="delete"  wire:confirm="{{ __('Are you sure?') }}" variant="danger" icon="trash">{{ __('Delete') }}</flux:menu.item>
+                            <flux:menu.item
+                                wire:click="delete"
+                                wire:confirm="{{ __('Are you sure?') }}"
+                                variant="danger"
+                                icon="trash"
+                            >
+                                {{ __('Delete') }}
+                            </flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
 
@@ -196,8 +208,18 @@ new class extends Component
             @if ($allPhotos->isNotEmpty())
                 <div class="mt-8">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                        <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">{{ __('All photos') }}</flux:navbar.item>
-                        <flux:navbar.item @click="$wire.activeTab = 'favorited'" x-bind:data-current="$wire.activeTab === 'favorited'">{{ __('Favorited') }}</flux:navbar.item>
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'all'"
+                            x-bind:data-current="$wire.activeTab === 'all'"
+                        >
+                            {{ __('All photos') }}
+                        </flux:navbar.item>
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'favorited'"
+                            x-bind:data-current="$wire.activeTab === 'favorited'"
+                        >
+                            {{ __('Favorited') }}
+                        </flux:navbar.item>
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-8">
@@ -244,11 +266,33 @@ new class extends Component
 
                     <div x-data="multiFileUploader">
                         <!-- File Input -->
-                        <flux:input @change="handleFileSelect($event)" type="file" accept=".jpg, .jpeg, .png, .tiff" multiple class="mb-4" />
+                        <flux:input
+                            @change="handleFileSelect($event)"
+                            type="file"
+                            accept=".jpg, .jpeg, .png, .tiff"
+                            multiple
+                            class="mb-4"
+                        />
 
                         <flux:error name="photos" />
 
                         <flux:error name="photos.*" />
+
+                        <div
+                            x-show="
+                                files.filter((file) => file.status === 'pending' || file.status === 'queued')
+                                    .length > 0
+                            "
+                            class="text-sm font-medium text-zinc-800 dark:text-white"
+                        >
+                            <span
+                                x-text="
+                                    files.filter((file) => file.status === 'pending' || file.status === 'queued')
+                                        .length
+                                "
+                            ></span>
+                            {{ __('remaining files') }}
+                        </div>
 
                         <!-- Upload Queue Display -->
                         <div class="space-y-2">
@@ -356,7 +400,7 @@ new class extends Component
             </flux:modal>
 
             <flux:modal name="favorite-list" class="w-full sm:max-w-lg">
-                <div  class="space-y-6">
+                <div class="space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Favorite list') }}</flux:heading>
                         <flux:subheading>{{ __('List of favorite photo names.') }}</flux:subheading>
@@ -365,8 +409,8 @@ new class extends Component
                     <flux:input value="{{ implode(', ', $favorites->pluck('name')->toArray()) }}" readonly copyable />
 
                     @if ($favorites->isNotEmpty())
-                        <ul class="list-disc ml-6">
-                            @foreach($favorites as $favorite)
+                        <ul class="ml-6 list-disc">
+                            @foreach ($favorites as $favorite)
                                 <li><flux:text>{{ $favorite->name }}</flux:text></li>
                             @endforeach
                         </ul>
@@ -443,10 +487,12 @@ new class extends Component
                     },
 
                     checkAllUploadsComplete() {
-                        return this.files.every(file =>
-                            file.status === 'completed'
-                            // file.status === 'completed' || file.status === 'failed'
-                        ) && this.activeUploads === 0;
+                        return (
+                            this.files.every(
+                                (file) => file.status === 'completed',
+                                // file.status === 'completed' || file.status === 'failed'
+                            ) && this.activeUploads === 0
+                        );
                     },
 
                     uploadFile(fileObj, index) {
@@ -461,14 +507,14 @@ new class extends Component
                             fileObj.file,
                             () => {
                                 // Success callback
-                                $wire.save(index)
+                                $wire.save(index);
                                 fileObj.status = 'completed';
                                 fileObj.progress = 100;
                                 this.activeUploads--;
                                 this.processUploadQueue();
 
                                 if (this.checkAllUploadsComplete()) {
-                                    $flux.modals('add-photos').close()
+                                    $flux.modals('add-photos').close();
                                 }
                             },
                             (error) => {

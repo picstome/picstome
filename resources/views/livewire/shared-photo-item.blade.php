@@ -33,12 +33,9 @@ new class extends Component
                     'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
                     'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
                     'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-            ])>
-                <img
-                    class="h-5"
-                    src="{{ $photo->gallery->team->brand_watermark_url }}"
-                    alt=""
-                />
+                ])
+            >
+                <img class="h-5" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" />
             </div>
         @endif
     </a>

@@ -9,6 +9,7 @@ use App\Models\Photoshoot;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
+
 use function Laravel\Folio\middleware;
 
 middleware(['auth', 'can:view,photoshoot']);
@@ -308,7 +309,7 @@ new class extends Component
             </flux:modal>
 
             <flux:modal name="create-contract" class="w-full sm:max-w-lg">
-                <form wire:submit="addContract" class="space-y-6 -mb-6">
+                <form wire:submit="addContract" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Create a new contract') }}</flux:heading>
                         <flux:subheading>{{ __('Enter the contract details.') }}</flux:subheading>
@@ -323,7 +324,11 @@ new class extends Component
                         <flux:input wire:model="contractForm.shootingDate" :label="__('Shooting date')" type="date" />
                     </div>
 
-                    <flux:input wire:model="contractForm.signature_quantity" :label="__('Signatures required')" type="number" />
+                    <flux:input
+                        wire:model="contractForm.signature_quantity"
+                        :label="__('Signatures required')"
+                        type="number"
+                    />
 
                     <flux:field
                         class="**:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
@@ -347,9 +352,9 @@ new class extends Component
                         <flux:error name="contractForm.body" />
                     </flux:field>
 
-                    <div class="sticky -bottom-6 right-0 left-0 bg-white">
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white">
                         <flux:separator />
-                        <div class="py-6 flex">
+                        <div class="flex py-6">
                             <flux:spacer />
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </div>

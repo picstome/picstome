@@ -32,12 +32,7 @@ new class extends Component
                 <flux:subheading>{{ __('Welcome Back!') }}</flux:subheading>
             </div>
 
-            <flux:input
-                wire:model="form.email"
-                :label="__('Email')"
-                type="email"
-                placeholder="email@example.com"
-            />
+            <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
             <flux:input
                 wire:model="form.password"

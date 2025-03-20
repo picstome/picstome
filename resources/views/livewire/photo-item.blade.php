@@ -18,7 +18,11 @@ new class extends Component
 }; ?>
 
 <div class="group relative flex overflow-hidden rounded-lg bg-zinc-100 dark:bg-white/10">
-    <a href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}" wire:navigate.hover class="mx-auto flex">
+    <a
+        href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
+        wire:navigate.hover
+        class="mx-auto flex"
+    >
         <img src="{{ $photo->thumbnail_url }}" alt="" class="object-contain" />
     </a>
     <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">

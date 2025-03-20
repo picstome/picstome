@@ -39,12 +39,7 @@ new class extends Component
                     </div>
                 </div>
 
-                <flux:input
-                    wire:model="form.email"
-                    :label="__('Email')"
-                    type="email"
-                    placeholder="email@example.com"
-                />
+                <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
                 <flux:input
                     wire:model="form.password"

@@ -119,17 +119,15 @@ new class extends Component
                 />
 
                 @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                    <div @class([
-                        'absolute flex justify-center',
-                        'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
-                        'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
-                        'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-                    ])>
-                        <img
-                            class="h-8"
-                            src="{{ $photo->gallery->team->brand_watermark_url }}"
-                            alt=""
-                        />
+                    <div
+                        @class([
+                            'absolute flex justify-center',
+                            'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
+                            'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
+                            'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
+                        ])
+                    >
+                        <img class="h-8" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" />
                     </div>
                 @endif
             </div>

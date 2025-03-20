@@ -126,7 +126,7 @@ new class extends Component
             @endif
 
             <flux:modal name="create-contract" class="w-full sm:max-w-lg">
-                <form wire:submit="save" class="space-y-6 -mb-6">
+                <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Create a new contract') }}</flux:heading>
                         <flux:subheading>{{ __('Enter the contract details.') }}</flux:subheading>
@@ -165,9 +165,9 @@ new class extends Component
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="sticky -bottom-6 right-0 left-0 bg-white">
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white">
                         <flux:separator />
-                        <div class="py-6 flex">
+                        <div class="flex py-6">
                             <flux:spacer />
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </div>

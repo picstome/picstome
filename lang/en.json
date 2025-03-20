@@ -3,7 +3,6 @@
     "Accent color": "Accent color",
     "Account": "Account",
     "Add photos": "Add photos",
-    "Add studio": "Add studio",
     "All photos": "All photos",
     "Amber": "Amber",
     "Appearance": "Appearance",
@@ -142,7 +141,6 @@
     "Stop sharing": "Stop sharing",
     "Studio": "Studio",
     "Studio name": "Studio name",
-    "Studios": "Studios",
     "Stylist": "Stylist",
     "Submit": "Submit",
     "Submit signature": "Submit signature",
@@ -152,7 +150,6 @@
     "Template": "Template",
     "Templates": "Templates",
     "Terms": "Terms",
-    "Tiled": "Tiled",
     "Title": "Title",
     "Top": "Top",
     "Unlock": "Unlock",
@@ -184,5 +181,6 @@
     "Yellow": "Yellow",
     "Your email address is unverified.": "Your email address is unverified.",
     "Your password": "Your password",
+    "remaining files": "remaining files",
     "signatures": "signatures"
 }

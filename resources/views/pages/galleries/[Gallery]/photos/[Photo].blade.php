@@ -85,7 +85,8 @@ new class extends Component
                     <flux:button
                         :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
                         icon="cloud-arrow-down"
-                        variant="subtle" />
+                        variant="subtle"
+                    />
                     <flux:button wire:click="favorite" square>
                         @if ($photo->isFavorited())
                             <flux:icon.heart class="size-5" variant="solid" />

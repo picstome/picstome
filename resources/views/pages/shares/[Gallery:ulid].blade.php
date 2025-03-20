@@ -63,7 +63,9 @@ new class extends Component
                 </div>
                 <div class="flex gap-4">
                     @if ($this->gallery->is_share_downloadable)
-                        <flux:button :href="route('shares.download', ['gallery' => $gallery])" variant="primary">{{ __('Download') }}</flux:button>
+                        <flux:button :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
+                            {{ __('Download') }}
+                        </flux:button>
                     @endif
                 </div>
             </div>
@@ -71,8 +73,18 @@ new class extends Component
             @if ($allPhotos->isNotEmpty())
                 <div class="mt-8">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                        <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">{{ __('All photos') }}</flux:navbar.item>
-                        <flux:navbar.item @click="$wire.activeTab = 'favorited'" x-bind:data-current="$wire.activeTab === 'favorited'">{{ __('Favorited') }}</flux:navbar.item>
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'all'"
+                            x-bind:data-current="$wire.activeTab === 'all'"
+                        >
+                            {{ __('All photos') }}
+                        </flux:navbar.item>
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'favorited'"
+                            x-bind:data-current="$wire.activeTab === 'favorited'"
+                        >
+                            {{ __('Favorited') }}
+                        </flux:navbar.item>
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-8">
@@ -90,7 +102,12 @@ new class extends Component
                             class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4"
                         >
                             @foreach ($favorites as $photo)
-                                <livewire:shared-photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" lazy />
+                                <livewire:shared-photo-item
+                                    :$photo
+                                    :asFavorite="true"
+                                    :key="'favorite-'.$photo->id"
+                                    lazy
+                                />
                             @endforeach
                         </div>
                     </div>
