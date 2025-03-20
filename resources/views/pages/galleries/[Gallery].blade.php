@@ -280,14 +280,14 @@ new class extends Component
 
                         <div
                             x-show="
-                                files.filter((file) => file.status === 'pending' || file.status === 'queued')
+                                files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
                                     .length > 0
                             "
                             class="text-sm font-medium text-zinc-800 dark:text-white"
                         >
                             <span
                                 x-text="
-                                    files.filter((file) => file.status === 'pending' || file.status === 'queued')
+                                    files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
                                         .length
                                 "
                             ></span>
