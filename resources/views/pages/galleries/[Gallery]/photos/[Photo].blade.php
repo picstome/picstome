@@ -50,8 +50,8 @@ new class extends Component
         <div
             x-data="{ swipe: '', zoom: false }"
             x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
-            @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
-            @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
+            @keyup.window.left="$refs.next && Livewire.navigate($refs.next.href)"
+            @keyup.window.right="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.f="$wire.favorite()"
             @swipeleft="$refs.previous && Livewire.navigate($refs.previous.href)"
             @swiperight="$refs.next && Livewire.navigate($refs.next.href)"

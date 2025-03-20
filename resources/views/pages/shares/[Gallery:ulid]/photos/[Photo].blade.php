@@ -60,8 +60,8 @@ new class extends Component
             x-data="{ swipe: '', zoom: false }"
             x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
-            @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
-            @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
+            @keyup.window.left="$refs.next && Livewire.navigate($refs.next.href)"
+            @keyup.window.right="$refs.previous && Livewire.navigate($refs.previous.href)"
             @swipeleft="$refs.previous && Livewire.navigate($refs.previous.href)"
             @swiperight="$refs.next && Livewire.navigate($refs.next.href)"
             @if ($this->photo->gallery->is_share_selectable)
