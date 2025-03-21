@@ -48,7 +48,12 @@ new class extends Component
 <x-app-layout :full-screen="true">
     @volt('pages.galleries.photos.show')
         <div
-            x-data="{ swipe: '', zoom: false }"
+            x-data="{
+                swipe: '',
+                zoom: false,
+                thumbnailUrl: '{{ $photo->thumbnail_url }}',
+                photoUrl: '{{ $photo->url }}',
+            }"
             x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
@@ -102,10 +107,11 @@ new class extends Component
 
             <div class="relative mt-12 h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
-                    src="{{ $photo->url }}"
+                    src="{{ $photo->thumbnail_url }}"
                     @click="zoom = !zoom"
                     class="mx-auto max-w-none object-contain"
                     :class="zoom ? 'hover:cursor-zoom-out' : 'hover:cursor-zoom-in'"
+                    :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
             </div>

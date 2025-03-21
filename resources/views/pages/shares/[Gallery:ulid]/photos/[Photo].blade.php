@@ -57,7 +57,12 @@ new class extends Component
 <x-guest-layout :full-screen="true">
     @volt('pages.shares.photos.show')
         <div
-            x-data="{ swipe: '', zoom: false }"
+            x-data="{
+                swipe: '',
+                zoom: false,
+                thumbnailUrl: '{{ $photo->thumbnail_url }}',
+                photoUrl: '{{ $photo->url }}',
+            }"
             x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
@@ -113,11 +118,12 @@ new class extends Component
 
             <div class="relative mt-12 h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
-                    src="{{ $photo->url }}"
+                    src="{{ $photo->thumbnail_url }}"
                     @contextmenu.prevent
                     @click="zoom = !zoom"
                     class="mx-auto max-w-none object-contain"
                     :class="zoom ? 'hover:cursor-zoom-out' : 'hover:cursor-zoom-in'"
+                    :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
 
