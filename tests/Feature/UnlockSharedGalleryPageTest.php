@@ -44,3 +44,11 @@ test('protected gallery remains locked with incorrect password', function () {
     expect(session()->get('unlocked_gallery_id'))->toBeNull();
     get('shares/0123ABC')->assertRedirect('/shares/0123ABC/unlock');
 });
+
+test('visitor is redirected to the shared gallery when it\'s not password protected', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+
+    $response = get('/shares/0123ABC/unlock');
+
+    $response->assertRedirect('/shares/0123ABC');
+});

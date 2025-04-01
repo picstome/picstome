@@ -6,8 +6,15 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\name;
+use function Laravel\Folio\render;
 
 name('shares.unlock');
+
+render(function (Gallery $gallery) {
+    if (! $gallery->share_password) {
+        return to_route('shares.show', ['gallery' => $gallery]);
+    }
+});
 
 new class extends Component
 {

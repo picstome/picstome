@@ -55,7 +55,7 @@ class ShareGalleryForm extends Form
             'share_selection_limit' => $this->limitedSelection
                 ? $this->selectionLimit
                 : null,
-            'share_password' => $this->password
+            'share_password' => $this->passwordProtected && $this->password
                 ? Hash::make($this->password)
                 : null,
         ]);
