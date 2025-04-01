@@ -37,13 +37,13 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $this->favorites = $this->gallery->photos()->favorited()->with('gallery')->get();
+        $this->favorites = $this->gallery->photos()->favorited()->orderBy('name')->with('gallery')->get();
     }
 
     public function with()
     {
         return [
-            'allPhotos' => $this->gallery->photos,
+            'allPhotos' => $this->gallery->photos()->orderBy('name')->with('gallery')->get(),
         ];
     }
 }; ?>
