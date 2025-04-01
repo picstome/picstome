@@ -24,7 +24,7 @@ new class extends Component
 
     public function with()
     {
-        return ['photoshoots' => Auth::user()?->currentTeam->photoshoots];
+        return ['photoshoots' => Auth::user()?->currentTeam->photoshoots()->latest('date')->get()];
     }
 }; ?>
 
