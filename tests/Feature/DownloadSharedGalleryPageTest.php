@@ -69,7 +69,7 @@ test('a downloadable shared gallery can be downloaded with only favorites as a z
         $gallery->addPhoto($photo)->toggleFavorite();
     });
 
-    $response = get('shares/1234ABC/download?favorites=true',);
+    $response = get('shares/1234ABC/download?favorites=true');
 
     $response->assertDownload('example-gallery.zip');
 });
