@@ -54,7 +54,7 @@ class Gallery extends Model
         return $this->photos()->favorited();
     }
 
-    public function download()
+    public function download($favorites = false)
     {
         $zipName = Str::of($this->name)->slug()->append('.zip');
 
@@ -63,14 +63,16 @@ class Gallery extends Model
             'Content-Type' => 'application/octet-stream',
         ];
 
-        return new StreamedResponse(fn () => $this->getPhotosZipStream($zipName), 200, $headers);
+        $photos = $favorites ? $this->favorites : $this->photos;
+
+        return new StreamedResponse(fn () => $this->getPhotosZipStream($photos, $zipName), 200, $headers);
     }
 
-    protected function getPhotosZipStream($zipName)
+    protected function getPhotosZipStream($photos, $zipName)
     {
         $zip = new ZipStream(outputName: $zipName);
 
-        $this->photos->each(function ($photo) use ($zip) {
+        $photos->each(function ($photo) use ($zip) {
             $stream = Storage::disk('public')->readStream($photo->path);
 
             $zip->addFileFromStream($photo->name, $stream);

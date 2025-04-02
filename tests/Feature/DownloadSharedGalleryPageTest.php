@@ -57,3 +57,19 @@ test('visitors with unlocked gallery can download the password-protected gallery
 
     $response->assertStatus(200);
 });
+
+test('a downloadable shared gallery can be downloaded with only favorites as a zip file', function () {
+    Storage::fake('public');
+    $photos = collect([
+        UploadedFile::fake()->image('photo1.jpg'),
+        UploadedFile::fake()->image('photo2.jpg'),
+    ]);
+    $gallery = Gallery::factory()->shared()->downloadable()->create(['ulid' => '1234ABC', 'name' => 'Example Gallery']);
+    $photos->each(function ($photo) use ($gallery) {
+        $gallery->addPhoto($photo)->toggleFavorite();
+    });
+
+    $response = get('shares/1234ABC/download?favorites=true',);
+
+    $response->assertDownload('example-gallery.zip');
+});

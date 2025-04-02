@@ -66,7 +66,11 @@ new class extends Component
                 </div>
                 <div class="flex gap-4">
                     @if ($this->gallery->is_share_downloadable)
-                        <flux:button :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
+                        <flux:button x-show="$wire.activeTab !== 'favorited'" :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
+                            {{ __('Download') }}
+                        </flux:button>
+
+                        <flux:button x-show="$wire.activeTab === 'favorited'" :href="route('shares.download', ['gallery' => $gallery, 'favorites' => true])" variant="primary" x-cloak>
                             {{ __('Download') }}
                         </flux:button>
                     @endif
