@@ -59,7 +59,13 @@ new class extends Component
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     <p>{{ $photoshoot->name }}</p>
-                                    <flux:text>{{ $photoshoot->customer_name }}</flux:text>
+                                    <flux:text>
+                                        {{ $photoshoot->customer_name }}
+
+                                        @if ($photoshoot->customer_email)
+                                            ({{ $photoshoot->customer_email }})
+                                        @endif
+                                    </flux:text>
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
@@ -96,6 +102,7 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
                     <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+                    <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input wire:model="form.date" :label="__('Date')" type="date" />
                         <flux:input wire:model="form.location" :label="__('Location')" type="text" />

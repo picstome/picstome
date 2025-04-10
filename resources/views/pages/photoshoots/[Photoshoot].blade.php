@@ -151,6 +151,9 @@ new class extends Component
                     </x-description.term>
                     <x-description.details>
                         {{ $photoshoot->customer_name }}
+                        @if ($photoshoot->customer_email)
+                            (<a href="mailto:{{ $photoshoot->customer_email }}">{{ $photoshoot->customer_email }}</a>)
+                        @endif
                     </x-description.details>
 
                     <x-description.term>

@@ -40,6 +40,17 @@ test('can create a photoshoot', function () {
     expect($this->team->photoshoots()->count())->toBe(1);
 });
 
+test('can create a photoshoot with customer email', function () {
+    $component = Volt::actingAs($this->user)
+        ->test('pages.photoshoots')
+        ->set('form.name', 'John\'s Photoshoot')
+        ->set('form.customerName', 'John Doe')
+        ->set('form.customerEmail', 'john@example.com')
+        ->call('save');
+
+    expect($this->team->photoshoots()->first()->customer_email)->toBe('john@example.com');
+});
+
 test('guests cannot create photoshoots', function () {
     $component = Volt::test('pages.photoshoots')->call('save');
 

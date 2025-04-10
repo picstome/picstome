@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignIdFor(Team::class)->index();
             $table->string('name');
             $table->string('customer_name');
+            $table->string('customer_email')->nullable();
             $table->date('date')->nullable();
             $table->integer('price')->nullable();
             $table->string('location')->nullable();

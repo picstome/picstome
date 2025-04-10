@@ -17,6 +17,9 @@ class PhotoshootForm extends Form
     #[Validate('required')]
     public $customerName;
 
+    #[Validate('nullable|email')]
+    public $customerEmail;
+
     #[Validate('nullable|date')]
     public $date;
 
@@ -53,6 +56,7 @@ class PhotoshootForm extends Form
         return Auth::user()->currentTeam->photoshoots()->create([
             'name' => $this->name,
             'customer_name' => $this->customerName,
+            'customer_email' => $this->customerEmail,
             'date' => $this->date,
             'price' => $this->price,
             'location' => $this->location,
