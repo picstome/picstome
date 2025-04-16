@@ -51,35 +51,35 @@ class Photo extends Model
 
     public function next()
     {
-        return $this->orderBy('id')
+        return $this->orderBy('name')
             ->where('gallery_id', $this->gallery->id)
-            ->where('id', '>', $this->id)
+            ->where('name', '>', $this->name)
             ->first();
     }
 
     public function previous()
     {
-        return $this->orderByDesc('id')
+        return $this->orderByDesc('name')
             ->where('gallery_id', $this->gallery->id)
-            ->where('id', '<', $this->id)
+            ->where('name', '<', $this->name)
             ->first();
     }
 
     public function nextFavorite()
     {
         return $this->favorited()
-            ->orderBy('id')
+            ->orderBy('name')
             ->where('gallery_id', $this->gallery->id)
-            ->where('id', '>', $this->id)
+            ->where('name', '>', $this->name)
             ->first();
     }
 
     public function previousFavorite()
     {
         return $this->favorited()
-            ->orderByDesc('id')
+            ->orderByDesc('name')
             ->where('gallery_id', $this->gallery->id)
-            ->where('id', '<', $this->id)
+            ->where('name', '<', $this->name)
             ->first();
     }
 
