@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->boolean('personal_team');
             $table->string('brand_logo_path')->nullable();
+            $table->string('brand_logo_icon_path')->nullable();
             $table->string('brand_watermark_path')->nullable();
             $table->string('brand_watermark_position')->nullable();
             $table->string('brand_color')->nullable();

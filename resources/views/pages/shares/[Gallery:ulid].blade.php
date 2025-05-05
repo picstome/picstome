@@ -55,7 +55,7 @@ new class extends Component
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
         >
             <div>
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-9" />
+                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto" />
             </div>
 
             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">

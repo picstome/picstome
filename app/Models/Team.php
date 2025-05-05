@@ -90,6 +90,30 @@ class Team extends Model
         });
     }
 
+    public function updateBrandLogoIcon(UploadedFile $image)
+    {
+        tap($this->brand_logo_icon_path, function ($previous) use ($image) {
+            $this->update([
+                'brand_logo_icon_path' => $image->store(
+                    $this->storage_path, ['disk' => 'public']
+                ),
+            ]);
+
+            if ($previous) {
+                Storage::disk('public')->delete($previous);
+            }
+        });
+    }
+
+    protected function brandLogoIconUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            return $this->brand_logo_icon_path
+                    ? Storage::disk('public')->url($this->brand_logo_icon_path)
+                    : null;
+        });
+    }
+
     protected function storagePath(): Attribute
     {
         return Attribute::get(function () {

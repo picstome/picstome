@@ -17,6 +17,9 @@ class BrandingForm extends Form
     public $logo;
 
     #[Validate(['nullable', 'image'])]
+    public $logoIcon;
+
+    #[Validate(['nullable', 'image'])]
     public $watermark;
 
     #[Validate(['in:top,bottom,middle'])]
@@ -55,6 +58,10 @@ class BrandingForm extends Form
 
         if ($this->watermark) {
             $this->team->updateBrandWatermark($this->watermark);
+        }
+
+        if ($this->logoIcon) {
+            $this->team->updateBrandLogoIcon($this->logoIcon);
         }
     }
 }

@@ -59,11 +59,17 @@ new class extends Component
             <form wire:submit="save" class="space-y-6">
                 <flux:input wire:model="form.name" :label="__('Studio name')" />
 
-                @if ($team->brand_logo_url)
-                    <img src="{{ $team->brand_logo_url }}" style="max-height: 35px" />
+                @if ($team->brand_logo_icon_url)
+                    <img src="{{ $team->brand_logo_icon_url }}" class="size-[80px]" />
                 @endif
 
-                <flux:input wire:model="form.logo" :label="__('Logo')" type="file" accept="image/*" />
+                <flux:input wire:model="form.logoIcon" :label="__('Logo Icon')" :description="__('Your logo at 1:1 aspect ratio.')" type="file" accept="image/*" />
+
+                @if ($team->brand_logo_url)
+                    <img src="{{ $team->brand_logo_url }}" class="max-h-[80px]" />
+                @endif
+
+                <flux:input wire:model="form.logo" :label="__('Logo')" :description="__('Full version of your logo.')" type="file" accept="image/*" />
 
                 @if ($team->brand_watermark_url)
                     <img src="{{ $team->brand_watermark_url }}" style="max-height: 35px" />

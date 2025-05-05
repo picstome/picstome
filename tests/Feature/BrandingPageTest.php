@@ -41,6 +41,18 @@ test('a brand logo can be saved', function () {
     expect(Team::first()->brand_logo_url)->not->toBeNull();
 });
 
+test('a brand logo icon can be saved', function () {
+    Storage::fake('public');
+    expect($this->team->brand_logo_path)->toBeNull();
+
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.logoIcon', UploadedFile::fake()->image('logo.png'))
+        ->call('save');
+
+    expect(Team::first()->brand_logo_icon_path)->not->toBeNull();
+    expect(Team::first()->brand_logo_icon_url)->not->toBeNull();
+});
+
 test('a brand watermark can be saved', function () {
     Storage::fake('public');
     expect($this->team->brand_watermark_path)->toBeNull();
