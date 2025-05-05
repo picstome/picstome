@@ -299,7 +299,7 @@ new class extends Component
                             <template x-for="(fileObj, index) in files" :key="index">
                                 <div
                                     x-show="fileObj.status !== 'completed'"
-                                    class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
+                                    class="mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
                                 >
                                     <div class="flex w-full items-center gap-4">
                                         <div
@@ -321,6 +321,13 @@ new class extends Component
                                             size="sm"
                                             color="red"
                                         ></flux:badge>
+                                        <flux:button
+                                            class="z-10"
+                                            x-show="fileObj.status === 'failed'"
+                                            x-on:click="retryUpload(index)"
+                                            size="sm"
+                                            icon="arrow-path"
+                                        />
                                     </div>
                                 </div>
                             </template>
@@ -529,6 +536,13 @@ new class extends Component
                                 fileObj.progress = Math.round((event.loaded / event.total) * 100);
                             },
                         );
+                    },
+
+                    retryUpload(index) {
+                        const fileObj = this.files[index];
+                        fileObj.status = 'pending';
+                        fileObj.progress = 0;
+                        this.processUploadQueue();
                     },
                 }));
             </script>
