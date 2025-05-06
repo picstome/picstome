@@ -24,7 +24,6 @@
                     <flux:brand
                         href="/"
                         :logo="auth()->user()->currentTeam->brand_logo_icon_url ?? '/logo.png'"
-                        :name="auth()->user()->currentTeam->name"
                         class="px-2"
                     />
                 @else
