@@ -27,7 +27,7 @@
                         class="px-2"
                     />
                 @else
-                    <flux:brand href="/" logo="/logo.png" :name="__('Guest studio')" class="px-2" />
+                    <flux:brand href="/" logo="/logo.png" class="px-2" />
                 @endauth
 
                 <flux:navlist variant="outline">
