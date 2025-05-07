@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Contract</title>
+    <title>{{ __('Contract') }}</title>
 
     <style>
         body {
@@ -12,110 +12,56 @@
             font-family: DejaVu Sans, 'sans-serif';
             font-size: 12px;
         }
-
-        .container {
-            padding-top: 30px;
-        }
-
-        .table th {
-            border-bottom: 1px solid #ddd;
-            font-weight: bold;
-            padding: 8px 8px 8px 0;
-            vertical-align: bottom;
-        }
-
-        .table tr.row td {
-            border-bottom: 1px solid #ddd;
-        }
-
-        .table td {
-            padding: 8px 8px 8px 0;
-            vertical-align: top;
-        }
-
-        .table th:last-child,
-        .table td:last-child {
-            padding-right: 0;
-        }
-
-        .sublte {
-            color: #555;
-        }
-
-        .body p:first-child {
-            margin-top: 0;
-        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <table style="margin-left: auto; margin-right: auto;" width="100%">
-        <tr valign="top">
-            <td width="180">
-                <span style="font-size: 28px;">
-                    {{ $contract->title }}
-                </span>
+<div style="padding-top: 30px;">
+    <h1 style="font-size: 28px; margin: 0">{{ $contract->title }}</h1>
 
-                <p>
-                    {{ $contract->description }}
-                </p>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td width="25%">
-                <strong class="sublte">{{ __('Location') }}</strong><br><br>
+    <p style="margin: 8px 0 0 0; font-size: 16px;">
+        {{ $contract->description }}
+    </p>
 
-                <strong class="sublte">{{ __('Shooting date') }}</strong><br><br>
+    <dl>
+        <dt style="color: #555; font-weight: bold;">{{ __('Location') }}</dt>
+        <dd>{{ $contract->location }}</dd>
 
-                <strong class="sublte">{{ __('Contract terms') }}</strong><br><br>
-            </td>
-            <td width="75%">
-                {{ $contract->location }}<br><br>
-                {{ $contract->formatted_shooting_date }}<br><br>
-                <div class="body">{!! $contract->formatted_markdown_body !!}</div>
-            </td>
-        </tr>
+        <dt style="color: #555; font-weight: bold;">{{ __('Shooting date') }}</dt>
+        <dd>{{ $contract->formatted_shooting_date }}</dd>
+
+        <dt style="color: #555; font-weight: bold;">{{ __('Contract terms') }}</dt>
+        <dd>{!! $contract->formatted_markdown_body !!}</dd>
+    </dl>
+
+    <table style="margin-left: auto; margin-right: auto; margin-top: 30px;" width="100%">
         <tr>
             @foreach ($contract->signatures as $signature)
                 @if($loop->index > 0 && $loop->index % 3 === 0)
                     </tr><tr>
                 @endif
                 <td width="33%">
-                    <table class="table" border="0">
-                        <tr class="row">
-                            <td style="font-size: 14px;">
-                                <img src="{{ $signature->signature_image_url }}" style="max-width: 200px;" />
+                    <img src="{{ $signature->signature_image_url }}" style="max-width: 200px;" />
 
-                                <div style="text-align: center;">{{ $signature->legal_name }}</div>
-                            </td>
-                        </tr>
-                        <tr class="row">
-                            <td>
-                                <strong class="sublte">{{ __('Role') }}</strong>: {{ $signature->role }}
-                            </td>
-                        </tr>
-                        <tr class="row">
-                            <td>
-                                <strong class="sublte">{{ __('Birthday') }}</strong>: {{ $signature->formattedBirthday }}
-                            </td>
-                        </tr>
-                        <tr class="row">
-                            <td>
-                                <strong class="sublte">{{ __('Nationality') }}</strong>: {{ $signature->nationality }}
-                            </td>
-                        </tr>
-                        <tr class="row">
-                            <td>
-                                <strong class="sublte">{{ __('Document number') }}</strong>: {{ $signature->document_number }}
-                            </td>
-                        </tr>
-                        <tr class="row">
-                            <td>
-                                <strong class="sublte">{{ __('Email') }}</strong>: {{ $signature->email }}
-                            </td>
-                        </tr>
-                    </table>
+                    <dl>
+                        <dt style="color: #555; font-weight: bold;">{{ __('Legal name') }}</dt>
+                        <dd>{{ $signature->legal_name }}</dd>
+
+                        <dt style="color: #555; font-weight: bold;">{{ __('Role') }}</dt>
+                        <dd>{{ $signature->role }}</dd>
+
+                        <dt style="color: #555; font-weight: bold;">{{ __('Birthday') }}</dt>
+                        <dd>{{ $signature->formattedBirthday }}</dd>
+
+                        <dt style="color: #555; font-weight: bold;">{{ __('Nationality') }}</dt>
+                        <dd>{{ $signature->nationality }}</dd>
+
+                        <dt style="color: #555; font-weight: bold;">{{ __('Document number') }}</dt>
+                        <dd>{{ $signature->document_number }}</dd>
+
+                        <dt style="color: #555; font-weight: bold;">{{ __('Email') }}</dt>
+                        <dd>{{ $signature->email }}</dd>
+                    </dl>
                 </td>
             @endforeach
         </tr>
