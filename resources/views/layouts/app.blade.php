@@ -21,11 +21,13 @@
                 <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
                 @auth
-                    <flux:brand
-                        href="/"
-                        :logo="auth()->user()->currentTeam->brand_logo_icon_url ?? '/logo.png'"
-                        class="px-2"
-                    />
+                    <div class="px-2">
+                        <img
+                            src="{{ auth()->user()->currentTeam->brand_logo_icon_url ?? '/logo.png' }}"
+                            class="h-16 block rounded"
+                            alt=""
+                        >
+                    </div>
                 @else
                     <flux:brand href="/" logo="/logo.png" class="px-2" />
                 @endauth
