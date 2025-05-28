@@ -173,7 +173,7 @@ new class extends Component
                             <div
                                 x-data="signaturePad"
                                 data-flux-control
-                                class="block w-full overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
+                                class="block touch-none w-full overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
                             >
                                 <canvas x-ref="canvas"></canvas>
                             </div>
