@@ -109,7 +109,7 @@ new class extends Component
                 <img
                     src="{{ $photo->thumbnail_url }}"
                     @click="zoom = !zoom"
-                    class="mx-auto max-w-none object-contain"
+                    class="mx-auto max-w-full object-contain"
                     :class="zoom ? 'hover:cursor-zoom-out' : 'hover:cursor-zoom-in'"
                     :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
