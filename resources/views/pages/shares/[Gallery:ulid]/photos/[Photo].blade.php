@@ -121,8 +121,8 @@ new class extends Component
                     src="{{ $photo->thumbnail_url }}"
                     @contextmenu.prevent
                     @click="zoom = !zoom"
-                    class="mx-auto max-w-full object-contain"
-                    :class="zoom ? 'hover:cursor-zoom-out' : 'hover:cursor-zoom-in'"
+                    class="mx-auto object-contain"
+                    :class="zoom ? 'max-w-none hover:cursor-zoom-out' : 'max-w-full hover:cursor-zoom-in'"
                     :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
