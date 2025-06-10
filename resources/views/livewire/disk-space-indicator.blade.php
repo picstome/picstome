@@ -7,11 +7,14 @@ new class extends Component
 {
     public function with()
     {
+        if (!DiskSpaceService::isLocalPublicDisk()) {
+            return ['showDiskSpace' => false];
+        }
+
         return [
-            'showDiskSpace' => DiskSpaceService::isLocalPublicDisk(),
+            'showDiskSpace' => true,
             'freeSpace' => DiskSpaceService::formatBytes(DiskSpaceService::getFreeDiskSpace()),
             'usedSpace' => DiskSpaceService::formatBytes(DiskSpaceService::getUsedDiskSpace()),
-            'totalSpace' => DiskSpaceService::formatBytes(DiskSpaceService::getTotalDiskSpace()),
             'usagePercentage' => DiskSpaceService::getUsagePercentage(),
         ];
     }
@@ -35,10 +38,6 @@ new class extends Component
                 <div class="flex justify-between text-xs">
                     <span class="text-zinc-600 dark:text-zinc-400">{{ __('Free') }}</span>
                     <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $freeSpace }}</span>
-                </div>
-                <div class="flex justify-between text-xs mb-2">
-                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
-                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $totalSpace }}</span>
                 </div>
 
                 @if ($usagePercentage !== null)

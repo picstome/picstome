@@ -2,16 +2,18 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
+use App\Traits\FormatsFileSize;
 
 class DiskSpaceService
 {
+    use FormatsFileSize;
+
     public static function isLocalPublicDisk(): bool
     {
         return config('filesystems.disks.public.driver') === 'local';
     }
 
-    public static function getFreeDiskSpace(): ?int
+    private static function getPublicDiskPath(): ?string
     {
         if (!self::isLocalPublicDisk()) {
             return null;
@@ -23,22 +25,19 @@ class DiskSpaceService
             return null;
         }
 
-        return disk_free_space($publicPath);
+        return $publicPath;
+    }
+
+    public static function getFreeDiskSpace(): ?int
+    {
+        $path = self::getPublicDiskPath();
+        return $path ? disk_free_space($path) : null;
     }
 
     public static function getTotalDiskSpace(): ?int
     {
-        if (!self::isLocalPublicDisk()) {
-            return null;
-        }
-
-        $publicPath = config('filesystems.disks.public.root');
-
-        if (!$publicPath || !is_dir($publicPath)) {
-            return null;
-        }
-
-        return disk_total_space($publicPath);
+        $path = self::getPublicDiskPath();
+        return $path ? disk_total_space($path) : null;
     }
 
     public static function getUsedDiskSpace(): ?int
@@ -59,15 +58,7 @@ class DiskSpaceService
             return 'N/A';
         }
 
-        if ($bytes == 0) {
-            return '0 B';
-        }
-
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $unitIndex = floor(log($bytes, 1024));
-        $size = round($bytes / pow(1024, $unitIndex), 1);
-
-        return $size . ' ' . $units[$unitIndex];
+        return (new self())->formatFileSize($bytes, 1);
     }
 
     public static function getUsagePercentage(): ?float

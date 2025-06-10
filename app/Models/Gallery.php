@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use ZipStream\ZipStream;
 class Gallery extends Model
 {
     /** @use HasFactory<\Database\Factories\GalleryFactory> */
-    use HasFactory;
+    use HasFactory, FormatsFileSize;
 
     protected $guarded = [];
 
@@ -124,16 +125,6 @@ class Gallery extends Model
 
     public function getFormattedStorageSize()
     {
-        $bytes = $this->getTotalStorageSize();
-        
-        if ($bytes == 0) {
-            return '0 B';
-        }
-        
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $unitIndex = floor(log($bytes, 1024));
-        $size = round($bytes / pow(1024, $unitIndex), 2);
-        
-        return $size . ' ' . $units[$unitIndex];
+        return $this->formatFileSize($this->getTotalStorageSize());
     }
 }
