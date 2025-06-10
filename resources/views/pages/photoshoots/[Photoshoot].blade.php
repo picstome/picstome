@@ -183,6 +183,15 @@ new class extends Component
                     <x-description.details>
                         {{ $photoshoot->comment }}
                     </x-description.details>
+
+                    @if ($photoshoot->getTotalPhotosCount() > 0)
+                        <x-description.term>
+                            {{ __('Total photos') }}
+                        </x-description.term>
+                        <x-description.details>
+                            {{ $photoshoot->getTotalPhotosCount() }} {{ $photoshoot->getTotalPhotosCount() === 1 ? __('photo') : __('photos') }} • {{ $photoshoot->getFormattedStorageSize() }} {{ __('total storage') }}
+                        </x-description.details>
+                    @endif
                 </x-description.list>
             </div>
 
@@ -211,7 +220,8 @@ new class extends Component
                                 >
                                     <flux:heading>{{ $gallery->name }}</flux:heading>
                                     <flux:text>
-                                        {{ $gallery->photos()->count() }} photos ·
+                                        {{ $gallery->photos()->count() }} {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
+                                        {{ $gallery->getFormattedStorageSize() }} •
                                         {{ $gallery->created_at }}
                                     </flux:text>
                                 </div>

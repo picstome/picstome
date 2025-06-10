@@ -143,6 +143,11 @@ new class extends Component
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
                     </x-subheading>
+                    @if ($allPhotos->isNotEmpty())
+                        <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
+                            {{ $allPhotos->count() }} {{ $allPhotos->count() === 1 ? __('photo') : __('photos') }} • {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
+                        </div>
+                    @endif
                 </div>
                 <div class="flex gap-4">
                     <flux:dropdown>

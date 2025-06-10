@@ -100,7 +100,9 @@
     "Others": "Otros",
     "Parent": "Padre/Madre",
     "Password": "Contraseña",
+    "photo": "foto",
     "Photographer": "Fotógrafo/a",
+    "photos": "fotos",
     "Photos": "Fotos",
     "Photoshoot Name": "Nombre de la sesión de fotos",
     "Photoshoots": "Sesiones de fotos",
@@ -155,6 +157,7 @@
     "Tiled": "Mosaico",
     "Title": "Título",
     "Top": "Superior",
+    "Total photos": "Total de fotos",
     "Unlock": "Desbloquear",
     "Unsigned": "Sin firmar",
     "Untitled": "Sin título",
@@ -186,5 +189,6 @@
     "Your email address is unverified.": "Tu dirección de correo electrónico no está verificada.",
     "Your password": "Tu contraseña",
     "remaining files.": "archivos restantes.",
-    "signatures": "firmas"
+    "signatures": "firmas",
+    "total storage": "almacenamiento total"
 }

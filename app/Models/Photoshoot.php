@@ -43,4 +43,37 @@ class Photoshoot extends Model
 
         return $this;
     }
+
+    public function getTotalStorageSize()
+    {
+        return $this->galleries()
+            ->with('photos')
+            ->get()
+            ->sum(function ($gallery) {
+                return $gallery->photos->sum('size');
+            });
+    }
+
+    public function getFormattedStorageSize()
+    {
+        $bytes = $this->getTotalStorageSize();
+        
+        if ($bytes == 0) {
+            return '0 B';
+        }
+        
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $unitIndex = floor(log($bytes, 1024));
+        $size = round($bytes / pow(1024, $unitIndex), 2);
+        
+        return $size . ' ' . $units[$unitIndex];
+    }
+
+    public function getTotalPhotosCount()
+    {
+        return $this->galleries()
+            ->withCount('photos')
+            ->get()
+            ->sum('photos_count');
+    }
 }

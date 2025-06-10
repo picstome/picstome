@@ -99,7 +99,9 @@
     "Others": "Others",
     "Parent": "Parent",
     "Password": "Password",
+    "photo": "photo",
     "Photographer": "Photographer",
+    "photos": "photos",
     "Photos": "Photos",
     "Photoshoot Name": "Photoshoot Name",
     "Photoshoots": "Photoshoots",
@@ -152,6 +154,7 @@
     "Terms": "Terms",
     "Title": "Title",
     "Top": "Top",
+    "Total photos": "Total photos",
     "Unlock": "Unlock",
     "Unsigned": "Unsigned",
     "Untitled": "Untitled",
@@ -183,5 +186,6 @@
     "Your email address is unverified.": "Your email address is unverified.",
     "Your password": "Your password",
     "remaining files.": "remaining files.",
-    "signatures": "signatures"
+    "signatures": "signatures",
+    "total storage": "total storage"
 }
