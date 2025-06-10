@@ -15,7 +15,7 @@ use ZipStream\ZipStream;
 class Gallery extends Model
 {
     /** @use HasFactory<\Database\Factories\GalleryFactory> */
-    use HasFactory, FormatsFileSize;
+    use FormatsFileSize, HasFactory;
 
     protected $guarded = [];
 

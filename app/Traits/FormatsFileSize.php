@@ -12,8 +12,9 @@ trait FormatsFileSize
 
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $unitIndex = floor(log($bytes, 1024));
+        $unitIndex = min($unitIndex, count($units) - 1);
         $size = round($bytes / pow(1024, $unitIndex), $precision);
 
-        return $size . ' ' . $units[$unitIndex];
+        return $size.' '.$units[$unitIndex];
     }
 }

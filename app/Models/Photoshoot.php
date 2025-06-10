@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Photoshoot extends Model
 {
     /** @use HasFactory<\Database\Factories\PhotoshootFactory> */
-    use HasFactory, FormatsFileSize;
+    use FormatsFileSize, HasFactory;
 
     protected $guarded = [];
 
