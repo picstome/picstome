@@ -57,15 +57,15 @@ class Photoshoot extends Model
     public function getFormattedStorageSize()
     {
         $bytes = $this->getTotalStorageSize();
-        
+
         if ($bytes == 0) {
             return '0 B';
         }
-        
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $unitIndex = floor(log($bytes, 1024));
         $size = round($bytes / pow(1024, $unitIndex), 2);
-        
+
         return $size . ' ' . $units[$unitIndex];
     }
 

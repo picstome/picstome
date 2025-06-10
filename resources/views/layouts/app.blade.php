@@ -55,6 +55,8 @@
 
                 <flux:spacer />
 
+                <livewire:disk-space-indicator />
+
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Studio')" class="mt-4">
                         <flux:navlist.item :href="route('branding')" icon="paint-brush">
