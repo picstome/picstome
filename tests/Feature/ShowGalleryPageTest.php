@@ -288,13 +288,13 @@ test('can edit a team gallery', function () {
     expect($gallery->fresh()->name)->toBe('Edited Gallery');
 });
 
-// test('password protection can be disabled', function () {
-//     $gallery = Gallery::factory()->protected('password')->create();
-//     expect($gallery->share_password)->not->toBeNull();
+test('password protection can be disabled', function () {
+    $gallery = Gallery::factory()->protected('password')->create();
+    expect($gallery->share_password)->not->toBeNull();
 
-//     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
-//         ->set('shareForm.passwordProtected', false)
-//         ->call('share');
+    $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        ->set('shareForm.passwordProtected', false)
+        ->call('share');
 
-//     expect($gallery->fresh()->share_password)->toBeNull();
-// });
+    expect($gallery->fresh()->share_password)->toBeNull();
+});
