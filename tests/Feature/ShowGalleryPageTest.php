@@ -328,7 +328,27 @@ test('increments storage_used when team uploads photo and has enough storage', f
     expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed + $photoSize);
 });
 
-todo('blocks photo upload when team storage limit would be exceeded');
+test('blocks photo upload when team storage limit would be exceeded', function () {
+    Storage::fake('public');
+    Event::fake(PhotoAdded::class);
+
+    $this->team->update([
+        'storage_limit' => 20 * 1024, // 20 KB
+        'storage_used' => 18 * 1024, // 18 KB used
+    ]);
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
+    $initialStorageUsed = $this->team->fresh()->storage_used;
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        ->set('photos', [0 => $photoFile])
+        ->call('save', 0);
+
+    expect($gallery->fresh()->photos()->count())->toBe(0);
+    expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
+    $component->assertHasErrors(['photos.0' => 'storage_limit']);
+});
 todo('blocks photo upload when team is exactly at the storage limit');
 todo('block photo upload when team is just under the storage limit');
 todo('blocks batch photo upload if total size would exceed team storage limit');
