@@ -75,7 +75,7 @@ test('photos can be added to a gallery', function () {
         expect($photo->path)->toContain('galleries/1243ABC/photos/');
         expect($photo->url)->not()->toBeNull();
         expect($photo->size)->not()->toBeNull();
-        Storage::assertExists($photo->path);
+        Storage::disk('public')->assertExists($photo->path);
         Event::assertDispatched(PhotoAdded::class);
     });
     tap($gallery->fresh()->photos[1], function ($photo) {
@@ -83,7 +83,7 @@ test('photos can be added to a gallery', function () {
         expect($photo->path)->toContain('galleries/1243ABC/photos/');
         expect($photo->url)->not()->toBeNull();
         expect($photo->size)->not()->toBeNull();
-        Storage::assertExists($photo->path);
+        Storage::disk('public')->assertExists($photo->path);
         Event::assertDispatched(PhotoAdded::class);
     });
 });
@@ -235,14 +235,14 @@ test('can delete a photo', function () {
             ->image('photo1.jpg')
             ->storeAs('galleries/1/photos', 'photo1.jpg', 'public'),
     ]);
-    Storage::assertExists('galleries/1/photos/photo1.jpg');
+    Storage::disk('public')->assertExists('galleries/1/photos/photo1.jpg');
     expect(Photo::count())->toBe(1);
 
     $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
         ->call('deletePhoto', $photo->id);
 
     expect($gallery->photos()->count())->toBe(0);
-    Storage::assertMissing('galleries/1/photos/photo1.jpg');
+    Storage::disk('public')->assertMissing('galleries/1/photos/photo1.jpg');
 });
 
 test('users cannot delete another team photo', function () {
@@ -266,7 +266,7 @@ test('users can delete their team gallery', function () {
         $gallery->addPhoto($photo);
     });
     $gallery->photos->each(function ($photo) {
-        Storage::assertExists($photo->path);
+        Storage::disk('public')->assertExists($photo->path);
     });
 
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
@@ -274,7 +274,7 @@ test('users can delete their team gallery', function () {
     expect(Gallery::count())->toBe(0);
     expect(Photo::count())->toBe(0);
     $gallery->photos->each(function ($photo) {
-        Storage::assertMissing($photo->path);
+        Storage::disk('public')->assertMissing($photo->path);
     });
 });
 
