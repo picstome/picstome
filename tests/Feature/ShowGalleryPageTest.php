@@ -301,26 +301,29 @@ test('password protection can be disabled', function () {
 
 todo('checks team storage usage before uploading a photo');
 
-test('allows photo upload when team has enough storage', function () {
+test('increments storage_used when team uploads photo and has enough storage', function () {
     Storage::fake('public');
     Event::fake(PhotoAdded::class);
 
-    // Create a team with a storage limit and usage well below the limit
     $this->team->update([
         'storage_limit' => 100 * 1024 * 1024, // 100 MB
         'storage_used' => 10 * 1024 * 1024,   // 10 MB used
     ]);
+
     $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEOK']);
 
     $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
+    $photoSize = $photoFile->getSize();
+    $initialStorageUsed = $this->team->fresh()->storage_used;
 
-    $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+    Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
         ->set('photos', [0 => $photoFile])
         ->call('save', 0);
 
-    // Assert photo was added
     expect($gallery->fresh()->photos()->count())->toBe(1);
+    expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed + $photoSize);
 });
+
 todo('blocks photo upload when team storage limit would be exceeded');
 todo('blocks photo upload when team is exactly at the storage limit');
 todo('block photo upload when team is just under the storage limit');
