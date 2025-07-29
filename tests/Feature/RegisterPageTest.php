@@ -62,8 +62,6 @@ it('creates a personal team for the user upon registration', function () {
 });
 
 it('gives the personal team 1GB of storage upon creation', function () {
-    // This is a placeholder: there is no storage/quota field on the team yet.
-    // If/when a storage field is added, assert it here.
     $component = Volt::test('pages.register')
         ->set('name', 'Storage User')
         ->set('email', 'storageuser@example.com')
@@ -72,7 +70,6 @@ it('gives the personal team 1GB of storage upon creation', function () {
         ->call('register');
 
     $user = User::where('email', 'storageuser@example.com')->first();
-    $team = $user->personalTeam();
-    // expect($team->storage_quota)->toBe(1073741824); // 1GB in bytes
-    expect(true)->toBeTrue(); // Placeholder assertion
-})->todo();
+    $team = $user->currentTeam;
+    expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
+});
