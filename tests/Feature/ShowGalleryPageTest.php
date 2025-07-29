@@ -106,32 +106,34 @@ test('an added photo has been resized', function () {
 });
 
 test('an added photo is not resized when the keep original size option is enabled', function () {
+    config(['picstome.photo_resize' => 128]);
     Storage::fake('public');
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
-        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 2049, 2049)],
+        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 129, 129)],
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
         $resizedImage = Storage::disk('public')->get($photo->path);
         [$width, $height] = getimagesizefromstring($resizedImage);
-        expect($width)->toBe(2049);
-        expect($width)->toBe(2049);
+        expect($width)->toBe(129);
+        expect($height)->toBe(129);
     });
 });
 
 test('a thumbnail has been generated from the added photo', function () {
+    config(['picstome.photo_thumb_resize' => 64]);
     Storage::fake('public');
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
-        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 1001, 1001)],
+        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 65, 65)],
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
         $resizedImage = Storage::disk('public')->get($photo->thumb_path);
         [$width, $height] = getimagesizefromstring($resizedImage);
-        expect($width)->toBe(1000);
-        expect($height)->toBe(1000);
+        expect($width)->toBe(64);
+        expect($height)->toBe(64);
     });
 });
 
