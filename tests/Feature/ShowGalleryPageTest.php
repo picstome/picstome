@@ -100,8 +100,8 @@ test('an added photo has been resized', function () {
     tap($gallery->fresh()->photos[0], function ($photo) {
         $resizedImage = Storage::disk('public')->get($photo->path);
         [$width, $height] = getimagesizefromstring($resizedImage);
-        expect($width)->toBe(config('picstome.photo_resize'));
-        expect($height)->toBe(config('picstome.photo_resize'));
+        expect($width)->toBe(128);
+        expect($height)->toBe(128);
     });
 });
 
