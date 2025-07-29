@@ -302,3 +302,14 @@ test('password protection can be disabled', function () {
 
     expect($gallery->fresh()->share_password)->toBeNull();
 });
+
+todo('checks team storage usage before uploading a photo');
+todo('allows photo upload when team has enough storage');
+todo('blocks photo upload when team storage limit would be exceeded');
+todo('blocks photo upload when team is exactly at the storage limit');
+todo('block photo upload when team is just under the storage limit');
+todo('blocks batch photo upload if total size would exceed team storage limit');
+todo('allows batch photo upload if total size fits within team storage limit');
+todo('shows an appropriate error message when storage limit is exceeded');
+todo('does not count deleted photos towards storage usage');
+todo('recalculates storage usage just before each upload');
