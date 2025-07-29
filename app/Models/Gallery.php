@@ -93,10 +93,8 @@ class Gallery extends Model
         $team = $this->team;
         $photoSize = $photo->getSize();
 
-        if ($team && $team->storage_limit !== null) {
-            if (!$team->canStoreFile($photoSize)) {
-                throw new \Exception('Not enough storage');
-            }
+        if ($team->storage_limit !== null && !$team->canStoreFile($photoSize)) {
+            throw new \Exception('Not enough storage');
         }
 
         $photoModel = $this->photos()->create([
@@ -108,10 +106,7 @@ class Gallery extends Model
             ),
         ]);
 
-        // Update team's storage_used
-        if ($team) {
-            $team->increment('storage_used', $photoSize);
-        }
+        $team->increment('storage_used', $photoSize);
 
         return $photoModel;
     }
