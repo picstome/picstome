@@ -89,17 +89,19 @@ test('photos can be added to a gallery', function () {
 });
 
 test('an added photo has been resized', function () {
+    config(['picstome.photo_resize' => 128]);
     Storage::fake('public');
+
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
-        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 2049, 2049)],
+        'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 129, 129)],
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
         $resizedImage = Storage::disk('public')->get($photo->path);
         [$width, $height] = getimagesizefromstring($resizedImage);
-        expect($width)->toBe(2048);
-        expect($height)->toBe(2048);
+        expect($width)->toBe(config('picstome.photo_resize'));
+        expect($height)->toBe(config('picstome.photo_resize'));
     });
 });
 
