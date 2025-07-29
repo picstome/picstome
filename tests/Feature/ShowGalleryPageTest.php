@@ -75,7 +75,7 @@ test('photos can be added to a gallery', function () {
         expect($photo->path)->toContain('galleries/1243ABC/photos/');
         expect($photo->url)->not()->toBeNull();
         expect($photo->size)->not()->toBeNull();
-        Storage::disk('public')->assertExists($photo->path);
+        Storage::assertExists($photo->path);
         Event::assertDispatched(PhotoAdded::class);
     });
     tap($gallery->fresh()->photos[1], function ($photo) {
@@ -83,7 +83,7 @@ test('photos can be added to a gallery', function () {
         expect($photo->path)->toContain('galleries/1243ABC/photos/');
         expect($photo->url)->not()->toBeNull();
         expect($photo->size)->not()->toBeNull();
-        Storage::disk('public')->assertExists($photo->path);
+        Storage::assertExists($photo->path);
         Event::assertDispatched(PhotoAdded::class);
     });
 });
@@ -239,14 +239,14 @@ test('can delete a photo', function () {
             ->image('photo1.jpg')
             ->storeAs('galleries/1/photos', 'photo1.jpg', 'public'),
     ]);
-    Storage::disk('public')->assertExists(['galleries/1/photos/photo1.jpg']);
+    Storage::assertExists('galleries/1/photos/photo1.jpg');
     expect(Photo::count())->toBe(1);
 
     $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
         ->call('deletePhoto', $photo->id);
 
     expect($gallery->photos()->count())->toBe(0);
-    Storage::disk('public')->assertMissing(['galleries/1/photos/photo1.jpg']);
+    Storage::assertMissing('galleries/1/photos/photo1.jpg');
 });
 
 test('users cannot delete another team photo', function () {
@@ -270,7 +270,7 @@ test('users can delete their team gallery', function () {
         $gallery->addPhoto($photo);
     });
     $gallery->photos->each(function ($photo) {
-        Storage::disk('public')->assertExists($photo->path);
+        Storage::assertExists($photo->path);
     });
 
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
@@ -278,7 +278,7 @@ test('users can delete their team gallery', function () {
     expect(Gallery::count())->toBe(0);
     expect(Photo::count())->toBe(0);
     $gallery->photos->each(function ($photo) {
-        Storage::disk('public')->assertMissing($photo->path);
+        Storage::assertMissing($photo->path);
     });
 });
 
@@ -304,7 +304,35 @@ test('password protection can be disabled', function () {
 });
 
 todo('checks team storage usage before uploading a photo');
-todo('allows photo upload when team has enough storage');
+
+test('allows photo upload when team has enough storage', function () {
+    Storage::fake('public');
+    Event::fake(PhotoAdded::class);
+
+    // Create a team with a storage limit and usage well below the limit
+    $team = Team::factory()->create([
+        'storage_limit' => 100 * 1024 * 1024, // 100 MB
+        'storage_used' => 10 * 1024 * 1024,   // 10 MB used
+    ]);
+    $user = User::factory()->for($team)->create();
+    $gallery = Gallery::factory()->for($team)->create(['ulid' => 'STORAGEOK']);
+
+    $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
+
+    $component = Volt::actingAs($user)->test('pages.galleries.show', ['gallery' => $gallery])
+        ->set('photos', [0 => $photoFile])
+        ->call('save', 0);
+
+    // Assert photo was added
+    expect($gallery->fresh()->photos()->count())->toBe(1);
+    tap($gallery->fresh()->photos[0], function ($photo) use ($photoFile) {
+        expect($photo->name)->toBe('photo_upload.jpg');
+        expect($photo->path)->toContain('galleries/STORAGEOK/photos/');
+        expect($photo->size)->not()->toBeNull();
+        Storage::assertExists($photo->path);
+        Event::assertDispatched(PhotoAdded::class);
+    });
+});
 todo('blocks photo upload when team storage limit would be exceeded');
 todo('blocks photo upload when team is exactly at the storage limit');
 todo('block photo upload when team is just under the storage limit');
