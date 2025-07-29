@@ -299,8 +299,6 @@ test('password protection can be disabled', function () {
     expect($gallery->fresh()->share_password)->toBeNull();
 });
 
-todo('checks team storage usage before uploading a photo');
-
 test('increments storage_used when team uploads photo and has enough storage', function () {
     Storage::fake('public');
     Event::fake(PhotoAdded::class);
@@ -416,6 +414,25 @@ test('does not count deleted photos towards storage usage', function () {
 
     expect($this->team->fresh()->storage_used)->toBe(0);
 });
-todo('recalculates storage usage just before each upload');
-todo('does not block photo upload for teams with unlimited storage, regardless of usage');
-todo('does not block batch photo upload for teams with unlimited storage');
+
+test('does not block photo upload for teams with unlimited storage regardless of usage', function () {
+    Storage::fake('public');
+    Event::fake(PhotoAdded::class);
+
+    $this->team->update([
+        'storage_limit' => null, // Unlimited storage
+        'storage_used' => 999999999, // Simulate huge usage
+    ]);
+    $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'UNLIMITED']);
+
+    $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
+    $initialStorageUsed = $this->team->fresh()->storage_used;
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        ->set('photos', [0 => $photoFile])
+        ->call('save', 0);
+
+    expect($gallery->fresh()->photos()->count())->toBe(1);
+    expect($this->team->fresh()->storage_used)->toBeGreaterThanOrEqual($initialStorageUsed);
+    $component->assertHasNoErrors();
+});
