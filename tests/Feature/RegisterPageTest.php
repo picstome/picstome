@@ -57,7 +57,7 @@ it('creates a personal team for the user upon registration', function () {
     $team = $user->currentTeam;
 
     expect($team)->not->toBeNull();
-    expect($team->name)->toBe($user->name . "'s Studio");
+    expect($team->name)->toBe("{$user->name}'s Studio");
     expect($team->personal_team)->toBeTrue();
 });
 
