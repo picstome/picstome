@@ -54,7 +54,14 @@ new class extends Component
         ]);
 
         if (isset($this->photos[$index])) {
-            tap($this->photos[$index], function (UploadedFile $uploadedPhoto) {
+            $uploadedPhoto = $this->photos[$index];
+            $team = $this->gallery->team;
+            $photoSize = $uploadedPhoto->getSize();
+            if ($team && $team->storage_limit !== null && ($team->storage_used + $photoSize) > $team->storage_limit) {
+                $this->addError("photos.$index", 'storage_limit');
+                return;
+            }
+            tap($uploadedPhoto, function (UploadedFile $uploadedPhoto) {
                 $photo = $this->gallery->addPhoto($uploadedPhoto);
 
                 PhotoAdded::dispatch($photo);
