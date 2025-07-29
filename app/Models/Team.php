@@ -15,6 +15,14 @@ class Team extends Model
 
     protected $guarded = [];
 
+    public function canStoreFile(int $size): bool
+    {
+        if ($this->storage_limit === null) {
+            return true;
+        }
+        return ($this->storage_used + $size) <= $this->storage_limit;
+    }
+
     protected function casts()
     {
         return [

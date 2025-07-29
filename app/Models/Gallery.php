@@ -90,16 +90,25 @@ class Gallery extends Model
 
     public function addPhoto(UploadedFile $photo)
     {
-        $photo = $this->photos()->create([
+        $team = $this->team;
+        $photoSize = $photo->getSize();
+
+        if ($team->storage_limit !== null && !$team->canStoreFile($photoSize)) {
+            throw new \Exception('Not enough storage');
+        }
+
+        $photoModel = $this->photos()->create([
             'name' => $photo->getClientOriginalName(),
-            'size' => $photo->getSize(),
+            'size' => $photoSize,
             'path' => $photo->store(
                 path: $this->storage_path,
                 options: ['disk' => 'public']
             ),
         ]);
 
-        return $photo;
+        $team->increment('storage_used', $photoSize);
+
+        return $photoModel;
     }
 
     protected function storagePath(): Attribute

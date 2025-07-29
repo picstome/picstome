@@ -53,13 +53,29 @@ new class extends Component
             "photos.{$index}" => 'image|max:12288',
         ]);
 
-        if (isset($this->photos[$index])) {
-            tap($this->photos[$index], function (UploadedFile $uploadedPhoto) {
-                $photo = $this->gallery->addPhoto($uploadedPhoto);
+        $uploadedPhoto = $this->photos[$index];
 
-                PhotoAdded::dispatch($photo);
-            });
+        if (! $this->hasSufficientStorage($uploadedPhoto)) {
+            $this->addError("photos.$index", 'storage_limit');
+
+            return;
         }
+
+        $this->addPhotoToGallery($uploadedPhoto);
+    }
+
+    protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
+    {
+        $photoSize = $uploadedPhoto->getSize();
+
+        return $this->gallery->team->canStoreFile($photoSize);
+    }
+
+    protected function addPhotoToGallery(UploadedFile $uploadedPhoto): void
+    {
+        $photo = $this->gallery->addPhoto($uploadedPhoto);
+
+        PhotoAdded::dispatch($photo);
     }
 
     public function share()
