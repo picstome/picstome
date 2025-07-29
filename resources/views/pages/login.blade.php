@@ -51,6 +51,13 @@ new class extends Component
                 <flux:button type="submit" variant="primary" class="w-full">
                     {{ __('Log in') }}
                 </flux:button>
+
+                <flux:text class="text-center">
+                    {{ __('Don\'t have an account?') }}
+                    <flux:link href="{{ route('register') }}" wire:navigate>
+                        {{ __('Register') }}
+                    </flux:link>
+                </flux:text>
             </form>
         </div>
     @endvolt

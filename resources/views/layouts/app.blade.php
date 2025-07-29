@@ -83,6 +83,7 @@
 
         @guest
             <livewire:login-modal />
+            <livewire:register-modal />
         @endguest
 
         @fluxScripts
