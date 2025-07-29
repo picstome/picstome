@@ -313,3 +313,5 @@ todo('allows batch photo upload if total size fits within team storage limit');
 todo('shows an appropriate error message when storage limit is exceeded');
 todo('does not count deleted photos towards storage usage');
 todo('recalculates storage usage just before each upload');
+todo('does not block photo upload for teams with unlimited storage, regardless of usage');
+todo('does not block batch photo upload for teams with unlimited storage');
