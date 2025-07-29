@@ -54,7 +54,8 @@ it('creates a personal team for the user upon registration', function () {
         ->call('register');
 
     $user = User::where('email', 'teamuser@example.com')->first();
-    $team = $user->personalTeam();
+    $team = $user->currentTeam;
+
     expect($team)->not->toBeNull();
     expect($team->name)->toBe($user->name . "'s Studio");
     expect($team->personal_team)->toBeTrue();
