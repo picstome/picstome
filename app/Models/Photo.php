@@ -16,6 +16,13 @@ class Photo extends Model
 
     protected $guarded = [];
 
+    public static function booted()
+    {
+        static::deleting(function (Photo $photo) {
+            $photo->gallery->team->decrement('storage_used', $photo->size);
+        });
+    }
+
     protected function casts()
     {
         return [
