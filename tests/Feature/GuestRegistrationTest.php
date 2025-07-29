@@ -26,3 +26,11 @@ it('authenticates the user after successful registration', function () {
 it('redirects authenticated users away from the registration page', function () {
     todo();
 });
+
+it('creates a personal team for the user upon registration', function () {
+    todo();
+});
+
+it('gives the personal team 1GB of storage upon creation', function () {
+    todo();
+});
