@@ -31,14 +31,10 @@ new class extends Component {
 
         event(new Registered($user = User::create($validated)));
 
-        // Create a personal team for the user
-        $team = $user->ownedTeams()->create([
-            'name' => $user->name . "'s Studio",
+        $user->ownedTeams()->create([
+            'name' => "{$user->name}'s Studio",
             'personal_team' => true,
         ]);
-        // Optionally, set current_team_id
-        $user->current_team_id = $team->id;
-        $user->save();
 
         Auth::login($user);
 
