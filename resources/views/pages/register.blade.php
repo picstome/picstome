@@ -43,15 +43,39 @@ new class extends Component {
     }
 }; ?>
 
-<div>
+<x-guest-layout>
     @volt('pages.register')
-        <form wire:submit.prevent="register">
-            <input type="text" wire:model="name" placeholder="Name">
-            <input type="email" wire:model="email" placeholder="Email">
-            <input type="password" wire:model="password" placeholder="Password">
-            <input type="password" wire:model="password_confirmation" placeholder="Confirm Password">
-            <button type="submit">Register</button>
-        </form>
+        <div class="flex min-h-full items-center">
+            <form wire:submit="register" class="mx-auto w-80 max-w-80 space-y-6">
+                <div>
+                    <div class="mb-12 flex items-center justify-center gap-3">
+                        <x-logo-light class="size-5 dark:hidden" />
+                        <span class="text-xl font-semibold text-zinc-800 dark:text-white">Picstome</span>
+                    </div>
+                </div>
+
+                <flux:input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
+
+                <flux:input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
+
+                <flux:input
+                    wire:model="password"
+                    type="password"
+                    :label="__('Password')"
+                    :placeholder="__('Your password')"
+                />
+
+                <flux:input
+                    wire:model="password_confirmation"
+                    type="password"
+                    :label="__('Confirm Password')"
+                    :placeholder="__('Confirm your password')"
+                />
+
+                <flux:button type="submit" variant="primary" class="w-full">
+                    {{ __('Register') }}
+                </flux:button>
+            </form>
+        </div>
     @endvolt
-</div>
-</div>
+</x-guest-layout>
