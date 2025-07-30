@@ -55,7 +55,9 @@
 
                 <flux:spacer />
 
-                <livewire:disk-space-indicator />
+                @auth
+                    <livewire:storage-usage-indicator />
+                @endauth
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Studio')" class="mt-4">

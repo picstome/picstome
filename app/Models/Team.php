@@ -128,4 +128,20 @@ class Team extends Model
             return "teams/{$this->id}";
         });
     }
+
+    protected function storageUsedGb(): Attribute
+    {
+        return Attribute::get(function () {
+            $gb = $this->storage_used / 1073741824;
+            return number_format($gb, 2) . ' GB';
+        });
+    }
+
+    protected function storageLimitGb(): Attribute
+    {
+        return Attribute::get(function () {
+            $gb = $this->storage_limit / 1073741824;
+            return number_format($gb, 2) . ' GB';
+        });
+    }
 }
