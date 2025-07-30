@@ -57,6 +57,10 @@
 
                 @auth
                     <livewire:storage-usage-indicator />
+
+                    @unless(auth()->user()->currentTeam->subscribed())
+                        <flux:button :href="route('subscribe')" size="sm" class="mx-2">{{ __('Subscribe') }}</flux:button>
+                    @endunless
                 @endauth
 
                 <flux:navlist variant="outline">
