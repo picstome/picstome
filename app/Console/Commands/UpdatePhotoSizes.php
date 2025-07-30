@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 class UpdatePhotoSizes extends Command
 {
     protected $signature = 'photos:update-sizes {--dry-run : Run without making changes}';
+
     protected $description = 'Update photo sizes for galleries where keep_original_size is false';
 
     public function handle()
@@ -25,10 +26,11 @@ class UpdatePhotoSizes extends Command
 
         if ($galleries->isEmpty()) {
             $this->info('No galleries found with keep_original_size set to false.');
+
             return;
         }
 
-        $totalPhotos = $galleries->sum(fn($gallery) => $gallery->photos->count());
+        $totalPhotos = $galleries->sum(fn ($gallery) => $gallery->photos->count());
         $this->info("Found {$galleries->count()} galleries with {$totalPhotos} photos to process.");
 
         $updated = 0;
@@ -40,8 +42,9 @@ class UpdatePhotoSizes extends Command
         foreach ($allPhotos as $photo) {
             $progressBar->advance();
 
-            if (!Storage::disk('public')->exists($photo->path)) {
+            if (! Storage::disk('public')->exists($photo->path)) {
                 $skipped++;
+
                 continue;
             }
 
@@ -49,13 +52,13 @@ class UpdatePhotoSizes extends Command
                 $actualSize = Storage::disk('public')->size($photo->path);
 
                 if ($photo->size !== $actualSize) {
-                    if (!$isDryRun) {
+                    if (! $isDryRun) {
                         $photo->update(['size' => $actualSize]);
                     }
                     $updated++;
                 }
             } catch (\Exception $e) {
-                $this->error("Error processing {$photo->name}: " . $e->getMessage());
+                $this->error("Error processing {$photo->name}: ".$e->getMessage());
                 $skipped++;
             }
         }
@@ -63,17 +66,17 @@ class UpdatePhotoSizes extends Command
         $progressBar->finish();
         $this->newLine(2);
 
-        $this->info("Summary:");
+        $this->info('Summary:');
         $this->line("  Photos checked: {$totalPhotos}");
         $this->line("  Photos updated: {$updated}");
         $this->line("  Photos skipped: {$skipped}");
 
         if ($isDryRun && $updated > 0) {
-            $this->info("Run without --dry-run to apply the changes.");
+            $this->info('Run without --dry-run to apply the changes.');
         } elseif ($updated > 0) {
-            $this->info("Photo sizes updated successfully!");
+            $this->info('Photo sizes updated successfully!');
         } else {
-            $this->info("All photo sizes are already correct.");
+            $this->info('All photo sizes are already correct.');
         }
     }
 }

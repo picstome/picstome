@@ -57,7 +57,7 @@ class ProcessPhoto implements ShouldQueue
             ->save();
 
         $previousPath = $this->photo->path;
-        
+
         $this->photo->update([
             'path' => Storage::disk('public')->putFile(
                 path: $this->photo->gallery->storage_path,

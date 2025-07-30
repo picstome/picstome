@@ -93,7 +93,7 @@ class Gallery extends Model
         $team = $this->team;
         $photoSize = $photo->getSize();
 
-        if ($team->storage_limit !== null && !$team->canStoreFile($photoSize)) {
+        if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
             throw new \Exception('Not enough storage');
         }
 

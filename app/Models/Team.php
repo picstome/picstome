@@ -11,10 +11,10 @@ use Laravel\Cashier\Billable;
 
 class Team extends Model
 {
+    use Billable;
+
     /** @use HasFactory<\Database\Factories\TeamFactory> */
     use HasFactory;
-
-    use Billable;
 
     protected $guarded = [];
 
@@ -23,6 +23,7 @@ class Team extends Model
         if ($this->storage_limit === null) {
             return true;
         }
+
         return ($this->storage_used + $size) <= $this->storage_limit;
     }
 
@@ -136,7 +137,8 @@ class Team extends Model
     {
         return Attribute::get(function () {
             $gb = $this->storage_used / 1073741824;
-            return number_format($gb, 2) . ' GB';
+
+            return number_format($gb, 2).' GB';
         });
     }
 
@@ -144,7 +146,8 @@ class Team extends Model
     {
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
-            return number_format($gb, 2) . ' GB';
+
+            return number_format($gb, 2).' GB';
         });
     }
 
