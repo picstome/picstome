@@ -15,7 +15,10 @@ new class extends Component
 
         $this->used = $team->storage_used_gb;
         $this->total = $team->storage_limit_gb;
-        $this->usage = number_format($team->storage_used / $team->storage_limit * 100);
+
+        if (! $team->hasUnlimitedStorage) {
+            $this->usage = number_format($team->storage_used / $team->storage_limit * 100);
+        }
     }
 }; ?>
 
@@ -33,23 +36,33 @@ new class extends Component
                 <span class="text-zinc-600 dark:text-zinc-400">{{ __('Used') }}</span>
                 <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $used }}</span>
             </div>
-            <div class="flex justify-between text-xs">
-                <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
-                <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $total }}</span>
-            </div>
 
-            <div class="mt-2">
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Usage') }}</span>
-                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $usage }}%</span>
+            @unless (Auth::user()->currentTeam->hasUnlimitedStorage)
+                <div class="flex justify-between text-xs">
+                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
+                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $total }}</span>
                 </div>
-                <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700">
-                    <div
-                        class="h-1.5 rounded-full transition-all duration-300 {{ $usage > 90 ? 'bg-red-500' : ($usage > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
-                        style="width: {{ min($usage, 100) }}%"
-                    ></div>
+            @else
+                <div class="flex justify-between text-xs">
+                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
+                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ __('Unlimited') }}</span>
                 </div>
-            </div>
+            @endunless
+
+            @unless (Auth::user()->currentTeam->hasUnlimitedStorage)
+                <div class="mt-2">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Usage') }}</span>
+                        <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $usage }}%</span>
+                    </div>
+                    <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700">
+                        <div
+                            class="h-1.5 rounded-full transition-all duration-300 {{ $usage > 90 ? 'bg-red-500' : ($usage > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
+                            style="width: {{ min($usage, 100) }}%"
+                        ></div>
+                    </div>
+                </div>
+            @endunless
         </div>
     </div>
 </div>

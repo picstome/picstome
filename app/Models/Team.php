@@ -144,4 +144,9 @@ class Team extends Model
             return number_format($gb, 2) . ' GB';
         });
     }
+
+    protected function hasUnlimitedStorage(): Attribute
+    {
+        return Attribute::get(fn () => is_null($this->storage_limit));
+    }
 }
