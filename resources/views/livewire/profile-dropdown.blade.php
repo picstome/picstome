@@ -26,6 +26,7 @@ new class extends Component
         <flux:menu>
             <flux:menu.group :heading="__('Account')">
                 <flux:menu.item :href="route('settings.profile')">{{ __('Profile') }}</flux:menu.item>
+                <flux:menu.item :href="route('billing-portal')">{{ __('Billing') }}</flux:menu.item>
             </flux:menu.group>
             <flux:menu.item wire:click="logout" variant="danger">{{ __('Logout') }}</flux:menu.item>
         </flux:menu>
