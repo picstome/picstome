@@ -7,7 +7,7 @@ new class extends Component
 {
     public $used = 0;
     public $total = 0;
-    public $usage = 0;
+    public $usage = null;
 
     public function mount()
     {
@@ -15,10 +15,7 @@ new class extends Component
 
         $this->used = $team->storage_used_gb;
         $this->total = $team->storage_limit_gb;
-
-        if (! $team->hasUnlimitedStorage) {
-            $this->usage = number_format($team->storage_used / $team->storage_limit * 100);
-        }
+        $this->usage = $team->storage_used_percent;
     }
 }; ?>
 

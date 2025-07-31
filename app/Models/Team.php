@@ -147,12 +147,25 @@ class Team extends Model
         });
     }
 
+
     protected function storageLimitGb(): Attribute
     {
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
-
             return number_format($gb, 2).' GB';
+        });
+    }
+
+    protected function storageUsedPercent(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->storage_limit === null) {
+                return null;
+            }
+
+            $percent = ($this->storage_used / $this->storage_limit) * 100;
+
+            return number_format($percent);
         });
     }
 

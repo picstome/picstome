@@ -285,6 +285,18 @@ new class extends Component
                         <flux:subheading>{{ __('Select photos for your gallery.') }}</flux:subheading>
                     </div>
 
+                    @if (auth()->user()?->currentTeam->storage_used_percent > 95)
+                        <flux:callout icon="bolt" variant="secondary">
+                            <flux:callout.heading>{{ __('Low storage space') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('You have less than 5% storage remaining. ') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade') }}</flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endif
+
                     <div x-data="multiFileUploader">
                         <!-- File Input -->
                         <flux:input
