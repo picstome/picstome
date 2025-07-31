@@ -5,9 +5,12 @@ use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('galleries');
+
+middleware(['auth', 'verified']);
 
 new class extends Component
 {
