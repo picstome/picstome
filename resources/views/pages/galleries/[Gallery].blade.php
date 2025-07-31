@@ -56,7 +56,7 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
 
         if (! $this->hasSufficientStorage($uploadedPhoto)) {
-            $this->addError("photos.$index", 'storage_limit');
+            $this->addError("photos.$index", __('You do not have enough storage space to upload this photo.'));
 
             return;
         }

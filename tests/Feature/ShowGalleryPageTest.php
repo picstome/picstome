@@ -345,7 +345,7 @@ test('blocks photo upload when team storage limit would be exceeded', function (
 
     expect($gallery->fresh()->photos()->count())->toBe(0);
     expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
-    $component->assertHasErrors(['photos.0' => 'storage_limit']);
+    $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
 });
 
 test('blocks photo upload when team is exactly at the storage limit', function () {
@@ -367,7 +367,7 @@ test('blocks photo upload when team is exactly at the storage limit', function (
 
     expect($gallery->fresh()->photos()->count())->toBe(0);
     expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
-    $component->assertHasErrors(['photos.0' => 'storage_limit']);
+    $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
 });
 
 test('block photo upload when team is just under the storage limit', function () {
@@ -389,7 +389,7 @@ test('block photo upload when team is just under the storage limit', function ()
 
     expect($gallery->fresh()->photos()->count())->toBe(0);
     expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
-    $component->assertHasErrors(['photos.0' => 'storage_limit']);
+    $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
 });
 
 test('does not count deleted photos towards storage usage', function () {

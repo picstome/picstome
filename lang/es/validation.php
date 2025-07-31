@@ -164,17 +164,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Custom Error Messages Not Included in Standard Laravel
-    |--------------------------------------------------------------------------
-    |
-    | These messages are specific to this application and are not part of the
-    | default Laravel validation messages.
-    |
-    */
-    'storage_limit' => 'No tienes suficiente espacio de almacenamiento.',
-
-    /*
-    |--------------------------------------------------------------------------
     | Custom Validation Language Lines
     |--------------------------------------------------------------------------
     |
