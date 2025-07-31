@@ -308,7 +308,7 @@ test('increments storage_used when team uploads photo and has enough storage', f
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => 100 * 1024 * 1024, // 100 MB
+        'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
         'storage_used' => 10 * 1024 * 1024,   // 10 MB used
     ]);
 
@@ -331,7 +331,7 @@ test('blocks photo upload when team storage limit would be exceeded', function (
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => 20 * 1024, // 20 KB
+        'custom_storage_limit' => 20 * 1024, // 20 KB
         'storage_used' => 18 * 1024, // 18 KB used
     ]);
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -353,7 +353,7 @@ test('blocks photo upload when team is exactly at the storage limit', function (
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => 20 * 1024, // 20 KB
+        'custom_storage_limit' => 20 * 1024, // 20 KB
         'storage_used' => 20 * 1024, // exactly at the limit
     ]);
     $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEFULL']);
@@ -375,7 +375,7 @@ test('block photo upload when team is just under the storage limit', function ()
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => 20 * 1024, // 20 KB
+        'custom_storage_limit' => 20 * 1024, // 20 KB
         'storage_used' => 19 * 1024, // just under the limit
     ]);
     $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEALMOSTFULL']);
@@ -397,7 +397,7 @@ test('does not count deleted photos towards storage usage', function () {
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => 100 * 1024 * 1024, // 100 MB
+        'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
         'storage_used' => 0,
     ]);
     $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEDELETE']);
@@ -424,7 +424,7 @@ test('does not block photo upload for teams with unlimited storage regardless of
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
-        'storage_limit' => null, // Unlimited storage
+        'custom_storage_limit' => null, // Unlimited storage
         'storage_used' => 999999999, // Simulate huge usage
     ]);
     $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'UNLIMITED']);

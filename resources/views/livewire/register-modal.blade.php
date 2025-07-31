@@ -28,7 +28,7 @@ new class extends Component
         $user->ownedTeams()->create([
             'name' => "{$user->name}'s Studio",
             'personal_team' => true,
-            'storage_limit' => config('picstome.personal_team_storage_limit'),
+            'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
         ]);
 
         Auth::login($user);

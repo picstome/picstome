@@ -34,6 +34,11 @@ class Team extends Model
         ];
     }
 
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function photoshoots()
     {
         return $this->hasMany(Photoshoot::class);
@@ -154,5 +159,22 @@ class Team extends Model
     protected function hasUnlimitedStorage(): Attribute
     {
         return Attribute::get(fn () => is_null($this->storage_limit));
+    }
+
+    protected function storageLimit(): Attribute
+    {
+        return Attribute::get(function () {
+            return $this->custom_storage_limit ?? null;
+        });
+    }
+
+    public function stripeName()
+    {
+        return $this->owner->name ?? null;
+    }
+
+    public function stripeEmail()
+    {
+        return $this->owner->email ?? null;
     }
 }
