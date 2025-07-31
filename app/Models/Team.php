@@ -147,11 +147,11 @@ class Team extends Model
         });
     }
 
-
     protected function storageLimitGb(): Attribute
     {
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
+
             return number_format($gb, 2).' GB';
         });
     }

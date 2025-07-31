@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Team;
-use Laravel\Cashier\Events\WebhookReceived;
 use App\Listeners\StripeEventListener;
+use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Cashier\Events\WebhookReceived;
 
 uses(RefreshDatabase::class);
 
@@ -25,7 +25,7 @@ it('grants unlimited storage to the team after a successful invoice payment', fu
     ];
 
     $event = new WebhookReceived($payload);
-    $listener = new StripeEventListener();
+    $listener = new StripeEventListener;
     $listener->handle($event);
 
     expect($team->fresh()->has_unlimited_storage)->toBeTrue();

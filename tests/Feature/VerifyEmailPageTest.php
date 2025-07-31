@@ -1,6 +1,5 @@
 <?php
 
-
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,7 +33,7 @@ describe('Email Verification', function () {
 
         Event::assertDispatched(Verified::class);
         expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-        $response->assertRedirect(route('galleries', absolute: false) . '?verified=1');
+        $response->assertRedirect(route('galleries', absolute: false).'?verified=1');
     });
 
     it('does not verify the email with an invalid hash', function () {
