@@ -26,5 +26,5 @@ it('removes the custom storage limit from the team when a successful invoice pay
     $listener = new StripeEventListener();
     $listener->handle($event);
 
-    expect($team->fresh()->custom_storage_limit)->toBeNull();
+    expect($team->fresh()->has_unlimited_storage)->toBeTrue();
 });
