@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('it sets custom_storage_limit to null when invoice.payment_succeeded is received for matching team', function () {
+it('removes the custom storage limit from the team when a successful invoice payment is received', function () {
     $team = Team::factory()->create([
         'stripe_id' => 'cus_test123',
         'custom_storage_limit' => 12345,
@@ -24,8 +24,7 @@ test('it sets custom_storage_limit to null when invoice.payment_succeeded is rec
 
     $event = new WebhookReceived($payload);
     $listener = new StripeEventListener();
-
     $listener->handle($event);
 
-    expect($team->fresh()->has_unlimited_storage)->toBeTrue();
+    expect($team->fresh()->custom_storage_limit)->toBeNull();
 });
