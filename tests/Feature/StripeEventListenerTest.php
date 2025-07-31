@@ -7,11 +7,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('removes the custom storage limit from the team when a successful invoice payment is received', function () {
+it('grants unlimited storage to the team after a successful invoice payment', function () {
     $team = Team::factory()->create([
         'stripe_id' => 'cus_test123',
         'custom_storage_limit' => 12345,
     ]);
+
+    expect($team->fresh()->has_unlimited_storage)->toBeFalse();
 
     $payload = [
         'type' => 'invoice.payment_succeeded',
