@@ -12,7 +12,7 @@ use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
 
-middleware(['auth', 'can:view,photoshoot']);
+middleware(['auth', 'verified', 'can:view,photoshoot']);
 
 new class extends Component
 {

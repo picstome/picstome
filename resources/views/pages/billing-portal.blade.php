@@ -6,7 +6,7 @@ use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 use function Laravel\Folio\render;
 
-middleware(['auth']);
+middleware(['auth', 'verified']);
 
 name('billing-portal');
 

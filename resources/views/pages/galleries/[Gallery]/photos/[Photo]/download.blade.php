@@ -10,7 +10,7 @@ use function Laravel\Folio\render;
 
 name('galleries.photos.download');
 
-middleware(['auth', 'can:view,photo']);
+middleware(['auth', 'verified', 'can:view,photo']);
 
 render(function (View $view, Photo $photo) {
     return $photo->download();

@@ -8,7 +8,7 @@ use function Laravel\Folio\name;
 
 name('contracts.show');
 
-middleware(['auth', 'can:view,contract']);
+middleware(['auth', 'verified', 'can:view,contract']);
 
 new class extends Component
 {

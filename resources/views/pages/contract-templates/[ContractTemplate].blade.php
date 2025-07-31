@@ -10,7 +10,7 @@ use function Laravel\Folio\name;
 
 name('contract-templates.show');
 
-middleware(['auth', 'can:view,contractTemplate']);
+middleware(['auth', 'verified', 'can:view,contractTemplate']);
 
 new class extends Component
 {

@@ -19,7 +19,7 @@ use function Laravel\Folio\name;
 
 name('galleries.show');
 
-middleware(['auth', 'can:view,gallery']);
+middleware(['auth', 'verified', 'can:view,gallery']);
 
 new class extends Component
 {

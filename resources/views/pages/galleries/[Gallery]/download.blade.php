@@ -9,7 +9,7 @@ use function Laravel\Folio\render;
 
 name('galleries.download');
 
-middleware(['auth', 'can:view,gallery']);
+middleware(['auth', 'verified', 'can:view,gallery']);
 
 render(function (View $view, Gallery $gallery) {
     return $gallery->download();
