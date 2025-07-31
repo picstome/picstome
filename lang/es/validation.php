@@ -161,7 +161,17 @@ return [
     'uppercase' => 'The :attribute field must be uppercase.',
     'url' => 'The :attribute field must be a valid URL.',
     'ulid' => 'The :attribute field must be a valid ULID.',
-    'uuid' => 'The :attribute field must be a valid UUID.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Error Messages Not Included in Standard Laravel
+    |--------------------------------------------------------------------------
+    |
+    | These messages are specific to this application and are not part of the
+    | default Laravel validation messages.
+    |
+    */
+    'storage_limit' => 'No tienes suficiente espacio de almacenamiento.',
 
     /*
     |--------------------------------------------------------------------------
