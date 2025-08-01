@@ -70,6 +70,9 @@ new class extends Component {
                             <flux:table.cell class="flex items-center gap-3">
                                 <flux:avatar size="xs" :src="$user->avatar_url" />
                                 {{ $user->name }}
+                                @if ($user->personalTeam()->subscribed())
+                                    <flux:badge color="lime" size="sm">Subscribed</flux:badge>
+                                @endif
                             </flux:table.cell>
                             <flux:table.cell class="whitespace-nowrap">
                                 {{ $user->created_at->format('M j, Y') }}
