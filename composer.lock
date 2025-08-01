@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "39d57699330d3eda2a0fe389b53cb104",
+    "content-hash": "dd96b8f51a4ea71da45c2d742a7762ad",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -2550,6 +2550,63 @@
                 "source": "https://github.com/livewire/flux/tree/v2.2.3"
             },
             "time": "2025-07-11T00:25:51+00:00"
+        },
+        {
+            "name": "livewire/flux-pro",
+            "version": "2.2.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://composer.fluxui.dev/download/9f5c71a4-3991-455e-a2aa-5f090e1ab06b/flux-pro-2.2.3.zip",
+                "reference": "c5d01f717049e92b6402f0866ff61a7ee0486bcf",
+                "shasum": "78c16099c98a93191886484f4c60752997f1c91f"
+            },
+            "require": {
+                "illuminate/console": "^10.0|^11.0|^12.0",
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "illuminate/view": "^10.0|^11.0|^12.0",
+                "laravel/prompts": "^0.1.24|^0.2|^0.3",
+                "livewire/flux": "2.2.3|dev-main",
+                "livewire/livewire": "^3.6.2",
+                "php": "^8.1",
+                "symfony/console": "^6.0|^7.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Flux": "FluxPro\\FluxPro"
+                    },
+                    "providers": [
+                        "FluxPro\\FluxProServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "FluxPro\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Caleb Porzio",
+                    "email": "calebporzio@gmail.com"
+                }
+            ],
+            "description": "The pro version of Flux, the official UI component library for Livewire.",
+            "keywords": [
+                "components",
+                "flux",
+                "laravel",
+                "livewire",
+                "ui"
+            ],
+            "time": "2025-07-11T00:32:04+00:00"
         },
         {
             "name": "livewire/livewire",

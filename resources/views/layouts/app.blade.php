@@ -51,7 +51,15 @@
                             {{ __('Templates') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
-                </flux:navlist>
+
+                    @if (auth()->user()?->is_admin)
+                        <flux:navlist.group :heading="__('Admin')" class="mt-4">
+                            <flux:navlist.item :href="route('users')" icon="user">
+                                {{ __('Users') }}
+                            </flux:navlist.item>
+                        </flux:navlist.group>
+                    @endif
+            </flux:navlist>
 
                 <flux:spacer />
 
