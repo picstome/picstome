@@ -63,6 +63,7 @@ new class extends Component {
                 <flux:table.columns>
                     <flux:table.column>User</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Created At</flux:table.column>
+                    <flux:table.column>Storage</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
                     @foreach ($this->users as $user)
@@ -78,9 +79,20 @@ new class extends Component {
                                 {{ $user->created_at->format('M j, Y') }}
                             </flux:table.cell>
                             <flux:table.cell class="whitespace-nowrap">
-                                {{ $user->personalTeam()->storage_limit
-                                    ? $user->personalTeam()->storage_limit_gb
-                                    : __('Unlimited') }}
+                                @if ($user->personalTeam()->has_unlimited_storage)
+                                    {{  __('Unlimited') }}
+                                @else
+                                    <div>
+                                        <div class="tabular-nums text-xs">{{  $user->personalTeam()->storage_limit_gb }}</div>
+                                        <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700 mt-1">
+                                            <div
+                                                class="h-1.5 rounded-full transition-all duration-300 {{ $user->personalTeam()->storage_used_percent > 90 ? 'bg-red-500' : ($user->personalTeam()->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
+                                                style="width: {{ min($user->personalTeam()->storage_used_percent, 100) }}%"
+                                            ></div>
+                                        </div>
+                                    </div>
+                                @endunless
+
                             </flux:table.cell>
                             <flux:table.cell>
                                 <form wire:submit="editUser({{ $user->id }})">
