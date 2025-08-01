@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Livewire\Forms\UserForm;
 use App\Models\User;
+use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -18,6 +20,7 @@ new class extends Component {
 
     public $sortBy = 'created_at';
     public $sortDirection = 'desc';
+    public UserForm $userForm;
 
     public function sort($column) {
         if ($this->sortBy === $column) {
@@ -34,6 +37,20 @@ new class extends Component {
         return User::query()
             ->tap(fn ($query) => $this->sortBy ? $query->orderBy($this->sortBy, $this->sortDirection) : $query)
             ->paginate(25);
+    }
+
+    public function editUser(User $user)
+    {
+        $this->userForm->setUser($user);
+
+        Flux::modal('edit-user')->show();
+    }
+
+    public function saveUser()
+    {
+        $this->userForm->update();
+
+        Flux::modal('edit-user')->close();
     }
 }; ?>
 
@@ -63,12 +80,34 @@ new class extends Component {
                                     : __('Unlimited') }}
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
+                                <form wire:submit="editUser({{ $user->id }})">
+                                    <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
+                                </form>
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach
                 </flux:table.rows>
             </flux:table>
+
+            <flux:modal name="edit-user" variant="flyout">
+                @if ($userForm->user)
+                    <form wire:submit="saveUser" class="space-y-6">
+                        <div>
+                            <flux:heading size="lg">Update user</flux:heading>
+                            <flux:text class="mt-2">Make changes to the user details.</flux:text>
+                        </div>
+                        <flux:input :value="$userForm->user->name" label="Name" readonly />
+                        <flux:input.group :label="__('Storage Limit')" :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')">
+                            <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01"  />
+                            <flux:input.group.suffix>GB</flux:input.group.suffix>
+                        </flux:input.group>
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">Save changes</flux:button>
+                        </div>
+                    </form>
+                @endif
+            </flux:modal>
         </div>
     @endvolt
 </x-app-layout>

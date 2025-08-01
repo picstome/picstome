@@ -3,8 +3,6 @@
 namespace App\Listeners;
 
 use App\Models\Team;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Laravel\Cashier\Events\WebhookReceived;
 
 class StripeEventListener
