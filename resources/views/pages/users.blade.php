@@ -76,7 +76,7 @@ new class extends Component {
                                 @endif
                             </flux:table.cell>
                             <flux:table.cell class="whitespace-nowrap">
-                                {{ $user->created_at->format('M j, Y') }}
+                                {{ $user->created_at?->format('M j, Y') }}
                             </flux:table.cell>
                             <flux:table.cell class="whitespace-nowrap">
                                 @if ($user->personalTeam()->has_unlimited_storage)
