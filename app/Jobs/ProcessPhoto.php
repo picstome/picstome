@@ -51,16 +51,14 @@ class ProcessPhoto implements ShouldQueue
 
     protected function resizePhoto()
     {
-        if ($this->photo->gallery->keep_original_size) {
-            return;
-        }
-
-        Image::load($this->temporaryPhotoPath)
-            ->width(config('picstome.photo_resize'))
-            ->height(config('picstome.photo_resize'))
-            ->save();
-
         $previousPath = $this->photo->path;
+
+        if (!$this->photo->gallery->keep_original_size) {
+            Image::load($this->temporaryPhotoPath)
+                ->width(config('picstome.photo_resize'))
+                ->height(config('picstome.photo_resize'))
+                ->save();
+        }
 
         $newPath = Storage::disk('s3')->putFile(
             path: $this->photo->gallery->storage_path,
