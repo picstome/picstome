@@ -88,7 +88,7 @@ class Signature extends Model
     protected function formattedSignedAt(): Attribute
     {
         return Attribute::get(function () {
-            return $this->signed_at?->isoFormat('MMM D, YYYY HH:MM');
+            return $this->signed_at?->isoFormat('MMM D, YYYY');
         });
     }
 
