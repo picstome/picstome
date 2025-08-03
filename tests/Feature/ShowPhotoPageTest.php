@@ -49,6 +49,8 @@ test('users cannot view the team gallery photos of other users', function () {
 
 test('can delete a photo', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     $photo = Photo::factory()->create([
         'name' => 'photo1.jpg',
         'path' => UploadedFile::fake()

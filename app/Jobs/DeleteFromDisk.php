@@ -13,7 +13,7 @@ class DeleteFromDisk implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public $path)
+    public function __construct(public $path, public $disk = 'public')
     {
         //
     }
@@ -23,6 +23,6 @@ class DeleteFromDisk implements ShouldQueue
      */
     public function handle(): void
     {
-        Storage::disk('public')->delete($this->path);
+        Storage::disk($this->disk)->delete($this->path);
     }
 }

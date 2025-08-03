@@ -11,6 +11,8 @@ uses(RefreshDatabase::class);
 
 test('a downloadable shared gallery can be downloaded as a zip file', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     $photos = collect([
         UploadedFile::fake()->image('photo1.jpg'),
         UploadedFile::fake()->image('photo2.jpg'),
@@ -60,6 +62,8 @@ test('visitors with unlocked gallery can download the password-protected gallery
 
 test('a downloadable shared gallery can be downloaded with only favorites as a zip file', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     $photos = collect([
         UploadedFile::fake()->image('photo1.jpg'),
         UploadedFile::fake()->image('photo2.jpg'),

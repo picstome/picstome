@@ -58,6 +58,8 @@ test('users cannot view the team gallery of others', function () {
 
 test('photos can be added to a gallery', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     Event::fake(PhotoAdded::class);
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
@@ -91,6 +93,7 @@ test('photos can be added to a gallery', function () {
 test('an added photo has been resized', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('public');
+    Storage::fake('s3');
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
@@ -98,7 +101,7 @@ test('an added photo has been resized', function () {
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
-        $resizedImage = Storage::disk('public')->get($photo->path);
+        $resizedImage = Storage::disk('s3')->get($photo->path);
         [$width, $height] = getimagesizefromstring($resizedImage);
         expect($width)->toBe(128);
         expect($height)->toBe(128);
@@ -108,6 +111,8 @@ test('an added photo has been resized', function () {
 test('an added photo is not resized when the keep original size option is enabled', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('public');
+    Storage::fake('s3');
+
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
         'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 129, 129)],
@@ -124,13 +129,15 @@ test('an added photo is not resized when the keep original size option is enable
 test('a thumbnail has been generated from the added photo', function () {
     config(['picstome.photo_thumb_resize' => 64]);
     Storage::fake('public');
+    Storage::fake('s3');
+
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
     $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
         'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 65, 65)],
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
-        $resizedImage = Storage::disk('public')->get($photo->thumb_path);
+        $resizedImage = Storage::disk('s3')->get($photo->thumb_path);
         [$width, $height] = getimagesizefromstring($resizedImage);
         expect($width)->toBe(64);
         expect($height)->toBe(64);
@@ -232,21 +239,24 @@ test('users can favorite a photo', function () {
 
 test('can delete a photo', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     $gallery = Gallery::factory()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create([
         'name' => 'photo1.jpg',
+        'disk' => 's3',
         'path' => UploadedFile::fake()
             ->image('photo1.jpg')
-            ->storeAs('galleries/1/photos', 'photo1.jpg', 'public'),
+            ->storeAs('galleries/1/photos', 'photo1.jpg', 's3'),
     ]);
-    Storage::disk('public')->assertExists('galleries/1/photos/photo1.jpg');
+    Storage::disk('s3')->assertExists('galleries/1/photos/photo1.jpg');
     expect(Photo::count())->toBe(1);
 
     $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
         ->call('deletePhoto', $photo->id);
 
     expect($gallery->photos()->count())->toBe(0);
-    Storage::disk('public')->assertMissing('galleries/1/photos/photo1.jpg');
+    Storage::disk('s3')->assertMissing('galleries/1/photos/photo1.jpg');
 });
 
 test('users cannot delete another team photo', function () {
@@ -261,6 +271,8 @@ test('users cannot delete another team photo', function () {
 
 test('users can delete their team gallery', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     $photos = collect([
         UploadedFile::fake()->image('photo1.jpg'),
         UploadedFile::fake()->image('photo2.jpg'),
@@ -305,6 +317,8 @@ test('password protection can be disabled', function () {
 
 test('increments storage_used when team uploads photo and has enough storage', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
@@ -328,6 +342,8 @@ test('increments storage_used when team uploads photo and has enough storage', f
 
 test('blocks photo upload when team storage limit would be exceeded', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
@@ -350,6 +366,8 @@ test('blocks photo upload when team storage limit would be exceeded', function (
 
 test('blocks photo upload when team is exactly at the storage limit', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
@@ -372,6 +390,8 @@ test('blocks photo upload when team is exactly at the storage limit', function (
 
 test('block photo upload when team is just under the storage limit', function () {
     Storage::fake('public');
+    Storage::fake('s3');
+
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
@@ -394,6 +414,7 @@ test('block photo upload when team is just under the storage limit', function ()
 
 test('does not count deleted photos towards storage usage', function () {
     Storage::fake('public');
+Storage::fake('s3');
     Event::fake(PhotoAdded::class);
 
     $this->team->update([
@@ -421,6 +442,7 @@ test('does not count deleted photos towards storage usage', function () {
 
 test('does not block photo upload for teams with unlimited storage regardless of usage', function () {
     Storage::fake('public');
+Storage::fake('s3');
     Event::fake(PhotoAdded::class);
 
     $this->team->update([

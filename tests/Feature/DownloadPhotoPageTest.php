@@ -19,12 +19,14 @@ beforeEach(function () {
 });
 
 test('can download a photo', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
+
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create([
         'name' => 'photo1.jpg',
+        'disk' => 's3',
         'path' => UploadedFile::fake()
             ->image('photo1.jpg')
-            ->store('photo1.jpg', 'public'),
+            ->store('photo1.jpg', 's3'),
     ]);
 
     $response = actingAs($this->user)->get('galleries/1/photos/1/download');
