@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
@@ -96,11 +98,13 @@ describe('Users Page', function () {
 
         $team->update([
             'custom_storage_limit' => 0,
-            'storage_used' => 0,
         ]);
         expect($team->storage_used_percent)->toBe(100);
 
-        // $team->update(['storage_used' => 12345]);
+        Photo::factory()->for(
+            Gallery::factory()->for($team)
+        )->create(['size' => 12345]);
+
         expect($team->storage_used_percent)->toBe(100);
     });
 });

@@ -382,8 +382,12 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => 20 * 1024, // 20 KB
-            'storage_used' => 18 * 1024, // 18 KB used
         ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 18 * 1024]); // 18 KB
+
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
@@ -406,8 +410,12 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => 20 * 1024, // 20 KB
-            'storage_used' => 20 * 1024, // exactly at the limit
         ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 20 * 1024]); // 20 KB
+
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEFULL']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
@@ -430,8 +438,12 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => 20 * 1024, // 20 KB
-            'storage_used' => 19 * 1024, // just under the limit
         ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 19 * 1024]); // 19 KB
+
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEALMOSTFULL']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(2 * 1024); // 2 KB
@@ -453,8 +465,8 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
-            'storage_used' => 0,
         ]);
+        // No photos yet, so storage used is 0
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEDELETE']);
 
         $photoFile = UploadedFile::fake()->image('photo_delete.jpg', 1200, 800)->size(5 * 1024); // 5 KB
@@ -481,8 +493,12 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => null, // Unlimited storage
-            'storage_used' => 999999999, // Simulate huge usage
         ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 999999999]); // 999 MB
+
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'UNLIMITED']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
