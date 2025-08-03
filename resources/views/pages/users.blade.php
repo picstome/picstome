@@ -118,7 +118,7 @@ new class extends Component {
                         </flux:input.group>
                         <div class="flex">
                             <flux:spacer />
-                            <flux:button type="submit" variant="primary">Save changes</flux:button>
+                            <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
                         </div>
                     </form>
                 @endif
