@@ -121,4 +121,9 @@ class Photo extends Model
     {
         return $this->disk ?? 'public';
     }
+
+    public function isOnPublicDisk()
+    {
+        return $this->diskOrDefault() === 'public';
+    }
 }
