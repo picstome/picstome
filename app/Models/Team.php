@@ -197,8 +197,10 @@ class Team extends Model
 
     /**
      * Dynamically calculate total storage used by all galleries/photos for this team.
+     *
+     * @return int Total bytes used
      */
-    public function calculateStorageUsedFromDatabase(): int
+    public function calculateStorageUsed(): int
     {
         return DB::table('photos')
             ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
