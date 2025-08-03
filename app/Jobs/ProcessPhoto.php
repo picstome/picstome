@@ -42,6 +42,10 @@ class ProcessPhoto implements ShouldQueue
 
         $this->generateThumbnail();
 
+        if ($this->photo->getOriginal('disk') === null || $this->photo->getOriginal('disk') === 'public') {
+            Storage::disk('public')->delete($this->photo->getOriginal('path'));
+        }
+
         $this->temporaryDirectory->delete();
     }
 
@@ -58,12 +62,15 @@ class ProcessPhoto implements ShouldQueue
 
         $previousPath = $this->photo->path;
 
+        $newPath = Storage::disk('s3')->putFile(
+            path: $this->photo->gallery->storage_path,
+            file: new File($this->temporaryPhotoPath),
+        );
+
         $this->photo->update([
-            'path' => Storage::disk('public')->putFile(
-                path: $this->photo->gallery->storage_path,
-                file: new File($this->temporaryPhotoPath),
-            ),
+            'path' => $newPath,
             'size' => filesize($this->temporaryPhotoPath),
+            'disk' => 's3',
         ]);
 
         if ($previousPath) {
@@ -78,11 +85,13 @@ class ProcessPhoto implements ShouldQueue
             ->height(config('picstome.photo_thumb_resize'))
             ->save();
 
+        $newThumbPath = Storage::disk('s3')->putFile(
+            path: $this->photo->gallery->storage_path,
+            file: new File($this->temporaryPhotoPath),
+        );
         $this->photo->update([
-            'thumb_path' => Storage::disk('public')->putFile(
-                path: $this->photo->gallery->storage_path,
-                file: new File($this->temporaryPhotoPath),
-            ),
+            'thumb_path' => $newThumbPath,
+            'disk' => 's3',
         ]);
     }
 }

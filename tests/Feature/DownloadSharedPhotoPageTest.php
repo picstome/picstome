@@ -17,12 +17,14 @@ beforeEach(function () {
 });
 
 test('can download a photo', function () {
-    Storage::fake('public');
-    $photo = Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC'])->for($this->team))->create([
+    Storage::fake('s3');
+
+    Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC'])->for($this->team))->create([
         'name' => 'photo1.jpg',
+        'disk' => 's3',
         'path' => UploadedFile::fake()
             ->image('photo1.jpg')
-            ->store('photo1.jpg', 'public'),
+            ->store('photo1.jpg', 's3'),
     ]);
 
     $response = get('/shares/0123ABC/photos/1/download');
@@ -55,12 +57,14 @@ test('unauthenticated visitors to a password-protected gallery are redirected to
 });
 
 test('visitors with unlocked gallery can download the password-protected gallery', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
+
     Photo::factory()->for(Gallery::factory()->shared()->protected()->downloadable()->state(['ulid' => '0123ABC']))->create([
         'name' => 'photo1.jpg',
+        'disk' => 's3',
         'path' => UploadedFile::fake()
             ->image('photo1.jpg')
-            ->store('photo1.jpg', 'public'),
+            ->store('photo1.jpg', 's3'),
     ]);
     session()->put('unlocked_gallery_ulid', '0123ABC');
 

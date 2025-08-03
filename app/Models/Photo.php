@@ -93,11 +93,11 @@ class Photo extends Model
     public function deleteFromDisk()
     {
         if ($this->path) {
-            DeleteFromDisk::dispatch($this->path);
+            DeleteFromDisk::dispatch($this->path, $this->diskOrDefault());
         }
 
         if ($this->thumb_path) {
-            DeleteFromDisk::dispatch($this->thumb_path);
+            DeleteFromDisk::dispatch($this->thumb_path, $this->diskOrDefault());
         }
 
         return $this;
@@ -105,13 +105,13 @@ class Photo extends Model
 
     public function download()
     {
-        return Storage::disk('public')->download($this->path, $this->name);
+        return Storage::disk($this->diskOrDefault())->download($this->path, $this->name);
     }
 
     protected function url(): Attribute
     {
         return Attribute::get(function (): string {
-            return Storage::disk('public')->url($this->path);
+            return Storage::disk($this->diskOrDefault())->url($this->path);
         });
     }
 
@@ -119,8 +119,13 @@ class Photo extends Model
     {
         return Attribute::get(function (): string {
             return $this->thumb_path
-                ? Storage::disk('public')->url($this->thumb_path)
+                ? Storage::disk($this->diskOrDefault())->url($this->thumb_path)
                 : $this->url;
         });
+    }
+
+    protected function diskOrDefault(): string
+    {
+        return $this->disk ?? 'public';
     }
 }
