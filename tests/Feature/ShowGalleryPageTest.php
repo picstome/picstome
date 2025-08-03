@@ -464,3 +464,20 @@ Storage::fake('s3');
     expect($this->team->fresh()->storage_used)->toBeGreaterThanOrEqual($initialStorageUsed);
     $component->assertHasNoErrors();
 });
+
+it('deletes the original photo from public disk after processing', function () {
+    config(['picstome.photo_resize' => 128]);
+    config(['picstome.photo_thumb_resize' => 64]);
+    Storage::fake('public');
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photoFile = UploadedFile::fake()->image('photo1.jpg', 129, 129);
+    $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        'photos' => [0 => $photoFile],
+    ])->call('save', 0);
+
+    $photo = $gallery->fresh()->photos[0];
+
+    expect(Storage::disk('public')->allFiles())->toBeEmpty();
+});
