@@ -53,7 +53,7 @@ class ProcessPhoto implements ShouldQueue
     {
         $previousPath = $this->photo->path;
 
-        if (!$this->photo->gallery->keep_original_size) {
+        if (! $this->photo->gallery->keep_original_size) {
             Image::load($this->temporaryPhotoPath)
                 ->width(config('picstome.photo_resize'))
                 ->height(config('picstome.photo_resize'))

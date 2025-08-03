@@ -106,8 +106,6 @@ class Gallery extends Model
             ),
         ]);
 
-
-
         return $photoModel;
     }
 
