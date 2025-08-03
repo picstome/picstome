@@ -4,12 +4,12 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 
 it('adds missing translation keys found in Blade files to lang JSON files', function () {
-    $filesystem = new Filesystem();
+    $filesystem = new Filesystem;
 
     $bladeTestDir = resource_path('views/test_translations');
-    $bladeTestFile = $bladeTestDir . '/test.blade.php';
+    $bladeTestFile = $bladeTestDir.'/test.blade.php';
     $langTestFile = base_path('lang/test.json');
-    $uniqueTranslationKey = 'Unique Test Key ' . uniqid();
+    $uniqueTranslationKey = 'Unique Test Key '.uniqid();
 
     $filesystem->ensureDirectoryExists($bladeTestDir);
     $filesystem->put($bladeTestFile, "{{ __('$uniqueTranslationKey') }}");

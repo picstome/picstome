@@ -16,13 +16,6 @@ class Photo extends Model
 
     protected $guarded = [];
 
-    public static function booted()
-    {
-        static::deleting(function (Photo $photo) {
-
-        });
-    }
-
     protected function casts()
     {
         return [

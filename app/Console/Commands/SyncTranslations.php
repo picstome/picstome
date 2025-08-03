@@ -50,8 +50,8 @@ class SyncTranslations extends Command
                     )
                 )
             )
-            ->filter(fn($file) => $file->isFile() && str_ends_with($file->getFilename(), '.blade.php'))
-            ->map(fn($file) => $file->getPathname());
+                ->filter(fn ($file) => $file->isFile() && str_ends_with($file->getFilename(), '.blade.php'))
+                ->map(fn ($file) => $file->getPathname());
         }
 
         return $files;
@@ -94,7 +94,7 @@ class SyncTranslations extends Command
             $added = 0;
 
             foreach ($keys as $key) {
-                if (!array_key_exists($key, $json)) {
+                if (! array_key_exists($key, $json)) {
                     $json[$key] = $key;
                     $added++;
                 }
@@ -104,9 +104,9 @@ class SyncTranslations extends Command
                 ksort($json);
                 file_put_contents($langFile, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-                $this->info("Added $added missing keys to " . basename($langFile));
+                $this->info("Added $added missing keys to ".basename($langFile));
             } else {
-                $this->info("No missing keys in " . basename($langFile));
+                $this->info('No missing keys in '.basename($langFile));
             }
         }
     }

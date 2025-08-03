@@ -15,7 +15,7 @@ class UserForm extends Form
     {
         $this->user = $user;
 
-        $this->custom_storage_limit = $user->personalTeam()->custom_storage_limit
+        $this->custom_storage_limit = ! is_null($user->personalTeam()->custom_storage_limit)
             ? round($user->personalTeam()->storage_limit / 1073741824, 2) // Convert bytes to GB
             : null;
     }
