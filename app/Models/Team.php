@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Billable;
 
@@ -192,5 +193,16 @@ class Team extends Model
     public function stripeEmail()
     {
         return $this->owner->email ?? null;
+    }
+
+    /**
+     * Dynamically calculate total storage used by all galleries/photos for this team.
+     */
+    public function calculateStorageUsedFromDatabase(): int
+    {
+        return DB::table('photos')
+            ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
+            ->where('galleries.team_id', $this->id)
+            ->sum('photos.size');
     }
 }
