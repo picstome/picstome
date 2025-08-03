@@ -68,7 +68,7 @@ new class extends Component
                                     <flux:heading>{{ $gallery->name }}</flux:heading>
                                     <flux:text>
                                         {{ $gallery->photos()->count() }} photos ·
-                                        {{ $gallery->created_at }}
+                                        {{ $gallery->created_at->format('M j, Y') }}
                                     </flux:text>
                                 </div>
                             </div>

@@ -222,7 +222,7 @@ new class extends Component
                                     <flux:text>
                                         {{ $gallery->photos()->count() }} {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
                                         {{ $gallery->getFormattedStorageSize() }} •
-                                        {{ $gallery->created_at }}
+                                        {{ $gallery->created_at->format('M j, Y') }}
                                     </flux:text>
                                 </div>
                             </div>

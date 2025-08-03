@@ -126,7 +126,7 @@ new class extends Component
                     <x-description.details>{{ $signature->contract->location }}</x-description.details>
 
                     <x-description.term>{{ __('Shooting date') }}</x-description.term>
-                    <x-description.details>{{ $signature->contract->shooting_date }}</x-description.details>
+                    <x-description.details>{{ $signature->contract->formatted_shooting_date }}</x-description.details>
 
                     <x-description.term>{{ __('Contract terms') }}</x-description.term>
                     <x-description.details>
