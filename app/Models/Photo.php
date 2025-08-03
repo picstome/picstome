@@ -19,7 +19,7 @@ class Photo extends Model
     public static function booted()
     {
         static::deleting(function (Photo $photo) {
-            $photo->gallery->team->decrement('storage_used', $photo->size);
+
         });
     }
 

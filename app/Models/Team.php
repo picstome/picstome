@@ -25,7 +25,7 @@ class Team extends Model
             return true;
         }
 
-        return ($this->storage_used + $size) <= $this->storage_limit;
+        return ($this->calculateStorageUsed() + $size) <= $this->storage_limit;
     }
 
     protected function casts()
@@ -142,7 +142,7 @@ class Team extends Model
     protected function storageUsedGb(): Attribute
     {
         return Attribute::get(function () {
-            $gb = $this->storage_used / 1073741824;
+            $gb = $this->calculateStorageUsed() / 1073741824;
 
             return number_format($gb, 2).' GB';
         });
@@ -167,7 +167,7 @@ class Team extends Model
                 return 100;
             }
 
-            $percent = ($this->storage_used / $this->storage_limit) * 100;
+            $percent = ($this->calculateStorageUsed() / $this->storage_limit) * 100;
 
             return number_format($percent);
         });
