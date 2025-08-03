@@ -106,7 +106,7 @@ class Gallery extends Model
             ),
         ]);
 
-        $team->increment('storage_used', $photoSize);
+
 
         return $photoModel;
     }
