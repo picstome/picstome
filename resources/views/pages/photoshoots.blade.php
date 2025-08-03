@@ -72,7 +72,7 @@ new class extends Component
                                         href="/photoshoots/{{ $photoshoot->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    <p>{{ $photoshoot->date->format('F j, Y') }}, {{ $photoshoot->location }}</p>
+                                    <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
                                 </x-table.cell>
                             </x-table.row>
                         @endforeach
