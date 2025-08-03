@@ -95,6 +95,7 @@
     "Logo": "Logo",
     "Logo Icon": "Logo Icon",
     "Logout": "Logout",
+    "Make changes to the user details.": "Make changes to the user details.",
     "Make Up Artist": "Make Up Artist",
     "Manage your profile and account settings": "Manage your profile and account settings",
     "Middle": "Middle",
@@ -135,6 +136,7 @@
     "Role": "Role",
     "Rose": "Rose",
     "Save": "Save",
+    "Save changes": "Save changes",
     "Saved.": "Saved.",
     "Select a role": "Select a role",
     "Select a template": "Select a template",
@@ -168,6 +170,7 @@
     "Submit": "Submit",
     "Submit signature": "Submit signature",
     "Subscribe": "Subscribe",
+    "Subscribed": "Subscribed",
     "Summary": "Summary",
     "System": "System",
     "Teal": "Teal",
@@ -185,6 +188,7 @@
     "Untitled": "Untitled",
     "Update password": "Update password",
     "Update the appearance settings for your account": "Update the appearance settings for your account",
+    "Update user": "Update user",
     "Update your name and email address": "Update your name and email address",
     "Usage": "Usage",
     "Use template": "Use template",
@@ -214,6 +218,5 @@
     "You have reached the limit for photo selection.": "You have reached the limit for photo selection.",
     "Your email address is unverified.": "Your email address is unverified.",
     "Your logo at 1:1 aspect ratio.": "Your logo at 1:1 aspect ratio.",
-    "Your password": "Your password",
-    "Save changes": "Save changes"
+    "Your password": "Your password"
 }

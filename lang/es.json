@@ -96,6 +96,7 @@
     "Logo": "Logotipo",
     "Logo Icon": "Logo Icon",
     "Logout": "Cerrar sesión",
+    "Make changes to the user details.": "Realiza cambios en los detalles del usuario.",
     "Make Up Artist": "Maquillador\/a",
     "Manage your profile and account settings": "Gestiona tu perfil y configuraciones de cuenta",
     "Middle": "Medio",
@@ -136,6 +137,7 @@
     "Role": "Rol",
     "Rose": "Rosa",
     "Save": "Guardar",
+    "Save changes": "Guardar cambios",
     "Saved.": "Guardado.",
     "Select a role": "Seleccionar un rol",
     "Select a template": "Seleccionar una plantilla",
@@ -170,6 +172,7 @@
     "Submit": "Enviar",
     "Submit signature": "Enviar firma",
     "Subscribe": "Suscribirse",
+    "Subscribed": "Suscrito",
     "Summary": "Resumen",
     "System": "Sistema",
     "Teal": "Turquesa",
@@ -188,6 +191,7 @@
     "Untitled": "Sin título",
     "Update password": "Actualizar contraseña",
     "Update the appearance settings for your account": "Actualiza las configuraciones de apariencia de tu cuenta",
+    "Update user": "Actualizar usuario",
     "Update your name and email address": "Actualiza tu nombre y dirección de correo electrónico",
     "Usage": "Uso",
     "Use template": "Usar plantilla",
@@ -217,6 +221,5 @@
     "You have reached the limit for photo selection.": "Has alcanzado el límite para la selección de fotos.",
     "Your email address is unverified.": "Tu dirección de correo electrónico no está verificada.",
     "Your logo at 1:1 aspect ratio.": "Tu logotipo en formato 1:1.",
-    "Your password": "Tu contraseña",
-    "Save changes": "Guardar cambios"
+    "Your password": "Tu contraseña"
 }
