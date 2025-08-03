@@ -1,33 +1,30 @@
 <?php
 
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Artisan;
 
-it('adds missing translation keys to lang files', function () {
-    $fs = new Filesystem();
-    $testBladeDir = resource_path('views/test_translations');
-    $testBladeFile = $testBladeDir . '/test.blade.php';
-    $testLangDir = base_path('lang');
-    $testLangFile = $testLangDir . '/test.json';
-    $uniqueKey = 'Unique Test Key ' . uniqid();
+it('adds missing translation keys found in Blade files to lang JSON files', function () {
+    $filesystem = new Filesystem();
 
-    // Setup: create a test blade file with a unique translation key
-    $fs->ensureDirectoryExists($testBladeDir);
-    $fs->put($testBladeFile, "{{ __('$uniqueKey') }}");
+    $bladeTestDir = resource_path('views/test_translations');
+    $bladeTestFile = $bladeTestDir . '/test.blade.php';
+    $langTestFile = base_path('lang/test.json');
+    $uniqueTranslationKey = 'Unique Test Key ' . uniqid();
 
-    // Setup: create a test lang file missing the key
-    $fs->put($testLangFile, json_encode(["Existing Key" => "Existing Value"], JSON_PRETTY_PRINT));
+    $filesystem->ensureDirectoryExists($bladeTestDir);
+    $filesystem->put($bladeTestFile, "{{ __('$uniqueTranslationKey') }}");
 
-    // Run the command
+    $filesystem->put($langTestFile, json_encode([
+        'Existing Key' => 'Existing Value',
+    ], JSON_PRETTY_PRINT));
+
     Artisan::call('translations:sync');
 
-    // Assert the key was added
-    $json = json_decode($fs->get($testLangFile), true);
-    expect($json)->toHaveKey($uniqueKey);
-    expect($json[$uniqueKey])->toBe($uniqueKey);
+    $langJson = json_decode($filesystem->get($langTestFile), true);
+    expect($langJson)->toHaveKey($uniqueTranslationKey);
+    expect($langJson[$uniqueTranslationKey])->toBe($uniqueTranslationKey);
 
-    // Cleanup
-    $fs->delete($testBladeFile);
-    $fs->deleteDirectory($testBladeDir);
-    $fs->delete($testLangFile);
+    $filesystem->delete($bladeTestFile);
+    $filesystem->deleteDirectory($bladeTestDir);
+    $filesystem->delete($langTestFile);
 });
