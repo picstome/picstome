@@ -61,9 +61,9 @@ new class extends Component {
 
             <flux:table :paginate="$this->users" class="mt-6">
                 <flux:table.columns>
-                    <flux:table.column>User</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">Created At</flux:table.column>
-                    <flux:table.column>Storage</flux:table.column>
+                    <flux:table.column>{{ __('User') }}</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Created At') }}</flux:table.column>
+                    <flux:table.column>{{ __('Storage') }}</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
                     @foreach ($this->users as $user)
