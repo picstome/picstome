@@ -162,6 +162,9 @@ class Team extends Model
             if ($this->storage_limit === null) {
                 return null;
             }
+            if ($this->storage_limit == 0) {
+                return 100;
+            }
 
             $percent = ($this->storage_used / $this->storage_limit) * 100;
 

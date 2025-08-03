@@ -66,3 +66,40 @@ it('saves unlimited when storage limit is null', function () {
     $team->refresh();
     expect($team->has_unlimited_storage)->toBeTrue();
 });
+
+it('saves zero when storage limit is zero', function () {
+    $admin = User::factory()->withPersonalTeam()->create([
+        'email' => 'admin@example.com',
+    ]);
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->personalTeam();
+    $team->update(['custom_storage_limit' => 123456789]);
+    expect($team->custom_storage_limit)->not->toBe(0);
+    expect($team->has_unlimited_storage)->toBeFalse();
+
+    Volt::actingAs($admin)
+        ->test('pages.users')
+        ->call('editUser', $user->id)
+        ->set('userForm.custom_storage_limit', 0)
+        ->call('saveUser')
+        ->assertHasNoErrors();
+
+    $team->refresh();
+    expect($team->custom_storage_limit)->toBe(0);
+    expect($team->has_unlimited_storage)->toBeFalse();
+});
+
+it('storage used percent is 100 when storage limit is zero', function () {
+    $admin = User::factory()->withPersonalTeam()->create([
+        'email' => 'admin@example.com',
+    ]);
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->personalTeam();
+    $team->update([
+        'custom_storage_limit' => 0,
+        'storage_used' => 0,
+    ]);
+    expect($team->storage_used_percent)->toBe(100);
+    $team->update(['storage_used' => 12345]);
+    expect($team->storage_used_percent)->toBe(100);
+});
