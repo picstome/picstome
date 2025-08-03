@@ -355,21 +355,23 @@ describe('Storage Limits', function () {
 
         $this->team->update([
             'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
-            'storage_used' => 10 * 1024 * 1024,   // 10 MB used
         ]);
+        // Add a photo to simulate 10 MB used
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEOK']);
+        Photo::factory()->for($gallery)->create(['size' => 10 * 1024 * 1024]);
 
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEOK']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
         $photoSize = $photoFile->getSize();
-        $initialStorageUsed = $this->team->fresh()->storage_used;
+        $initialStorageUsed = $this->team->calculateStorageUsed();
 
         Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(1);
-        expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed + $photoSize);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed + $photoSize);
     });
 
     it('blocks photo upload when team storage limit would be exceeded', function () {
@@ -385,14 +387,14 @@ describe('Storage Limits', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
-        $initialStorageUsed = $this->team->fresh()->storage_used;
+        $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
-        expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
         $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
     });
 
@@ -409,14 +411,14 @@ describe('Storage Limits', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEFULL']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
-        $initialStorageUsed = $this->team->fresh()->storage_used;
+        $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
-        expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
         $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
     });
 
@@ -433,14 +435,14 @@ describe('Storage Limits', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEALMOSTFULL']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(2 * 1024); // 2 KB
-        $initialStorageUsed = $this->team->fresh()->storage_used;
+        $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
-        expect($this->team->fresh()->storage_used)->toBe($initialStorageUsed);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
         $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
     });
 
@@ -462,14 +464,14 @@ describe('Storage Limits', function () {
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
-        $storageAfterUpload = $this->team->fresh()->storage_used;
+        $storageAfterUpload = $this->team->calculateStorageUsed();
         expect($storageAfterUpload)->toBe($photoSize);
 
         $photo = $gallery->fresh()->photos()->first();
         Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('deletePhoto', $photo->id);
 
-        expect($this->team->fresh()->storage_used)->toBe(0);
+        expect($this->team->calculateStorageUsed())->toBe(0);
     });
 
     it('does not block photo upload for teams with unlimited storage regardless of usage', function () {
@@ -484,14 +486,14 @@ describe('Storage Limits', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'UNLIMITED']);
 
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
-        $initialStorageUsed = $this->team->fresh()->storage_used;
+        $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $photoFile])
             ->call('save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(1);
-        expect($this->team->fresh()->storage_used)->toBeGreaterThanOrEqual($initialStorageUsed);
+        expect($this->team->calculateStorageUsed())->toBeGreaterThanOrEqual($initialStorageUsed);
         $component->assertHasNoErrors();
     });
 });
