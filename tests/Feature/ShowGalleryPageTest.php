@@ -105,6 +105,7 @@ test('an added photo has been resized', function () {
         [$width, $height] = getimagesizefromstring($resizedImage);
         expect($width)->toBe(128);
         expect($height)->toBe(128);
+        expect($photo->disk)->toBe('s3');
     });
 });
 
@@ -119,10 +120,11 @@ test('an added photo is not resized when the keep original size option is enable
     ])->call('save', 0);
 
     tap($gallery->fresh()->photos[0], function ($photo) {
-        $resizedImage = Storage::disk('public')->get($photo->path);
+        $resizedImage = Storage::disk('s3')->get($photo->path);
         [$width, $height] = getimagesizefromstring($resizedImage);
         expect($width)->toBe(129);
         expect($height)->toBe(129);
+        expect($photo->disk)->toBe('s3');
     });
 });
 
