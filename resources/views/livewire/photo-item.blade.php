@@ -23,7 +23,7 @@ new class extends Component
         wire:navigate.hover
         class="mx-auto flex"
     >
-        <img src="{{ $photo->thumbnail_url }}" alt="" class="object-contain" />
+        <img src="{{ $photo->thumbnail_url }}" alt="" class="object-contain" loading="lazy" />
     </a>
     <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
