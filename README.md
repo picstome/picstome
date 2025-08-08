@@ -14,6 +14,13 @@ Using [Composer](https://getcomposer.org) and [NPM](https://www.npmjs.com):
 ```bash
 composer install
 
+# Optional: Flux Pro
+If you want to use advanced Flux UI components, you may also install the commercial package:
+
+    composer require livewire/flux-pro
+
+This is not required for most features.
+
 npm install
 ```
 
