@@ -53,6 +53,10 @@ new class extends Component
             "photos.{$index}" => 'image|max:12288',
         ]);
 
+        if(! isset($this->photos[$index])) {
+            return;
+        }
+
         $uploadedPhoto = $this->photos[$index];
 
         if (! $this->hasSufficientStorage($uploadedPhoto)) {
@@ -248,7 +252,7 @@ new class extends Component
                             class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-4 gap-y-6"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" lazy />
+                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>

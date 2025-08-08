@@ -17,7 +17,7 @@ new class extends Component
     }
 }; ?>
 
-<div {{ $photo->isOnPublicDisk() ? 'wire:poll' : null }} class="group relative flex overflow-hidden rounded-lg bg-zinc-100 dark:bg-white/10">
+<div class="group relative flex overflow-hidden rounded-lg bg-zinc-100 dark:bg-white/10">
     <a
         href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate.hover
