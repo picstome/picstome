@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "honeybadger-io/honeybadger-laravel": "^4.6",
         "laravel/cashier": "^15.7",
         "laravel/folio": "^1.1",
         "laravel/framework": "^12",
