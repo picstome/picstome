@@ -41,6 +41,9 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Install Flux Pro
+        run: composer require livewire/flux-pro --no-interaction --prefer-dist --optimize-autoloader
+
       - name: Copy Environment File
         run: cp .env.example .env
 
