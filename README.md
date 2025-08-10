@@ -7,6 +7,16 @@ For local development, you can use the following requirements:
 - PHP 8.3 with SQLite, GD, and other common extensions.
 - Node.js 16 or later.
 
+> **Note for production:**
+> If you expect users to download large galleries or files, you should increase the `request_terminate_timeout` setting in your PHP-FPM pool configuration (usually in `/etc/php/8.3/fpm/pool.d/www.conf`).
+> For example:
+>
+> ```
+> request_terminate_timeout = 1200
+> ```
+>
+> This prevents PHP-FPM from killing long-running download requests. Make sure to reload PHP-FPM after changing this setting.
+
 If you meet these requirements, you can start by cloning the repository and installing the dependencies.
 
 Using [Composer](https://getcomposer.org) and [NPM](https://www.npmjs.com):
