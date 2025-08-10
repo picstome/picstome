@@ -252,7 +252,7 @@ new class extends Component
                             class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-4 gap-y-6"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" />
+                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" lazy="on-load" />
                             @endforeach
                         </div>
                     </div>
@@ -262,7 +262,7 @@ new class extends Component
                             class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4"
                         >
                             @foreach ($favorites as $photo)
-                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" lazy />
+                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" lazy="on-load" />
                             @endforeach
                         </div>
                     </div>
