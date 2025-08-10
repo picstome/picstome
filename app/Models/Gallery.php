@@ -66,6 +66,8 @@ class Gallery extends Model
 
         $photos = $favorites ? $this->favorites : $this->photos;
 
+        set_time_limit(1200); // Set max execution time to 20 minutes
+
         return new StreamedResponse(fn () => $this->getPhotosZipStream($photos, $zipName), 200, $headers);
     }
 
