@@ -86,7 +86,9 @@ class ProcessPhoto implements ShouldQueue
         $newThumbPath = Storage::disk('s3')->putFile(
             path: $this->photo->gallery->storage_path,
             file: new File($this->temporaryPhotoPath),
+            options: 'public',
         );
+
         $this->photo->update([
             'thumb_path' => $newThumbPath,
             'disk' => 's3',
