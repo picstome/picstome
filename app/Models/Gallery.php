@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use ZipStream\ZipStream;
-use Illuminate\Support\Facades\Log;
 
 class Gallery extends Model
 {
@@ -67,20 +66,9 @@ class Gallery extends Model
 
         $photos = $favorites ? $this->favorites : $this->photos;
 
-        set_time_limit(1200); // Set max execution time to 20 minutes
+        set_time_limit(1200); // 20 minutes
 
-        return new StreamedResponse(function () use ($photos, $zipName) {
-            try {
-                $this->getPhotosZipStream($photos, $zipName);
-            } catch (\Throwable $e) {
-                Log::error('Fatal error streaming gallery zip', [
-                    'gallery_id' => $this->id,
-                    'zip_name' => $zipName,
-                    'exception' => $e->getMessage(),
-                ]);
-                // Optionally, output a message or just fail silently
-            }
-        }, 200, $headers);
+        return new StreamedResponse(fn () => $this->getPhotosZipStream($photos, $zipName), 200, $headers);
     }
 
     protected function getPhotosZipStream($photos, $zipName)
@@ -88,41 +76,16 @@ class Gallery extends Model
         $zip = new ZipStream(outputName: $zipName);
 
         $photos->each(function ($photo) use ($zip) {
-            try {
-                $stream = Storage::disk($photo->disk)->readStream($photo->path);
-                if ($stream === false) {
-                    Log::error('Failed to open photo stream for zip', [
-                        'photo_id' => $photo->id,
-                        'photo_name' => $photo->name,
-                        'photo_path' => $photo->path,
-                        'disk' => $photo->disk,
-                    ]);
-                    return; // Skip this photo
-                }
-                $zip->addFileFromStream($photo->name, $stream);
-                if (is_resource($stream)) {
-                    fclose($stream);
-                }
-            } catch (\Throwable $e) {
-                Log::error('Exception adding photo to zip', [
-                    'photo_id' => $photo->id,
-                    'photo_name' => $photo->name,
-                    'photo_path' => $photo->path,
-                    'disk' => $photo->disk,
-                    'exception' => $e->getMessage(),
-                ]);
-                // Optionally skip this photo and continue
+            $stream = Storage::disk($photo->disk)->readStream($photo->path);
+
+            $zip->addFileFromStream($photo->name, $stream);
+
+            if (is_resource($stream)) {
+                fclose($stream);
             }
         });
 
-        try {
-            $zip->finish();
-        } catch (\Throwable $e) {
-            Log::error('Exception finishing zip stream', [
-                'zip_name' => $zipName,
-                'exception' => $e->getMessage(),
-            ]);
-        }
+        $zip->finish();
 
         return $zip;
     }
