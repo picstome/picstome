@@ -37,7 +37,7 @@ new class extends Component
     public $activeTab = 'all';
 
     #[Validate('required')]
-    #[Validate(['photos.*' => 'image|max:1024'])]
+    #[Validate(['photos.*' => 'image|max:51200'])]
     public $photos = [];
 
     public function mount(Gallery $gallery)
@@ -50,7 +50,7 @@ new class extends Component
     public function save($index)
     {
         $this->validate([
-            "photos.{$index}" => 'image|max:12288',
+            "photos.{$index}" => 'image|max:51200', // max. 50MB
         ]);
 
         if(! isset($this->photos[$index])) {
