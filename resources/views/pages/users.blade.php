@@ -68,12 +68,19 @@ new class extends Component {
                 <flux:table.rows>
                     @foreach ($this->users as $user)
                         <flux:table.row :key="$user->id">
-                            <flux:table.cell class="flex items-center gap-3">
-                                <flux:avatar size="xs" :src="$user->avatar_url" />
-                                {{ $user->name }}
-                                @if ($user->personalTeam()->subscribed())
-                                    <flux:badge color="lime" size="sm">{{ __('Subscribed') }}</flux:badge>
-                                @endif
+                            <flux:table.cell>
+                                <div class="flex items-center gap-2 sm:gap-4">
+                                    <flux:avatar :src="$user->avatar_url" circle size="lg" class="max-sm:size-8" />
+                                    <div class="flex flex-col">
+                                        <flux:heading>
+                                            {{ $user->name }}
+                                            @if ($user->personalTeam()->subscribed())
+                                                <flux:badge color="lime" size="sm">{{ __('Subscribed') }}</flux:badge>
+                                            @endif
+                                        </flux:heading>
+                                        <flux:text class="max-sm:hidden">{{ $user->email }}</flux:text>
+                                    </div>
+                                </div>
                             </flux:table.cell>
                             <flux:table.cell class="whitespace-nowrap">
                                 {{ $user->created_at?->format('M j, Y') }}
@@ -112,6 +119,7 @@ new class extends Component {
                             <flux:text class="mt-2">{{ __('Make changes to the user details.') }}</flux:text>
                         </div>
                         <flux:input :value="$userForm->user->name" :label="__('Name')" readonly />
+                        <flux:input :value="$userForm->user->email" :label="__('Email')" readonly />
                         <flux:input.group :label="__('Storage Limit')" :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')">
                             <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01"  />
                             <flux:input.group.suffix>GB</flux:input.group.suffix>
