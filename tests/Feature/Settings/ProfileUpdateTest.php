@@ -34,7 +34,7 @@ test('profile information can be updated', function () {
 });
 
 test('users can upload an avatar', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
 
@@ -42,7 +42,7 @@ test('users can upload an avatar', function () {
         ->set('avatar', UploadedFile::fake()->image('avatar.jpg'))
         ->call('updateProfileInformation');
 
-    Storage::disk('public')->assertCount('/avatars', 1);
+    Storage::disk('s3')->assertCount('/avatars', 1);
 
     tap($user->fresh(), function (User $user) {
         expect($user->avatar_path)->not->toBeNull();
@@ -51,18 +51,18 @@ test('users can upload an avatar', function () {
 });
 
 test('users can delete their avatar', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
 
     $user->updateAvatar(UploadedFile::fake()->image('avatar.jpg'));
 
-    Storage::disk('public')->assertCount('/avatars', 1);
+    Storage::disk('s3')->assertCount('/avatars', 1);
 
     $response = Volt::actingAs($user)->test('pages.settings.profile')
         ->call('deleteAvatar');
 
-    Storage::disk('public')->assertCount('/avatars', 0);
+    Storage::disk('s3')->assertCount('/avatars', 0);
 
     tap($user->fresh(), function (User $user) {
         expect($user->avatar_path)->toBeNull();

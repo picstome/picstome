@@ -56,6 +56,6 @@ trait HasAvatar
 
     protected function avatarDisk()
     {
-        return config('app.avatar_disk', 'public');
+        return config('picstome.disk', 'public');
     }
 }
