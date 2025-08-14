@@ -30,7 +30,7 @@ test('guests cannot view the branding page', function () {
 });
 
 test('a brand logo can be saved', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     expect($this->team->brand_logo_path)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -42,7 +42,7 @@ test('a brand logo can be saved', function () {
 });
 
 test('a brand logo icon can be saved', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     expect($this->team->brand_logo_path)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -54,7 +54,7 @@ test('a brand logo icon can be saved', function () {
 });
 
 test('a brand watermark can be saved', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     expect($this->team->brand_watermark_path)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding')

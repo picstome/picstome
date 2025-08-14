@@ -10,4 +10,6 @@ return [
 
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
+    'disk' => 's3',
+
 ];

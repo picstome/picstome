@@ -65,12 +65,12 @@ class Team extends Model
         tap($this->brand_logo_path, function ($previous) use ($image) {
             $this->update([
                 'brand_logo_path' => $image->store(
-                    $this->storage_path, ['disk' => 'public']
+                    $this->storage_path, ['disk' => config('picstome.disk')]
                 ),
             ]);
 
             if ($previous) {
-                Storage::disk('public')->delete($previous);
+                Storage::disk(config('picstome.disk'))->delete($previous);
             }
         });
     }
@@ -79,7 +79,7 @@ class Team extends Model
     {
         return Attribute::get(function () {
             return $this->brand_logo_path
-                    ? Storage::disk('public')->url($this->brand_logo_path)
+                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_path)
                     : null;
         });
     }
@@ -89,12 +89,12 @@ class Team extends Model
         tap($this->brand_watermark_path, function ($previous) use ($image) {
             $this->update([
                 'brand_watermark_path' => $image->store(
-                    $this->storage_path, ['disk' => 'public']
+                    $this->storage_path, ['disk' => config('picstome.disk')]
                 ),
             ]);
 
             if ($previous) {
-                Storage::disk('public')->delete($previous);
+                Storage::disk(config('picstome.disk'))->delete($previous);
             }
         });
     }
@@ -103,7 +103,7 @@ class Team extends Model
     {
         return Attribute::get(function () {
             return $this->brand_watermark_path
-                    ? Storage::disk('public')->url($this->brand_watermark_path)
+                    ? Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path)
                     : null;
         });
     }
@@ -113,12 +113,12 @@ class Team extends Model
         tap($this->brand_logo_icon_path, function ($previous) use ($image) {
             $this->update([
                 'brand_logo_icon_path' => $image->store(
-                    $this->storage_path, ['disk' => 'public']
+                    $this->storage_path, ['disk' => config('picstome.disk')]
                 ),
             ]);
 
             if ($previous) {
-                Storage::disk('public')->delete($previous);
+                Storage::disk(config('picstome.disk'))->delete($previous);
             }
         });
     }
@@ -127,7 +127,7 @@ class Team extends Model
     {
         return Attribute::get(function () {
             return $this->brand_logo_icon_path
-                    ? Storage::disk('public')->url($this->brand_logo_icon_path)
+                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path)
                     : null;
         });
     }
