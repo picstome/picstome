@@ -18,7 +18,7 @@ use function Pest\Laravel\get;
 uses(RefreshDatabase::class);
 
 test('guests can sign a contract', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     Queue::fake();
 
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
@@ -43,13 +43,13 @@ test('guests can sign a contract', function () {
         expect($signature->email)->toBe('john@example.com');
         expect($signature->signature_image_path)->not->toBeNull();
         expect($signature->signature_image_url)->not->toBeNull();
-        Storage::disk('public')->assertExists($signature->signature_image_path);
+        Storage::disk('s3')->assertExists($signature->signature_image_path);
         Queue::assertPushed(ProcessPdfContract::class);
     });
 });
 
 test('contract is executed once the final signature is submitted', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     Notification::fake();
 
     $contract = Contract::factory()->create(['ulid' => '1234ABC', 'title' => 'The Contract']);
@@ -74,7 +74,7 @@ test('contract is executed once the final signature is submitted', function () {
         expect($contract->executed_at)->not->toBeNull();
         expect($contract->pdf_file_path)->not->toBeNull();
         expect($contract->pdf_file_path)->toContain('teams/1/contracts/1234ABC');
-        Storage::disk('public')->assertExists($contract->pdf_file_path);
+        Storage::disk('s3')->assertExists($contract->pdf_file_path);
         Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
             return $notifiable->routes['mail'] === 'john@example.com';
         });
@@ -85,7 +85,7 @@ test('contract is executed once the final signature is submitted', function () {
 });
 
 test('contract is not executed if there are remaining signatures to sign', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     $contract = Contract::factory()->create(['ulid' => '1234ABC', 'title' => 'The Contract']);
     $contract->addSignatures(2);
     expect($contract->signaturesRemaining())->toBe(2);

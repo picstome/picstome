@@ -64,7 +64,7 @@ class Signature extends Model
     {
         return $this->update([
             'signature_image_path' => $image->store(
-                $this->storage_path, 'public'
+                $this->storage_path, config('picstome.disk')
             ),
         ]);
     }
@@ -73,7 +73,7 @@ class Signature extends Model
     {
         return Attribute::get(function () {
             return $this->signature_image_path
-                    ? Storage::disk('public')->url($this->signature_image_path)
+                    ? Storage::disk(config('picstome.disk'))->url($this->signature_image_path)
                     : null;
         });
     }
