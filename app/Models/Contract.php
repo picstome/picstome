@@ -67,7 +67,7 @@ class Contract extends Model
 
     public function download()
     {
-        return Storage::disk('public')->download(
+        return Storage::disk(config('picstome.disk'))->download(
             $this->pdf_file_path,
             Str::of($this->title)->slug().'.pdf'
         );
@@ -83,7 +83,7 @@ class Contract extends Model
         $file_name = Str::random(40);
         $path = "{$this->storage_path}/{$file_name}.pdf";
 
-        Storage::disk('public')->put(
+        Storage::disk(config('picstome.disk'))->put(
             path: $path,
             contents: $pdf->output()
         );
@@ -95,7 +95,7 @@ class Contract extends Model
     {
         return Attribute::get(function (): string {
             return $this->pdf_file_path
-                    ? Storage::disk('public')->url($this->pdf_file_path)
+                    ? Storage::disk(config('picstome.disk'))->url($this->pdf_file_path)
                     : null;
         });
     }
@@ -127,7 +127,7 @@ class Contract extends Model
     public function deleteFromDisk()
     {
         if ($this->pdf_file_path) {
-            DeleteFromDisk::dispatch($this->pdf_file_path);
+            DeleteFromDisk::dispatch($this->pdf_file_path, config('picstome.disk'));
         }
 
         return $this;

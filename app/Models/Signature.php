@@ -102,7 +102,7 @@ class Signature extends Model
     public function deleteFromDisk()
     {
         if ($this->signature_image_path) {
-            DeleteFromDisk::dispatch($this->signature_image_path);
+            DeleteFromDisk::dispatch($this->signature_image_path, config('picstome.disk'));
         }
 
         return $this;

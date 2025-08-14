@@ -48,7 +48,7 @@ test('users cannot view the team contracts of others', function () {
 });
 
 test('contract can be executed once all parties have signed it', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     Notification::fake();
 
     $contract = Contract::factory()->for($this->team)->create(['ulid' => '1234ABC', 'title' => 'The Contract']);
@@ -62,7 +62,7 @@ test('contract can be executed once all parties have signed it', function () {
         expect($contract->executed_at)->not->toBeNull();
         expect($contract->pdf_file_path)->not->toBeNull();
         expect($contract->pdf_file_path)->toContain('teams/1/contracts/1234ABC');
-        Storage::disk('public')->assertExists($contract->pdf_file_path);
+        Storage::disk('s3')->assertExists($contract->pdf_file_path);
         Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
             return $notifiable->routes['mail'] === 'john@example.com';
         });
@@ -85,11 +85,11 @@ test('contract cannot be executed if there are remaining signatures to sign', fu
 });
 
 test('can download an executed contract', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     $contract = Contract::factory()->executed()->create([
         'title' => 'Contract',
         'pdf_file_path' => UploadedFile::fake()->create('contract.pdf')
-            ->storeAs('contracts/1/contract.pdf', 'contract.pdf', 'public'),
+            ->storeAs('contracts/1/contract.pdf', 'contract.pdf', 's3'),
     ]);
 
     $component = Volt::test('pages.contracts.show', ['contract' => $contract])
@@ -99,26 +99,26 @@ test('can download an executed contract', function () {
 });
 
 test('can delete team contract', function () {
-    Storage::fake('public');
+    Storage::fake('s3');
     $contract = Contract::factory()->has(
         Signature::factory()->count(2)->sequence(
             ['signature_image_path' => UploadedFile::fake()
                 ->image('signature.png')
-                ->storeAs('signatures', 'signatureA.png', 'public'),
+                ->storeAs('signatures', 'signatureA.png', 's3'),
             ],
             ['signature_image_path' => UploadedFile::fake()
                 ->image('signature.png')
-                ->storeAs('signatures', 'signatureB.png', 'public'),
+                ->storeAs('signatures', 'signatureB.png', 's3'),
             ],
         ))->create([
             'pdf_file_path' => UploadedFile::fake()
                 ->create('contract.pdf')
-                ->storeAs('contracts', 'contract.pdf', 'public'),
+                ->storeAs('contracts', 'contract.pdf', 's3'),
         ]);
     expect(Signature::count())->toBe(2);
-    Storage::disk('public')->assertExists('contracts/contract.pdf');
-    Storage::disk('public')->assertExists('signatures/signatureA.png');
-    Storage::disk('public')->assertExists('signatures/signatureA.png');
+    Storage::disk('s3')->assertExists('contracts/contract.pdf');
+    Storage::disk('s3')->assertExists('signatures/signatureA.png');
+    Storage::disk('s3')->assertExists('signatures/signatureA.png');
 
     $component = Volt::test('pages.contracts.show', ['contract' => $contract])
         ->call('delete');
@@ -126,7 +126,7 @@ test('can delete team contract', function () {
     $component->assertRedirect('/contracts');
     expect(Contract::count())->toBe(0);
     expect(Signature::count())->toBe(0);
-    Storage::disk('public')->assertMissing('contracts/contract.pdf');
-    Storage::disk('public')->assertMissing('signatures/signatureA.png');
-    Storage::disk('public')->assertMissing('signatures/signatureA.png');
+    Storage::disk('s3')->assertMissing('contracts/contract.pdf');
+    Storage::disk('s3')->assertMissing('signatures/signatureA.png');
+    Storage::disk('s3')->assertMissing('signatures/signatureA.png');
 });
