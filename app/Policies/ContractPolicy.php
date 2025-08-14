@@ -28,7 +28,13 @@ class ContractPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        $team = $user->personalTeam();
+
+        if ($team->hasUnlimitedStorage || $team->subscribed()) {
+            return true;
+        }
+
+        return $team->contracts()->count() <= 5;
     }
 
     /**
