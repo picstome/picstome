@@ -1,0 +1,19 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  webhook:
+    name: Ping webhook
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Use curl to ping webhook
+        env:
+          DEPLOY_WEBHOOK: ${{ secrets.DEPLOY_WEBHOOK }}
+        run: |
+          curl -n "$DEPLOY_WEBHOOK"
