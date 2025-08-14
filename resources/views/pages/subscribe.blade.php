@@ -17,8 +17,11 @@ render(function (Request $request) {
         return $team->redirectToBillingPortal(route('galleries'));
     }
 
-    return $team->newSubscription('default', config('services.stripe.monthly_price_id'))->checkout([
-        'success_url' => route('galleries'),
-        'cancel_url' => route('galleries'),
+    return $team
+        ->newSubscription('default', config('services.stripe.monthly_price_id'))
+        ->allowPromotionCodes()
+        ->checkout([
+            'success_url' => route('galleries'),
+            'cancel_url' => route('galleries'),
     ]);
 }); ?>
