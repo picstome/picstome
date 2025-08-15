@@ -5,6 +5,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -54,6 +55,66 @@ test('can add new contract', function () {
             expect($contract->isSigned())->toBeFalse();
         });
     });
+});
+
+test('contract creation is limited to 5 for non-subscribed non-unlimited teams', function () {
+    $this->team->update([
+        'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+    ]);
+    Contract::factory()->count(5)->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.contracts')
+        ->set('form.title', 'Contract 6')
+        ->set('form.description', 'Desc')
+        ->set('form.location', 'Loc')
+        ->set('form.shootingDate', Carbon::parse('12-12-2025'))
+        ->set('form.body', '<h3>Body</h3>')
+        ->set('form.signature_quantity', 1)
+        ->call('save');
+
+    $component->assertStatus(403);
+    expect($this->team->contracts()->count())->toBe(5);
+});
+
+test('contract creation is NOT limited for teams with unlimited storage', function () {
+    $this->team->update([
+        'custom_storage_limit' => null, // unlimited
+    ]);
+
+    Contract::factory()->count(6)->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.contracts')
+        ->set('form.title', 'Contract 7')
+        ->set('form.description', 'Desc')
+        ->set('form.location', 'Loc')
+        ->set('form.shootingDate', Carbon::parse('12-12-2025'))
+        ->set('form.body', '<h3>Body</h3>')
+        ->set('form.signature_quantity', 1)
+        ->call('save');
+
+    $component->assertRedirect('/contracts/7');
+    expect($this->team->contracts()->count())->toBe(7);
+});
+
+
+test('contract creation is NOT limited for teams with active subscription', function () {
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    expect($this->user->currentTeam->subscribed())->toBeTrue();
+
+    Contract::factory()->count(6)->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.contracts')
+        ->set('form.title', 'Contract 7')
+        ->set('form.description', 'Desc')
+        ->set('form.location', 'Loc')
+        ->set('form.shootingDate', Carbon::parse('12-12-2025'))
+        ->set('form.body', '<h3>Body</h3>')
+        ->set('form.signature_quantity', 1)
+        ->call('save');
+
+    $component->assertRedirect('/contracts/7');
+    expect($this->team->contracts()->count())->toBe(7);
 });
 
 test('guests cannot create contracts', function () {
