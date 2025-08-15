@@ -71,7 +71,7 @@ describe('Contract limits', function () {
         $this->team->update([
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
         ]);
-        // 5 contracts in current month
+
         Contract::factory()->count(5)->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.contracts')
@@ -91,11 +91,11 @@ describe('Contract limits', function () {
         $this->team->update([
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
         ]);
-        // 5 contracts from last month
+
         Contract::factory()->count(5)->for($this->team)->create([
             'created_at' => Carbon::now()->subMonth()->startOfMonth(),
         ]);
-        // 4 contracts in current month
+
         Contract::factory()->count(4)->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.contracts')
