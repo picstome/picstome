@@ -132,6 +132,18 @@ new class extends Component
                         <flux:subheading>{{ __('Enter the contract details.') }}</flux:subheading>
                     </div>
 
+                    @cannot('create', App\Models\Contract::class)
+                        <flux:callout icon="bolt" variant="secondary">
+                            <flux:callout.heading>{{ __('Plan limit reached') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('Your current plan does not support creating more contracts. Upgrade your plan to create additional contracts.') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade') }}</flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endcannot
+
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
                     <flux:input wire:model="form.description" :label="__('Description')" type="text" />
@@ -169,7 +181,7 @@ new class extends Component
                         <flux:separator />
                         <div class="flex py-6">
                             <flux:spacer />
-                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                            <flux:button type="submit" variant="primary" :disabled="auth()->user()->cannot('create', App\Models\Contract::class)">{{ __('Save') }}</flux:button>
                         </div>
                     </div>
                 </form>
