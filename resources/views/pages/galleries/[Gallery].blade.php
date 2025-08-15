@@ -380,9 +380,9 @@ new class extends Component
                         <flux:subheading>{{ __('Customize your shared gallery.') }}</flux:subheading>
                     </div>
 
-                    <flux:switch wire:model="shareForm.watermarked" :label="__('Watermark photos')" />
+                    <flux:switch wire:model="shareForm.watermarked" :label="__('Watermark photos')" @click="$wire.shareForm.downloadable = false" />
 
-                    <flux:switch wire:model="shareForm.downloadable" :label="__('Visitors can download photos')" />
+                    <flux:switch wire:model="shareForm.downloadable" :label="__('Visitors can download photos')" x-bind:disabled="$wire.shareForm.watermarked" />
 
                     <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 
