@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Volt\Component;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('contracts');
+middleware(['auth', 'verified']);
 
 new class extends Component
 {

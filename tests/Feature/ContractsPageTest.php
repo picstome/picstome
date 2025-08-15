@@ -9,6 +9,7 @@ use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
@@ -61,16 +62,16 @@ describe('Creating contracts', function () {
     });
 
     it('prevents guests from creating contracts', function () {
-        $component = Volt::test('pages.contracts')->call('save');
-        $component->assertStatus(403);
+        get('contracts')->assertRedirect('/login');
     });
 });
 
 describe('Contract limits', function () {
-    it('limits contract creation to 5 for non-subscribed, non-unlimited teams', function () {
+    it('limits contract creation to 5 for non-subscribed, non-unlimited teams in the current month', function () {
         $this->team->update([
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
         ]);
+        // 5 contracts in current month
         Contract::factory()->count(5)->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.contracts')
@@ -84,6 +85,30 @@ describe('Contract limits', function () {
 
         $component->assertStatus(403);
         expect($this->team->contracts()->count())->toBe(5);
+    });
+
+    it('does not count contracts from previous months toward the current month limit', function () {
+        $this->team->update([
+            'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+        ]);
+        // 5 contracts from last month
+        Contract::factory()->count(5)->for($this->team)->create([
+            'created_at' => Carbon::now()->subMonth()->startOfMonth(),
+        ]);
+        // 4 contracts in current month
+        Contract::factory()->count(4)->for($this->team)->create();
+
+        $component = Volt::actingAs($this->user)->test('pages.contracts')
+            ->set('form.title', 'Contract 5 this month')
+            ->set('form.description', 'Desc')
+            ->set('form.location', 'Loc')
+            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
+            ->set('form.body', '<h3>Body</h3>')
+            ->set('form.signature_quantity', 1)
+            ->call('save');
+
+        $component->assertRedirect('/contracts/10');
+        expect($this->team->contracts()->count())->toBe(10);
     });
 
     it('does not limit contract creation for teams with unlimited storage', function () {
