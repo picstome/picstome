@@ -34,7 +34,11 @@ class ContractPolicy
             return true;
         }
 
-        return $team->contracts()->count() < 5;
+        $contractsThisMonth = $team->contracts()
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+            ->count();
+
+        return $contractsThisMonth < 5;
     }
 
     /**
