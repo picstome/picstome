@@ -83,9 +83,11 @@ new class extends Component {
                                     </div>
                                 </div>
                             </flux:table.cell>
+
                             <flux:table.cell class="whitespace-nowrap">
                                 {{ $user->created_at?->format('M j, Y') }}
                             </flux:table.cell>
+
                             <flux:table.cell class="whitespace-nowrap">
                                 @if ($user->personalTeam()->has_unlimited_storage)
                                     {{  __('Unlimited') }}
@@ -100,13 +102,13 @@ new class extends Component {
                                         </div>
                                     </div>
                                 @endif
-
                             </flux:table.cell>
+
                             <flux:table.cell class="whitespace-nowrap">
-                                @if ($user->personalTeam()->has_unlimited_contracts || is_null($user->personalTeam()->monthly_contract_limit))
+                                @if ($user->personalTeam()->has_unlimited_contracts)
                                     {{ __('Unlimited') }}
-                                else
-                                    <div class="tabular-nums text-xs">{{ $user->personalTeam()->monthly_contract_limit }} / month</div>
+                                @else
+                                    <div class="tabular-nums">{{ $user->personalTeam()->monthly_contract_limit }} / month</div>
                                 @endif
                             </flux:table.cell>
 
