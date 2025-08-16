@@ -8,7 +8,7 @@ return [
 
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
-    'personal_team_monthly_contract_limit' => 5, // default monthly contract limit for new personal teams
+    'personal_team_monthly_contract_limit' => 5,
 
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
