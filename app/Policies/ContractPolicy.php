@@ -34,14 +34,11 @@ class ContractPolicy
             return true;
         }
 
-        $limit = $team->monthly_contract_limit ?? 5;
-        $limit = is_numeric($limit) && (int) $limit >= 0 ? (int) $limit : 5;
-
         $contractsThisMonth = $team->contracts()
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
 
-        return $contractsThisMonth < $limit;
+        return $contractsThisMonth < $team->monthly_contract_limit;
     }
 
     /**
