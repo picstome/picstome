@@ -108,7 +108,7 @@ new class extends Component {
                                 @if ($user->personalTeam()->has_unlimited_contracts)
                                     {{ __('Unlimited') }}
                                 @else
-                                    <div class="tabular-nums">{{ $user->personalTeam()->monthly_contract_limit }} / month</div>
+                                    <div class="tabular-nums">{{ $user->personalTeam()->monthly_contract_limit }}/{{ __('month') }}</div>
                                 @endif
                             </flux:table.cell>
 
@@ -141,7 +141,7 @@ new class extends Component {
 
                         <flux:input.group :label="__('Monthly contracts limit')" :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')">
                             <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1"  />
-                            <flux:input.group.suffix>/ month</flux:input.group.suffix>
+                            <flux:input.group.suffix>/{{ __('month') }}</flux:input.group.suffix>
                         </flux:input.group>
 
                         <div class="flex">
