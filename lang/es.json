@@ -146,6 +146,7 @@
     "Set a custom storage limit for this user. Leave empty for unlimited.": "Establece un límite de almacenamiento personalizado para este usuario. Déjalo vacío para ilimitado.",
     "Monthly contracts limit": "Límite mensual de contratos",
     "Set how many contracts this user can create per month. Leave empty for unlimited.": "Establece cuántos contratos puede crear este usuario por mes. Déjalo vacío para ilimitado.",
+    "month": "mes",
     "Share": "Compartir",
     "Share URL": "URL para compartir",
     "Share gallery": "Compartir galería",
