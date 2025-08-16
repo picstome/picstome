@@ -185,6 +185,26 @@ class Team extends Model
         });
     }
 
+    protected function monthlyContractLimit(): Attribute
+    {
+        return Attribute::get(function () {
+            $limit = $this->monthly_contract_limit ?? null;
+
+            if (is_numeric($limit) && (int) $limit >= 0) {
+                return (int) $limit;
+            }
+
+            return null;
+        });
+    }
+
+    protected function hasUnlimitedContracts(): Attribute
+    {
+        return Attribute::get(function () {
+            return is_null($this->monthly_contract_limit);
+        });
+    }
+
     public function stripeName()
     {
         return $this->owner->name ?? null;
