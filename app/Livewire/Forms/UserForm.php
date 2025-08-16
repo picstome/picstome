@@ -11,6 +11,8 @@ class UserForm extends Form
 
     public ?float $custom_storage_limit = null;
 
+    public ?int $monthly_contract_limit = null;
+
     public function setUser(User $user)
     {
         $this->user = $user;
@@ -18,12 +20,15 @@ class UserForm extends Form
         $this->custom_storage_limit = ! is_null($user->personalTeam()->custom_storage_limit)
             ? round($user->personalTeam()->storage_limit / 1073741824, 2) // Convert bytes to GB
             : null;
+
+        $this->monthly_contract_limit = $user->personalTeam()->monthly_contract_limit;
     }
 
     public function update()
     {
         $this->validate([
             'custom_storage_limit' => 'nullable|numeric|min:0',
+            'monthly_contract_limit' => 'nullable|integer|min:0',
         ]);
 
         $bytes = $this->custom_storage_limit !== null
@@ -32,6 +37,7 @@ class UserForm extends Form
 
         $this->user->personalTeam()->update([
             'custom_storage_limit' => $bytes,
+            'monthly_contract_limit' => $this->monthly_contract_limit,
         ]);
     }
 }

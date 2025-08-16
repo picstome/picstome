@@ -98,7 +98,7 @@ new class extends Component {
                                             ></div>
                                         </div>
                                     </div>
-                                @endunless
+                                @endif
 
                             </flux:table.cell>
                             <flux:table.cell>
@@ -123,6 +123,11 @@ new class extends Component {
                         <flux:input.group :label="__('Storage Limit')" :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')">
                             <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01"  />
                             <flux:input.group.suffix>GB</flux:input.group.suffix>
+                        </flux:input.group>
+
+                        <flux:input.group :label="__('Monthly contracts limit')" :description="__('Set how many contracts this user (team) can create per month. Leave empty for unlimited.')">
+                            <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1"  />
+                            <flux:input.group.suffix>/ month</flux:input.group.suffix>
                         </flux:input.group>
                         <div class="flex">
                             <flux:spacer />

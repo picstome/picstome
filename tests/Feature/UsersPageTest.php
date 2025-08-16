@@ -45,6 +45,7 @@ describe('Users Page', function () {
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 12)
+            ->set('userForm.monthly_contract_limit', 5)
             ->call('saveUser')
             ->assertHasNoErrors();
 
@@ -66,6 +67,7 @@ describe('Users Page', function () {
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', null)
+            ->set('userForm.monthly_contract_limit', null)
             ->call('saveUser')
             ->assertHasNoErrors();
 
@@ -85,6 +87,7 @@ describe('Users Page', function () {
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 0)
+            ->set('userForm.monthly_contract_limit', 0)
             ->call('saveUser')
             ->assertHasNoErrors();
 
