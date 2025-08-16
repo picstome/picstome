@@ -30,7 +30,7 @@ class ContractPolicy
     {
         $team = $user->currentTeam;
 
-        if ($team->hasUnlimitedContracts || $team->subscribed()) {
+        if ($team->has_unlimited_contracts || $team->subscribed()) {
             return true;
         }
 
