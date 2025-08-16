@@ -67,9 +67,9 @@ describe('Creating contracts', function () {
 });
 
 describe('Contract limits', function () {
-    it('limits contract creation to 5 for non-subscribed, non-unlimited teams in the current month', function () {
+    it('enforces monthly contract limit for non-subscribed teams', function () {
         $this->team->update([
-            'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+            'monthly_contract_limit' => 5,
         ]);
 
         Contract::factory()->count(5)->for($this->team)->create();
@@ -87,9 +87,9 @@ describe('Contract limits', function () {
         expect($this->team->contracts()->count())->toBe(5);
     });
 
-    it('does not count contracts from previous months toward the current month limit', function () {
+    it('ignores contracts from previous months when enforcing monthly limit', function () {
         $this->team->update([
-            'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+            'monthly_contract_limit' => 5,
         ]);
 
         Contract::factory()->count(5)->for($this->team)->create([
@@ -111,9 +111,9 @@ describe('Contract limits', function () {
         expect($this->team->contracts()->count())->toBe(10);
     });
 
-    it('does not limit contract creation for teams with unlimited storage', function () {
+    it('skips monthly limit for teams with unlimited contracts', function () {
         $this->team->update([
-            'custom_storage_limit' => null, // unlimited
+            'monthly_contract_limit' => null, // null
         ]);
 
         Contract::factory()->count(6)->for($this->team)->create();
@@ -131,7 +131,7 @@ describe('Contract limits', function () {
         expect($this->team->contracts()->count())->toBe(7);
     });
 
-    it('does not limit contract creation for teams with active subscription', function () {
+    it('skips monthly limit for subscribed teams', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         expect($this->user->currentTeam->subscribed())->toBeTrue();
         Contract::factory()->count(6)->for($this->team)->create();
