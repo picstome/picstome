@@ -35,6 +35,7 @@ new class extends Component {
             'name' => "{$user->name}'s Studio",
             'personal_team' => true,
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+            'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
         ]);
 
         Auth::login($user);
