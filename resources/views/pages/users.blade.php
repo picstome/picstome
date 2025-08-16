@@ -118,17 +118,21 @@ new class extends Component {
                             <flux:heading size="lg">{{ __('Update user') }}</flux:heading>
                             <flux:text class="mt-2">{{ __('Make changes to the user details.') }}</flux:text>
                         </div>
+
                         <flux:input :value="$userForm->user->name" :label="__('Name')" readonly />
+
                         <flux:input :value="$userForm->user->email" :label="__('Email')" readonly />
+
                         <flux:input.group :label="__('Storage Limit')" :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')">
                             <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01"  />
                             <flux:input.group.suffix>GB</flux:input.group.suffix>
                         </flux:input.group>
 
-                        <flux:input.group :label="__('Monthly contracts limit')" :description="__('Set how many contracts this user (team) can create per month. Leave empty for unlimited.')">
+                        <flux:input.group :label="__('Monthly contracts limit')" :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')">
                             <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1"  />
                             <flux:input.group.suffix>/ month</flux:input.group.suffix>
                         </flux:input.group>
+
                         <div class="flex">
                             <flux:spacer />
                             <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
