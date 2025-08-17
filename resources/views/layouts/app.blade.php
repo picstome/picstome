@@ -25,9 +25,12 @@
                 @auth
                     <div class="px-2">
                         <img
-                            src="{{ auth()->user()->currentTeam->brand_logo_icon_url ?? '/logo.png' }}"
-                            class="h-16 block rounded"
-                            alt=""
+                            src="{{ auth()->user()->currentTeam->brand_logo_icon_url ?? '/app-logo.png' }}"
+                            @class([
+                                'h-16 block rounded',
+                                '-mx-2' => ! auth()->user()->currentTeam->brand_logo_icon_url,
+                            ])
+                            alt="logo"
                         >
                     </div>
                 @else
@@ -61,7 +64,7 @@
                             </flux:navlist.item>
                         </flux:navlist.group>
                     @endif
-            </flux:navlist>
+                </flux:navlist>
 
                 <flux:spacer />
 

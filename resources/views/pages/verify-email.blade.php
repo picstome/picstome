@@ -40,11 +40,8 @@ new class extends Component {
     @volt('pages.verify-email')
         <div class="flex min-h-full items-center">
             <div class="mx-auto w-80 max-w-80 space-y-6">
-                <div>
-                    <div class="mb-12 flex items-center justify-center gap-3">
-                        <x-logo-light class="size-5 dark:hidden" />
-                        <span class="text-xl font-semibold text-zinc-800 dark:text-white">Picstome</span>
-                    </div>
+                <div class="mb-10 flex justify-center">
+                    <img src="/app-logo.png" class="h-26" alt="Picstome">
                 </div>
 
                 <flux:text class="text-center">
