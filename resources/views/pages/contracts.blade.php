@@ -21,6 +21,8 @@ new class extends Component
     {
         $this->authorize('create', Contract::class);
 
+        $this->addError('limit.reached', __('You have reached the contract limit.'));
+
         tap($this->form->store(), function ($contract) {
             $this->redirect(route('contracts.show', ['contract' => $contract]));
         });
