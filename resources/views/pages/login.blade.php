@@ -33,7 +33,8 @@ new class extends Component
         <div class="flex min-h-full items-center">
             <form wire:submit="login" class="mx-auto w-80 max-w-80 space-y-6">
                 <div class="mb-10 flex justify-center">
-                    <img src="/app-logo.png" class="h-26" alt="Picstome">
+                    <img src="/app-logo.png" class="h-26 dark:hidden" alt="Picstome">
+                    <img src="/app-logo-dark.png" class="h-26 hidden dark:block" alt="Picstome">
                 </div>
 
                 <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />

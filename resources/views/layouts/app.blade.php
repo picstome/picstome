@@ -24,14 +24,16 @@
 
                 @auth
                     <div class="px-2">
-                        <img
-                            src="{{ auth()->user()->currentTeam->brand_logo_icon_url ?? '/app-logo.png' }}"
-                            @class([
-                                'h-16 block rounded',
-                                '-mx-2' => ! auth()->user()->currentTeam->brand_logo_icon_url,
-                            ])
-                            alt="logo"
-                        >
+                        @if (auth()->user()->currentTeam->brand_logo_icon_url)
+                            <img
+                                src="{{ auth()->user()->currentTeam->brand_logo_icon_url }}"
+                                class="h-16 block rounded"
+                                alt="{{ auth()->user()->currentTeam->name }}"
+                            >
+                        @else
+                            <img src="/app-logo.png" class="h-16 block -mx-2 rounded dark:hidden" alt="Picstome">
+                            <img src="/app-logo-dark.png" class="h-16 -mx-2 rounded hidden dark:block" alt="Picstome">
+                        @endif
                     </div>
                 @else
                     <flux:brand href="/" logo="/logo.png" class="px-2" />
