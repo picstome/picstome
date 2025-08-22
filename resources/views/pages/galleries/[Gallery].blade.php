@@ -134,20 +134,14 @@ new class extends Component
     {
         $favorites = $this->gallery->photos()->favorited()->with('gallery')->get();
 
-        $sortedFavorites = $favorites->sort(function ($a, $b) {
-            return strnatcmp($a->name, $b->name);
-        })->values();
-
-        $this->favorites = $sortedFavorites;
+        $this->favorites = $favorites->naturalSortBy('name');
     }
 
     public function with()
     {
         $photos = $this->gallery->photos()->with('gallery')->get();
 
-        $sortedPhotos = $photos->sort(function ($a, $b) {
-            return strnatcmp($a->name, $b->name);
-        })->values();
+        $sortedPhotos = $photos->naturalSortBy('name');
 
         return [
             'allPhotos' => $sortedPhotos,
