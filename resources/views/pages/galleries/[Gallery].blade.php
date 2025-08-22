@@ -137,8 +137,14 @@ new class extends Component
 
     public function with()
     {
+        $photos = $this->gallery->photos()->with('gallery')->get();
+
+        $sortedPhotos = $photos->sort(function ($a, $b) {
+            return strnatcmp($a->name, $b->name);
+        })->values();
+
         return [
-            'allPhotos' => $this->gallery->photos()->orderBy('name')->with('gallery')->get(),
+            'allPhotos' => $sortedPhotos,
         ];
     }
 }; ?>
