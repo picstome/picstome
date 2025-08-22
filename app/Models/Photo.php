@@ -51,36 +51,34 @@ class Photo extends Model
 
     public function next()
     {
-        return $this->orderBy('name')
-            ->where('gallery_id', $this->gallery->id)
-            ->where('name', '>', $this->name)
-            ->first();
+        $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
+        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+
+        return $photos->get($currentIndex + 1);
     }
 
     public function previous()
     {
-        return $this->orderByDesc('name')
-            ->where('gallery_id', $this->gallery->id)
-            ->where('name', '<', $this->name)
-            ->first();
+        $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
+        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+
+        return $photos->get($currentIndex - 1);
     }
 
     public function nextFavorite()
     {
-        return $this->favorited()
-            ->orderBy('name')
-            ->where('gallery_id', $this->gallery->id)
-            ->where('name', '>', $this->name)
-            ->first();
+        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
+        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+
+        return $favorites->get($currentIndex + 1);
     }
 
     public function previousFavorite()
     {
-        return $this->favorited()
-            ->orderByDesc('name')
-            ->where('gallery_id', $this->gallery->id)
-            ->where('name', '<', $this->name)
-            ->first();
+        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
+        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+
+        return $favorites->get($currentIndex - 1);
     }
 
     public function deleteFromDisk()
