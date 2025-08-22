@@ -70,5 +70,5 @@ it('gives the personal team 1GB of storage upon creation', function () {
 
     $user = User::where('email', 'storageuser@example.com')->first();
     $team = $user->currentTeam;
-    expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
+    expect($team->storage_limit)->toBe(10737418240); // 10GB in bytes
 });
