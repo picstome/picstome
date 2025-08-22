@@ -90,10 +90,14 @@ new class extends Component {
 
                             <flux:table.cell class="whitespace-nowrap">
                                 @if ($user->personalTeam()->has_unlimited_storage)
-                                    {{  __('Unlimited') }}
+                                    <div class="tabular-nums text-xs">
+                                        {{ $user->personalTeam()->storage_used_gb }} / {{ __('Unlimited') }}
+                                    </div>
                                 @else
                                     <div>
-                                        <div class="tabular-nums text-xs">{{  $user->personalTeam()->storage_limit_gb }}</div>
+                                        <div class="tabular-nums text-xs">
+                                            {{ $user->personalTeam()->storage_used_gb }} / {{ $user->personalTeam()->storage_limit_gb }}
+                                        </div>
                                         <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700 mt-1">
                                             <div
                                                 class="h-1.5 rounded-full transition-all duration-300 {{ $user->personalTeam()->storage_used_percent > 90 ? 'bg-red-500' : ($user->personalTeam()->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
