@@ -18,6 +18,7 @@ new class extends Component {
     public $email = '';
     public $password = '';
     public $password_confirmation = '';
+    public $terms = false;
 
     public function register()
     {
@@ -25,6 +26,7 @@ new class extends Component {
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
+            'terms' => 'accepted',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -69,6 +71,26 @@ new class extends Component {
                     :label="__('Confirm Password')"
                     :placeholder="__('Confirm your password')"
                 />
+
+                <flux:field variant="inline">
+                    <flux:checkbox wire:model="terms" />
+                    <flux:label>
+                        <div class="flex items-center gap-1">
+                            @if(app()->getLocale() === 'es')
+                                {{ __('I accept the terms and conditions') }}
+                                <flux:link href="https://picstome.com/es/terminos-y-condiciones/" target="_blank" variant="subtle">
+                                    <flux:icon.arrow-top-right-on-square variant="micro" />
+                                </flux:link>
+                            @else
+                                {{ __('I accept the terms and conditions') }}
+                                <flux:link href="https://picstome.com/terms-and-conditions/" target="_blank" variant="subtle">
+                                    <flux:icon.arrow-top-right-on-square variant="micro" />
+                                </flux:link>
+                            @endif
+                        </div>
+                    </flux:label>
+                    <flux:error name="terms" />
+                </flux:field>
 
                 <flux:button type="submit" variant="primary" class="w-full">
                     {{ __('Register') }}

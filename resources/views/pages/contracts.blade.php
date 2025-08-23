@@ -164,7 +164,7 @@ new class extends Component
                             <flux:label>{{ __('Terms') }}</flux:label>
 
                             <flux:modal.trigger name="templates">
-                                <flux:button size="sm">Use template</flux:button>
+                                <flux:button size="sm">{{ __('Use template') }}</flux:button>
                             </flux:modal.trigger>
                         </div>
 
