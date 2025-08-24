@@ -32,6 +32,7 @@ class GalleryForm extends Form
         $this->gallery = $gallery;
 
         $this->name = $gallery->name;
+        $this->expirationDate = $gallery->expiration_date?->format('Y-m-d');
     }
 
     public function store()
