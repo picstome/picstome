@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('galleries:delete-expired')->daily();
+Schedule::command('galleries:send-expiration-reminders')->dailyAt('09:00');
