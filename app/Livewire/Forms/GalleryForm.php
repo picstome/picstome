@@ -32,6 +32,7 @@ class GalleryForm extends Form
         $this->gallery = $gallery;
 
         $this->name = $gallery->name;
+        $this->expirationDate = $gallery->expiration_date?->format('Y-m-d');
     }
 
     public function store()
@@ -42,7 +43,7 @@ class GalleryForm extends Form
             'photoshoot_id' => $this->photoshoot?->id,
             'name' => $this->name ?? __('Untitled'),
             'keep_original_size' => $this->keepOriginalSize,
-            'expiration_date' => $this->expirationDate,
+            'expiration_date' => $this->expirationDate ?: null,
         ]);
     }
 
@@ -52,7 +53,7 @@ class GalleryForm extends Form
 
         return $this->gallery->update([
             'name' => $this->name ?? __('Untitled'),
-            'expiration_date' => $this->expirationDate,
+            'expiration_date' => $this->expirationDate ?: null,
         ]);
     }
 }
