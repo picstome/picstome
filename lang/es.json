@@ -240,5 +240,8 @@
     "photos": "fotos",
     "remaining files.": "archivos restantes.",
     "signatures": "firmas",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Gallery Expiration Reminder": "Recordatorio de expiración de galería",
+    "Your gallery \":name\" will expire on :date.": "Tu galería \":name\" expirará el :date.",
+    "View Gallery": "Ver galería"
 }
