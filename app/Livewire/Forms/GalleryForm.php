@@ -52,6 +52,7 @@ class GalleryForm extends Form
 
         return $this->gallery->update([
             'name' => $this->name ?? __('Untitled'),
+            'expiration_date' => $this->expirationDate,
         ]);
     }
 }
