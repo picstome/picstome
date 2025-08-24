@@ -64,7 +64,7 @@ test('can create a team gallery with an expiration date', function () {
 
     expect($gallery)->not->toBeNull();
     expect($gallery->name)->toBe('Expiring Gallery');
-    expect($gallery->expiration_date->eq($expiration))->toBeTrue();
+    expect($gallery->expiration_date->format('Y-m-d H:i:s'))->toBe($expiration->format('Y-m-d H:i:s'));
 });
 
 test('can update a gallery to set, change, and remove expiration date', function () {

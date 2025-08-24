@@ -16,6 +16,8 @@ class GalleryForm extends Form
 
     public ?string $name = null;
 
+    public $expirationDate = null;
+
     #[Validate('required|boolean')]
     public $keepOriginalSize = false;
 
@@ -39,6 +41,7 @@ class GalleryForm extends Form
             'photoshoot_id' => $this->photoshoot?->id,
             'name' => $this->name ?? __('Untitled'),
             'keep_original_size' => $this->keepOriginalSize,
+            'expiration_date' => $this->expirationDate,
         ]);
     }
 
