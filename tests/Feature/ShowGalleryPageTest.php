@@ -340,7 +340,6 @@ describe('Gallery Photoshoot Association', function () {
         $photoshoot = Photoshoot::factory()->for($this->team)->create();
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        // Simulate assigning
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshoot->id)
             ->call('update');
