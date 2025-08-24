@@ -8,6 +8,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use function Pest\Laravel\artisan;
+
 uses(RefreshDatabase::class);
 
 describe('SendGalleryExpirationReminderCommand', function () {
