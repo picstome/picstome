@@ -33,6 +33,8 @@ new class extends Component
 
     public Collection $favorites;
 
+    public array $existingPhotoNames = [];
+
     #[Url]
     public $activeTab = 'all';
 
@@ -45,6 +47,7 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
+        $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
     }
 
     public function save($index)
@@ -74,6 +77,8 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
 
         $this->addPhotoToGallery($uploadedPhoto);
+
+        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
     protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
@@ -119,6 +124,8 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
+
+        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
     public function update()
@@ -315,7 +322,7 @@ new class extends Component
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader({ existingPhotoNames: @js($allPhotos->pluck('name')->toArray()) })">
+                    <div x-data="multiFileUploader">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
@@ -486,8 +493,7 @@ new class extends Component
 
         @script
             <script>
-                Alpine.data('multiFileUploader', (options = {}) => ({
-                    existingPhotoNames: options.existingPhotoNames || [],
+                Alpine.data('multiFileUploader', () => ({
                     files: [],
                     maxParallelUploads: 5,
                     activeUploads: 0,
@@ -563,7 +569,7 @@ new class extends Component
 
                     uploadFile(fileObj, index) {
                         // Check for duplicate photo name
-                        if (this.existingPhotoNames.includes(fileObj.file.name)) {
+                        if ($wire.existingPhotoNames.includes(fileObj.file.name)) {
                             fileObj.status = 'duplicated';
                             this.activeUploads--;
 
