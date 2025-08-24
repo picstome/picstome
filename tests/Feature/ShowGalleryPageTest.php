@@ -5,6 +5,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Photoshoot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
@@ -331,6 +332,60 @@ describe('Photo Deletion', function () {
         $gallery->photos->each(function ($photo) {
             Storage::disk('public')->assertMissing($photo->path);
         });
+    });
+});
+
+describe('Gallery Photoshoot Association', function () {
+    it('allows assigning a gallery to a photoshoot', function () {
+        $photoshoot = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        // Simulate assigning
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshoot->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBe($photoshoot->id);
+    });
+
+    it('allows changing a gallery\'s photoshoot', function () {
+        $photoshootA = Photoshoot::factory()->for($this->team)->create();
+        $photoshootB = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshootB->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBe($photoshootB->id);
+    });
+
+    it('prevents assigning a photoshoot from another team', function () {
+        $otherTeam = Team::factory()->create();
+        $photoshoot = Photoshoot::factory()->for($otherTeam)->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshoot->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBeNull();
+        $component->assertHasErrors(['form.photoshoot_id' => 'exists']);
+    });
+
+    it('allows removing a gallery from a photoshoot', function () {
+        $photoshoot = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->create(['photoshoot_id' => $photoshoot->id]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', null)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBeNull();
     });
 });
 
