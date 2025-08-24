@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\Gallery;
 
 class GalleryExpirationReminder extends Notification implements ShouldQueue
 {
@@ -14,7 +15,7 @@ class GalleryExpirationReminder extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-    public function __construct(public \App\Models\Gallery $gallery)
+    public function __construct(public Gallery $gallery)
     {
     }
 
@@ -34,10 +35,13 @@ class GalleryExpirationReminder extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Gallery Expiration Reminder')
-            ->line('Your gallery "' . $this->gallery->name . '" will expire on ' . $this->gallery->expiration_date->toFormattedDateString() . '.')
-            ->action('View Gallery', url('/'))
-            ->line('Thank you for using our application!');
+            ->subject(__('Gallery Expiration Reminder'))
+            ->line(__('Your gallery ":name" will expire on :date.', [
+                'name' => $this->gallery->name,
+                'date' => $this->gallery->expiration_date->toFormattedDateString()
+            ]))
+            ->action(__('View Gallery'), route('galleries.show', $this->gallery));
+            
     }
 
     /**
