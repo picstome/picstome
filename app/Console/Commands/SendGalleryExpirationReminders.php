@@ -28,6 +28,7 @@ class SendGalleryExpirationReminders extends Command
     public function handle()
     {
         $days = config('picstome.gallery_expiration_reminder_days', 3);
+
         Gallery::expiringSoon($days)
             ->reminderNotSent()
             ->cursor()
@@ -36,6 +37,7 @@ class SendGalleryExpirationReminders extends Command
                 $gallery->reminder_sent_at = now();
                 $gallery->save();
             });
+
         return 0;
     }
 }
