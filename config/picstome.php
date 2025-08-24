@@ -14,4 +14,7 @@ return [
 
     'disk' => 's3',
 
+    // Number of days before expiration to send gallery reminder
+    'gallery_expiration_reminder_days' => env('GALLERY_EXPIRATION_REMINDER_DAYS', 3),
+
 ];

@@ -27,10 +27,9 @@ class SendGalleryExpirationReminders extends Command
      */
     public function handle()
     {
-        $threshold = now()->addDays(3);
-        $galleries = Gallery::whereNotNull('expiration_date')
-            ->where('expiration_date', '<=', $threshold)
-            ->whereNull('reminder_sent_at')
+        $days = config('picstome.gallery_expiration_reminder_days', 3);
+        $galleries = Gallery::expiringSoon($days)
+            ->reminderNotSent()
             ->get();
 
         foreach ($galleries as $gallery) {

@@ -65,6 +65,20 @@ class Gallery extends Model
               ->where('expiration_date', '<', now());
     }
 
+    #[Scope]
+    protected function expiringSoon(Builder $query, int $days = 3): void
+    {
+        $threshold = now()->addDays($days);
+        $query->whereNotNull('expiration_date')
+              ->where('expiration_date', '<=', $threshold);
+    }
+
+    #[Scope]
+    protected function reminderNotSent(Builder $query): void
+    {
+        $query->whereNull('reminder_sent_at');
+    }
+
     public function download($favorites = false)
     {
         $zipName = Str::of($this->name)->slug()->append('.zip');
