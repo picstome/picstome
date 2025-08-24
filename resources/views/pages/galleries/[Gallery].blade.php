@@ -49,25 +49,29 @@ new class extends Component
 
     public function save($index)
     {
-        $this->validate([
-            "photos.{$index}" => 'image|max:51200', // max. 50MB
-        ]);
-
         if(! isset($this->photos[$index])) {
             return;
         }
 
+        $this->validate([
+            "photos.{$index}" => [
+                'image',
+                'max:51200', // max. 50MB
+                function ($attribute, $value, $fail) use ($index) {
+                    $uploadedPhoto = $this->photos[$index];
+
+                    if ($this->gallery->photos()->where('name', $uploadedPhoto->getClientOriginalName())->exists()) {
+                        $fail(__('A photo with this name already exists.'));
+                    }
+
+                    if (! $this->hasSufficientStorage($uploadedPhoto)) {
+                        $fail(__('You do not have enough storage space to upload this photo.'));
+                    }
+                },
+            ],
+        ]);
+
         $uploadedPhoto = $this->photos[$index];
-
-        if ($this->gallery->photos()->where('name', $uploadedPhoto->getClientOriginalName())->exists()) {
-            return;
-        }
-
-        if (! $this->hasSufficientStorage($uploadedPhoto)) {
-            $this->addError("photos.$index", __('You do not have enough storage space to upload this photo.'));
-
-            return;
-        }
 
         $this->addPhotoToGallery($uploadedPhoto);
     }
@@ -342,11 +346,11 @@ new class extends Component
                         </div>
 
                         <!-- Upload Queue Display -->
-                        <div class="space-y-2 relative">
+                        <div class="space-y-2">
                             <template x-for="(fileObj, index) in files" :key="index">
                                 <div
                                     x-show="fileObj.status !== 'completed'"
-                                    class="mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
+                                    class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
                                 >
                                     <div class="flex w-full items-center gap-4">
                                         <div
