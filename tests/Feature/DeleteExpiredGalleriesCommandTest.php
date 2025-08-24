@@ -18,9 +18,9 @@ describe('DeleteExpiredGalleriesCommand', function () {
         $this->team = Team::factory()->create();
     });
 
-    it('deletes galleries with expiration dates in the past', function () {
+    it('deletes galleries with expiration dates more than one day in the past', function () {
         $gallery = Gallery::factory()->for($this->team)->create([
-            'expiration_date' => now()->subDay(),
+            'expiration_date' => now()->subDays(2),
         ]);
         $file = UploadedFile::fake()->image('photo.jpg');
         $path = $file->store('galleries/photos', ['disk' => $this->disk]);
@@ -34,6 +34,24 @@ describe('DeleteExpiredGalleriesCommand', function () {
         expect(Gallery::find($gallery->id))->toBeNull();
         expect(Photo::find($photo->id))->toBeNull();
         expect(Storage::disk($photo->disk)->exists($photo->path))->toBeFalse();
+    });
+
+    it('does not delete galleries expired less than one day ago', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'expiration_date' => now()->subDay(), // exactly 1 day ago
+        ]);
+        $file = UploadedFile::fake()->image('photo.jpg');
+        $path = $file->store('galleries/photos', ['disk' => $this->disk]);
+        $photo = Photo::factory()->for($gallery)->create([
+            'path' => $path,
+            'disk' => $this->disk,
+        ]);
+
+        artisan('galleries:delete-expired')->assertExitCode(0);
+
+        expect(Gallery::find($gallery->id))->not->toBeNull();
+        expect(Photo::find($photo->id))->not->toBeNull();
+        expect(Storage::disk($photo->disk)->exists($photo->path))->toBeTrue();
     });
 
     it('does not delete galleries with expiration dates in the future', function () {

@@ -63,7 +63,7 @@ class Gallery extends Model
     protected function expired(Builder $query): void
     {
         $query->whereNotNull('expiration_date')
-              ->where('expiration_date', '<', now());
+            ->where('expiration_date', '<', now()->subDay());
     }
 
     #[Scope]
