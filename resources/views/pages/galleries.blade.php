@@ -16,6 +16,11 @@ new class extends Component
 {
     public GalleryForm $form;
 
+    public function mount()
+    {
+        $this->form->expirationDate = now()->addYear()->format('Y-m-d');
+    }
+
     public function save()
     {
         $this->authorize('create', Gallery::class);
