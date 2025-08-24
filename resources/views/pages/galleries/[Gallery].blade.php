@@ -59,6 +59,10 @@ new class extends Component
 
         $uploadedPhoto = $this->photos[$index];
 
+        if ($this->gallery->photos()->where('name', $uploadedPhoto->getClientOriginalName())->exists()) {
+            return;
+        }
+
         if (! $this->hasSufficientStorage($uploadedPhoto)) {
             $this->addError("photos.$index", __('You do not have enough storage space to upload this photo.'));
 
@@ -307,7 +311,7 @@ new class extends Component
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader">
+                    <div x-data="multiFileUploader({ existingPhotoNames: @js($allPhotos->pluck('name')->toArray()) })">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
@@ -338,7 +342,7 @@ new class extends Component
                         </div>
 
                         <!-- Upload Queue Display -->
-                        <div class="space-y-2">
+                        <div class="space-y-2 relative">
                             <template x-for="(fileObj, index) in files" :key="index">
                                 <div
                                     x-show="fileObj.status !== 'completed'"
@@ -349,11 +353,11 @@ new class extends Component
                                             x-text="fileObj.file.name"
                                             class="flex-1 text-sm font-medium text-zinc-800 dark:text-white"
                                         ></div>
-                                        <div class="text-sm text-zinc-500 dark:text-white/70">
+                                        <div class="text-sm text-zinc-500 dark:text-white/70" x-show="fileObj.status !== 'duplicated'">
                                             <span x-text="fileObj.progress + '%'"></span>
                                         </div>
                                         <flux:badge
-                                            x-show="! ['failed'].includes(fileObj.status)"
+                                            x-show="!['failed', 'duplicated'].includes(fileObj.status)"
                                             x-text="fileObj.status"
                                             size="sm"
                                             color="zinc"
@@ -364,6 +368,13 @@ new class extends Component
                                             size="sm"
                                             color="red"
                                         ></flux:badge>
+                                        <flux:badge
+                                            x-show="fileObj.status === 'duplicated'"
+                                            x-text="fileObj.status"
+                                            size="sm"
+                                            color="yellow"
+                                        ></flux:badge>
+
                                         <flux:button
                                             class="z-10"
                                             x-show="fileObj.status === 'failed'"
@@ -471,7 +482,8 @@ new class extends Component
 
         @script
             <script>
-                Alpine.data('multiFileUploader', () => ({
+                Alpine.data('multiFileUploader', (options = {}) => ({
+                    existingPhotoNames: options.existingPhotoNames || [],
                     files: [],
                     maxParallelUploads: 5,
                     activeUploads: 0,
@@ -546,6 +558,18 @@ new class extends Component
                     },
 
                     uploadFile(fileObj, index) {
+                        // Check for duplicate photo name
+                        if (this.existingPhotoNames.includes(fileObj.file.name)) {
+                            fileObj.status = 'duplicated';
+                            this.activeUploads--;
+
+                            setTimeout(() => {
+                                this.processUploadQueue();
+                            }, 10000); // Wait 10 seconds before continuing
+
+                            return;
+                        }
+
                         this.activeUploads++;
                         this.uploadTimestamps.push(Date.now());
                         fileObj.status = 'uploading';
