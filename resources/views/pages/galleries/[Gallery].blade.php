@@ -183,6 +183,9 @@ new class extends Component
                     </div>
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
+                        @if ($gallery->expiration_date)
+                            &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
+                        @endif
                     </x-subheading>
                     @if ($allPhotos->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
