@@ -53,7 +53,7 @@ test('can create a team gallery that keeps photos at their original size', funct
 });
 
 test('can create a team gallery with an expiration date', function () {
-    $expiration = now()->addDays(7);
+    $expiration = now()->addDays(7)->toDateString();
 
     $component = Volt::actingAs($this->user)->test('pages.galleries')
         ->set('form.name', 'Expiring Gallery')
@@ -64,25 +64,25 @@ test('can create a team gallery with an expiration date', function () {
 
     expect($gallery)->not->toBeNull();
     expect($gallery->name)->toBe('Expiring Gallery');
-    expect($gallery->expiration_date->format('Y-m-d H:i:s'))->toBe($expiration->format('Y-m-d H:i:s'));
+    expect($gallery->expiration_date->toDateString())->toBe($expiration);
 });
 
 test('can update a gallery to set, change, and remove expiration date', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
-    $newExpiration = now()->addDays(10);
+    $newExpiration = now()->addDays(10)->toDateString();
 
     // Set expiration date
     $component = Volt::actingAs($this->user)->test('pages.galleries.edit', ['gallery' => $gallery])
         ->set('form.expirationDate', $newExpiration)
         ->call('update');
     $gallery->refresh();
-    expect($gallery->expiration_date->eq($newExpiration))->toBeTrue();
+    expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
 
     // Change expiration date
-    $changedExpiration = now()->addDays(20);
+    $changedExpiration = now()->addDays(20)->toDateString();
     $component->set('form.expirationDate', $changedExpiration)->call('update');
     $gallery->refresh();
-    expect($gallery->expiration_date->eq($changedExpiration))->toBeTrue();
+    expect($gallery->expiration_date->toDateString())->toBe($changedExpiration);
 
     // Remove expiration date
     $component->set('form.expirationDate', null)->call('update');

@@ -9,7 +9,7 @@ return new class extends Migration
         public function up(): void
     {
         Schema::table('galleries', function (Blueprint $table) {
-            $table->dateTime('expiration_date')->nullable();
+            $table->date('expiration_date')->nullable();
         });
     }
 
