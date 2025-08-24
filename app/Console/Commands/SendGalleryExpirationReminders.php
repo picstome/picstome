@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Models\Gallery;
+use App\Notifications\GalleryExpirationReminder;
 
 class SendGalleryExpirationReminders extends Command
 {
@@ -26,7 +28,7 @@ class SendGalleryExpirationReminders extends Command
     public function handle()
     {
         $threshold = now()->addDays(3);
-        $galleries = \App\Models\Gallery::whereNotNull('expiration_date')
+        $galleries = Gallery::whereNotNull('expiration_date')
             ->where('expiration_date', '<=', $threshold)
             ->whereNull('reminder_sent_at')
             ->get();
@@ -34,7 +36,7 @@ class SendGalleryExpirationReminders extends Command
         foreach ($galleries as $gallery) {
             $owner = $gallery->team?->owner;
             if ($owner) {
-                $owner->notify(new \App\Notifications\GalleryExpirationReminder($gallery));
+                $owner->notify(new GalleryExpirationReminder($gallery));
                 $gallery->reminder_sent_at = now();
                 $gallery->save();
             }
