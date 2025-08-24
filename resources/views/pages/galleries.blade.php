@@ -99,6 +99,8 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
+                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" />
+
                     <flux:switch wire:model="form.keepOriginalSize" :label="__('Keep photos at their original size')" />
 
                     <div class="flex">
