@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Gallery;
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -16,11 +17,24 @@ class GalleryForm extends Form
 
     public ?string $name = null;
 
-    #[Validate('nullable|date|after_or_equal:today')]
     public $expirationDate = null;
 
-    #[Validate('required|boolean')]
     public $keepOriginalSize = false;
+
+    public ?int $photoshoot_id = null;
+
+    protected function rules()
+    {
+        return [
+            'photoshoot_id' => [
+                'nullable',
+                Rule::exists('photoshoots', 'id')->where(fn($query) => $query->where('team_id', auth()->user()->currentTeam->id)),
+            ],
+            'name' => ['nullable', 'string'],
+            'expirationDate' => ['nullable', 'date', 'after_or_equal:today'],
+            'keepOriginalSize' => ['required', 'boolean'],
+        ];
+    }
 
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
@@ -33,6 +47,7 @@ class GalleryForm extends Form
 
         $this->name = $gallery->name;
         $this->expirationDate = $gallery->expiration_date?->format('Y-m-d');
+        $this->photoshoot_id = $gallery->photoshoot_id;
     }
 
     public function store()
@@ -52,6 +67,7 @@ class GalleryForm extends Form
         $this->validate();
 
         return $this->gallery->update([
+            'photoshoot_id' => $this->photoshoot_id ?: null,
             'name' => $this->name ?? __('Untitled'),
             'expiration_date' => $this->expirationDate ?: null,
         ]);

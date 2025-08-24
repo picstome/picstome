@@ -54,6 +54,11 @@ class Gallery extends Model
         return $this->hasMany(Photo::class);
     }
 
+    public function photoshoot()
+    {
+        return $this->belongsTo(Photoshoot::class);
+    }
+
     public function favorites()
     {
         return $this->photos()->favorited();
