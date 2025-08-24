@@ -26,13 +26,10 @@ class DeleteExpiredGalleriesCommand extends Command
      */
     public function handle()
     {
-        Gallery::whereNotNull('expiration_date')
-            ->where('expiration_date', '<', now())
-            ->get()
-            ->each(function ($gallery) {
-                $gallery->deletePhotos();
-                $gallery->delete();
-            });
+        Gallery::expired()->get()->each(function ($gallery) {
+            $gallery->deletePhotos();
+            $gallery->delete();
+        });
 
         $this->info('Completed deleting expired galleries.');
     }

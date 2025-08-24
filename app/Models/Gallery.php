@@ -6,6 +6,8 @@ use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -54,6 +56,13 @@ class Gallery extends Model
     public function favorites()
     {
         return $this->photos()->favorited();
+    }
+
+    #[Scope]
+    protected function expired(Builder $query): void
+    {
+        $query->whereNotNull('expiration_date')
+              ->where('expiration_date', '<', now());
     }
 
     public function download($favorites = false)
