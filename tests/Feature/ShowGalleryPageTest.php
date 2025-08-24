@@ -344,6 +344,39 @@ describe('Gallery Editing', function () {
 
         expect($gallery->fresh()->name)->toBe('Edited Gallery');
     });
+
+    it('sets the gallery expiration date', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $expirationDate = now()->addDays(10)->toDateString();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.edit', ['gallery' => $gallery])
+            ->set('form.expirationDate', $expirationDate)
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date->toDateString())->toBe($expirationDate);
+    });
+
+    it('changes the gallery expiration date', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+        $newExpiration = now()->addDays(20)->toDateString();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.edit', ['gallery' => $gallery])
+            ->set('form.expirationDate', $newExpiration)
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
+    });
+
+    it('removes the gallery expiration date', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.edit', ['gallery' => $gallery])
+            ->set('form.expirationDate', null)
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date)->toBeNull();
+    });
+
 });
 
 describe('Storage Limits', function () {

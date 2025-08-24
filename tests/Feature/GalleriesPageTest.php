@@ -67,29 +67,6 @@ test('can create a team gallery with an expiration date', function () {
     expect($gallery->expiration_date->toDateString())->toBe($expiration);
 });
 
-test('can update a gallery to set, change, and remove expiration date', function () {
-    $gallery = Gallery::factory()->for($this->team)->create();
-    $newExpiration = now()->addDays(10)->toDateString();
-
-    // Set expiration date
-    $component = Volt::actingAs($this->user)->test('pages.galleries.edit', ['gallery' => $gallery])
-        ->set('form.expirationDate', $newExpiration)
-        ->call('update');
-    $gallery->refresh();
-    expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
-
-    // Change expiration date
-    $changedExpiration = now()->addDays(20)->toDateString();
-    $component->set('form.expirationDate', $changedExpiration)->call('update');
-    $gallery->refresh();
-    expect($gallery->expiration_date->toDateString())->toBe($changedExpiration);
-
-    // Remove expiration date
-    $component->set('form.expirationDate', null)->call('update');
-    $gallery->refresh();
-    expect($gallery->expiration_date)->toBeNull();
-});
-
 test('guests cannot create galleries', function () {
     $component = Volt::test('pages.galleries')->call('save');
 
