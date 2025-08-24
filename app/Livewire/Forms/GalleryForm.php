@@ -16,6 +16,7 @@ class GalleryForm extends Form
 
     public ?string $name = null;
 
+    #[Validate('nullable|date|after_or_equal:today')]
     public $expirationDate = null;
 
     #[Validate('required|boolean')]

@@ -95,3 +95,22 @@ test('guests cannot create galleries', function () {
 
     $component->assertStatus(403);
 });
+
+test('cannot create a gallery with an invalid expiration date', function () {
+    $component = Volt::actingAs($this->user)->test('pages.galleries')
+        ->set('form.name', 'Invalid Expiration Gallery')
+        ->set('form.expirationDate', 'not-a-date')
+        ->call('save');
+
+    $component->assertHasErrors(['form.expirationDate' => 'date']);
+    expect($this->team->galleries()->count())->toBe(0);
+
+    $pastDate = now()->subDay()->toDateString();
+    $component = Volt::actingAs($this->user)->test('pages.galleries')
+        ->set('form.name', 'Past Expiration Gallery')
+        ->set('form.expirationDate', $pastDate)
+        ->call('save');
+
+    $component->assertHasErrors(['form.expirationDate' => 'after_or_equal']);
+    expect($this->team->galleries()->count())->toBe(0);
+});
