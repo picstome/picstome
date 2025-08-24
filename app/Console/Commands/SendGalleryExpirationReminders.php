@@ -33,9 +33,7 @@ class SendGalleryExpirationReminders extends Command
             ->reminderNotSent()
             ->cursor()
             ->each(function ($gallery) {
-                $gallery->team->owner->notify(new GalleryExpirationReminder($gallery));
-                $gallery->reminder_sent_at = now();
-                $gallery->save();
+                $gallery->sendExpirationReminder();
             });
 
         return 0;

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\GalleryExpirationReminder;
 use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -77,6 +78,13 @@ class Gallery extends Model
     protected function reminderNotSent(Builder $query): void
     {
         $query->whereNull('reminder_sent_at');
+    }
+
+    public function sendExpirationReminder(): void
+    {
+        $this->team->owner->notify(new GalleryExpirationReminder($this));
+        $this->reminder_sent_at = now();
+        $this->save();
     }
 
     public function download($favorites = false)
