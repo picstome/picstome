@@ -28,6 +28,7 @@ class Gallery extends Model
             'is_share_watermarked' => 'boolean',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
+            'expiration_date' => 'datetime',
         ];
     }
 
