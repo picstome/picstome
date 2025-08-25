@@ -23,13 +23,13 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative flex overflow-hidden rounded-lg bg-zinc-100 dark:bg-white/10">
+<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
     <a
         wire:navigate.hover
         href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $photo, 'navigateFavorites' => $asFavorite ? true : null]) }}"
         class="mx-auto flex"
     >
-        <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-contain" />
+        <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
         @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
             <div
                 @class([
