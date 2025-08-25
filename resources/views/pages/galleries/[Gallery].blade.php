@@ -471,8 +471,9 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
                     @if ($photoshoots)
-                        <flux:select wire:model="form.photoshoot_id" :label="__('Photoshoot')">
+                        <flux:select wire:model="form.photoshoot_id" :label="__('Photoshoot')" :placeholder="__('Select a photoshoot')">
                             <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
+                            <hr />
                             @foreach ($photoshoots as $photoshoot)
                                 <flux:select.option value="{{ $photoshoot->id }}">
                                     {{ $photoshoot->name }}
