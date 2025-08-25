@@ -275,9 +275,9 @@ new class extends Component
                         </flux:navbar.item>
                     </flux:navbar>
 
-                    <div x-show="$wire.activeTab === 'all'" class="pt-8">
+                    <div x-show="$wire.activeTab === 'all'" class="pt-1">
                         <div
-                            class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-4 gap-y-6"
+                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($allPhotos as $photo)
                                 <livewire:photo-item :$photo :key="'photo-'.$photo->id" />
@@ -285,9 +285,9 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div x-show="$wire.activeTab === 'favorited'" class="pt-8">
+                    <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
                         <div
-                            class="grid grid-flow-dense auto-rows-[155px] grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4"
+                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($favorites as $photo)
                                 <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" />

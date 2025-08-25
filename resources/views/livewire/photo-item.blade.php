@@ -17,13 +17,13 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative flex overflow-hidden rounded-lg bg-zinc-100 dark:bg-white/10">
+<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
     <a
         href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate.hover
         class="mx-auto flex"
     >
-        <img src="{{ $photo->thumbnail_url }}" alt="" class="object-contain" loading="lazy" />
+        <img src="{{ $photo->thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
     </a>
     <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
