@@ -51,7 +51,7 @@ new class extends Component
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
-        $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->get();
+        $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
 
     public function save($index)

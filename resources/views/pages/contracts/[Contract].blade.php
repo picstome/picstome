@@ -25,7 +25,7 @@ new class extends Component
 
     public function mount()
     {
-        $this->photoshoots = Auth::user()?->currentTeam->photoshoots;
+        $this->photoshoots = Auth::user()?->currentTeam->photoshoots()->latest()->get();
         $this->photoshoot_id = $this->contract->photoshoot_id;
     }
 
