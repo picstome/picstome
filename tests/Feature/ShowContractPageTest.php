@@ -105,7 +105,8 @@ test('user can assign a contract to a photoshoot', function () {
     )->create();
     $contract = Contract::factory()->for($this->team)->create();
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
+    $component = Volt::actingAs($this->team->owner)
+        ->test('pages.contracts.show', ['contract' => $contract])
         ->call('assignToPhotoshoot', $photoshoot->id);
 
     expect($contract->fresh()->photoshoot->is($photoshoot))->toBeTrue();
@@ -116,7 +117,8 @@ test('user cannot assign a contract to a photoshoot from another team', function
     $photoshoot = Photoshoot::factory()->for($otherTeam)->create();
     $contract = Contract::factory()->for($this->team)->create();
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
+    $component = Volt::actingAs($this->team->owner)
+        ->test('pages.contracts.show', ['contract' => $contract])
         ->call('assignToPhotoshoot', $photoshoot->id);
 
     $component->assertStatus(403);
@@ -128,7 +130,8 @@ test('user can re-assign a contract to a different photoshoot', function () {
     $photoshootB = Photoshoot::factory()->for($this->team)->create();
     $contract = Contract::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
+    $component = Volt::actingAs($this->team->owner)
+        ->test('pages.contracts.show', ['contract' => $contract])
         ->call('assignToPhotoshoot', $photoshootB->id);
 
     expect($contract->fresh()->photoshoot->is($photoshootB))->toBeTrue();

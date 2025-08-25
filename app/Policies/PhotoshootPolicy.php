@@ -62,4 +62,13 @@ class PhotoshootPolicy
     {
         return false;
     }
+
+    /**
+     * Determine whether the user can add a contract to the photoshoot.
+     */
+    public function addContract(User $user, Photoshoot $photoshoot): bool
+    {
+        return $photoshoot->team->is($user->currentTeam);
+    }
+
 }

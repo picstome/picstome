@@ -41,12 +41,9 @@ new class extends Component
 
     public function assignToPhotoshoot(Photoshoot $photoshoot)
     {
-        if ($photoshoot->team_id !== $this->contract->team_id) {
-            abort(403);
-        }
+        $this->authorize('addContract', $photoshoot);
 
-        $this->contract->photoshoot_id = $photoshoot->id;
-        $this->contract->save();
+        $photoshoot->addContract($this->contract);
     }
 }; ?>
 
