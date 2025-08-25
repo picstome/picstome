@@ -144,5 +144,14 @@ new class extends Component
         @assets
             <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
         @endassets
+        @push('head')
+            <link rel="preload" as="image" href="{{ $photo->url }}">
+            @if ($next)
+                <link rel="preload" as="image" href="{{ $next->url }}">
+            @endif
+            @if ($previous)
+                <link rel="preload" as="image" href="{{ $previous->url }}">
+            @endif
+        @endpush
     @endvolt
 </x-app-layout>
