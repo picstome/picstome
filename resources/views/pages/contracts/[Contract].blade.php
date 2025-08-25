@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Contract;
+use App\Models\Photoshoot;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -38,16 +39,12 @@ new class extends Component
         return $this->redirect('/contracts');
     }
 
-    public function assignToPhotoshoot(array $params)
+    public function assignToPhotoshoot(Photoshoot $photoshoot)
     {
-        $photoshootId = $params['photoshoot_id'] ?? null;
-        $photoshoot = \App\Models\Photoshoot::find($photoshootId);
-        if (! $photoshoot) {
-            abort(404);
-        }
         if ($photoshoot->team_id !== $this->contract->team_id) {
             abort(403);
         }
+
         $this->contract->photoshoot_id = $photoshoot->id;
         $this->contract->save();
     }

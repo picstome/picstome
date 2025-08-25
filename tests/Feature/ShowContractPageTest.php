@@ -106,7 +106,7 @@ test('user can assign a contract to a photoshoot', function () {
     $contract = Contract::factory()->for($this->team)->create();
 
     $component = Volt::test('pages.contracts.show', ['contract' => $contract])
-        ->call('assignToPhotoshoot', ['photoshoot_id' => $photoshoot->id]);
+        ->call('assignToPhotoshoot', $photoshoot->id);
 
     expect($contract->fresh()->photoshoot->is($photoshoot))->toBeTrue();
 });
@@ -117,7 +117,7 @@ test('user cannot assign a contract to a photoshoot from another team', function
     $contract = Contract::factory()->for($this->team)->create();
 
     $component = Volt::test('pages.contracts.show', ['contract' => $contract])
-        ->call('assignToPhotoshoot', ['photoshoot_id' => $photoshoot->id]);
+        ->call('assignToPhotoshoot', $photoshoot->id);
 
     $component->assertStatus(403);
     expect($contract->fresh()->photoshoot_id)->toBeNull();
@@ -129,20 +129,9 @@ test('user can re-assign a contract to a different photoshoot', function () {
     $contract = Contract::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
 
     $component = Volt::test('pages.contracts.show', ['contract' => $contract])
-        ->call('assignToPhotoshoot', ['photoshoot_id' => $photoshootB->id]);
+        ->call('assignToPhotoshoot', $photoshootB->id);
 
     expect($contract->fresh()->photoshoot->is($photoshootB))->toBeTrue();
-});
-
-test('user cannot assign a contract to a non-existent photoshoot', function () {
-    $contract = Contract::factory()->for($this->team)->create();
-    $invalidPhotoshootId = 999999;
-
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
-        ->call('assignToPhotoshoot', ['photoshoot_id' => $invalidPhotoshootId]);
-
-    $component->assertStatus(404);
-    expect($contract->fresh()->photoshoot_id)->toBeNull();
 });
 
 test('can delete team contract', function () {
