@@ -8,6 +8,7 @@ use App\Models\Photo;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
@@ -35,6 +36,8 @@ new class extends Component
 
     public array $existingPhotoNames = [];
 
+    public ?Collection $photoshoots;
+
     #[Url]
     public $activeTab = 'all';
 
@@ -48,6 +51,7 @@ new class extends Component
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
+        $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->get();
     }
 
     public function save($index)
@@ -465,6 +469,17 @@ new class extends Component
                     </div>
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
+
+                    @if ($photoshoots)
+                        <flux:select wire:model="form.photoshoot_id" :label="__('Photoshoot')">
+                            <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
+                            @foreach ($photoshoots as $photoshoot)
+                                <flux:select.option value="{{ $photoshoot->id }}">
+                                    {{ $photoshoot->name }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
 
                     <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable />
 
