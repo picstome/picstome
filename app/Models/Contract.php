@@ -41,6 +41,11 @@ class Contract extends Model
         return $this->belongsTo(Team::class);
     }
 
+    public function photoshoot()
+    {
+        return $this->belongsTo(Photoshoot::class);
+    }
+
     public function signatures()
     {
         return $this->hasMany(Signature::class);

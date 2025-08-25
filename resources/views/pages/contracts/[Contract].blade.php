@@ -37,6 +37,20 @@ new class extends Component
 
         return $this->redirect('/contracts');
     }
+
+    public function assignToPhotoshoot(array $params)
+    {
+        $photoshootId = $params['photoshoot_id'] ?? null;
+        $photoshoot = \App\Models\Photoshoot::find($photoshootId);
+        if (! $photoshoot) {
+            abort(404);
+        }
+        if ($photoshoot->team_id !== $this->contract->team_id) {
+            abort(403);
+        }
+        $this->contract->photoshoot_id = $photoshoot->id;
+        $this->contract->save();
+    }
 }; ?>
 
 <x-app-layout>
