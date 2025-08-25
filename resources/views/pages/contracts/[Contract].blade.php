@@ -86,29 +86,27 @@ new class extends Component
                         </span>
                     </div>
                     <div class="flex gap-4">
+                        <flux:dropdown>
+                            <flux:button icon="ellipsis-horizontal" variant="ghost" square />
+                            <flux:menu>
+                                <flux:menu.item
+                                    icon="trash"
+                                    variant="danger"
+                                    wire:click="delete"
+                                    wire:confirm="{{ __('Are you sure?') }}"
+                                >
+                                    {{ __('Delete contract') }}
+                                </flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
 
+                        @if ($contract->isExecuted() && $contract->pdf_file_path)
+                            <flux:button wire:click="download" variant="primary">{{ __('Download') }}</flux:button>
+                        @endif
 
-@if ($contract->isExecuted() && $contract->pdf_file_path)
-    <flux:button wire:click="download" variant="primary">{{ __('Download') }}</flux:button>
-@endif
-
-<flux:dropdown>
-    <flux:button icon="ellipsis-horizontal" variant="ghost" square />
-    <flux:menu>
-        <flux:menu.item
-            icon="trash"
-            variant="danger"
-            wire:click="delete"
-            wire:confirm="{{ __('Are you sure?') }}"
-        >
-            {{ __('Delete contract') }}
-        </flux:menu.item>
-    </flux:menu>
-</flux:dropdown>
-
-@if (! $contract->isExecuted() && $contract->signaturesRemaining() === 0)
-    <flux:button wire:click="execute" variant="primary">{{ __('Execute') }}</flux:button>
-@endif
+                        @if (! $contract->isExecuted() && $contract->signaturesRemaining() === 0)
+                            <flux:button wire:click="execute" variant="primary">{{ __('Execute') }}</flux:button>
+                        @endif
                     </div>
                 </div>
             </div>
