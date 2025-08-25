@@ -59,6 +59,7 @@ class ProcessPhoto implements ShouldQueue
     {
         if (app()->environment('production')) {
             Http::async()->get($photo->url);
+            Http::async()->get($photo->thumbnail_url);
         }
     }
 
