@@ -244,5 +244,12 @@
     "total storage": "almacenamiento total",
     "Gallery Expiration Reminder": "Recordatorio de expiración de galería",
     "Your gallery \":name\" will expire on :date.": "Tu galería \":name\" expirará el :date.",
-    "View Gallery": "Ver galería"
+    "View Gallery": "Ver galería",
+    "Delete contract": "Eliminar contrato",
+    "Assign to Photoshoot": "Asignar a sesión de fotos",
+    "Select a photoshoot to assign this contract.": "Selecciona una sesión de fotos para asignar este contrato.",
+    "Choose photoshoot...": "Elige sesión de fotos...",
+    "Cancel": "Cancelar",
+    "Assign": "Asignar",
+    "Assign to photoshoot": "Asignar a sesión de fotos"
 }
