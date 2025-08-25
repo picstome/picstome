@@ -12,6 +12,7 @@
 
         @vite('resources/css/app.css')
         @fluxAppearance
+        @stack('head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
         @unless ($fullScreen)

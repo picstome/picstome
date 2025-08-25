@@ -9,6 +9,7 @@ use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Image\Image;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
+use Illuminate\Support\Facades\Http;
 
 class ProcessPhoto implements ShouldQueue
 {
@@ -46,7 +47,19 @@ class ProcessPhoto implements ShouldQueue
             Storage::disk('public')->delete($this->photo->getOriginal('path'));
         }
 
+        $this->triggerWsrvCache($this->photo);
+
         $this->temporaryDirectory->delete();
+    }
+
+    /**
+     * Fire-and-forget request to wsrv.nl to trigger caching
+     */
+    protected function triggerWsrvCache(Photo $photo): void
+    {
+        if (app()->environment('production')) {
+            Http::async()->get($photo->url);
+        }
     }
 
     protected function resizePhoto()
