@@ -259,7 +259,7 @@ new class extends Component
             </div>
 
             @if ($allPhotos->isNotEmpty())
-                <div class="mt-8">
+                <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
                         <flux:navbar.item
                             @click="$wire.activeTab = 'all'"
