@@ -36,14 +36,6 @@ class Photoshoot extends Model
         return $this->hasMany(Contract::class);
     }
 
-    /**
-     * Assign a contract to this photoshoot.
-     */
-    public function addContract(Contract $contract): void
-    {
-        $this->contracts()->save($contract);
-    }
-
     public function deleteGalleries()
     {
         $this->galleries()->cursor()->each(

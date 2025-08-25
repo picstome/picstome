@@ -2,6 +2,10 @@
 
 use App\Models\Contract;
 use App\Models\Photoshoot;
+use Flux\Flux;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -14,6 +18,16 @@ middleware(['auth', 'verified', 'can:view,contract']);
 new class extends Component
 {
     public Contract $contract;
+
+    public ?Collection $photoshoots = null;
+
+    public ?int $photoshoot_id = null;
+
+    public function mount()
+    {
+        $this->photoshoots = Auth::user()->currentTeam->photoshoots;
+        $this->photoshoot_id = $this->contract->photoshoot_id;
+    }
 
     public function execute()
     {
@@ -39,11 +53,22 @@ new class extends Component
         return $this->redirect('/contracts');
     }
 
-    public function assignToPhotoshoot(Photoshoot $photoshoot)
+    public function assignToPhotoshoot()
     {
-        $this->authorize('addContract', $photoshoot);
+        $this->validate([
+            'photoshoot_id' => [
+                'nullable',
+                Rule::exists('photoshoots', 'id')->where(
+                    fn($query) => $query->where('team_id', Auth::user()->currentTeam->id)
+                ),
+            ],
+        ]);
 
-        $photoshoot->addContract($this->contract);
+        $this->contract->update([
+            'photoshoot_id' => $this->photoshoot_id
+        ]);
+
+        Flux::modal('assign-photoshoot')->close();
     }
 }; ?>
 
@@ -89,6 +114,13 @@ new class extends Component
                         <flux:dropdown>
                             <flux:button icon="ellipsis-horizontal" variant="ghost" square />
                             <flux:menu>
+                                <flux:modal.trigger name="assign-photoshoot">
+                                    <flux:menu.item
+                                        icon="camera"
+                                    >
+                                        {{ __('Assign to photoshoot') }}
+                                    </flux:menu.item>
+                                </flux:modal.trigger>
                                 <flux:menu.item
                                     icon="trash"
                                     variant="danger"
@@ -191,6 +223,33 @@ new class extends Component
                     @endforeach
                 </x-table.rows>
             </x-table>
+
+            <flux:modal name="assign-photoshoot" class="md:w-96">
+                <form wire:submit="assignToPhotoshoot" class="space-y-6">
+                    <div>
+                        <flux:heading size="lg">{{ __('Assign to Photoshoot') }}</flux:heading>
+                        <flux:text class="mt-2">{{ __('Select a photoshoot to assign this contract.') }}</flux:text>
+                    </div>
+                    <flux:select wire:model="photoshoot_id" placeholder="{{ __('Choose photoshoot...') }}">
+                        <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
+                        <hr />
+                        @foreach ($photoshoots as $photoshoot)
+                            <flux:select.option value="{{ $photoshoot->id }}">
+                                {{ $photoshoot->name }}
+                            </flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <div class="flex gap-2">
+                        <flux:spacer />
+                        <flux:modal.close>
+                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                        </flux:modal.close>
+                        <flux:button wire:click="assignToPhotoshoot" variant="primary">
+                            {{ __('Assign') }}
+                        </flux:button>
+                    </div>
+                </form>
+            </flux:modal>
         </div>
     @endvolt
 </x-app-layout>
