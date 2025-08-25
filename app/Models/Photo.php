@@ -99,20 +99,25 @@ class Photo extends Model
         return Storage::disk($this->diskOrDefault())->download($this->path, $this->name);
     }
 
-    protected function url(): Attribute
+    public function getUrlAttribute()
     {
-        return Attribute::get(function (): string {
-            return Storage::disk($this->diskOrDefault())->url($this->path);
-        });
+        $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+
+        $encodedUrl = urlencode($originalUrl);
+
+        return "https://wsrv.nl/?url={$encodedUrl}&q=90&output=webp";
     }
 
-    protected function thumbnailUrl(): Attribute
+    public function getThumbnailUrlAttribute()
     {
-        return Attribute::get(function (): string {
-            return $this->thumb_path
-                ? Storage::disk($this->diskOrDefault())->url($this->thumb_path)
-                : $this->url;
-        });
+        $originalUrl = $this->thumb_path
+            ? Storage::disk($this->diskOrDefault())->url($this->thumb_path)
+            : Storage::disk($this->diskOrDefault())->url($this->path);
+
+        $height = config('picstome.photo_thumb_resize', 1000);
+        $encodedUrl = urlencode($originalUrl);
+
+        return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&q=90&output=webp";
     }
 
     protected function diskOrDefault(): string
