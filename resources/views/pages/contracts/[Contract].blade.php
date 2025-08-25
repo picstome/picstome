@@ -25,7 +25,7 @@ new class extends Component
 
     public function mount()
     {
-        $this->photoshoots = Auth::user()->currentTeam->photoshoots;
+        $this->photoshoots = Auth::user()?->currentTeam->photoshoots;
         $this->photoshoot_id = $this->contract->photoshoot_id;
     }
 
@@ -233,11 +233,13 @@ new class extends Component
                     <flux:select wire:model="photoshoot_id" placeholder="{{ __('Choose photoshoot...') }}">
                         <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
                         <hr />
-                        @foreach ($photoshoots as $photoshoot)
-                            <flux:select.option value="{{ $photoshoot->id }}">
-                                {{ $photoshoot->name }}
-                            </flux:select.option>
-                        @endforeach
+                        @if ($photoshoots)
+                            @foreach ($photoshoots as $photoshoot)
+                                <flux:select.option value="{{ $photoshoot->id }}">
+                                    {{ $photoshoot->name }}
+                                </flux:select.option>
+                            @endforeach
+                        @endif
                     </flux:select>
                     <div class="flex gap-2">
                         <flux:spacer />
