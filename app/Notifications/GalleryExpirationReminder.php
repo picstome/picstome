@@ -40,8 +40,8 @@ class GalleryExpirationReminder extends Notification implements ShouldQueue
                 'name' => $this->gallery->name,
                 'date' => $this->gallery->expiration_date->toFormattedDateString()
             ]))
-            ->action(__('View Gallery'), route('galleries.show', $this->gallery));
-            
+            ->action(__('View Gallery'), route('galleries.show', ['gallery' => $this->gallery]));
+
     }
 
     /**
