@@ -24,10 +24,10 @@ test('users can view their team contract templates', function () {
     $component = Volt::test('pages.contract-templates');
 
     $response->assertStatus(200);
-    $component->assertViewHas('templates');
-    expect($component->viewData('templates')->contains($templateA))->toBeTrue();
-    expect($component->viewData('templates')->contains($templateB))->toBeFalse();
-    expect($component->viewData('templates')->contains($templateC))->toBeTrue();
+    expect($component->templates->count())->toBe(2);
+    expect($component->templates->contains($templateA))->toBeTrue();
+    expect($component->templates->contains($templateB))->toBeFalse();
+    expect($component->templates->contains($templateC))->toBeTrue();
 });
 
 test('can add new contract', function () {

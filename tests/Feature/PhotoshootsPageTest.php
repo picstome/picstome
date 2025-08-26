@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-it('shows only photoshoots belonging to the user\'s team', function () {
+it('shows only photoshoots belonging to the users team', function () {
     $photoshootA = Photoshoot::factory()->for($this->team)->create();
     $photoshootB = Photoshoot::factory()->for(Team::factory())->create();
     $photoshootC = Photoshoot::factory()->for($this->team)->create();
@@ -24,10 +24,10 @@ it('shows only photoshoots belonging to the user\'s team', function () {
     $component = Volt::test('pages.photoshoots');
 
     $response->assertStatus(200);
-    $component->assertViewHas('photoshoots');
-    expect($component->viewData('photoshoots')->contains($photoshootA))->toBeTrue();
-    expect($component->viewData('photoshoots')->contains($photoshootB))->toBeFalse();
-    expect($component->viewData('photoshoots')->contains($photoshootC))->toBeTrue();
+    expect($component->photoshoots->count())->toBe(2);
+    expect($component->photoshoots->contains($photoshootA))->toBeTrue();
+    expect($component->photoshoots->contains($photoshootB))->toBeFalse();
+    expect($component->photoshoots->contains($photoshootC))->toBeTrue();
 });
 
 it('allows a user to create a photoshoot', function () {
