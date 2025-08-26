@@ -4,8 +4,9 @@ use App\Livewire\Forms\ContractForm;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
@@ -15,6 +16,8 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
+    use WithPagination;
+
     public ContractForm $form;
 
     public function save()
@@ -35,12 +38,22 @@ new class extends Component
         $this->modal('templates')->close();
     }
 
-    public function with()
+    #[Computed]
+    public function contracts()
     {
-        return [
-            'contracts' => Auth::user()?->currentTeam->contracts()->latest()->get(),
-            'templates' => Auth::user()?->currentTeam->contractTemplates()->orderBy('title')->get(),
-        ];
+        return Auth::user()?->currentTeam
+            ->contracts()
+            ->latest()
+            ->paginate(25);
+    }
+
+    #[Computed]
+    public function templates()
+    {
+        return Auth::user()?->currentTeam
+            ->contractTemplates()
+            ->orderBy('title')
+            ->get();
     }
 }; ?>
 
@@ -59,7 +72,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($contracts?->isNotEmpty())
+            @if ($this->contracts?->isNotEmpty())
                 <x-table class="mt-8">
                     <x-table.columns>
                         <x-table.column class="w-full">{{ __('Title') }}</x-table.column>
@@ -69,7 +82,7 @@ new class extends Component
                     </x-table.columns>
 
                     <x-table.rows>
-                        @foreach ($contracts as $contract)
+                        @foreach ($this->contracts as $contract)
                             <x-table.row>
                                 <x-table.cell variant="strong" class="relative">
                                     <a
@@ -112,6 +125,8 @@ new class extends Component
                         @endforeach
                     </x-table.rows>
                 </x-table>
+
+                <flux:pagination :paginator="$this->contracts" />
             @else
                 <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
                     <flux:icon.document-text class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
@@ -203,8 +218,8 @@ new class extends Component
                     </div>
 
                     <flux:select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
-                        @if ($templates?->isNotEmpty())
-                            @foreach ($templates as $template)
+                        @if ($this->templates?->isNotEmpty())
+                            @foreach ($this->templates as $template)
                                 <option value="{{ $template->id }}">{{ $template->title }}</option>
                             @endforeach
                         @endif

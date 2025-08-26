@@ -165,6 +165,7 @@
     "Share settings": "Configuraciones de compartición",
     "Sharing": "Compartiendo",
     "Shooting date": "Fecha de la sesión",
+    "Showing": "Mostrando",
     "Sign": "Firmar",
     "Sign bellow": "Firmar abajo",
     "Sign contract": "Firmar contrato",
@@ -207,6 +208,7 @@
     "Unique Test Key 68ab20e5acd93": "Unique Test Key 68ab20e5acd93",
     "Unique Test Key 68acc43299aa3": "Unique Test Key 68acc43299aa3",
     "Unique Test Key 68acc4c46c1e1": "Unique Test Key 68acc4c46c1e1",
+    "Unique Test Key 68ad04660b507": "Unique Test Key 68ad04660b507",
     "Unlimited": "Ilimitado",
     "Unlock": "Desbloquear",
     "Unsigned": "Sin firmar",
@@ -249,9 +251,12 @@
     "Your logo at 1:1 aspect ratio.": "Tu logotipo en formato 1:1.",
     "Your password": "Tu contraseña",
     "month": "mes",
+    "of": "de",
     "photo": "foto",
     "photos": "fotos",
     "remaining files.": "archivos restantes.",
+    "results": "resultados",
     "signatures": "firmas",
+    "to": "al",
     "total storage": "almacenamiento total"
 }

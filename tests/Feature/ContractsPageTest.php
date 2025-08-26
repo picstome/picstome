@@ -28,10 +28,11 @@ describe('Viewing contracts', function () {
         $component = Volt::test('pages.contracts');
 
         $response->assertStatus(200);
-        $component->assertViewHas('contracts');
-        expect($component->viewData('contracts')->contains($contractA))->toBeTrue();
-        expect($component->viewData('contracts')->contains($contractB))->toBeFalse();
-        expect($component->viewData('contracts')->contains($contractC))->toBeTrue();
+
+        expect($component->contracts->count())->toBe(2);
+        expect($component->contracts->contains($contractA))->toBeTrue();
+        expect($component->contracts->contains($contractB))->toBeFalse();
+        expect($component->contracts->contains($contractC))->toBeTrue();
     });
 });
 
