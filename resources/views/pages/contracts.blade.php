@@ -73,7 +73,7 @@ new class extends Component
             </div>
 
             @if ($this->contracts?->isNotEmpty())
-                <x-table class="mt-8">
+                <x-table id="table" class="mt-8">
                     <x-table.columns>
                         <x-table.column class="w-full">{{ __('Title') }}</x-table.column>
                         <x-table.column>{{ __('Location') }}</x-table.column>
@@ -126,7 +126,18 @@ new class extends Component
                     </x-table.rows>
                 </x-table>
 
-                <flux:pagination :paginator="$this->contracts" />
+                <div x-data
+                    x-on:click="
+                        let el = $event.target;
+                        while (el && el !== $el) {
+                            if (el.hasAttribute('wire:click')) {
+                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
+                                break;
+                            }
+                            el = el.parentElement;
+                        }">
+                    <flux:pagination :paginator="$this->contracts" />
+                </div>
             @else
                 <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
                     <flux:icon.document-text class="mb-6 size-12 text-zinc-500 dark:text-white/70" />

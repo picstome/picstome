@@ -60,6 +60,7 @@ new class extends Component
             @if ($this->galleries?->isNotEmpty())
                 <div class="mt-12">
                     <div
+                        id="grid"
                         class="grid grid-flow-dense auto-rows-[263px] grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-4 gap-y-6"
                     >
                         @foreach ($this->galleries as $gallery)
@@ -86,7 +87,17 @@ new class extends Component
                         @endforeach
                     </div>
 
-                    <div class="mt-6">
+                    <div x-data
+                        x-on:click="
+                            let el = $event.target;
+                            while (el && el !== $el) {
+                                if (el.hasAttribute('wire:click')) {
+                                    document.getElementById('grid')?.scrollIntoView({ behavior: 'smooth' });
+                                    break;
+                                }
+                                el = el.parentElement;
+                            }"
+                        class="mt-6">
                         <flux:pagination :paginator="$this->galleries" />
                     </div>
                 </div>

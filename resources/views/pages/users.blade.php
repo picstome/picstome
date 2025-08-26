@@ -59,7 +59,18 @@ new class extends Component {
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <flux:table :paginate="$this->users" class="mt-6">
+            <div x-data
+                x-on:click="
+                    let el = $event.target;
+                    while (el && el !== $el) {
+                        if (el.hasAttribute('wire:click')) {
+                            document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
+                            break;
+                        }
+                        el = el.parentElement;
+                    }"
+                class="mt-6">
+                <flux:table id="table" :paginate="$this->users" class="mt-6">
                 <flux:table.columns>
                     <flux:table.column>{{ __('User') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Created At') }}</flux:table.column>
