@@ -24,10 +24,10 @@ test('users can view their team galleries galleries', function () {
     $component = Volt::test('pages.galleries');
 
     $response->assertStatus(200);
-    $component->assertViewHas('galleries');
-    expect($component->viewData('galleries')->contains($galleryA))->toBeTrue();
-    expect($component->viewData('galleries')->contains($galleryB))->toBeFalse();
-    expect($component->viewData('galleries')->contains($galleryC))->toBeTrue();
+    expect($component->galleries->count())->toBe(2);
+    expect($component->galleries->contains($galleryA))->toBeTrue();
+    expect($component->galleries->contains($galleryB))->toBeFalse();
+    expect($component->galleries->contains($galleryC))->toBeTrue();
 });
 
 test('can create a team gallery', function () {
