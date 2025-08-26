@@ -49,7 +49,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($photoshoots?->isNotEmpty())
+            @if ($this->photoshoots?->isNotEmpty())
                 <x-table class="mt-8">
                     <x-table.columns>
                         <x-table.column>Name</x-table.column>
@@ -57,7 +57,7 @@ new class extends Component
                     </x-table.columns>
 
                     <x-table.rows>
-                        @foreach ($photoshoots as $photoshoot)
+                        @foreach ($this->photoshoots as $photoshoot)
                             <x-table.row>
 
                                 <x-table.cell variant="strong" class="relative">
