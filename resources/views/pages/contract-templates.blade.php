@@ -3,7 +3,9 @@
 use App\Livewire\Forms\ContractTemplateForm;
 use App\Models\ContractTemplate;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 use function Laravel\Folio\name;
 
@@ -23,11 +25,13 @@ new class extends Component
         });
     }
 
-    public function with()
+    #[Computed]
+    public function templates()
     {
-        return [
-            'templates' => Auth::user()?->currentTeam->contractTemplates()->latest()->get(),
-        ];
+        return Auth::user()?->currentTeam
+            ->contractTemplates()
+            ->orderBy('title')
+            ->paginate(25);
     }
 }; ?>
 
@@ -46,7 +50,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($templates?->isNotEmpty())
+            @if ($this->templates?->isNotEmpty())
                 <x-table class="mt-8">
                     <x-table.columns>
                         <x-table.column class="w-full">{{ __('Title') }}</x-table.column>
@@ -54,7 +58,7 @@ new class extends Component
                     </x-table.columns>
 
                     <x-table.rows>
-                        @foreach ($templates as $template)
+                        @foreach ($this->templates as $template)
                             <x-table.row>
                                 <x-table.cell variant="strong" class="relative">
                                     <a
@@ -75,6 +79,10 @@ new class extends Component
                         @endforeach
                     </x-table.rows>
                 </x-table>
+
+                <div class="mt-6">
+                    <flux:pagination :paginator="$this->templates" />
+                </div>
             @else
                 <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
                     <flux:icon.clipboard-document-list class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
