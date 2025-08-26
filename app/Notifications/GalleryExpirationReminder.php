@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Gallery;
 
-class GalleryExpirationReminder extends Notification implements ShouldQueue
+class GalleryExpirationReminder extends Notification
 {
     use Queueable;
 
