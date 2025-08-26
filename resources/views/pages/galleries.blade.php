@@ -3,6 +3,7 @@
 use App\Livewire\Forms\GalleryForm;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -14,6 +15,8 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
+    use Livewire\WithPagination;
+
     public GalleryForm $form;
 
     public function mount()
@@ -30,11 +33,13 @@ new class extends Component
         });
     }
 
-    public function with()
+    #[Computed]
+    public function galleries()
     {
-        return [
-            'galleries' => Auth::user()?->currentTeam->galleries()->latest()->get(),
-        ];
+        return Auth::user()?->currentTeam
+            ->galleries()
+            ->latest()
+            ->paginate(25);
     }
 }; ?>
 
@@ -51,12 +56,12 @@ new class extends Component
                 </flux:modal.trigger>
             </div>
 
-            @if ($galleries?->isNotEmpty())
+            @if ($this->galleries?->isNotEmpty())
                 <div class="mt-12">
                     <div
                         class="grid grid-flow-dense auto-rows-[263px] grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-4 gap-y-6"
                     >
-                        @foreach ($galleries as $gallery)
+                        @foreach ($this->galleries as $gallery)
                             <div
                                 class="relative flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10"
                             >
@@ -78,6 +83,10 @@ new class extends Component
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+
+                    <div class="mt-6">
+                        <flux:pagination :paginator="$this->galleries" />
                     </div>
                 </div>
             @else
