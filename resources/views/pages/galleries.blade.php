@@ -5,6 +5,7 @@ use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
+use Livewire\WithPagination;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
@@ -15,7 +16,7 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
-    use Livewire\WithPagination;
+    use WithPagination;
 
     public GalleryForm $form;
 

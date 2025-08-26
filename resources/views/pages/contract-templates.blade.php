@@ -13,6 +13,8 @@ name('contract-templates');
 
 new class extends Component
 {
+    use WithPagination;
+
     public ContractTemplateForm $form;
 
     public function save()

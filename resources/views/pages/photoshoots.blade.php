@@ -13,6 +13,8 @@ name('photoshoots');
 
 new class extends Component
 {
+    use WithPagination;
+
     public PhotoshootForm $form;
 
     public function save()
