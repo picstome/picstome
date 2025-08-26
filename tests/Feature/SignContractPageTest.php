@@ -75,12 +75,14 @@ test('contract is executed once the final signature is submitted', function () {
         expect($contract->pdf_file_path)->not->toBeNull();
         expect($contract->pdf_file_path)->toContain('teams/1/contracts/1234ABC');
         Storage::disk('s3')->assertExists($contract->pdf_file_path);
-        Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
-            return $notifiable->routes['mail'] === 'john@example.com';
-        });
-        Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
-            return $notifiable->routes['mail'] === 'jane@example.com';
-        });
+    });
+
+    Notification::assertCount(2);
+    Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
+        return $notifiable->routes['mail'] === 'john@example.com';
+    });
+    Notification::assertSentOnDemand(ContractExecuted::class, function (ContractExecuted $notification, $channels, $notifiable) {
+        return $notifiable->routes['mail'] === 'jane@example.com';
     });
 });
 
