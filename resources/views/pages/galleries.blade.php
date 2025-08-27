@@ -40,7 +40,7 @@ new class extends Component
         return Auth::user()?->currentTeam
             ->galleries()
             ->latest()
-            ->paginate(25);
+            ->paginate(24);
     }
 }; ?>
 
