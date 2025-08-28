@@ -3,7 +3,9 @@
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\User;
+use App\Notifications\SelectionLimitReached;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\get;
@@ -94,4 +96,64 @@ test('visitors cannot favorite a photo when gallery is not selectable', function
         ->call('favorite');
 
     $component->assertStatus(403);
+});
+
+test('team owner is notified when selection limit is reached', function () {
+    Notification::fake();
+
+    $gallery = Gallery::factory()->shared()->selectable()->create(['share_selection_limit' => 2]);
+    $photo1 = Photo::factory()->for($gallery)->unfavorited()->create();
+    $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
+    $teamOwner = $gallery->team->owner;
+
+    // Favorite first photo
+    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
+    expect($photo1->fresh()->isFavorited())->toBeTrue();
+
+    // No notification sent yet
+    Notification::assertNotSentTo($teamOwner, SelectionLimitReached::class);
+
+    // Favorite second photo, reaching limit
+    Volt::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
+    expect($photo2->fresh()->isFavorited())->toBeTrue();
+
+    // Notification should be sent
+    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($gallery) {
+        return $notification->gallery->is($gallery);
+    });
+
+    // Check email content mentions customer may have changed pictures
+    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) {
+        $mailData = $notification->toMail($teamOwner);
+        return str_contains($mailData->subject, 'Selection Limit Reached') &&
+               str_contains($mailData->render(), 'customer may have changed pictures');
+    });
+});
+
+test('notification is sent only once per gallery when selection limit is reached', function () {
+    Notification::fake();
+
+    $gallery = Gallery::factory()->shared()->selectable()->create(['share_selection_limit' => 2]);
+    $photo1 = Photo::factory()->for($gallery)->unfavorited()->create();
+    $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
+    $photo3 = Photo::factory()->for($gallery)->unfavorited()->create();
+    $teamOwner = $gallery->team->owner;
+
+    // Favorite first two photos, reaching limit
+    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
+    Volt::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
+
+    // Notification sent
+    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, 1);
+
+    // Unfavorite one photo
+    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite'); // toggle off
+    expect($photo1->fresh()->isFavorited())->toBeFalse();
+
+    // Favorite another photo, reaching limit again
+    Volt::test('shared-photo-item', ['photo' => $photo3])->call('favorite');
+    expect($photo3->fresh()->isFavorited())->toBeTrue();
+
+    // No additional notification sent
+    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, 1);
 });
