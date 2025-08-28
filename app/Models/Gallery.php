@@ -32,6 +32,7 @@ class Gallery extends Model
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
             'expiration_date' => 'date',
+            'selection_limit_notification_sent_at' => 'datetime',
         ];
     }
 

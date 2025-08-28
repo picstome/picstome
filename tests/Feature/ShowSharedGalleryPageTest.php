@@ -123,7 +123,7 @@ test('team owner is notified when selection limit is reached', function () {
     });
 
     // Check email content mentions customer may have changed pictures
-    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) {
+    Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($teamOwner) {
         $mailData = $notification->toMail($teamOwner);
         return str_contains($mailData->subject, 'Selection Limit Reached') &&
                str_contains($mailData->render(), 'customer may have changed pictures');

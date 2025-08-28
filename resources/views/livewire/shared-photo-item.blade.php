@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Photo;
+use App\Notifications\SelectionLimitReached;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -13,11 +15,19 @@ new class extends Component
     {
         abort_unless($this->photo->gallery->is_share_selectable, 403);
 
-        if ($this->photo->gallery->photos()->favorited()->count() === $this->photo->gallery->share_selection_limit) {
-            $this->dispatch('selection-limit-reached');
-        }
-
         $this->photo->toggleFavorite();
+
+        $favoritedCount = $this->photo->gallery->photos()->favorited()->count();
+
+        if ($favoritedCount === $this->photo->gallery->share_selection_limit) {
+            $this->dispatch('selection-limit-reached');
+
+            if (!$this->photo->gallery->selection_limit_notification_sent_at) {
+                Notification::send($this->photo->gallery->team->owner, new SelectionLimitReached($this->photo->gallery));
+                $this->photo->gallery->selection_limit_notification_sent_at = now();
+                $this->photo->gallery->save();
+            }
+        }
 
         $this->dispatch('photo-favorited');
     }
