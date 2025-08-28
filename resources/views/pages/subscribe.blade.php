@@ -20,7 +20,7 @@ new class extends Component
 
     public $pricingTableId;
 
-    public function mount(Request $request)
+    public function mount()
     {
         Stripe::setApiKey(config('cashier.secret'));
 
