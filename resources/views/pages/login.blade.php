@@ -37,14 +37,26 @@ new class extends Component
                     <img src="/app-logo-dark.png" class="h-26 hidden dark:block" alt="Picstome">
                 </div>
 
+                @if(session('status'))
+                    <flux:text variant="strong" class="text-center font-medium">{{ session('status') }}</flux:text>
+                @endif
+
                 <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
-                <flux:input
-                    wire:model="form.password"
-                    type="password"
-                    :label="__('Password')"
-                    :placeholder="__('Your password')"
-                />
+                <div>
+                    <flux:input
+                        wire:model="form.password"
+                        type="password"
+                        :label="__('Password')"
+                        :placeholder="__('Your password')"
+                    />
+
+                    <flux:text class="mt-2">
+                        <flux:link variant="subtle" :href="route('password.request')" wire:navigate>
+                            {{ __('Forgot your password?') }}
+                        </flux:link>
+                    </flux:text>
+                </div>
 
                 <flux:button type="submit" variant="primary" class="w-full">
                     {{ __('Log in') }}
