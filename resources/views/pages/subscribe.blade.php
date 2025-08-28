@@ -26,7 +26,9 @@ new class extends Component
 
         $user = Auth::user();
 
-        abort_if($user->currentTeam->subscribed(), 403);
+        if($user->currentTeam->subscribed()) {
+            return redirect()->route('galleries');
+        };
 
         $stripeId = $user->currentTeam->stripe_id;
 
