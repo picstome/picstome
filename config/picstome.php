@@ -6,7 +6,7 @@ return [
 
     'photo_thumb_resize' => 1000,
 
-    'personal_team_storage_limit' => 10737418240, // 10GB in bytes
+    'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
     'personal_team_monthly_contract_limit' => 5,
 
