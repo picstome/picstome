@@ -106,23 +106,18 @@ test('team owner is notified when selection limit is reached', function () {
     $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
     $teamOwner = $gallery->team->owner;
 
-    // Favorite first photo
     Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
-    expect($photo1->fresh()->isFavorited())->toBeTrue();
 
-    // No notification sent yet
+    expect($photo1->fresh()->isFavorited())->toBeTrue();
     Notification::assertNotSentTo($teamOwner, SelectionLimitReached::class);
 
-    // Favorite second photo, reaching limit
     Volt::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
-    expect($photo2->fresh()->isFavorited())->toBeTrue();
 
-    // Notification should be sent
+    expect($photo2->fresh()->isFavorited())->toBeTrue();
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($gallery) {
         return $notification->gallery->is($gallery);
     });
 
-    // Check email content mentions customer may have changed pictures
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($teamOwner) {
         $mailData = $notification->toMail($teamOwner);
         return str_contains($mailData->subject, 'Selection Limit Reached') &&
