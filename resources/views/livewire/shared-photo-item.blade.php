@@ -17,6 +17,7 @@ new class extends Component
 
         if ($this->photo->gallery->isSelectionLimitReached()) {
             $this->dispatch('selection-limit-reached');
+
             $this->photo->gallery->notifyOwnerWhenSelectionLimitReached();
         }
 

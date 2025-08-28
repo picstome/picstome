@@ -104,8 +104,8 @@ class Gallery extends Model
     {
         if ($this->isSelectionLimitReached() && !$this->selection_limit_notification_sent_at) {
             Notification::send($this->team->owner, new SelectionLimitReached($this));
-            $this->selection_limit_notification_sent_at = now();
-            $this->save();
+
+            $this->update(['selection_limit_notification_sent_at' => now()]);
         }
     }
 
