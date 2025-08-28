@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\GalleryExpirationReminder;
+use App\Notifications\SelectionLimitReached;
 use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -91,6 +93,20 @@ class Gallery extends Model
         $this->team->owner->notify(new GalleryExpirationReminder($this));
         $this->reminder_sent_at = now();
         $this->save();
+    }
+
+    public function isSelectionLimitReached(): bool
+    {
+        return $this->photos()->favorited()->count() === $this->share_selection_limit;
+    }
+
+    public function notifyOwnerWhenSelectionLimitReached(): void
+    {
+        if ($this->isSelectionLimitReached() && !$this->selection_limit_notification_sent_at) {
+            Notification::send($this->team->owner, new SelectionLimitReached($this));
+            $this->selection_limit_notification_sent_at = now();
+            $this->save();
+        }
     }
 
     public function download($favorites = false)
