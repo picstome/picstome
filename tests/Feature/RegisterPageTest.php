@@ -3,7 +3,7 @@
 use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -80,7 +80,7 @@ it('gives the personal team 1GB of storage upon creation', function () {
 });
 
 it('adds new user to Acumbamail mailing list upon registration', function () {
-    Bus::fake();
+    Queue::fake();
 
     // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
@@ -100,7 +100,7 @@ it('adds new user to Acumbamail mailing list upon registration', function () {
 
     expect(User::count())->toBe(1);
 
-    Bus::assertDispatched(AddToAcumbamailList::class, function ($job) {
+    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
         return $job->email === 'acumbamail@example.com' &&
                $job->name === 'Test User' &&
                $job->listId === '123'; // Should use default list_id for non-Spanish
@@ -108,7 +108,7 @@ it('adds new user to Acumbamail mailing list upon registration', function () {
 });
 
 it('adds spanish users to spanish Acumbamail mailing list upon registration', function () {
-    Bus::fake();
+    Queue::fake();
 
     // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
@@ -128,7 +128,7 @@ it('adds spanish users to spanish Acumbamail mailing list upon registration', fu
 
     expect(User::count())->toBe(1);
 
-    Bus::assertDispatched(AddToAcumbamailList::class, function ($job) {
+    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
         return $job->email === 'acumbamail-es@example.com' &&
                $job->name === 'Usuario de Prueba' &&
                $job->listId === '456'; // Should use Spanish list_id
