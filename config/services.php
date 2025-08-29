@@ -44,6 +44,7 @@ return [
     'acumbamail' => [
         'auth_token' => env('ACUMBAMAIL_AUTH_TOKEN'),
         'list_id' => env('ACUMBAMAIL_LIST_ID'),
+        'list_id_es' => env('ACUMBAMAIL_LIST_ID_ES'),
     ],
 
 ];

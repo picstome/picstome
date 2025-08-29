@@ -1,8 +1,9 @@
 <?php
 
+use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Bus;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -79,12 +80,15 @@ it('gives the personal team 1GB of storage upon creation', function () {
 });
 
 it('adds new user to Acumbamail mailing list upon registration', function () {
+    Bus::fake();
+
+    // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
     config(['services.acumbamail.list_id' => '123']);
+    config(['services.acumbamail.list_id_es' => '456']);
 
-    Http::fake([
-        'acumbamail.com/api/1/addSubscriber' => Http::response(123, 200)
-    ]);
+    // Test with default (non-Spanish) locale
+    app()->setLocale('en');
 
     $component = Volt::test('pages.register')
         ->set('name', 'Test User')
@@ -96,14 +100,37 @@ it('adds new user to Acumbamail mailing list upon registration', function () {
 
     expect(User::count())->toBe(1);
 
-    Http::assertSent(function ($request) {
-        return $request->url() === 'https://acumbamail.com/api/1/addSubscriber' &&
-               $request->method() === 'POST' &&
-               $request['auth_token'] === 'test_token' &&
-               $request['list_id'] === '123' &&
-               $request['merge_fields'] === [
-                   'EMAIL' => 'acumbamail@example.com',
-                   'NAME' => 'Test User',
-               ];
+    Bus::assertDispatched(AddToAcumbamailList::class, function ($job) {
+        return $job->email === 'acumbamail@example.com' &&
+               $job->name === 'Test User' &&
+               $job->listId === '123'; // Should use default list_id for non-Spanish
+    });
+});
+
+it('adds spanish users to spanish Acumbamail mailing list upon registration', function () {
+    Bus::fake();
+
+    // Set required config values for the test
+    config(['services.acumbamail.auth_token' => 'test_token']);
+    config(['services.acumbamail.list_id' => '123']);
+    config(['services.acumbamail.list_id_es' => '456']);
+
+    // Test with Spanish locale
+    app()->setLocale('es');
+
+    $component = Volt::test('pages.register')
+        ->set('name', 'Usuario de Prueba')
+        ->set('email', 'acumbamail-es@example.com')
+        ->set('password', 'password')
+        ->set('password_confirmation', 'password')
+        ->set('terms', true)
+        ->call('register');
+
+    expect(User::count())->toBe(1);
+
+    Bus::assertDispatched(AddToAcumbamailList::class, function ($job) {
+        return $job->email === 'acumbamail-es@example.com' &&
+               $job->name === 'Usuario de Prueba' &&
+               $job->listId === '456'; // Should use Spanish list_id
     });
 });

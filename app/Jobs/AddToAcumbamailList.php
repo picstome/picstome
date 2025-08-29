@@ -15,18 +15,21 @@ class AddToAcumbamailList implements ShouldQueue
 
     public function __construct(
         public string $email,
-        public string $name
+        public string $name,
+        public ?string $listId = null
     ) {}
 
     public function handle(): void
     {
-        if (!config('services.acumbamail.auth_token') || !config('services.acumbamail.list_id')) {
+        $listId = $this->listId ?? config('services.acumbamail.list_id');
+
+        if (!config('services.acumbamail.auth_token') || !$listId) {
             return;
         }
 
         Http::post('https://acumbamail.com/api/1/addSubscriber', [
             'auth_token' => config('services.acumbamail.auth_token'),
-            'list_id' => config('services.acumbamail.list_id'),
+            'list_id' => $listId,
             'merge_fields' => [
                 'EMAIL' => $this->email,
                 'NAME' => $this->name,

@@ -41,7 +41,12 @@ new class extends Component {
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
         ]);
 
-        AddToAcumbamailList::dispatch($user->email, $user->name);
+        // Add user to Acumbamail mailing list asynchronously
+        $listId = app()->getLocale() === 'es'
+            ? config('services.acumbamail.list_id_es')
+            : config('services.acumbamail.list_id');
+
+        \App\Jobs\AddToAcumbamailList::dispatch($user->email, $user->name, $listId);
 
         Auth::login($user);
 
