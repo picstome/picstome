@@ -41,4 +41,9 @@ return [
         'es_pricing_table_id' => env('STRIPE_ES_PRICING_TABLE_ID'),
     ],
 
+    'acumbamail' => [
+        'auth_token' => env('ACUMBAMAIL_AUTH_TOKEN'),
+        'list_id' => env('ACUMBAMAIL_LIST_ID'),
+    ],
+
 ];
