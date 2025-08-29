@@ -133,6 +133,18 @@ new class extends Component
 
                     <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="$this->currentTeam?->subscribed() ? __('Optional') : null" type="date" :clearable="$this->currentTeam?->subscribed()" />
 
+                    @if (!$this->currentTeam?->subscribed())
+                        <flux:callout icon="bolt" variant="secondary">
+                            <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Subscribe') }}</flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endif
+
                     <flux:switch wire:model="form.keepOriginalSize" :label="__('Keep photos at their original size')" />
 
                     <div class="flex">
