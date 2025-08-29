@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -75,4 +76,28 @@ it('gives the personal team 1GB of storage upon creation', function () {
     $user = User::where('email', 'storageuser@example.com')->first();
     $team = $user->currentTeam;
     expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
+});
+
+it('adds new user to Acumbamail mailing list upon registration', function () {
+    Http::fake([
+        'acumbamail.com/api/1/addSubscriber' => Http::response(123, 200)
+    ]);
+
+    $component = Volt::test('pages.register')
+        ->set('name', 'Test User')
+        ->set('email', 'acumbamail@example.com')
+        ->set('password', 'password')
+        ->set('password_confirmation', 'password')
+        ->set('terms', true)
+        ->call('register');
+
+    expect(User::count())->toBe(1);
+
+    Http::assertSent(function ($request) {
+        return $request->url() === 'https://acumbamail.com/api/1/addSubscriber' &&
+               $request->method() === 'POST' &&
+               $request->has(['auth_token', 'list_id', 'merge_fields']) &&
+               str_contains($request['merge_fields'], 'acumbamail@example.com') &&
+               str_contains($request['merge_fields'], 'Test User');
+    });
 });
