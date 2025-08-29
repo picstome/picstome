@@ -96,4 +96,13 @@ class GalleryFactory extends Factory
             ];
         });
     }
+
+    public function withExpirationDate($days = 30): Factory
+    {
+        return $this->state(function () use ($days) {
+            return [
+                'expiration_date' => now()->addDays($days),
+            ];
+        });
+    }
 }
