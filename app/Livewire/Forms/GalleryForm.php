@@ -25,13 +25,28 @@ class GalleryForm extends Form
 
     protected function rules()
     {
+        $team = Auth::user()->currentTeam;
+        $maxExpirationDate = now()->addYear()->format('Y-m-d');
+
+        $expirationRules = [
+            'date',
+            'after_or_equal:today',
+            'before_or_equal:' . $maxExpirationDate,
+        ];
+
+        if (!$team->subscribed()) {
+            array_unshift($expirationRules, 'required');
+        } else {
+            array_unshift($expirationRules, 'nullable');
+        }
+
         return [
             'photoshoot_id' => [
                 'nullable',
-                Rule::exists('photoshoots', 'id')->where(fn($query) => $query->where('team_id', auth()->user()->currentTeam->id)),
+                Rule::exists('photoshoots', 'id')->where(fn($query) => $query->where('team_id', $team->id)),
             ],
             'name' => ['nullable', 'string'],
-            'expirationDate' => ['nullable', 'date', 'after_or_equal:today'],
+            'expirationDate' => $expirationRules,
             'keepOriginalSize' => ['required', 'boolean'],
         ];
     }
