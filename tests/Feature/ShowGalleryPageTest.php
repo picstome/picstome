@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -421,14 +422,27 @@ describe('Gallery Editing', function () {
         expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
     });
 
-    it('removes the gallery expiration date', function () {
+    it('removes the gallery expiration date when subscribed', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', null)
+            ->set('form.expirationDate', '')
             ->call('update');
         $gallery->refresh();
         expect($gallery->expiration_date)->toBeNull();
+    });
+
+    it('cannot remove the gallery expiration date when not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update');
+
+        $component->assertHasErrors(['form.expirationDate' => 'required']);
+        $gallery->refresh();
+        expect($gallery->expiration_date)->not->toBeNull();
     });
 });
 

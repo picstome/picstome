@@ -25,7 +25,7 @@ class GalleryForm extends Form
 
     protected function rules()
     {
-        $team = Auth::user()->currentTeam;
+        $team = Auth::user()?->currentTeam;
         $maxExpirationDate = now()->addYear()->format('Y-m-d');
 
         $expirationRules = [
@@ -34,7 +34,7 @@ class GalleryForm extends Form
             'before_or_equal:' . $maxExpirationDate,
         ];
 
-        if (!$team->subscribed()) {
+        if (!$team?->subscribed()) {
             array_unshift($expirationRules, 'required');
         } else {
             array_unshift($expirationRules, 'nullable');
