@@ -79,7 +79,6 @@ it('gives the personal team 1GB of storage upon creation', function () {
 });
 
 it('adds new user to Acumbamail mailing list upon registration', function () {
-    // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
     config(['services.acumbamail.list_id' => '123']);
 
