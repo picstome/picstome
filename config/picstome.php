@@ -8,6 +8,8 @@ return [
 
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
+    'subscription_storage_limit' => 1073741824000, // 1TB in bytes
+
     'personal_team_monthly_contract_limit' => 5,
 
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
