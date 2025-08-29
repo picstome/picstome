@@ -339,7 +339,9 @@ describe('Photo Deletion', function () {
 describe('Gallery Photoshoot Association', function () {
     it('allows assigning a gallery to a photoshoot', function () {
         $photoshoot = Photoshoot::factory()->for($this->team)->create();
-        $gallery = Gallery::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'expiration_date' => now()->addDays(30)
+        ]);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshoot->id)
@@ -352,7 +354,10 @@ describe('Gallery Photoshoot Association', function () {
     it('allows changing a gallery\'s photoshoot', function () {
         $photoshootA = Photoshoot::factory()->for($this->team)->create();
         $photoshootB = Photoshoot::factory()->for($this->team)->create();
-        $gallery = Gallery::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'photoshoot_id' => $photoshootA->id,
+            'expiration_date' => now()->addDays(30),
+        ]);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshootB->id)
@@ -378,7 +383,10 @@ describe('Gallery Photoshoot Association', function () {
 
     it('allows removing a gallery from a photoshoot', function () {
         $photoshoot = Photoshoot::factory()->for($this->team)->create();
-        $gallery = Gallery::factory()->for($this->team)->create(['photoshoot_id' => $photoshoot->id]);
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'photoshoot_id' => $photoshoot->id,
+            'expiration_date' => now()->addDays(30),
+        ]);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', null)
@@ -391,9 +399,9 @@ describe('Gallery Photoshoot Association', function () {
 
 describe('Gallery Editing', function () {
     it('allows editing a team gallery', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(30)]);
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.name', 'Edited Gallery')
             ->call('update');
 
