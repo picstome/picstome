@@ -22,7 +22,7 @@ new class extends Component
 
     public function mount()
     {
-        $this->form->expirationDate = now()->addYear()->format('Y-m-d');
+        $this->form->expirationDate = now()->addMonth()->format('Y-m-d');
     }
 
     public function save()
@@ -35,9 +35,15 @@ new class extends Component
     }
 
     #[Computed]
+    public function currentTeam()
+    {
+        return Auth::user()?->currentTeam;
+    }
+
+    #[Computed]
     public function galleries()
     {
-        return Auth::user()?->currentTeam
+        return $this->currentTeam
             ->galleries()
             ->latest()
             ->paginate(24);
@@ -125,7 +131,7 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable />
+                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="$this->currentTeam?->subscribed() ? __('Optional') : null" type="date" :clearable="$this->currentTeam?->subscribed()" />
 
                     <flux:switch wire:model="form.keepOriginalSize" :label="__('Keep photos at their original size')" />
 
