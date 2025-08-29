@@ -43,8 +43,7 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return $this->currentTeam
-            ->galleries()
+        return $this->currentTeam?->galleries()
             ->latest()
             ->paginate(24);
     }

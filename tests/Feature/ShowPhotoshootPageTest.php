@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -50,10 +51,75 @@ test('can add a gallery', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('form.name', 'Gallery for a photoshoot')
+        ->set('galleryForm.name', 'Gallery for a photoshoot')
         ->call('addGallery');
 
     expect($photoshoot->galleries()->count())->toBe(1);
+    $gallery = $photoshoot->galleries()->first();
+    expect($gallery->name)->toBe('Gallery for a photoshoot');
+    expect($gallery->expiration_date)->not->toBeNull();
+    expect($gallery->expiration_date->format('Y-m-d'))->toBe(now()->addMonth()->format('Y-m-d'));
+});
+
+test('can add a gallery with custom expiration date', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+    $expiration = now()->addDays(7)->toDateString();
+
+    Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->set('galleryForm.name', 'Gallery with custom expiration')
+        ->set('galleryForm.expirationDate', $expiration)
+        ->call('addGallery');
+
+    $gallery = $photoshoot->galleries()->first();
+    expect($gallery->name)->toBe('Gallery with custom expiration');
+    expect($gallery->expiration_date->toDateString())->toBe($expiration);
+});
+
+test('can add a gallery with no expiration date when subscribed', function () {
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+
+    Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->set('galleryForm.name', 'Gallery with no expiration')
+        ->set('galleryForm.expirationDate', '')
+        ->call('addGallery');
+
+    $gallery = $photoshoot->galleries()->first();
+    expect($gallery->name)->toBe('Gallery with no expiration');
+    expect($gallery->expiration_date)->toBeNull();
+});
+
+test('cannot add a gallery with no expiration date when not subscribed', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->set('galleryForm.name', 'Gallery with no expiration')
+        ->set('galleryForm.expirationDate', '')
+        ->call('addGallery');
+
+    $component->assertHasErrors(['galleryForm.expirationDate' => 'required']);
+    expect($photoshoot->galleries()->count())->toBe(0);
+});
+
+test('cannot add a gallery with invalid expiration date', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->set('galleryForm.name', 'Gallery with invalid date')
+        ->set('galleryForm.expirationDate', 'not-a-date')
+        ->call('addGallery');
+
+    $component->assertHasErrors(['galleryForm.expirationDate' => 'date']);
+    expect($photoshoot->galleries()->count())->toBe(0);
+
+    $pastDate = now()->subDay()->toDateString();
+    $component = Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->set('galleryForm.name', 'Gallery with past date')
+        ->set('galleryForm.expirationDate', $pastDate)
+        ->call('addGallery');
+
+    $component->assertHasErrors(['galleryForm.expirationDate' => 'after_or_equal']);
+    expect($photoshoot->galleries()->count())->toBe(0);
 });
 
 test('can delete team photoshoot', function () {

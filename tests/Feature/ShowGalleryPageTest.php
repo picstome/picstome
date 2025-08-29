@@ -430,7 +430,6 @@ describe('Gallery Editing', function () {
         $gallery->refresh();
         expect($gallery->expiration_date)->toBeNull();
     });
-
 });
 
 describe('Storage Limits', function () {

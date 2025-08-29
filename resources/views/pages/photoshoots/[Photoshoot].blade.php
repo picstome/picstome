@@ -31,6 +31,7 @@ new class extends Component
         $this->form->setPhotoshoot($this->photoshoot);
 
         $this->galleryForm->setPhotoshoot($this->photoshoot);
+        $this->galleryForm->expirationDate = now()->addMonth()->format('Y-m-d');
 
         $this->contractForm->setPhotoshoot($this->photoshoot);
 
@@ -307,6 +308,20 @@ new class extends Component
                     </div>
 
                     <flux:input wire:model="galleryForm.name" :label="__('Gallery name')" type="text" />
+
+                    <flux:input wire:model="galleryForm.expirationDate" :label="__('Expiration date')" :badge="Auth::user()?->currentTeam?->subscribed() ? __('Optional') : null" type="date" :clearable="Auth::user()?->currentTeam?->subscribed()" />
+
+                    @if (!Auth::user()?->currentTeam?->subscribed())
+                        <flux:callout icon="bolt" variant="secondary">
+                            <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Subscribe') }}</flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endif
 
                     <flux:switch
                         wire:model="galleryForm.keepOriginalSize"
