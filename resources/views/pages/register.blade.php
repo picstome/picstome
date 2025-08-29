@@ -1,10 +1,10 @@
 <?php
 
+use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -41,20 +41,7 @@ new class extends Component {
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
         ]);
 
-        // Add user to Acumbamail mailing list
-        if (config('services.acumbamail.auth_token') && config('services.acumbamail.list_id')) {
-            Http::post('https://acumbamail.com/api/1/addSubscriber', [
-                'auth_token' => config('services.acumbamail.auth_token'),
-                'list_id' => config('services.acumbamail.list_id'),
-                'merge_fields' => [
-                    'EMAIL' => $user->email,
-                    'NAME' => $user->name,
-                ],
-                'double_optin' => 0,
-                'update_subscriber' => 0,
-                'complete_json' => 0,
-            ]);
-        }
+        AddToAcumbamailList::dispatch($user->email, $user->name);
 
         Auth::login($user);
 
