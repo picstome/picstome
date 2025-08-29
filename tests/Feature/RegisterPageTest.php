@@ -100,8 +100,11 @@ it('adds new user to Acumbamail mailing list upon registration', function () {
     Http::assertSent(function ($request) {
         return $request->url() === 'https://acumbamail.com/api/1/addSubscriber' &&
                $request->method() === 'POST' &&
-               $request->has(['auth_token', 'list_id', 'merge_fields']) &&
-               str_contains($request['merge_fields'], 'acumbamail@example.com') &&
-               str_contains($request['merge_fields'], 'Test User');
+               $request['auth_token'] === 'test_token' &&
+               $request['list_id'] === '123' &&
+               $request['merge_fields'] === [
+                   'EMAIL' => 'acumbamail@example.com',
+                   'NAME' => 'Test User',
+               ];
     });
 });
