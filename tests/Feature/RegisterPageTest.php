@@ -82,12 +82,10 @@ it('gives the personal team 1GB of storage upon creation', function () {
 it('adds new user to Acumbamail mailing list upon registration', function () {
     Queue::fake();
 
-    // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
     config(['services.acumbamail.list_id' => '123']);
     config(['services.acumbamail.list_id_es' => '456']);
 
-    // Test with default (non-Spanish) locale
     app()->setLocale('en');
 
     $component = Volt::test('pages.register')
@@ -103,19 +101,17 @@ it('adds new user to Acumbamail mailing list upon registration', function () {
     Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
         return $job->email === 'acumbamail@example.com' &&
                $job->name === 'Test User' &&
-               $job->listId === '123'; // Should use default list_id for non-Spanish
+               $job->listId === '123';
     });
 });
 
 it('adds spanish users to spanish Acumbamail mailing list upon registration', function () {
     Queue::fake();
 
-    // Set required config values for the test
     config(['services.acumbamail.auth_token' => 'test_token']);
     config(['services.acumbamail.list_id' => '123']);
     config(['services.acumbamail.list_id_es' => '456']);
 
-    // Test with Spanish locale
     app()->setLocale('es');
 
     $component = Volt::test('pages.register')
@@ -131,6 +127,6 @@ it('adds spanish users to spanish Acumbamail mailing list upon registration', fu
     Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
         return $job->email === 'acumbamail-es@example.com' &&
                $job->name === 'Usuario de Prueba' &&
-               $job->listId === '456'; // Should use Spanish list_id
+               $job->listId === '456';
     });
 });
