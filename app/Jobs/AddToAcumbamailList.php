@@ -27,7 +27,7 @@ class AddToAcumbamailList implements ShouldQueue
             return;
         }
 
-        Http::post('https://acumbamail.com/api/1/addSubscriber', [
+        Http::post('https://acumbamail.com/api/1/addSubscriber/', [
             'auth_token' => config('services.acumbamail.auth_token'),
             'list_id' => $listId,
             'merge_fields' => [
