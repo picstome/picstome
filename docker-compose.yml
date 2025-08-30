@@ -1,19 +1,33 @@
-version: '3.8'
-
 services:
   app:
-    image: php:8.2-cli
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html
-      - sqlite_data:/var/www/html/database/database.sqlite
-    command: php -S 0.0.0.0:8000 -t public
-    ports:
-      - "8000:8000"
+    build:
+      context: .
+      target: app
+      args:
+        APP_ENV: production
+    environment:
+      APP_ENV: production
+      REDIS_HOST: redis
     depends_on:
       - redis
-    environment:
-      REDIS_HOST: redis
+    volumes:
+      # Application code volume (populated from image on first run)
+      - app_root:/var/www/html
+      # Persist application storage (user uploads, logs, cache)
+      - storage:/var/www/html/storage
+      # Persist SQLite database directory (the file lives under database/)
+      - sqlite_data:/var/www/html/database
+
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+    ports:
+      - "8000:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Mount the built app read-only (served by nginx)
+      - app_root:/var/www/html:ro
 
   redis:
     image: redis:7-alpine
@@ -21,4 +35,7 @@ services:
       - "6379:6379"
 
 volumes:
+  storage:
   sqlite_data:
+  # Application code shared between app and web, populated from the built image
+  app_root:
