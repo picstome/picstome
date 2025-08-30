@@ -105,6 +105,7 @@ docker compose exec app php artisan storage:link
 Persisted data:
 - storage/ is persisted in a named volume (storage)
 - database/ (including database.sqlite) is persisted in a named volume (sqlite_data)
+- Redis data is persisted in a named volume (redis_data)
 
 ### 3) Asset builds during Docker image build
 
@@ -130,6 +131,6 @@ For active frontend development with hot-reload, you may still prefer running `n
 
 ```bash
 docker compose down
-# Remove named volumes too (including SQLite DB and storage)
+# Remove named volumes too (including SQLite DB, storage, and Redis)
 docker compose down -v
 ```

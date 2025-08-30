@@ -33,9 +33,12 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
 
 volumes:
   storage:
   sqlite_data:
+  redis_data:
   # Application code shared between app and web, populated from the built image
   app_root:
