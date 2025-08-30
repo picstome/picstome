@@ -31,7 +31,7 @@ describe('Email Verification', function () {
             ['id' => $user->id, 'hash' => sha1($user->email)]
         );
 
-$response = actingAs($user)->get($verificationUrl, ['Accept-Language' => 'es']);
+        $response = actingAs($user)->get($verificationUrl);
 
         Event::assertDispatched(Verified::class);
         expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
