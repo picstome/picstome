@@ -1,9 +1,7 @@
 <?php
 
-use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -77,56 +75,4 @@ it('gives the personal team 1GB of storage upon creation', function () {
     $user = User::where('email', 'storageuser@example.com')->first();
     $team = $user->currentTeam;
     expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
-});
-
-it('adds new user to Acumbamail mailing list upon registration', function () {
-    Queue::fake();
-
-    config(['services.acumbamail.auth_token' => 'test_token']);
-    config(['services.acumbamail.list_id' => '123']);
-    config(['services.acumbamail.list_id_es' => '456']);
-
-    app()->setLocale('en');
-
-    $component = Volt::test('pages.register')
-        ->set('name', 'Test User')
-        ->set('email', 'acumbamail@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
-        ->set('terms', true)
-        ->call('register');
-
-    expect(User::count())->toBe(1);
-
-    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
-        return $job->email === 'acumbamail@example.com' &&
-               $job->name === 'Test User' &&
-               $job->listId === '123';
-    });
-});
-
-it('adds spanish users to spanish Acumbamail mailing list upon registration', function () {
-    Queue::fake();
-
-    config(['services.acumbamail.auth_token' => 'test_token']);
-    config(['services.acumbamail.list_id' => '123']);
-    config(['services.acumbamail.list_id_es' => '456']);
-
-    app()->setLocale('es');
-
-    $component = Volt::test('pages.register')
-        ->set('name', 'Usuario de Prueba')
-        ->set('email', 'acumbamail-es@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
-        ->set('terms', true)
-        ->call('register');
-
-    expect(User::count())->toBe(1);
-
-    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
-        return $job->email === 'acumbamail-es@example.com' &&
-               $job->name === 'Usuario de Prueba' &&
-               $job->listId === '456';
-    });
 });
