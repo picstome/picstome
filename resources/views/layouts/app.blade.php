@@ -40,6 +40,17 @@
                     <flux:brand href="/" logo="/logo.png" class="px-2" />
                 @endauth
 
+
+                @auth
+                    <flux:modal.trigger name="search" shortcut="cmd.k">
+                        <flux:input as="button" variant="filled" placeholder="Search..." icon="magnifying-glass" />
+                    </flux:modal.trigger>
+
+                    <flux:modal name="search" variant="bare" class="w-full max-w-[30rem] my-[12vh] max-h-screen overflow-y-hidden">
+                        <livewire:search />
+                    </flux:modal>
+                @endauth
+
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Photos')">
                         <flux:navlist.item :href="route('galleries')" icon="photo">
