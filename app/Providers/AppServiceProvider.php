@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Team;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
 use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Cashier::useCustomerModel(Team::class);
+
+        Blade::if('subscribed', function (Team $team) {
+            return $team && $team->subscribed();
+        });
 
         Collection::macro('naturalSortBy', function ($attribute = 'name') {
             /** @var \Illuminate\Support\Collection $this */
