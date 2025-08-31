@@ -209,9 +209,11 @@ new class extends Component
                                 {{ __('Download') }}
                             </flux:menu.item>
 
-                            <flux:modal.trigger name="favorite-list">
-                                <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
-                            </flux:modal.trigger>
+                            @if($favorites->isNotEmpty())
+                                <flux:modal.trigger name="favorite-list">
+                                    <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
+                                </flux:modal.trigger>
+                            @endif
 
                             <flux:modal.trigger name="edit">
                                 <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
@@ -273,6 +275,11 @@ new class extends Component
                         >
                             {{ __('Favorited') }}
                         </flux:navbar.item>
+                        @if($favorites->isNotEmpty())
+                            <flux:modal.trigger name="favorite-list">
+                                <flux:badge size="sm" as="button">As list</flux:badge>
+                            </flux:modal.trigger>
+                        @endif
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
