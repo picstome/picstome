@@ -43,7 +43,13 @@
 
                 @auth
                     <flux:modal.trigger name="search" shortcut="cmd.k">
-                        <flux:input as="button" variant="filled" :placeholder="__('Search...')" icon="magnifying-glass" />
+                        <flux:input
+                            as="button"
+                            variant="filled"
+                            :placeholder="__('Search...')"
+                            icon="magnifying-glass"
+                            kbd="⌘K"
+                        />
                     </flux:modal.trigger>
 
                     <flux:modal name="search" variant="bare" class="w-full max-w-[30rem] my-[12vh] max-h-screen overflow-y-hidden px-2">
