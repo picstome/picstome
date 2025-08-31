@@ -1,12 +1,31 @@
 <?php
 
-use App\Models\Photo;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 new class extends Component {
     public ?string $search = null;
+
+    public function viewGallery($galleryId)
+    {
+        return $this->redirect("/galleries/{$galleryId}", navigate: true);
+    }
+
+    public function viewPhotoshoot($photoshootId)
+    {
+        return $this->redirect("/photoshoots/{$photoshootId}", navigate: true);
+    }
+
+    public function viewContract($contractId)
+    {
+        return $this->redirect("/contracts/{$contractId}", navigate: true);
+    }
+
+    public function viewPhoto($galleryId, $photoId)
+    {
+        return $this->redirect("/galleries/{$galleryId}/photos/{$photoId}", navigate: true);
+    }
 
     #[Computed]
     public function galleries() {
@@ -78,7 +97,7 @@ new class extends Component {
                     {{ __('Galleries') }}
                 </flux:text>
                 @foreach ($this->galleries as $gallery)
-                    <flux:command.item href="/galleries/{{ $gallery->ulid }}">{{ $gallery->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewGallery('{{ $gallery->id }}')">{{ $gallery->name }}</flux:command.item>
                 @endforeach
             @endunless
 
@@ -87,7 +106,7 @@ new class extends Component {
                     {{ __('Photoshoots') }}
                 </flux:text>
                 @foreach ($this->photoshoots as $photoshoot)
-                    <flux:command.item href="/photoshoots/{{ $photoshoot->ulid }}">{{ $photoshoot->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewPhotoshoot('{{ $photoshoot->id }}')">{{ $photoshoot->name }}</flux:command.item>
                 @endforeach
             @endunless
 
@@ -96,7 +115,7 @@ new class extends Component {
                     {{ __('Contracts') }}
                 </flux:text>
                 @foreach ($this->contracts as $contract)
-                    <flux:command.item href="/contracts/{{ $contract->ulid }}">{{ $contract->title }}</flux:command.item>
+                    <flux:command.item wire:click="viewContract('{{ $contract->id }}')">{{ $contract->title }}</flux:command.item>
                 @endforeach
             @endunless
 
@@ -105,7 +124,7 @@ new class extends Component {
                     {{ __('Photos') }}
                 </flux:text>
                 @foreach ($this->photos as $photo)
-                    <flux:command.item href="/galleries/{{ $photo->gallery->ulid }}/photos/{{ $photo->id }}">{{ $photo->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewPhoto('{{ $photo->gallery->id }}', '{{ $photo->id }}')">{{ $photo->name }}</flux:command.item>
                 @endforeach
             @endunless
         </flux:command.items>
