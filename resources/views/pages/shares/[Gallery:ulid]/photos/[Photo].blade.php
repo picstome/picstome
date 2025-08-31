@@ -165,6 +165,12 @@ new class extends Component
                     @endif
                 </div>
             </div>
+
+            @unlesssubscribed($photo->gallery->team)
+                <div class="mt-10">
+                    @include('partials.powered-by')
+                </div>
+            @endsubscribed
         </div>
 
         @assets

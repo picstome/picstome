@@ -57,6 +57,7 @@ new class extends Component
         <div
             x-data
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
+            class="h-full"
         >
             <div>
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto" />
@@ -135,6 +136,11 @@ new class extends Component
                     </flux:subheading>
                 </div>
             @endif
+            @unlesssubscribed($gallery->team)
+                <div class="mt-10">
+                    @include('partials.powered-by')
+                </div>
+            @endsubscribed
         </div>
     @endvolt
 </x-guest-layout>
