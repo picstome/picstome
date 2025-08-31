@@ -41,7 +41,7 @@ class ContractExecuted extends Notification
             ->action('Download contract', $this->contract->pdf_file_url);
 
         if ($this->contract->team->subscribed()) {
-            $mail->salutation('');
+            $mail->salutation($this->contract->team->name);
         }
 
         return $mail;
