@@ -66,6 +66,12 @@
             @endforeach
         </tr>
     </table>
+
+    @unlesssubscribed($contract->team)
+        <p style="margin: 8px 0 0 0; font-size: 12px; color: #555;">
+            {{ __('Powered by') }} Picstome
+        </p>
+    @endsubscribed
 </div>
 
 </body>
