@@ -88,7 +88,7 @@ new class extends Component {
 }; ?>
 
 <flux:command class="border-none shadow-lg inline-flex flex-col max-h-[76vh]">
-    <flux:command.input wire:model.live="search" placeholder="Search..." autofocus closable />
+    <flux:command.input wire:model.live="search" placeholder="{{ __('Search...') }}" autofocus closable />
 
     @unless(is_null($this->search))
         <flux:command.items>
