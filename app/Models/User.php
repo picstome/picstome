@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\HasAvatar;
+use App\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -77,6 +78,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function personalTeam()
     {
         return $this->ownedTeams->where('personal_team', true)->first();
+    }
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new VerifyEmail);
     }
 
     protected function isAdmin(): Attribute
