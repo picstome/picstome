@@ -49,7 +49,9 @@ new class extends Component
         $referer = request()->header('referer');
         $galleryUrl = route('shares.show', ['gallery' => $this->photo->gallery]);
 
-        return $referer && str_starts_with($referer, $galleryUrl);
+        return $referer
+            && str_starts_with($referer, $galleryUrl)
+            && !str_contains($referer, '/photos/');
     }
 
     public function favorite()
