@@ -17,9 +17,9 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
+<div id="photo-{{ $photo->id }}" class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
     <a
-        href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
+        href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}#photo-{{ $photo->id }}"
         wire:navigate.hover
         class="mx-auto flex"
     >
