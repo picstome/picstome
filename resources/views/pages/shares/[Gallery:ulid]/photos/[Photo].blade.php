@@ -4,6 +4,7 @@ use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -43,17 +44,6 @@ new class extends Component
             : $this->photo->previous();
     }
 
-    #[Computed]
-    public function cameFromGallery()
-    {
-        $referer = request()->header('referer');
-        $galleryUrl = route('shares.show', ['gallery' => $this->photo->gallery]);
-
-        return $referer
-            && str_starts_with($referer, $galleryUrl)
-            && !str_contains($referer, '/photos/');
-    }
-
     public function favorite()
     {
         abort_unless($this->photo->gallery->is_share_selectable, 401);
@@ -63,6 +53,16 @@ new class extends Component
         }
 
         $this->photo->toggleFavorite();
+    }
+
+    #[Computed]
+    public function galleryUrl()
+    {
+        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery]))
+            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
+            ->append('#')
+            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->photo->id);
     }
 }; ?>
 
@@ -87,26 +87,15 @@ new class extends Component
             class="flex h-[calc(100vh-64px)] flex-col"
         >
             <div>
-                @if ($this->cameFromGallery)
-                    <flux:button
-                        @click="history.back()"
-                        icon="chevron-left"
-                        variant="subtle"
-                        inset
-                    >
-                        {{ $photo->gallery->name }}
-                    </flux:button>
-                @else
-                    <flux:button
-                        :href="route('shares.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
-                        wire:navigate.hover
-                        icon="chevron-left"
-                        variant="subtle"
-                        inset
-                    >
-                        {{ $photo->gallery->name }}
-                    </flux:button>
-                @endif
+                <flux:button
+                    :href="$this->galleryUrl"
+                    wire:navigate.hover
+                    icon="chevron-left"
+                    variant="subtle"
+                    inset
+                >
+                    {{ $photo->gallery->name }}
+                </flux:button>
             </div>
 
             <div class="mt-8 flex flex-wrap items-end justify-between gap-4">

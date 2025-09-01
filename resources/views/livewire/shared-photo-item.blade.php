@@ -7,6 +7,8 @@ new class extends Component
 {
     public Photo $photo;
 
+    public ?string $htmlId = null;
+
     public $asFavorite = false;
 
     public function favorite()
@@ -27,6 +29,7 @@ new class extends Component
 
 <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
     <a
+        id="{{ $htmlId }}"
         wire:navigate.hover
         href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $photo, 'navigateFavorites' => $asFavorite ? true : null]) }}"
         class="mx-auto flex"

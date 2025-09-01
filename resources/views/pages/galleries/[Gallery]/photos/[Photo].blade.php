@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photo;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -31,17 +32,6 @@ new class extends Component
             : $this->photo->previous();
     }
 
-    #[Computed]
-    public function cameFromGallery()
-    {
-        $referer = request()->header('referer');
-        $galleryUrl = route('galleries.show', ['gallery' => $this->photo->gallery]);
-
-        return $referer
-            && str_starts_with($referer, $galleryUrl)
-            && !str_contains($referer, '/photos/');
-    }
-
     public function favorite()
     {
         $this->photo->toggleFavorite();
@@ -54,6 +44,16 @@ new class extends Component
         $this->photo->deleteFromDisk()->delete();
 
         return $this->redirect("/galleries/{$gallery->id}");
+    }
+
+    #[Computed]
+    public function galleryUrl()
+    {
+        return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
+            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
+            ->append('#')
+            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->photo->id);
     }
 }; ?>
 
@@ -75,26 +75,15 @@ new class extends Component
             class="flex h-[calc(100vh-64px)] flex-col"
         >
             <div>
-                @if ($this->cameFromGallery)
-                    <flux:button
-                        @click="history.back()"
-                        icon="chevron-left"
-                        variant="subtle"
-                        inset
-                    >
-                        {{ $photo->gallery->name }}
-                    </flux:button>
-                @else
-                    <flux:button
-                        :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
-                        wire:navigate.hover
-                        icon="chevron-left"
-                        variant="subtle"
-                        inset
-                    >
-                        {{ $photo->gallery->name }}
-                    </flux:button>
-                @endif
+                <flux:button
+                    :href="$this->galleryUrl"
+                    wire:navigate.hover
+                    icon="chevron-left"
+                    variant="subtle"
+                    inset
+                >
+                    {{ $photo->gallery->name }}
+                </flux:button>
             </div>
 
             <div class="mt-8 flex flex-wrap items-end justify-between gap-4">

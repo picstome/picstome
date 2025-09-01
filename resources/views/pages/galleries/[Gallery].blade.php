@@ -287,7 +287,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" />
+                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -297,7 +297,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($favorites as $photo)
-                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" />
+                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" :html-id="'favorite-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -521,6 +521,18 @@ new class extends Component
 
         @script
             <script>
+                document.addEventListener('livewire:navigated', () => {
+                    const hash = window.location.hash;
+                    if (hash) {
+                        setTimeout(() => {
+                            const element = document.querySelector(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 500);
+                    }
+                });
+
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
                     maxParallelUploads: 5,

@@ -107,7 +107,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" lazy />
+                                <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -121,7 +121,7 @@ new class extends Component
                                     :$photo
                                     :asFavorite="true"
                                     :key="'favorite-'.$photo->id"
-                                    lazy
+                                    :html-id="'favorite-'.$photo->id"
                                 />
                             @endforeach
                         </div>
@@ -142,5 +142,20 @@ new class extends Component
                 </div>
             @endsubscribed
         </div>
+        @script
+            <script>
+                document.addEventListener('livewire:navigated', () => {
+                    const hash = window.location.hash;
+                    if (hash) {
+                        setTimeout(() => {
+                            const element = document.querySelector(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 500);
+                    }
+                });
+            </script>
+        @endscript
     @endvolt
 </x-guest-layout>
