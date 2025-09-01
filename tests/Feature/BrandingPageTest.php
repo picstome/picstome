@@ -94,3 +94,13 @@ test('brand font can be changed', function () {
 
     expect($this->team->fresh()->brand_font)->toBe('Montserrat');
 });
+
+test('watermark transparency can be changed', function () {
+    expect($this->team->brand_watermark_transparency)->toBeNull();
+
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.watermarkTransparency', 50)
+        ->call('save');
+
+    expect($this->team->fresh()->brand_watermark_transparency)->toBe(50);
+});
