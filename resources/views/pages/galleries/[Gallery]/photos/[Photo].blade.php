@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photo;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
@@ -28,6 +29,15 @@ new class extends Component
         $this->previous = $this->navigateFavorites
             ? $this->photo->previousFavorite()
             : $this->photo->previous();
+    }
+
+    #[Computed]
+    public function cameFromGallery()
+    {
+        $referer = request()->header('referer');
+        $galleryUrl = route('galleries.show', ['gallery' => $this->photo->gallery]);
+
+        return $referer && str_starts_with($referer, $galleryUrl);
     }
 
     public function favorite()
@@ -63,15 +73,26 @@ new class extends Component
             class="flex h-[calc(100vh-64px)] flex-col"
         >
             <div>
-                <flux:button
-                    :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
-                    wire:navigate.hover
-                    icon="chevron-left"
-                    variant="subtle"
-                    inset
-                >
-                    {{ $photo->gallery->name }}
-                </flux:button>
+                @if ($this->cameFromGallery)
+                    <flux:button
+                        @click="history.back()"
+                        icon="chevron-left"
+                        variant="subtle"
+                        inset
+                    >
+                        {{ $photo->gallery->name }}
+                    </flux:button>
+                @else
+                    <flux:button
+                        :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
+                        wire:navigate.hover
+                        icon="chevron-left"
+                        variant="subtle"
+                        inset
+                    >
+                        {{ $photo->gallery->name }}
+                    </flux:button>
+                @endif
             </div>
 
             <div class="mt-8 flex flex-wrap items-end justify-between gap-4">

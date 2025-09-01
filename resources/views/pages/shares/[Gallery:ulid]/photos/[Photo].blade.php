@@ -5,6 +5,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
@@ -42,6 +43,15 @@ new class extends Component
             : $this->photo->previous();
     }
 
+    #[Computed]
+    public function cameFromGallery()
+    {
+        $referer = request()->header('referer');
+        $galleryUrl = route('shares.show', ['gallery' => $this->photo->gallery]);
+
+        return $referer && str_starts_with($referer, $galleryUrl);
+    }
+
     public function favorite()
     {
         abort_unless($this->photo->gallery->is_share_selectable, 401);
@@ -75,15 +85,26 @@ new class extends Component
             class="flex h-[calc(100vh-64px)] flex-col"
         >
             <div>
-                <flux:button
-                    :href="route('shares.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
-                    wire:navigate.hover
-                    icon="chevron-left"
-                    variant="subtle"
-                    inset
-                >
-                    {{ $photo->gallery->name }}
-                </flux:button>
+                @if ($this->cameFromGallery)
+                    <flux:button
+                        @click="history.back()"
+                        icon="chevron-left"
+                        variant="subtle"
+                        inset
+                    >
+                        {{ $photo->gallery->name }}
+                    </flux:button>
+                @else
+                    <flux:button
+                        :href="route('shares.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
+                        wire:navigate.hover
+                        icon="chevron-left"
+                        variant="subtle"
+                        inset
+                    >
+                        {{ $photo->gallery->name }}
+                    </flux:button>
+                @endif
             </div>
 
             <div class="mt-8 flex flex-wrap items-end justify-between gap-4">
