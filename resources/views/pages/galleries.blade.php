@@ -55,7 +55,7 @@ new class extends Component
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
                     <x-heading level="1" size="xl">{{ __('Galleries') }}</x-heading>
-                    <x-subheading>{{ __('View, create, and manage your contracts.') }}</x-subheading>
+                    <x-subheading>{{ __('View, create, and manage your galleries.') }}</x-subheading>
                 </div>
                 <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
                     <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
