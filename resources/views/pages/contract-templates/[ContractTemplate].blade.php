@@ -88,9 +88,10 @@ new class extends Component
                         <flux:label>{{ __('Terms') }}</flux:label>
 
                         <trix-editor
-                            class="prose prose-sm mt-2"
-                            x-on:trix-change="$wire.form.body = $event.target.value"
                             input="trix"
+                            x-init="$nextTick(() => $el.editor.loadHTML($wire.form.body))"
+                            x-on:trix-change="$wire.form.body = $event.target.value"
+                            class="prose prose-sm mt-2"
                         ></trix-editor>
 
                         <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />
