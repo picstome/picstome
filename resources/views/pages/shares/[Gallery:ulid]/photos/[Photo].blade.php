@@ -136,7 +136,7 @@ new class extends Component
                             'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
                         ])
                     >
-                        <img class="h-8" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" />
+                        <img class="h-8" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" />
                     </div>
                 @endif
             </div>
