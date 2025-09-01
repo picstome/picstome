@@ -85,7 +85,13 @@ new class extends Component
                     </div>
                 </flux:radio.group>
 
-                <flux:input wire:model="form.watermarkTransparency" :label="__('Watermark transparency')" type="number" min="0" max="100" :placeholder="__('e.g. 50')" />
+                <flux:field>
+                    <flux:label badge="Optional">{{ __('Watermark transparency') }}</flux:label>
+                    <flux:input.group>
+                        <flux:input wire:model="form.watermarkTransparency" type="number" min="0" max="100" class="max-w-20" />
+                        <flux:input.group.suffix>%</flux:input.group.suffix>
+                    </flux:input.group>
+                </flux:field>
 
                 <flux:select wire:model="form.color" :label="__('Accent color')" class="flex-wrap">
                     <option value="red">{{ __('Red') }}</option>

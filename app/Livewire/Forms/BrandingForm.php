@@ -52,7 +52,7 @@ class BrandingForm extends Form
         $this->team->update([
             'name' => $this->name,
             'brand_watermark_position' => $this->watermarkPosition,
-            'brand_watermark_transparency' => $this->watermarkTransparency,
+            'brand_watermark_transparency' => $this->watermarkTransparency ?: null,
             'brand_color' => $this->color,
             'brand_font' => $this->font,
         ]);
