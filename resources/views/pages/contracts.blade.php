@@ -183,8 +183,9 @@ new class extends Component
 
                     <flux:input wire:model="form.signature_quantity" :label="__('Signatures required')" type="number" />
 
-                    <flux:field
-                        class="**:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                    <flux:field class="
+                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
+                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
                     >
                         <div data-flux-label class="flex items-center justify-between">
                             <flux:label>{{ __('Terms') }}</flux:label>

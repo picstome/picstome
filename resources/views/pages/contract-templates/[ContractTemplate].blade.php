@@ -73,7 +73,7 @@ new class extends Component
             </div>
 
             <flux:modal name="edit" class="w-full sm:max-w-lg">
-                <form wire:submit="save" class="space-y-6">
+                <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Edit template') }}</flux:heading>
                         <flux:subheading>{{ __('Enter the template details.') }}</flux:subheading>
@@ -81,8 +81,9 @@ new class extends Component
 
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
-                    <flux:field
-                        class="**:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                    <flux:field class="
+                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
+                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
                     >
                         <flux:label>{{ __('Terms') }}</flux:label>
 
@@ -97,10 +98,13 @@ new class extends Component
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="flex">
-                        <flux:spacer />
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white">
+                        <flux:separator />
+                        <div class="flex py-6">
+                            <flux:spacer />
 
-                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        </div>
                     </div>
                 </form>
             </flux:modal>
