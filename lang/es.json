@@ -146,6 +146,7 @@
     "Please enter your photoshoot details.": "Por favor, ingresa los detalles de tu sesión de fotos.",
     "Please note that the customer may have changed pictures in the meantime, so be sure to confirm with the customer before starting.": "Ten en cuenta que el cliente puede haber cambiado las fotos mientras tanto, así que asegúrate de confirmar con el cliente antes de comenzar.",
     "Please verify your email address by clicking on the link we just emailed to you.": "Por favor, verifica tu dirección de correo electrónico haciendo clic en el enlace que te acabamos de enviar.",
+    "Powered by": "Funciona con",
     "Previous": "Anterior",
     "Price": "Precio",
     "Profile": "Perfil",
@@ -217,6 +218,7 @@
     "Total photos": "Total de fotos",
     "Unique Test Key 68b1e962de94f": "Unique Test Key 68b1e962de94f",
     "Unique Test Key 68b2116be1cb7": "Unique Test Key 68b2116be1cb7",
+    "Unique Test Key 68b506f160843": "Unique Test Key 68b506f160843",
     "Unlimited": "Ilimitado",
     "Unlock": "Desbloquear",
     "Unsigned": "Sin firmar",
@@ -244,6 +246,7 @@
     "Watermark": "Marca de agua",
     "Watermark photos": "Fotos con marca de agua",
     "Watermark position": "Posición de la marca de agua",
+    "Watermark transparency": "Transparencia de marca de agua",
     "We couldn’t find any contracts. Create one to get started.": "No pudimos encontrar contratos. Crea uno para comenzar.",
     "We couldn’t find any galleries. Create one to get started.": "No pudimos encontrar galerías. Crea una para comenzar.",
     "We couldn’t find any photos.": "No pudimos encontrar fotos.",
@@ -270,6 +273,5 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total",
-    "Powered by": "Funciona con"
+    "total storage": "almacenamiento total"
 }
