@@ -48,7 +48,6 @@ new class extends Component
 <x-app-layout :full-screen="true">
     @volt('pages.galleries.photos.show')
         <div
-            id="photo-{{ $photo->id }}"
             x-data="{
                 swipe: '',
                 zoom: false,
@@ -65,7 +64,7 @@ new class extends Component
         >
             <div>
                 <flux:button
-                    :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null]) . '#photo-' . $photo->id"
+                    :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
                     wire:navigate.hover
                     icon="chevron-left"
                     variant="subtle"
@@ -121,7 +120,7 @@ new class extends Component
                 <div>
                     @if ($previous)
                         <flux:button
-                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}#photo-{{ $previous->id }}"
+                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
                             wire:navigate.hover
                             x-ref="previous"
                         >
@@ -132,7 +131,7 @@ new class extends Component
                 <div>
                     @if ($next)
                         <flux:button
-                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}#photo-{{ $next->id }}"
+                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
                             wire:navigate.hover
                             x-ref="next"
                         >
