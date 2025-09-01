@@ -86,9 +86,10 @@ new class extends Component
                 </flux:radio.group>
 
                 <flux:field>
-                    <flux:label badge="Optional">{{ __('Watermark transparency') }}</flux:label>
+                    <flux:label :badge="__('Optional')">{{ __('Watermark transparency') }}</flux:label>
                     <flux:input.group>
-                        <flux:input wire:model="form.watermarkTransparency" type="number" min="0" max="100" class="max-w-20" />
+                        <flux:input wire:model="form.watermarkTransparency"
+                                    type="number" min="0" max="100" class="max-w-20" />
                         <flux:input.group.suffix>%</flux:input.group.suffix>
                     </flux:input.group>
                 </flux:field>
