@@ -7,7 +7,6 @@ use App\Models\Gallery;
 use App\Notifications\SubscriptionExpiringSoon;
 use App\Notifications\SubscriptionExpiredWarning;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class SubscriptionsCleanupCommand extends Command
 {
@@ -61,14 +60,7 @@ class SubscriptionsCleanupCommand extends Command
                   ->where('stripe_status', 'canceled');
         })->get()->each(function ($team) {
             $team->galleries->each(function ($gallery) {
-                $gallery->photos->each(function ($photo) {
-                    Storage::disk($photo->disk)->delete($photo->path);
-                    if ($photo->thumb_path) {
-                        Storage::disk($photo->disk)->delete($photo->thumb_path);
-                    }
-                    $photo->delete();
-                });
-                $gallery->delete();
+                $gallery->deletePhotos()->delete();
             });
         });
     }
