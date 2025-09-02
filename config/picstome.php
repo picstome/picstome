@@ -19,4 +19,13 @@ return [
     // Number of days before expiration to send gallery reminder
     'gallery_expiration_reminder_days' => env('GALLERY_EXPIRATION_REMINDER_DAYS', 3),
 
+    // Subscription notification intervals (days before expiration)
+    'subscription_warning_days' => [15, 7, 1],
+
+    // Days after expiration to send deletion warning
+    'subscription_expired_warning_days' => 1,
+
+    // Grace period in days after expiration before deleting data
+    'subscription_grace_period_days' => 7,
+
 ];

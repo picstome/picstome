@@ -11,6 +11,10 @@ class SubscriptionExpiringSoon extends Notification
 {
     use Queueable;
 
+    public function __construct(
+        public int $daysLeft
+    ) {}
+
     public function via($notifiable)
     {
         return ['mail'];
@@ -19,7 +23,7 @@ class SubscriptionExpiringSoon extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line(__('Your subscription is expiring soon.'))
+                    ->line(__('Your subscription expires in :days days.', ['days' => $this->daysLeft]))
                     ->action(__('Renew Subscription'), route('billing-portal'))
                     ->line(__('Thank you for using our application!'));
     }
