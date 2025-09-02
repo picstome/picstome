@@ -56,7 +56,7 @@ class SubscriptionsCleanupCommand extends Command
     private function deleteExpiredData()
     {
         Team::whereHas('subscriptions', function ($query) {
-            $query->where('ends_at', '<', now()->subDays(30))
+            $query->where('ends_at', '<', now()->subDays(7))
                   ->where('stripe_status', 'canceled');
         })->get()->each(function ($team) {
             $team->galleries->each(function ($gallery) {
