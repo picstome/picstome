@@ -83,7 +83,8 @@ new class extends Component
                     :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
-                <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-3 flex px-3"
+
+                <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
                     :class="zoom ? 'hidden' : 'flex'">
                     @if ($previous)
                         <flux:button
@@ -97,7 +98,7 @@ new class extends Component
                         />
                     @endif
                 </div>
-                <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-3 flex px-3"
+                <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
                     :class="zoom ? 'hidden' : 'flex'">
                     @if ($next)
                         <flux:button
@@ -111,7 +112,7 @@ new class extends Component
                         />
                     @endif
                 </div>
-                <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3"
+                <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3 max-sm:p-1"
                     :class="zoom ? 'hidden' : 'flex'">
                     <div class="flex gap-3">
                         <flux:button
