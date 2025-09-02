@@ -1,13 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "picstome/picstome",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": [
-        "laravel",
-        "framework"
-    ],
-    "license": "MIT",
+    "description": "Galleries and contracts for photographers",
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
