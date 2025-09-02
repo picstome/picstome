@@ -84,51 +84,9 @@ new class extends Component
             @if ($this->photo->gallery->is_share_selectable)
                 @keyup.window.f="$wire.favorite()"
             @endif
-            class="flex h-[calc(100vh-64px)] flex-col"
+            class="flex h-screen flex-col"
         >
-            <div>
-                <flux:button
-                    :href="$this->galleryUrl"
-                    wire:navigate.hover
-                    icon="chevron-left"
-                    variant="subtle"
-                    inset
-                >
-                    {{ $photo->gallery->name }}
-                </flux:button>
-            </div>
-
-            <div class="mt-8 flex flex-wrap items-end justify-between gap-4">
-                <div class="max-sm:w-full sm:flex-1">
-                    <div class="flex items-center gap-4">
-                        <x-heading level="1" size="xl">{{ $photo->name }}</x-heading>
-                        @if ($photo->isFavorited())
-                            <flux:badge color="lime" size="sm">{{ __('Favorited') }}</flux:badge>
-                        @endif
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    @if ($this->photo->gallery->is_share_downloadable)
-                        <flux:button
-                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                            icon="cloud-arrow-down"
-                            variant="subtle"
-                        />
-                    @endif
-
-                    @if ($this->photo->gallery->is_share_selectable)
-                        <flux:button wire:click="favorite" square>
-                            @if ($photo->isFavorited())
-                                <flux:icon.heart class="size-5" variant="solid" />
-                            @else
-                                <flux:icon.heart class="size-5" />
-                            @endif
-                        </flux:button>
-                    @endif
-                </div>
-            </div>
-
-            <div class="relative mt-12 h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
+            <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
                     src="{{ $photo->thumbnail_url }}"
                     @contextmenu.prevent
@@ -138,6 +96,71 @@ new class extends Component
                     :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
+
+                <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-3 flex px-3"
+                    :class="zoom ? 'hidden' : 'flex'">
+                    @if ($previous)
+                        <flux:button
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            wire:navigate.hover
+                            x-ref="previous"
+                            icon="chevron-left"
+                            size="sm"
+                            class="py-10 max-sm:py-0"
+                            square
+                        />
+                    @endif
+                </div>
+                <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-3 flex px-3"
+                    :class="zoom ? 'hidden' : 'flex'">
+                    @if ($next)
+                        <flux:button
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            wire:navigate.hover
+                            x-ref="next"
+                            icon="chevron-right"
+                            size="sm"
+                            class="py-10 max-sm:py-0"
+                            square
+                        />
+                    @endif
+                </div>
+                <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3"
+                    :class="zoom ? 'hidden' : 'flex'">
+                    <div class="flex gap-3">
+                        <flux:button
+                            :href="$this->galleryUrl"
+                            wire:navigate.hover
+                            icon="arrow-left"
+                            size="sm"
+                            icon:variant="micro"
+                        >
+                            {{ __('Back') }}
+                        </flux:button>
+                    </div>
+                    <div class="flex gap-3">
+                        @if ($this->photo->gallery->is_share_downloadable)
+                            <flux:button
+                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                                icon="cloud-arrow-down"
+                                icon:variant="mini"
+                                size="sm"
+                                square
+                            />
+                        @endif
+                        @if ($this->photo->gallery->is_share_selectable)
+                            <flux:button
+                                wire:click="favorite"
+                                icon="heart"
+                                :variant="$photo->isFavorited() ? 'primary' : null"
+                                :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                                :color="$photo->isFavorited() ? 'rose' : 'lime'"
+                                size="sm"
+                                square
+                            />
+                        @endif
+                    </div>
+                </div>
 
                 @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
                     <div
@@ -153,33 +176,10 @@ new class extends Component
                 @endif
             </div>
 
-            <div class="mt-12 flex justify-between">
-                <div>
-                    @if ($previous)
-                        <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
-                            wire:navigate.hover
-                            x-ref="previous"
-                        >
-                            {{ __('Previous') }}
-                        </flux:button>
-                    @endif
-                </div>
-                <div>
-                    @if ($next)
-                        <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
-                            wire:navigate.hover
-                            x-ref="next"
-                        >
-                            {{ __('Next') }}
-                        </flux:button>
-                    @endif
-                </div>
-            </div>
+
 
             @unlesssubscribed($photo->gallery->team)
-                <div class="mt-10">
+                <div class="py-3">
                     @include('partials.powered-by')
                 </div>
             @endsubscribed

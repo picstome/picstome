@@ -40,7 +40,7 @@
         @fluxAppearance
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:main :container="!$fullScreen">
+        <flux:main :container="!$fullScreen" @class(['p-0!' => $fullScreen])>
             {{ $slot }}
         </flux:main>
 
