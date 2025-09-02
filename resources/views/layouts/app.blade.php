@@ -116,7 +116,7 @@
             </flux:header>
         @endunless
 
-        <flux:main :container="!$fullScreen">
+        <flux:main :container="!$fullScreen" @class(['p-0!' => $fullScreen])>
             {{ $slot }}
         </flux:main>
 
