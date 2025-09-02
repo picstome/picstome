@@ -18,9 +18,9 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->disk = config('picstome.disk');
     Storage::fake($this->disk);
+    Notification::fake();
     $this->user = User::factory()->create();
     $this->team = Team::factory()->for($this->user, 'owner')->create();
-        Notification::fake();
 });
 
 it('sends warning email 15 days before subscription ends', function () {
