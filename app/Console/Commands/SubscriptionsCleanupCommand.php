@@ -27,16 +27,19 @@ class SubscriptionsCleanupCommand extends Command
     {
         $warningDays = config('picstome.subscription_warning_days', [15, 7, 1]);
 
-        foreach ($warningDays as $days) {
-            $date = now()->addDays($days);
-            Team::whereHas('subscriptions', function ($query) use ($date) {
-                $query->where('ends_at', '>=', $date->startOfDay())
-                      ->where('ends_at', '<', $date->copy()->endOfDay())
-                      ->where('stripe_status', 'active');
-            })->get()->each(function ($team) use ($days) {
-                $team->owner->notify(new SubscriptionExpiringSoon($days));
-            });
-        }
+        Team::has('subscriptions')->cursor()->each(function ($team) use ($warningDays) {
+            $subscription = $team->subscription();
+
+            if ($subscription && $subscription->stripe_status === 'active' && $subscription->ends_at) {
+                foreach ($warningDays as $days) {
+                    $targetDate = now()->addDays($days);
+                    if ($subscription->ends_at->isSameDay($targetDate)) {
+                        $team->owner->notify(new SubscriptionExpiringSoon($days));
+                        break; // Send only one notification per team
+                    }
+                }
+            }
+        });
     }
 
     private function notifyExpired()
@@ -44,13 +47,17 @@ class SubscriptionsCleanupCommand extends Command
         $expiredWarningDays = config('picstome.subscription_expired_warning_days', 1);
         $gracePeriodDays = config('picstome.subscription_grace_period_days', 7);
         $daysLeft = $gracePeriodDays - $expiredWarningDays;
+        $targetDate = now()->subDays($expiredWarningDays);
 
-        Team::whereHas('subscriptions', function ($query) use ($expiredWarningDays) {
-            $query->where('ends_at', '>=', now()->subDays($expiredWarningDays)->startOfDay())
-                  ->where('ends_at', '<', now()->subDays($expiredWarningDays)->endOfDay())
-                  ->where('stripe_status', 'canceled');
-        })->get()->each(function ($team) use ($daysLeft) {
-            $team->owner->notify(new SubscriptionExpiredWarning($daysLeft));
+        Team::has('subscriptions')->cursor()->each(function ($team) use ($targetDate, $daysLeft) {
+            $subscription = $team->subscription();
+
+            if ($subscription &&
+                $subscription->stripe_status === 'canceled' &&
+                $subscription->ends_at &&
+                $subscription->ends_at->isSameDay($targetDate)) {
+                $team->owner->notify(new SubscriptionExpiredWarning($daysLeft));
+            }
         });
     }
 
@@ -58,13 +65,17 @@ class SubscriptionsCleanupCommand extends Command
     {
         $gracePeriodDays = config('picstome.subscription_grace_period_days', 7);
 
-        Team::whereHas('subscriptions', function ($query) use ($gracePeriodDays) {
-            $query->where('ends_at', '<', now()->subDays($gracePeriodDays))
-                  ->where('stripe_status', 'canceled');
-        })->get()->each(function ($team) {
-            $team->galleries->each(function ($gallery) {
-                $gallery->deletePhotos()->delete();
-            });
+        Team::has('subscriptions')->cursor()->each(function ($team) use ($gracePeriodDays) {
+            $subscription = $team->subscription();
+
+            if ($subscription &&
+                $subscription->stripe_status === 'canceled' &&
+                $subscription->ends_at &&
+                $subscription->ends_at->lt(now()->subDays($gracePeriodDays))) {
+                $team->galleries->each(function ($gallery) {
+                    $gallery->deletePhotos()->delete();
+                });
+            }
         });
     }
 }
