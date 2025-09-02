@@ -4,6 +4,8 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\SubscriptionExpiringSoon;
+use App\Notifications\SubscriptionExpiredWarning;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Carbon;
@@ -31,7 +33,7 @@ it('sends warning email 15 days before subscription ends', function () {
 
     artisan('subscriptions:cleanup')->assertExitCode(0);
 
-    Notification::assertSentTo($this->user, \App\Notifications\SubscriptionExpiringSoon::class);
+    Notification::assertSentTo($this->user, SubscriptionExpiringSoon::class);
 });
 
 it('sends warning email 7 days before subscription ends', function () {
@@ -44,7 +46,7 @@ it('sends warning email 7 days before subscription ends', function () {
 
     artisan('subscriptions:cleanup')->assertExitCode(0);
 
-    Notification::assertSentTo($this->user, \App\Notifications\SubscriptionExpiringSoon::class);
+    Notification::assertSentTo($this->user, SubscriptionExpiringSoon::class);
 });
 
 it('sends warning email 1 day before subscription ends', function () {
@@ -57,7 +59,7 @@ it('sends warning email 1 day before subscription ends', function () {
 
     artisan('subscriptions:cleanup')->assertExitCode(0);
 
-    Notification::assertSentTo($this->user, \App\Notifications\SubscriptionExpiringSoon::class);
+    Notification::assertSentTo($this->user, SubscriptionExpiringSoon::class);
 });
 
 it('sends deletion warning email 1 day after subscription expired', function () {
@@ -70,7 +72,7 @@ it('sends deletion warning email 1 day after subscription expired', function () 
 
     artisan('subscriptions:cleanup')->assertExitCode(0);
 
-    Notification::assertSentTo($this->user, \App\Notifications\SubscriptionExpiredWarning::class);
+    Notification::assertSentTo($this->user, SubscriptionExpiredWarning::class);
 });
 
 it('deletes all galleries when subscription expired more than 30 days ago', function () {

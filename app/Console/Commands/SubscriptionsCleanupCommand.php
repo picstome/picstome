@@ -62,9 +62,9 @@ class SubscriptionsCleanupCommand extends Command
         })->get()->each(function ($team) {
             $team->galleries->each(function ($gallery) {
                 $gallery->photos->each(function ($photo) {
-                    \Storage::disk($photo->disk)->delete($photo->path);
+                    Storage::disk($photo->disk)->delete($photo->path);
                     if ($photo->thumb_path) {
-                        \Storage::disk($photo->disk)->delete($photo->thumb_path);
+                        Storage::disk($photo->disk)->delete($photo->thumb_path);
                     }
                     $photo->delete();
                 });
