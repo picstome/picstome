@@ -268,7 +268,7 @@
     "Renew Subscription": "Renovar Suscripción",
     "Thank you for using our application!": "¡Gracias por usar nuestra aplicación!",
     "Your subscription has expired.": "Tu suscripción ha expirado.",
-    "Your data will be deleted soon if not renewed.": "Tus datos serán eliminados pronto si no renuevas.",
+    "Your data will be deleted in :days days if not renewed.": "Tus datos serán eliminados en :days días si no renuevas.",
     "Your logo at 1:1 aspect ratio.": "Tu logotipo en formato 1:1.",
     "Your password": "Tu contraseña",
     "log in": "iniciar sesión",
