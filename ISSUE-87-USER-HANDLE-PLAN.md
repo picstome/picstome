@@ -7,35 +7,33 @@ Implement user handle feature for allowing URLs like `https://app.picstome.com/@
 ## Implementation Steps
 
 1. **Add 'handle' column to teams table via migration**
+    - Create migration to add unique string column 'handle' to teams table
+    - Each user has a personal team, so handle is stored per team
 
-1.5. **Generate unique handle on user registration**
+2. **Generate unique handle on user registration**
+    - Create service/method to generate handle from user name/email
+    - Ensure uniqueness by appending numbers if needed
+    - Set handle on team creation during registration
 
-- Create service/method to generate handle from user name/email
-- Ensure uniqueness by appending numbers if needed
-- Set handle on team creation during registration
+3. **Generate handles for existing teams**
+    - Create artisan command to backfill handles for existing teams
+    - Use same generation logic as registration
+    - Run command after migration
 
-    1.6. **Generate handles for existing teams**
-
-- Create artisan command to backfill handles for existing teams
-- Use same generation logic as registration
-- Run command after migration
-- Create migration to add unique string column 'handle' to teams table
-- Each user has a personal team, so handle is stored per team
-
-2. **Update Team model to include handle field and validation**
+4. **Update Team model to include handle field and validation**
     - Add fillable/handle to Team model
     - Add validation rules for handle (unique, alphanumeric, etc.)
 
-3. **Create route for /{handle} to show team name**
+5. **Create route for /{handle} to show team name**
     - Add route in web.php for `/{handle}` pattern
     - Route should match @ followed by handle
 
-4. **Implement controller logic to find team by handle and display team name**
+6. **Implement controller logic to find team by handle and display team name**
     - Create controller method to find team by handle
     - Display team name in a simple view
     - Handle 404 if not found
 
-5. **Add handle editing to branding page**
+7. **Add handle editing to branding page**
     - Add form field for handle in branding settings
     - Validate uniqueness on update
     - Update team handle via Livewire or controller
