@@ -19,8 +19,8 @@ class SubscriptionExpiredWarning extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('Your subscription has expired.')
-                    ->action('Renew Subscription', url('/billing'))
-                    ->line('Your data will be deleted soon if not renewed.');
+                    ->line(__('Your subscription has expired.'))
+                    ->action(__('Renew Subscription'), route('billing-portal'))
+                    ->line(__('Your data will be deleted soon if not renewed.'));
     }
 }

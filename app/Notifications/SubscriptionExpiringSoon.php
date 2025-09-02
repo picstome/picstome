@@ -19,8 +19,8 @@ class SubscriptionExpiringSoon extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('Your subscription is expiring soon.')
-                    ->action('Renew Subscription', url('/billing'))
-                    ->line('Thank you for using our application!');
+                    ->line(__('Your subscription is expiring soon.'))
+                    ->action(__('Renew Subscription'), route('billing-portal'))
+                    ->line(__('Thank you for using our application!'));
     }
 }
