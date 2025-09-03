@@ -42,9 +42,10 @@ class BrandingForm extends Form
             'handle' => [
                 'required',
                 'string',
+                'lowercase',
                 'min:2',
                 'max:50',
-                'regex:/^[a-zA-Z0-9]+$/',
+                'regex:/^[a-z0-9]+$/',
                 'unique:teams,handle,' . ($this->team->id ?? 'null'),
             ],
         ];
@@ -69,7 +70,7 @@ class BrandingForm extends Form
 
         $this->team->update([
             'name' => $this->name,
-            'handle' => strtolower($this->handle),
+            'handle' => $this->handle,
             'brand_watermark_position' => $this->watermarkPosition,
             'brand_watermark_transparency' => $this->watermarkTransparency ?: null,
             'brand_color' => $this->color,

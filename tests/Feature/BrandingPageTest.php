@@ -115,12 +115,11 @@ it('allows user to update handle successfully', function () {
     expect($this->team->fresh()->handle)->toBe($newHandle);
 });
 
-it('converts handle to lowercase when saved', function () {
+it('validates handle must be lowercase', function () {
     Volt::actingAs($this->user)->test('pages.branding')
         ->set('form.handle', 'MixedCaseHandle')
-        ->call('save');
-
-    expect($this->team->fresh()->handle)->toBe('mixedcasehandle');
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
 });
 
 it('prevents duplicate handles with uniqueness validation', function () {
