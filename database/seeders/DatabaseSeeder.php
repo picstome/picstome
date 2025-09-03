@@ -14,19 +14,18 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $this->createUserWithHandle('Test User', 'test@example.com', 'testuser');
+        $this->createUserWithHandle('Oliver', 'oliver@example.com', 'oliver');
+        $this->createUserWithHandle('Chema', 'chema@example.com', 'chema');
+    }
+
+    private function createUserWithHandle(string $name, string $email, string $handle): void
+    {
         $user = User::factory()->withPersonalTeam()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => $name,
+            'email' => $email,
         ]);
 
-        $user = User::factory()->withPersonalTeam()->create([
-            'name' => 'Oliver',
-            'email' => 'oliver@example.com',
-        ]);
-
-        $user = User::factory()->withPersonalTeam()->create([
-            'name' => 'Chema',
-            'email' => 'chema@example.com',
-        ]);
+        $user->currentTeam->update(['handle' => $handle]);
     }
 }
