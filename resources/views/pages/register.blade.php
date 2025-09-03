@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\HandleGenerationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -33,8 +34,12 @@ new class extends Component {
 
         event(new Registered($user = User::create($validated)));
 
+        $handleService = new HandleGenerationService();
+        $handle = $handleService->generateUniqueHandle($user->name);
+
         $user->ownedTeams()->create([
             'name' => "{$user->name}'s Studio",
+            'handle' => $handle,
             'personal_team' => true,
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
