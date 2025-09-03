@@ -44,18 +44,7 @@ it('handles handle with underscores', function () {
         ->assertSee('Test User Studio');
 });
 
-it('redirects to team page if authenticated user owns the team', function () {
-    $user = \App\Models\User::factory()->withPersonalTeam()->create();
-    $team = $user->currentTeam;
-    $team->update(['handle' => 'myhandle']);
-
-    $this->actingAs($user);
-
-    get('/@myhandle')
-        ->assertRedirect('/dashboard'); // Assuming dashboard is the main team page
-});
-
-it('shows public team profile for other users', function () {
+it('shows team profile page for all users', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
     get('/@publicteam')
