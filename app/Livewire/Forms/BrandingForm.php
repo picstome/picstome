@@ -38,22 +38,16 @@ class BrandingForm extends Form
 
     public function rules()
     {
-        $rules = [
+        return [
             'handle' => [
-                'nullable',
+                'required',
                 'string',
+                'min:2',
                 'max:50',
-                'regex:/^[a-zA-Z0-9]*$/',
+                'regex:/^[a-zA-Z0-9]+$/',
                 'unique:teams,handle,' . ($this->team->id ?? 'null'),
             ],
         ];
-
-        // Only require minimum length if handle is not null
-        if ($this->handle !== null && $this->handle !== '') {
-            $rules['handle'][] = 'min:1';
-        }
-
-        return $rules;
     }
 
     public function setTeam(Team $team)
@@ -68,40 +62,14 @@ class BrandingForm extends Form
         $this->font = $team->brand_font;
     }
 
-    public function updatedHandle($value)
-    {
-        // Validate handle when it changes
-        if ($value !== null && $value !== '' && strlen($value) < 1) {
-            $this->addError('handle', 'Handle must be at least 1 character.');
-        } elseif ($value !== null && $value !== '' && !preg_match('/^[a-zA-Z0-9]*$/', $value)) {
-            $this->addError('handle', 'Handle can only contain letters and numbers.');
-        }
-    }
-
     public function update()
     {
         // Validate all fields
         $this->validate();
 
-        // Additional validation for handle
-        if ($this->handle === '') {
-            $this->addError('handle', 'Handle cannot be empty.');
-            return;
-        }
-
-        if ($this->handle !== null && strlen($this->handle) < 2) {
-            $this->addError('handle', 'Handle must be at least 2 characters.');
-            return;
-        }
-
-        if ($this->handle !== null && !preg_match('/^[a-zA-Z0-9]*$/', $this->handle)) {
-            $this->addError('handle', 'Handle can only contain letters and numbers.');
-            return;
-        }
-
         $this->team->update([
             'name' => $this->name,
-            'handle' => $this->handle ? strtolower($this->handle) : null,
+            'handle' => strtolower($this->handle),
             'brand_watermark_position' => $this->watermarkPosition,
             'brand_watermark_transparency' => $this->watermarkTransparency ?: null,
             'brand_color' => $this->color,
