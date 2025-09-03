@@ -37,14 +37,12 @@ class BackfillTeamHandlesCommand extends Command
             return;
         }
 
-        $handleService = new HandleGenerationService();
+        $handleGenerator = new HandleGenerationService();
         $processed = 0;
 
         foreach ($teamsWithoutHandles as $team) {
             // Generate handle from team name
-            $handle = $handleService->generateUniqueHandle($team->name);
-
-            $team->update(['handle' => $handle]);
+            $team->update(['handle' => $handleGenerator->generateUniqueHandle($team->name)]);
             $processed++;
         }
 

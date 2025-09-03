@@ -99,12 +99,9 @@ class BrandingForm extends Form
             return;
         }
 
-        // Convert handle to lowercase before saving
-        $handle = $this->handle ? strtolower($this->handle) : null;
-
         $this->team->update([
             'name' => $this->name,
-            'handle' => $handle,
+            'handle' => $this->handle ? strtolower($this->handle) : null,
             'brand_watermark_position' => $this->watermarkPosition,
             'brand_watermark_transparency' => $this->watermarkTransparency ?: null,
             'brand_color' => $this->color,

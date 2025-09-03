@@ -34,12 +34,11 @@ new class extends Component {
 
         event(new Registered($user = User::create($validated)));
 
-        $handleService = new HandleGenerationService();
-        $handle = $handleService->generateUniqueHandle($user->name);
+        $handleGenerator = new HandleGenerationService();
 
         $user->ownedTeams()->create([
             'name' => "{$user->name}'s Studio",
-            'handle' => $handle,
+            'handle' => $handleGenerator->generateUniqueHandle($user->name),
             'personal_team' => true,
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
