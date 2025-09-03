@@ -19,20 +19,6 @@ class Team extends Model
 
     protected $guarded = [];
 
-    public function rules()
-    {
-        return [
-            'handle' => [
-                'nullable',
-                'string',
-                'min:1',
-                'max:50',
-                'regex:/^[a-zA-Z0-9]+$/',
-                'unique:teams,handle,' . $this->id,
-            ],
-        ];
-    }
-
     public function canStoreFile(int $size): bool
     {
         if ($this->storage_limit === null) {
