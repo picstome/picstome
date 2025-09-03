@@ -59,7 +59,7 @@ new class extends Component
              <form wire:submit="save" class="space-y-6">
                  <flux:input wire:model="form.name" :label="__('Studio name')" />
 
-                  <flux:input wire:model="form.handle" :label="__('Handle')" :placeholder="__('e.g. mystudio')" :description="__('Your unique @handle for sharing.')" />
+                  <flux:input wire:model="form.handle" :label="__('Handle')" :placeholder="__('e.g. mystudio')" />
 
                 @if ($team->brand_logo_icon_url)
                     <img src="{{ $team->brand_logo_icon_url }}" class="size-[80px]" />
