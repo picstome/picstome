@@ -76,3 +76,43 @@ it('gives the personal team 1GB of storage upon creation', function () {
     $team = $user->currentTeam;
     expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
 });
+
+it('creates a personal team with a handle upon registration', function () {
+    $component = Volt::test('pages.register')
+        ->set('name', 'Handle User')
+        ->set('email', 'handleuser@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    $user = User::where('email', 'handleuser@example.com')->first();
+    $team = $user->currentTeam;
+
+    expect($team->handle)->not->toBeNull();
+    expect($team->handle)->toBe('handleuser');
+});
+
+it('generates unique handles when registering users with similar names', function () {
+    Volt::test('pages.register')
+        ->set('name', 'Test User')
+        ->set('email', 'testuser1@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    Volt::test('pages.register')
+        ->set('name', 'Test User')
+        ->set('email', 'testuser2@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    $user1 = User::where('email', 'testuser1@example.com')->first();
+    $user2 = User::where('email', 'testuser2@example.com')->first();
+
+    expect($user1->currentTeam->handle)->toBe('testuser');
+    expect($user2->currentTeam->handle)->toBe('testuser1');
+});

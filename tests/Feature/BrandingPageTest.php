@@ -17,19 +17,19 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-test('users can see the branding page', function () {
+it('allows users to see the branding page', function () {
     $response = actingAs($this->user)->get('/branding');
 
     $response->assertStatus(200);
 });
 
-test('guests cannot view the branding page', function () {
+it('prevents guests from viewing the branding page', function () {
     $response = get('/branding');
 
     $response->assertRedirect('/login');
 });
 
-test('a brand logo can be saved', function () {
+it('can save a brand logo', function () {
     Storage::fake('s3');
     expect($this->team->brand_logo_path)->toBeNull();
 
@@ -41,7 +41,7 @@ test('a brand logo can be saved', function () {
     expect(Team::first()->brand_logo_url)->not->toBeNull();
 });
 
-test('a brand logo icon can be saved', function () {
+it('can save a brand logo icon', function () {
     Storage::fake('s3');
     expect($this->team->brand_logo_path)->toBeNull();
 
@@ -53,7 +53,7 @@ test('a brand logo icon can be saved', function () {
     expect(Team::first()->brand_logo_icon_url)->not->toBeNull();
 });
 
-test('a brand watermark can be saved', function () {
+it('can save a brand watermark', function () {
     Storage::fake('s3');
     expect($this->team->brand_watermark_path)->toBeNull();
 
@@ -65,7 +65,7 @@ test('a brand watermark can be saved', function () {
     expect(Team::first()->brand_watermark_url)->not->toBeNull();
 });
 
-test('watermark position can be changed', function () {
+it('can change watermark position', function () {
     expect($this->team->brand_watermark_position)->not()->toBe('bottom');
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -75,7 +75,7 @@ test('watermark position can be changed', function () {
     expect($this->team->fresh()->brand_watermark_position)->toBe('bottom');
 });
 
-test('brand color can be changed', function () {
+it('can change brand color', function () {
     expect($this->team->brand_color)->not()->toBe('red');
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -85,7 +85,7 @@ test('brand color can be changed', function () {
     expect($this->team->fresh()->brand_color)->toBe('red');
 });
 
-test('brand font can be changed', function () {
+it('can change brand font', function () {
     expect($this->team->brand_font)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -95,7 +95,7 @@ test('brand font can be changed', function () {
     expect($this->team->fresh()->brand_font)->toBe('Montserrat');
 });
 
-test('watermark transparency can be changed', function () {
+it('can change watermark transparency', function () {
     expect($this->team->brand_watermark_transparency)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding')
@@ -104,3 +104,62 @@ test('watermark transparency can be changed', function () {
 
     expect($this->team->fresh()->brand_watermark_transparency)->toBe(50);
 });
+
+it('allows user to update handle successfully', function () {
+    $newHandle = 'newhandle';
+
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', $newHandle)
+        ->call('save');
+
+    expect($this->team->fresh()->handle)->toBe($newHandle);
+});
+
+it('converts handle to lowercase when saved', function () {
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', 'MixedCaseHandle')
+        ->call('save');
+
+    expect($this->team->fresh()->handle)->toBe('mixedcasehandle');
+});
+
+it('prevents duplicate handles with uniqueness validation', function () {
+    Team::factory()->create(['handle' => 'existinghandle']);
+
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', 'existinghandle')
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
+});
+
+it('prevents special characters in handles', function () {
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', 'invalid@handle!')
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
+});
+
+it('enforces minimum length for handles', function () {
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', 'a')
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
+});
+
+it('enforces maximum length for handles', function () {
+    $longHandle = str_repeat('a', 100);
+
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', $longHandle)
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
+});
+
+it('prevents empty string handles', function () {
+    Volt::actingAs($this->user)->test('pages.branding')
+        ->set('form.handle', '')
+        ->call('save')
+        ->assertHasErrors(['form.handle']);
+});
+
+
