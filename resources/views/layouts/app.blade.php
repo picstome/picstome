@@ -101,6 +101,10 @@
                         <flux:navlist.item :href="route('branding')" icon="paint-brush">
                             {{ __('Branding') }}
                         </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('bio-links')" icon="link" wire:navigate>
+                            {{ __('Bio Links') }}
+                        </flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
