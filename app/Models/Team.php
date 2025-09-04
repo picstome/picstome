@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
 
 class Team extends Model
@@ -83,9 +84,15 @@ class Team extends Model
     protected function brandLogoUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_logo_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_path)
-                    : null;
+            if (!$this->brand_logo_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_path);
+
+            return Str::of('https://wsrv.nl/')
+                ->append('?url=', urlencode($originalUrl))
+                ->append('&q=90&output=webp');
         });
     }
 
@@ -107,9 +114,15 @@ class Team extends Model
     protected function brandWatermarkUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_watermark_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path)
-                    : null;
+            if (!$this->brand_watermark_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path);
+
+            return Str::of('https://wsrv.nl/')
+                ->append('?url=', urlencode($originalUrl))
+                ->append('&q=90&output=webp');
         });
     }
 
@@ -131,9 +144,15 @@ class Team extends Model
     protected function brandLogoIconUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_logo_icon_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path)
-                    : null;
+            if (!$this->brand_logo_icon_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path);
+
+            return Str::of('https://wsrv.nl/')
+                ->append('?url=', urlencode($originalUrl))
+                ->append('&q=90&output=webp');
         });
     }
 
