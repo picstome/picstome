@@ -10,12 +10,7 @@ class BioLink extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'team_id',
-        'title',
-        'url',
-        'order',
-    ];
+    protected $guarded = [];
 
     protected $casts = [
         'order' => 'integer',
