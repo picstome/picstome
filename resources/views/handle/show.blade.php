@@ -1,16 +1,16 @@
-<x-guest-layout :font="$team->brand_font">
+<x-guest-layout :font="$team->brand_font" :full-screen="true">
     <div class="flex min-h-screen items-center justify-center">
         <div class="mx-auto w-full max-w-md text-center">
             <div class="space-y-4">
                 @if($team->brand_logo_icon_url)
-                    <flux:avatar size="xl" :src="$team->brand_logo_icon_url" class="mx-auto" />
+                    <flux:avatar size="xl" :src="$team->brand_logo_icon_url" class="mx-auto [:where(&)]:size-32" />
                 @endif
 
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
             </div>
 
             @if($team->bioLinks->isNotEmpty())
-                <div class="my-8">
+                <div class="my-14">
                     <div class="space-y-3">
                         @foreach($team->bioLinks as $link)
                             <flux:button
