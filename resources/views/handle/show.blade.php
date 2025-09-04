@@ -20,7 +20,7 @@
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="w-full text-base!"
-                            >{{ $link->title }}</flux:button>
+                            ><span class="truncate">{{ $link->title }}</span></flux:button>
                         @endforeach
                     </div>
                 </div>
