@@ -102,30 +102,30 @@ new class extends Component
                             <flux:table.row :key="$link->id">
                                 @if ($editingLink && $editingLink->id === $link->id)
                                     <flux:table.cell>
-                                        <flux:input
-                                            wire:model="editForm.title"
-                                            type="text"
-                                            class="ml-1"
-                                        />
+                                        <flux:field>
+                                            <flux:input wire:model="editForm.title" type="text" class="ml-1" />
+
+                                            <flux:error name="editForm.title" />
+                                        </flux:field>
                                     </flux:table.cell>
                                     <flux:table.cell>
-                                        <flux:input
-                                            wire:model="editForm.url"
-                                            type="url"
-                                        />
+                                        <flux:field>
+                                            <flux:input wire:model="editForm.url" type="url" />
+                                            <flux:error name="editForm.url" />
+                                        </flux:field>
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         <div class="flex gap-2">
                                             <flux:button wire:click="updateLink({{ $editingLink }})" icon="check" variant="primary" size="sm" color="green" />
-                                            <flux:button wire:click="cancelEdit" icon="x-mark" variant="subtle" size="sm" />
+                                            <flux:button wire:click="cancelEdit" wire:key="'cancel-'.$link->id" icon="x-mark" variant="subtle" size="sm" />
                                         </div>
                                     </flux:table.cell>
                                 @else
-                                    <flux:table.cell>
-                                        <div class="font-medium">{{ $link->title }}</div>
+                                    <flux:table.cell variant="strong">
+                                        {{ $link->title }}
                                     </flux:table.cell>
                                     <flux:table.cell>
-                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $link->url }}</div>
+                                        {{ $link->url }}
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         <div class="flex gap-2">
@@ -146,20 +146,28 @@ new class extends Component
 
                         <flux:table.row>
                             <flux:table.cell>
-                                <flux:input
-                                    wire:model="addForm.title"
-                                    type="text"
-                                    placeholder="e.g. Instagram"
-                                    class="ml-1 min-w-40"
-                                />
+                                <flux:field>
+                                    <flux:input
+                                        wire:model="addForm.title"
+                                        type="text"
+                                        placeholder="e.g. Instagram"
+                                        class="ml-1 min-w-40"
+                                    />
+
+                                    <flux:error name="addForm.title" />
+                                </flux:field>
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:input
-                                    wire:model="addForm.url"
-                                    type="url"
-                                    class="min-w-40"
-                                    placeholder="https://instagram.com/username"
-                                />
+                                <flux:field>
+                                    <flux:input
+                                        wire:model="addForm.url"
+                                        type="url"
+                                        class="min-w-40"
+                                        placeholder="https://instagram.com/username"
+                                    />
+
+                                    <flux:error name="addForm.url" />
+                                </flux:field>
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:button wire:click="addLink" icon="plus" variant="primary" size="sm" />
