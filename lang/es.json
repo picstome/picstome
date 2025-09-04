@@ -284,5 +284,11 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "View your public profile": "Ver tu perfil público",
+    "This username is used for your public profile.": "Este nombre de usuario se utiliza para tu perfil público.",
+    "Bio Links": "Enlaces Bio",
+    "Manage your bio links for your public profile.": "Gestiona tus enlaces bio para tu perfil público.",
+    "URL": "URL",
+    "Are you sure you want to delete this bio link?": "¿Estás seguro de que quieres eliminar este enlace bio?"
 }
