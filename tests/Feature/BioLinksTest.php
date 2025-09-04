@@ -103,10 +103,7 @@ it('allows users to reorder bio links', function () {
     $link2 = BioLink::factory()->for($team)->create(['order' => 2]);
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->call('reorderLinks', [
-            ['id' => $link2->id, 'order' => 1],
-            ['id' => $link1->id, 'order' => 2],
-        ]);
+        ->call('reorderLink', $link2, 1);
 
     $response->assertHasNoErrors();
 
