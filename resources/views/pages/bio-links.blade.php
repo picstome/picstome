@@ -84,8 +84,13 @@ new class extends Component
         <div class="max-w-3xl mx-auto">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
-                    <x-heading level="1" size="xl">{{ __('Bio Links') }}</x-heading>
-                    <x-subheading>{{ __('Manage your bio links for your public profile.') }}</x-subheading>
+                    <flux:heading level="1" size="xl">{{ __('Bio Links') }}</flux:heading>
+                    <flux:text class="mt-2">
+                        {{ __('Manage your bio links for your public profile.') }}
+                        <flux:link :href="route('handle.show', ['handle' => $this->team->handle])" target="_blank">
+                            {{ __('View your public profile') }}
+                        </flux:link>.
+                    </flux:text>
                 </div>
             </div>
 

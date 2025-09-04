@@ -59,7 +59,15 @@ new class extends Component
              <form wire:submit="save" class="space-y-6">
                  <flux:input wire:model="form.name" :label="__('Studio name')" />
 
-                   <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
+                    <flux:field>
+                        <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
+                        <flux:description>
+                            {{ __('This username is used for your public profile.') }}
+                            <flux:link :href="route('handle.show', ['handle' => $team->handle])" target="_blank">
+                                {{ __('View your public profile') }}
+                            </flux:link>.
+                        </flux:description>
+                    </flux:field>
 
                 @if ($team->brand_logo_icon_url)
                     <img src="{{ $team->brand_logo_icon_url }}" class="size-[80px]" />
