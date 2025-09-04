@@ -15,23 +15,24 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
-    public BioLinkForm $form;
+    public BioLinkForm $addForm;
+    public BioLinkForm $editForm;
 
     public ?BioLink $editingLink = null;
 
     public function addLink()
     {
-        $this->form->store();
-        $this->form->resetForm();
+        $this->addForm->store();
+        $this->addForm->resetForm();
     }
 
     public function updateLink(BioLink $link)
     {
         $this->authorize('update', $link);
 
-        $this->form->update();
+        $this->editForm->update();
 
-        $this->form->resetForm();
+        $this->editForm->resetForm();
         $this->editingLink = null;
     }
 
@@ -56,12 +57,12 @@ new class extends Component
         $this->authorize('view', $link);
 
         $this->editingLink = $link;
-        $this->form->setBioLink($link);
+        $this->editForm->setBioLink($link);
     }
 
     public function cancelEdit()
     {
-        $this->form->resetForm();
+        $this->editForm->resetForm();
         $this->editingLink = null;
     }
 
@@ -105,14 +106,14 @@ new class extends Component
                                 @if ($editingLink && $editingLink->id === $link->id)
                                         <flux:table.cell>
                                             <flux:input
-                                                wire:model="form.title"
+                                                wire:model="editForm.title"
                                                 type="text"
                                                 size="sm"
                                             />
                                         </flux:table.cell>
                                         <flux:table.cell>
                                             <flux:input
-                                                wire:model="form.url"
+                                                wire:model="editForm.url"
                                                 type="url"
                                                 size="sm"
                                             />
@@ -157,7 +158,7 @@ new class extends Component
                         <flux:table.row>
                             <flux:table.cell>
                                 <flux:input
-                                    wire:model="form.title"
+                                    wire:model="addForm.title"
                                     type="text"
                                     placeholder="e.g. Instagram"
                                     size="sm"
@@ -165,7 +166,7 @@ new class extends Component
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:input
-                                    wire:model="form.url"
+                                    wire:model="addForm.url"
                                     type="url"
                                     placeholder="https://instagram.com/username"
                                     size="sm"
