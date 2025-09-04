@@ -35,11 +35,9 @@ new class extends Component
         $this->reset(['title', 'url']);
     }
 
-    public function updateLink()
+    public function updateLink(BioLink $link)
     {
         $this->validate();
-
-        $link = BioLink::findOrFail($this->editingLink);
 
         // Ensure the link belongs to the current team
         if ($link->team_id !== $this->currentTeam->id) {
@@ -124,7 +122,7 @@ new class extends Component
                         {{ $editingLink ? __('Edit Bio Link') : __('Add New Bio Link') }}
                     </flux:heading>
 
-                    <form wire:submit="{{ $editingLink ? 'updateLink' : 'addLink' }}" class="space-y-4">
+                     <form wire:submit="{{ $editingLink ? 'updateLink(' . $editingLink . ')' : 'addLink' }}" class="space-y-4">
                         <flux:input
                             wire:model="title"
                             :label="__('Title')"
