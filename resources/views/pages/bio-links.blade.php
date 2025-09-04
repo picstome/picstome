@@ -1,9 +1,9 @@
 <?php
 
+use App\Livewire\Forms\BioLinkForm;
 use App\Models\BioLink;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -15,38 +15,24 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
-    #[Validate('required|string|max:255')]
-    public string $title = '';
-
-    #[Validate('required|url')]
-    public string $url = '';
+    public BioLinkForm $form;
 
     public ?BioLink $editingLink = null;
 
     public function addLink()
     {
-        $this->validate();
-
-        $this->team->bioLinks()->create([
-            'title' => $this->title,
-            'url' => $this->url,
-        ]);
-
-        $this->reset(['title', 'url']);
+        $this->form->store();
+        $this->form->resetForm();
     }
 
     public function updateLink(BioLink $link)
     {
         $this->authorize('update', $link);
 
-        $this->validate();
+        $this->form->update();
 
-        $link->update([
-            'title' => $this->title,
-            'url' => $this->url,
-        ]);
-
-        $this->reset(['title', 'url', 'editingLink']);
+        $this->form->resetForm();
+        $this->editingLink = null;
     }
 
     public function deleteLink(BioLink $link)
@@ -70,13 +56,13 @@ new class extends Component
         $this->authorize('view', $link);
 
         $this->editingLink = $link;
-        $this->title = $link->title;
-        $this->url = $link->url;
+        $this->form->setBioLink($link);
     }
 
     public function cancelEdit()
     {
-        $this->reset(['title', 'url', 'editingLink']);
+        $this->form->resetForm();
+        $this->editingLink = null;
     }
 
     #[Computed]
@@ -117,20 +103,20 @@ new class extends Component
                         @foreach ($this->bioLinks as $link)
                             <flux:table.row :key="$link->id">
                                 @if ($editingLink && $editingLink->id === $link->id)
-                                    <flux:table.cell>
-                                        <flux:input
-                                            wire:model="title"
-                                            type="text"
-                                            size="sm"
-                                        />
-                                    </flux:table.cell>
-                                    <flux:table.cell>
-                                        <flux:input
-                                            wire:model="url"
-                                            type="url"
-                                            size="sm"
-                                        />
-                                    </flux:table.cell>
+                                        <flux:table.cell>
+                                            <flux:input
+                                                wire:model="form.title"
+                                                type="text"
+                                                size="sm"
+                                            />
+                                        </flux:table.cell>
+                                        <flux:table.cell>
+                                            <flux:input
+                                                wire:model="form.url"
+                                                type="url"
+                                                size="sm"
+                                            />
+                                        </flux:table.cell>
                                     <flux:table.cell>
                                         <div class="flex gap-2">
                                             <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary" size="sm">
@@ -171,7 +157,7 @@ new class extends Component
                         <flux:table.row>
                             <flux:table.cell>
                                 <flux:input
-                                    wire:model="title"
+                                    wire:model="form.title"
                                     type="text"
                                     placeholder="e.g. Instagram"
                                     size="sm"
@@ -179,7 +165,7 @@ new class extends Component
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:input
-                                    wire:model="url"
+                                    wire:model="form.url"
                                     type="url"
                                     placeholder="https://instagram.com/username"
                                     size="sm"
