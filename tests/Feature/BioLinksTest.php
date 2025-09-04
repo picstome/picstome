@@ -23,9 +23,7 @@ test('bio links management page requires authentication', function () {
 
 test('users can add a new bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
-    $team = $user->ownedTeams()->where('personal_team', true)->first();
-    $user->current_team_id = $team->id;
-    $user->save();
+    $team = $user->currentTeam;
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
         ->set('title', 'Twitter')
@@ -64,9 +62,7 @@ test('users can update an existing bio link', function () {
 
 test('users can delete a bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
-    $team = $user->ownedTeams()->where('personal_team', true)->first();
-    $user->current_team_id = $team->id;
-    $user->save();
+    $team = $user->currentTeam;
 
     $bioLink = BioLink::factory()->for($team)->create();
 
