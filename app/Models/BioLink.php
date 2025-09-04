@@ -29,4 +29,23 @@ class BioLink extends Model
     {
         return $this->belongsTo(Team::class);
     }
+
+    public function reorder(int $newOrder): void
+    {
+        $currentOrder = $this->order;
+
+        if ($newOrder > $currentOrder) {
+            $this->team->bioLinks()
+                ->where('order', '>', $currentOrder)
+                ->where('order', '<=', $newOrder)
+                ->decrement('order');
+        } elseif ($newOrder < $currentOrder) {
+            $this->team->bioLinks()
+                ->where('order', '>=', $newOrder)
+                ->where('order', '<', $currentOrder)
+                ->increment('order');
+        }
+
+        $this->update(['order' => $newOrder]);
+    }
 }

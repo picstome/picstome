@@ -47,21 +47,7 @@ new class extends Component
     {
         $this->authorize('update', $link);
 
-        $currentOrder = $link->order;
-
-        if ($newOrder > $currentOrder) {
-            $this->team->bioLinks()
-                ->where('order', '>', $currentOrder)
-                ->where('order', '<=', $newOrder)
-                ->decrement('order');
-        } elseif ($newOrder < $currentOrder) {
-            $this->team->bioLinks()
-                ->where('order', '>=', $newOrder)
-                ->where('order', '<', $currentOrder)
-                ->increment('order');
-        }
-
-        $link->update(['order' => $newOrder]);
+        $link->reorder($newOrder);
     }
 
     public function editLink(BioLink $link)
