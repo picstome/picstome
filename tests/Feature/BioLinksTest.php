@@ -11,17 +11,17 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-test('bio links management page is displayed', function () {
+it('displays bio links management page', function () {
     actingAs($user = User::factory()->withPersonalTeam()->create());
 
     get('/bio-links')->assertOk();
 });
 
-test('bio links management page requires authentication', function () {
+it('requires authentication for bio links management page', function () {
     get('/bio-links')->assertRedirect('/login');
 });
 
-test('users can add a new bio link', function () {
+it('allows users to add a new bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
@@ -38,7 +38,7 @@ test('users can add a new bio link', function () {
     expect($team->bioLinks->first()->url)->toEqual('https://twitter.com/testuser');
 });
 
-test('users can update an existing bio link', function () {
+it('allows users to update an existing bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
@@ -60,7 +60,7 @@ test('users can update an existing bio link', function () {
     expect($bioLink->url)->toEqual('https://new-url.com');
 });
 
-test('users can delete a bio link', function () {
+it('allows users to delete a bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
@@ -76,7 +76,7 @@ test('users can delete a bio link', function () {
     expect(BioLink::find($bioLink->id))->toBeNull();
 });
 
-test('users can reorder bio links', function () {
+it('allows users to reorder bio links', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
@@ -98,7 +98,7 @@ test('users can reorder bio links', function () {
     expect($link2->order)->toEqual(1);
 });
 
-test('bio link title is required', function () {
+it('requires bio link title', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
@@ -109,7 +109,7 @@ test('bio link title is required', function () {
     $response->assertHasErrors(['title' => 'required']);
 });
 
-test('bio link url is required and must be valid', function () {
+it('requires bio link url and validates format', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
@@ -127,7 +127,7 @@ test('bio link url is required and must be valid', function () {
     $response->assertHasErrors(['url' => 'url']);
 });
 
-test('bio link title has maximum length', function () {
+it('validates bio link title maximum length', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
@@ -138,7 +138,7 @@ test('bio link title has maximum length', function () {
     $response->assertHasErrors(['title' => 'max']);
 });
 
-test('bio links are displayed on public handle page', function () {
+it('displays bio links on public handle page', function () {
     $team = Team::factory()->create(['handle' => 'testuser']);
 
     BioLink::factory()->for($team)->create([
@@ -161,7 +161,7 @@ test('bio links are displayed on public handle page', function () {
         ->assertSee('https://testuser.com');
 });
 
-test('bio links are ordered correctly on public page', function () {
+it('orders bio links correctly on public page', function () {
     $team = Team::factory()->create(['handle' => 'testuser']);
 
     BioLink::factory()->for($team)->create([
@@ -195,7 +195,7 @@ test('bio links are ordered correctly on public page', function () {
     expect($secondPos)->toBeLessThan($thirdPos);
 });
 
-test('public handle page works without bio links', function () {
+it('works without bio links on public handle page', function () {
     $team = Team::factory()->create(['handle' => 'testuser']);
 
     get('/@testuser')
@@ -203,7 +203,7 @@ test('public handle page works without bio links', function () {
         ->assertDontSee('Bio Links');
 });
 
-test('users cannot manage bio links for teams they dont belong to', function () {
+it('prevents users from managing bio links for other teams', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $otherTeam = Team::factory()->create();
 
@@ -221,7 +221,7 @@ test('users cannot manage bio links for teams they dont belong to', function () 
     expect(BioLink::find($otherBioLink->id))->not->toBeNull();
 });
 
-test('bio links are isolated by team', function () {
+it('isolates bio links by team', function () {
     $user1 = User::factory()->withPersonalTeam()->create();
     $user2 = User::factory()->withPersonalTeam()->create();
 
