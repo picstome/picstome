@@ -81,7 +81,7 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.bio-links')
-        <div>
+        <div class="max-w-3xl mx-auto">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
                     <x-heading level="1" size="xl">{{ __('Bio Links') }}</x-heading>
@@ -90,42 +90,34 @@ new class extends Component
             </div>
 
             <div class="mt-8">
-                <!-- Bio Links Table -->
-                <flux:heading size="md" class="mb-4">{{ __('Your Bio Links') }}</flux:heading>
-
                 <flux:table>
-                        <flux:table.columns>
-                            <flux:table.column>{{ __('Title') }}</flux:table.column>
-                            <flux:table.column>{{ __('URL') }}</flux:table.column>
-                            <flux:table.column></flux:table.column>
-                        </flux:table.columns>
+                    <flux:table.columns>
+                        <flux:table.column class="w-1/2">{{ __('Title') }}</flux:table.column>
+                        <flux:table.column class="w-1/2">{{ __('URL') }}</flux:table.column>
+                        <flux:table.column></flux:table.column>
+                    </flux:table.columns>
                     <flux:table.rows>
                         <!-- Existing Links -->
                         @foreach ($this->bioLinks as $link)
                             <flux:table.row :key="$link->id">
                                 @if ($editingLink && $editingLink->id === $link->id)
-                                        <flux:table.cell>
-                                            <flux:input
-                                                wire:model="editForm.title"
-                                                type="text"
-                                                size="sm"
-                                            />
-                                        </flux:table.cell>
-                                        <flux:table.cell>
-                                            <flux:input
-                                                wire:model="editForm.url"
-                                                type="url"
-                                                size="sm"
-                                            />
-                                        </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:input
+                                            wire:model="editForm.title"
+                                            type="text"
+                                            class="ml-1"
+                                        />
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:input
+                                            wire:model="editForm.url"
+                                            type="url"
+                                        />
+                                    </flux:table.cell>
                                     <flux:table.cell>
                                         <div class="flex gap-2">
-                                            <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary" size="sm">
-                                                {{ __('Update') }}
-                                            </flux:button>
-                                            <flux:button wire:click="cancelEdit" variant="ghost" size="sm">
-                                                {{ __('Cancel') }}
-                                            </flux:button>
+                                            <flux:button wire:click="updateLink({{ $editingLink }})" icon="check" variant="primary" size="sm" color="green" />
+                                            <flux:button wire:click="cancelEdit" icon="x-mark" variant="subtle" size="sm" />
                                         </div>
                                     </flux:table.cell>
                                 @else
@@ -137,17 +129,14 @@ new class extends Component
                                     </flux:table.cell>
                                     <flux:table.cell>
                                         <div class="flex gap-2">
-                                            <flux:button wire:click="editLink({{ $link->id }})" variant="ghost" size="sm">
-                                                {{ __('Edit') }}
-                                            </flux:button>
+                                            <flux:button wire:click="editLink({{ $link->id }})" icon="pencil-square" variant="subtle" size="sm" />
                                             <flux:button
                                                 wire:click="deleteLink({{ $link->id }})"
                                                 wire:confirm="Are you sure you want to delete this bio link?"
-                                                variant="ghost"
+                                                icon="trash"
+                                                variant="subtle"
                                                 size="sm"
-                                                color="red"
                                             >
-                                                {{ __('Delete') }}
                                             </flux:button>
                                         </div>
                                     </flux:table.cell>
@@ -161,21 +150,19 @@ new class extends Component
                                     wire:model="addForm.title"
                                     type="text"
                                     placeholder="e.g. Instagram"
-                                    size="sm"
+                                    class="ml-1 min-w-40"
                                 />
                             </flux:table.cell>
                             <flux:table.cell>
                                 <flux:input
                                     wire:model="addForm.url"
                                     type="url"
+                                    class="min-w-40"
                                     placeholder="https://instagram.com/username"
-                                    size="sm"
                                 />
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:button wire:click="addLink" variant="primary" size="sm">
-                                    {{ __('Add Link') }}
-                                </flux:button>
+                                <flux:button wire:click="addLink" icon="plus" variant="primary" size="sm" />
                             </flux:table.cell>
                         </flux:table.row>
                     </flux:table.rows>
