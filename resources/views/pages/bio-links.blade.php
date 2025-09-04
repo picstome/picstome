@@ -39,23 +39,31 @@ new class extends Component
     {
         $this->validate();
 
-        $link = $this->currentTeam->bioLinks()->find($this->editingLink);
-        if ($link) {
-            $link->update([
-                'title' => $this->title,
-                'url' => $this->url,
-            ]);
+        $link = BioLink::findOrFail($this->editingLink);
+
+        // Ensure the link belongs to the current team
+        if ($link->team_id !== $this->currentTeam->id) {
+            abort(403, 'Unauthorized');
         }
+
+        $link->update([
+            'title' => $this->title,
+            'url' => $this->url,
+        ]);
 
         $this->reset(['title', 'url', 'editingLink']);
     }
 
     public function deleteLink($linkId)
     {
-        $link = $this->currentTeam->bioLinks()->find($linkId);
-        if ($link) {
-            $link->delete();
+        $link = BioLink::findOrFail($linkId);
+
+        // Ensure the link belongs to the current team
+        if ($link->team_id !== $this->currentTeam->id) {
+            abort(403, 'Unauthorized');
         }
+
+        $link->delete();
     }
 
     public function reorderLinks($links)
@@ -69,12 +77,16 @@ new class extends Component
 
     public function editLink($linkId)
     {
-        $link = $this->currentTeam->bioLinks()->find($linkId);
-        if ($link) {
-            $this->editingLink = $link->id;
-            $this->title = $link->title;
-            $this->url = $link->url;
+        $link = BioLink::findOrFail($linkId);
+
+        // Ensure the link belongs to the current team
+        if ($link->team_id !== $this->currentTeam->id) {
+            abort(403, 'Unauthorized');
         }
+
+        $this->editingLink = $link->id;
+        $this->title = $link->title;
+        $this->url = $link->url;
     }
 
     public function cancelEdit()
