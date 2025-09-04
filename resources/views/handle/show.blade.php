@@ -25,6 +25,12 @@
                     </div>
                 </div>
             @endif
+
+            @unlesssubscribed($team)
+                <div class="py-3">
+                    @include('partials.powered-by')
+                </div>
+            @endsubscribed
         </div>
     </div>
 </x-guest-layout>

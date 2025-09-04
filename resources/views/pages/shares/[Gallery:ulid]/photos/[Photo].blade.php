@@ -176,8 +176,6 @@ new class extends Component
                 @endif
             </div>
 
-
-
             @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">
                     @include('partials.powered-by')
