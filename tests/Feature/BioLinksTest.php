@@ -26,8 +26,8 @@ it('allows users to add a new bio link', function () {
     $team = $user->currentTeam;
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('title', 'Twitter')
-        ->set('url', 'https://twitter.com/testuser')
+        ->set('form.title', 'Twitter')
+        ->set('form.url', 'https://twitter.com/testuser')
         ->call('addLink');
 
     $response->assertHasNoErrors();
@@ -49,8 +49,8 @@ it('allows users to update an existing bio link', function () {
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
         ->call('editLink', $bioLink->id)
-        ->set('title', 'New Title')
-        ->set('url', 'https://new-url.com')
+        ->set('form.title', 'New Title')
+        ->set('form.url', 'https://new-url.com')
         ->call('updateLink', $bioLink);
 
     $response->assertHasNoErrors();
@@ -121,40 +121,40 @@ it('requires bio link title', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('title', '')
-        ->set('url', 'https://example.com')
+        ->set('form.title', '')
+        ->set('form.url', 'https://example.com')
         ->call('addLink');
 
-    $response->assertHasErrors(['title' => 'required']);
+    $response->assertHasErrors(['form.title' => 'required']);
 });
 
 it('requires bio link url and validates format', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('title', 'Test Link')
-        ->set('url', '')
+        ->set('form.title', 'Test Link')
+        ->set('form.url', '')
         ->call('addLink');
 
-    $response->assertHasErrors(['url' => 'required']);
+    $response->assertHasErrors(['form.url' => 'required']);
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('title', 'Test Link')
-        ->set('url', 'invalid-url')
+        ->set('form.title', 'Test Link')
+        ->set('form.url', 'invalid-url')
         ->call('addLink');
 
-    $response->assertHasErrors(['url' => 'url']);
+    $response->assertHasErrors(['form.url' => 'url']);
 });
 
 it('validates bio link title maximum length', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('title', str_repeat('a', 256))
-        ->set('url', 'https://example.com')
+        ->set('form.title', str_repeat('a', 256))
+        ->set('form.url', 'https://example.com')
         ->call('addLink');
 
-    $response->assertHasErrors(['title' => 'max']);
+    $response->assertHasErrors(['form.title' => 'max']);
 });
 
 it('displays bio links on public handle page', function () {
