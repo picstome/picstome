@@ -226,14 +226,14 @@ test('users cannot manage bio links for teams they dont belong to', function () 
 });
 
 test('bio links are isolated by team', function () {
-    $team1 = Team::factory()->create(['handle' => 'team1']);
-    $team2 = Team::factory()->create(['handle' => 'team2']);
+    $user1 = User::factory()->withPersonalTeam()->create();
+    $user2 = User::factory()->withPersonalTeam()->create();
 
-    $user1 = User::factory()->create();
-    $user2 = User::factory()->create();
+    $team1 = $user1->currentTeam;
+    $team2 = $user2->currentTeam;
 
-    $team1->users()->attach($user1);
-    $team2->users()->attach($user2);
+    $team1->update(['handle' => 'team1']);
+    $team2->update(['handle' => 'team2']);
 
     $link1 = BioLink::factory()->for($team1)->create(['title' => 'Team 1 Link']);
     $link2 = BioLink::factory()->for($team2)->create(['title' => 'Team 2 Link']);
