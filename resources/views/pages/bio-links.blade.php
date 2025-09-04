@@ -43,13 +43,25 @@ new class extends Component
         $link->delete();
     }
 
-    public function reorderLinks($links)
+    public function reorderLink(BioLink $link, int $newOrder)
     {
-        foreach ($links as $linkData) {
+        $this->authorize('update', $link);
+
+        $currentOrder = $link->order;
+
+        if ($newOrder > $currentOrder) {
             $this->team->bioLinks()
-                ->where('id', $linkData['id'])
-                ->update(['order' => $linkData['order']]);
+                ->where('order', '>', $currentOrder)
+                ->where('order', '<=', $newOrder)
+                ->decrement('order');
+        } elseif ($newOrder < $currentOrder) {
+            $this->team->bioLinks()
+                ->where('order', '>=', $newOrder)
+                ->where('order', '<', $currentOrder)
+                ->increment('order');
         }
+
+        $link->update(['order' => $newOrder]);
     }
 
     public function editLink(BioLink $link)
@@ -83,7 +95,7 @@ new class extends Component
     @volt('pages.bio-links')
         <div class="max-w-3xl mx-auto" x-data="{
             handleReorder: (item, position) => {
-                console.log(item, position);
+                $wire.call('reorderLink', item, position);
             }
         }">
             <div class="flex flex-wrap items-end justify-between gap-4">
@@ -110,17 +122,12 @@ new class extends Component
                         @foreach ($this->bioLinks as $link)
                             <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
                                 <flux:table.cell class="w-8">
-                                    <div x-sort:handle class="cursor-move text-gray-400 hover:text-gray-600">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                                        </svg>
-                                    </div>
+                                    <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
                                 </flux:table.cell>
                                 @if ($editingLink && $editingLink->id === $link->id)
                                     <flux:table.cell>
                                         <flux:field>
                                             <flux:input wire:model="editForm.title" type="text" class="ml-1" />
-
                                             <flux:error name="editForm.title" />
                                         </flux:field>
                                     </flux:table.cell>
@@ -170,7 +177,6 @@ new class extends Component
                                         placeholder="e.g. Instagram"
                                         class="ml-1 min-w-40"
                                     />
-
                                     <flux:error name="addForm.title" />
                                 </flux:field>
                             </flux:table.cell>
@@ -182,7 +188,6 @@ new class extends Component
                                         class="min-w-40"
                                         placeholder="https://instagram.com/username"
                                     />
-
                                     <flux:error name="addForm.url" />
                                 </flux:field>
                             </flux:table.cell>
