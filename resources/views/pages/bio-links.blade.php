@@ -21,7 +21,7 @@ new class extends Component
     #[Validate('required|url')]
     public string $url = '';
 
-    public ?int $editingLink = null;
+    public ?BioLink $editingLink = null;
 
     public function addLink()
     {
@@ -69,16 +69,13 @@ new class extends Component
         }
     }
 
-    public function editLink($linkId)
+    public function editLink(BioLink $link)
     {
-        $link = BioLink::findOrFail($linkId);
-
-        // Ensure the link belongs to the current team
         if ($link->team_id !== $this->currentTeam->id) {
             abort(403, 'Unauthorized');
         }
 
-        $this->editingLink = $link->id;
+        $this->editingLink = $link;
         $this->title = $link->title;
         $this->url = $link->url;
     }
