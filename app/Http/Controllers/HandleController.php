@@ -13,6 +13,6 @@ class HandleController extends Controller
 
         abort_if(!$team, 404);
 
-        return view('team.show', ['team' => $team]);
+        return view('handle.show', ['team' => $team]);
     }
 }
