@@ -27,7 +27,7 @@ new class extends Component
     {
         $this->validate();
 
-        $this->currentTeam->bioLinks()->create([
+        $this->team->bioLinks()->create([
             'title' => $this->title,
             'url' => $this->url,
         ]);
@@ -59,7 +59,7 @@ new class extends Component
     public function reorderLinks($links)
     {
         foreach ($links as $linkData) {
-            $this->currentTeam->bioLinks()
+            $this->team->bioLinks()
                 ->where('id', $linkData['id'])
                 ->update(['order' => $linkData['order']]);
         }
@@ -80,7 +80,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function currentTeam()
+    public function team()
     {
         return Auth::user()->currentTeam;
     }
@@ -88,7 +88,7 @@ new class extends Component
     #[Computed]
     public function bioLinks()
     {
-        return $this->currentTeam?->bioLinks ?? collect();
+        return $this->team?->bioLinks ?? collect();
     }
 }; ?>
 
