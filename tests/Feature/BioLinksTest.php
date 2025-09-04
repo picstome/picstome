@@ -23,7 +23,9 @@ test('bio links management page requires authentication', function () {
 
 test('users can add a new bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
-    $team = $user->currentTeam;
+    $team = $user->ownedTeams()->where('personal_team', true)->first();
+    $user->current_team_id = $team->id;
+    $user->save();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
         ->set('title', 'Twitter')
@@ -32,6 +34,7 @@ test('users can add a new bio link', function () {
 
     $response->assertHasNoErrors();
 
+    $team->refresh();
     expect($team->bioLinks)->toHaveCount(1);
     expect($team->bioLinks->first()->title)->toEqual('Twitter');
     expect($team->bioLinks->first()->url)->toEqual('https://twitter.com/testuser');
@@ -61,7 +64,9 @@ test('users can update an existing bio link', function () {
 
 test('users can delete a bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
-    $team = $user->currentTeam;
+    $team = $user->ownedTeams()->where('personal_team', true)->first();
+    $user->current_team_id = $team->id;
+    $user->save();
 
     $bioLink = BioLink::factory()->for($team)->create();
 
@@ -70,6 +75,7 @@ test('users can delete a bio link', function () {
 
     $response->assertHasNoErrors();
 
+    $team->refresh();
     expect($team->bioLinks)->toHaveCount(0);
     expect(BioLink::find($bioLink->id))->toBeNull();
 });
