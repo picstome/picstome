@@ -75,13 +75,17 @@ new class extends Component
     #[Computed]
     public function bioLinks()
     {
-        return $this->team?->bioLinks ?? collect();
+        return $this->team?->bioLinks()->orderBy('order')->get() ?? collect();
     }
 }; ?>
 
 <x-app-layout>
     @volt('pages.bio-links')
-        <div class="max-w-3xl mx-auto">
+        <div class="max-w-3xl mx-auto" x-data="{
+            handleReorder: (item, position) => {
+                console.log(item, position);
+            }
+        }">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
                     <flux:heading level="1" size="xl">{{ __('Bio Links') }}</flux:heading>
@@ -97,14 +101,21 @@ new class extends Component
             <div class="mt-8">
                 <flux:table>
                     <flux:table.columns>
+                        <flux:table.column class="w-8"></flux:table.column>
                         <flux:table.column class="w-1/2">{{ __('Title') }}</flux:table.column>
                         <flux:table.column class="w-1/2">{{ __('URL') }}</flux:table.column>
                         <flux:table.column></flux:table.column>
-                    </flux:table.columns>
-                    <flux:table.rows>
-                        <!-- Existing Links -->
+                     </flux:table.columns>
+                    <flux:table.rows x-sort="handleReorder">
                         @foreach ($this->bioLinks as $link)
-                            <flux:table.row :key="$link->id">
+                            <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                <flux:table.cell class="w-8">
+                                    <div x-sort:handle class="cursor-move text-gray-400 hover:text-gray-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                        </svg>
+                                    </div>
+                                </flux:table.cell>
                                 @if ($editingLink && $editingLink->id === $link->id)
                                     <flux:table.cell>
                                         <flux:field>
@@ -149,9 +160,10 @@ new class extends Component
                             </flux:table.row>
                         @endforeach
 
-                        <flux:table.row>
-                            <flux:table.cell>
-                                <flux:field>
+                         <flux:table.row>
+                             <flux:table.cell></flux:table.cell>
+                             <flux:table.cell>
+                                 <flux:field>
                                     <flux:input
                                         wire:model="addForm.title"
                                         type="text"
@@ -182,5 +194,8 @@ new class extends Component
                 </flux:table>
             </div>
         </div>
+        @assets
+            <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
+        @endassets
     @endvolt
 </x-app-layout>
