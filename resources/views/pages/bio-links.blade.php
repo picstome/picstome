@@ -94,11 +94,11 @@ new class extends Component
                 <flux:heading size="md" class="mb-4">{{ __('Your Bio Links') }}</flux:heading>
 
                 <flux:table>
-                    <flux:table.columns>
-                        <flux:table.column>{{ __('Title') }}</flux:table.column>
-                        <flux:table.column>{{ __('URL') }}</flux:table.column>
-                        <flux:table.column>{{ __('Actions') }}</flux:table.column>
-                    </flux:table.columns>
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('Title') }}</flux:table.column>
+                            <flux:table.column>{{ __('URL') }}</flux:table.column>
+                            <flux:table.column></flux:table.column>
+                        </flux:table.columns>
                     <flux:table.rows>
                         <!-- Existing Links -->
                         @foreach ($this->bioLinks as $link)
