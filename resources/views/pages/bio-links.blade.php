@@ -39,7 +39,6 @@ new class extends Component
     {
         $this->validate();
 
-        // Ensure the link belongs to the current team
         if ($link->team_id !== $this->currentTeam->id) {
             abort(403, 'Unauthorized');
         }
@@ -52,11 +51,8 @@ new class extends Component
         $this->reset(['title', 'url', 'editingLink']);
     }
 
-    public function deleteLink($linkId)
+    public function deleteLink(BioLink $link)
     {
-        $link = BioLink::findOrFail($linkId);
-
-        // Ensure the link belongs to the current team
         if ($link->team_id !== $this->currentTeam->id) {
             abort(403, 'Unauthorized');
         }
