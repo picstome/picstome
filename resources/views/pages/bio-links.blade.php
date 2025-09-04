@@ -3,6 +3,7 @@
 use App\Models\BioLink;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -14,14 +15,13 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
+    #[Validate('required|string|max:255')]
     public string $title = '';
-    public string $url = '';
-    public ?int $editingLink = null;
 
-    protected $rules = [
-        'title' => 'required|string|max:255',
-        'url' => 'required|url',
-    ];
+    #[Validate('required|url')]
+    public string $url = '';
+
+    public ?int $editingLink = null;
 
     public function addLink()
     {
