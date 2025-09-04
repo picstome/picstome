@@ -116,34 +116,32 @@ new class extends Component
                         <!-- Existing Links -->
                         @foreach ($this->bioLinks as $link)
                             <flux:table.row :key="$link->id">
-                                    @if ($editingLink && $editingLink->id === $link->id)
-                                        <!-- Edit Mode -->
-                                        <flux:table.cell>
-                                            <flux:input
-                                                wire:model="title"
-                                                type="text"
-                                                size="sm"
-                                            />
-                                        </flux:table.cell>
-                                        <flux:table.cell>
-                                            <flux:input
-                                                wire:model="url"
-                                                type="url"
-                                                size="sm"
-                                            />
-                                        </flux:table.cell>
-                                        <flux:table.cell>
-                                            <div class="flex gap-2">
-                                                <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary" size="sm">
-                                                    {{ __('Update') }}
-                                                </flux:button>
-                                                <flux:button wire:click="cancelEdit" variant="ghost" size="sm">
-                                                    {{ __('Cancel') }}
-                                                </flux:button>
-                                            </div>
-                                        </flux:table.cell>
+                                @if ($editingLink && $editingLink->id === $link->id)
+                                    <flux:table.cell>
+                                        <flux:input
+                                            wire:model="title"
+                                            type="text"
+                                            size="sm"
+                                        />
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:input
+                                            wire:model="url"
+                                            type="url"
+                                            size="sm"
+                                        />
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <div class="flex gap-2">
+                                            <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary" size="sm">
+                                                {{ __('Update') }}
+                                            </flux:button>
+                                            <flux:button wire:click="cancelEdit" variant="ghost" size="sm">
+                                                {{ __('Cancel') }}
+                                            </flux:button>
+                                        </div>
+                                    </flux:table.cell>
                                 @else
-                                    <!-- Display Mode -->
                                     <flux:table.cell>
                                         <div class="font-medium">{{ $link->title }}</div>
                                     </flux:table.cell>
@@ -170,7 +168,6 @@ new class extends Component
                             </flux:table.row>
                         @endforeach
 
-                        <!-- Add New Link Row -->
                         <flux:table.row>
                             <flux:table.cell>
                                 <flux:input
