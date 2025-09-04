@@ -85,24 +85,7 @@ new class extends Component
     #[Computed]
     public function currentTeam()
     {
-        $user = Auth::user();
-        if (!$user) {
-            return null;
-        }
-
-        if ($user->current_team_id) {
-            return $user->currentTeam;
-        }
-
-        // Find personal team
-        $personalTeam = $user->ownedTeams()->where('personal_team', true)->first();
-        if ($personalTeam) {
-            $user->current_team_id = $personalTeam->id;
-            $user->save();
-            return $personalTeam;
-        }
-
-        return null;
+        return Auth::user()->currentTeam;
     }
 
     #[Computed]
