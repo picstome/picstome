@@ -37,11 +37,9 @@ new class extends Component
 
     public function updateLink(BioLink $link)
     {
-        $this->validate();
+        $this->authorize('update', $link);
 
-        if ($link->team_id !== $this->currentTeam->id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->validate();
 
         $link->update([
             'title' => $this->title,
@@ -53,9 +51,7 @@ new class extends Component
 
     public function deleteLink(BioLink $link)
     {
-        if ($link->team_id !== $this->currentTeam->id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorize('delete', $link);
 
         $link->delete();
     }
@@ -71,9 +67,7 @@ new class extends Component
 
     public function editLink(BioLink $link)
     {
-        if ($link->team_id !== $this->currentTeam->id) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorize('view', $link);
 
         $this->editingLink = $link;
         $this->title = $link->title;
