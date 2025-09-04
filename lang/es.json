@@ -143,7 +143,7 @@
     "Photos": "Fotos",
     "Photoshoot Name": "Nombre de la sesión de fotos",
     "Photoshoots": "Sesiones de fotos",
-    "Pink": "Rosa",
+    "Pink": "Rosado",
     "Plan limit reached": "Plan limit reached",
     "Please enter your photoshoot details.": "Por favor, ingresa los detalles de tu sesión de fotos.",
     "Please note that the customer may have changed pictures in the meantime, so be sure to confirm with the customer before starting.": "Ten en cuenta que el cliente puede haber cambiado las fotos mientras tanto, así que asegúrate de confirmar con el cliente antes de comenzar.",
@@ -290,5 +290,6 @@
     "Bio Links": "Enlaces Bio",
     "Manage your bio links for your public profile.": "Gestiona tus enlaces bio para tu perfil público.",
     "URL": "URL",
-    "Are you sure you want to delete this bio link?": "¿Estás seguro de que quieres eliminar este enlace bio?"
+    "Are you sure you want to delete this bio link?": "¿Estás seguro de que quieres eliminar este enlace bio?",
+    "Zinc": "Zinc"
 }

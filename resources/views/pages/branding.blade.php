@@ -122,6 +122,7 @@ new class extends Component
                     <option value="fuchsia">{{ __('Fuchsia') }}</option>
                     <option value="pink">{{ __('Pink') }}</option>
                     <option value="rose">{{ __('Rose') }}</option>
+                    <option value="">{{ __('Zinc') }}</option>
                 </flux:select>
 
                 <flux:select wire:model="form.font" :label="__('Font')">
