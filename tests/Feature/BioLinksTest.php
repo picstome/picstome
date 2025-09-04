@@ -242,7 +242,7 @@ it('prevents users from managing bio links for other teams', function () {
         ->assertDontSee($otherBioLink->title);
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->call('deleteLink', $otherBioLink->id);
+        ->call('deleteLink', $otherBioLink);
 
     $response->assertForbidden();
 });
