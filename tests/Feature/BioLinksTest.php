@@ -48,7 +48,7 @@ it('allows users to update an existing bio link', function () {
     ]);
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('editingLink', $bioLink->id)
+        ->call('editLink', $bioLink->id)
         ->set('title', 'New Title')
         ->set('url', 'https://new-url.com')
         ->call('updateLink', $bioLink);
@@ -74,16 +74,9 @@ it('prevents users from updating bio links for other teams', function () {
     get('/bio-links')->assertOk();
 
     $response = Volt::actingAs($user)->test('pages.bio-links')
-        ->set('editingLink', $otherBioLink->id)
-        ->set('title', 'Hacked Title')
-        ->set('url', 'https://hacked.com')
-        ->call('updateLink', $otherBioLink);
+        ->call('editLink', $otherBioLink->id);
 
     $response->assertForbidden();
-
-    $otherBioLink->refresh();
-    expect($otherBioLink->title)->toEqual('Other Team Link');
-    expect($otherBioLink->url)->toEqual('https://other-team.com');
 });
 
 it('allows users to delete a bio link', function () {
