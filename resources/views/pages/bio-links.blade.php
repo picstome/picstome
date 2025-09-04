@@ -114,7 +114,7 @@ new class extends Component
                         </flux:table.columns>
                         <flux:table.rows>
                             <!-- Existing Links -->
-                            @forelse ($this->bioLinks as $link)
+                            @foreach ($this->bioLinks as $link)
                                 <flux:table.row :key="$link->id">
                                     @if ($editingLink && $editingLink->id === $link->id)
                                         <!-- Edit Mode -->
@@ -170,13 +170,7 @@ new class extends Component
                                         </flux:table.cell>
                                     @endif
                                 </flux:table.row>
-                            @empty
-                                <flux:table.row>
-                                    <flux:table.cell colspan="3" class="text-center py-8 text-zinc-500 dark:text-zinc-400">
-                                        {{ __('No bio links yet. Add your first link using the form below.') }}
-                                    </flux:table.cell>
-                                </flux:table.row>
-                            @endforelse
+                            @endforeach
 
                             <!-- Add New Link Row -->
                             <flux:table.row>
