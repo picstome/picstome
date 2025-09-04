@@ -16,11 +16,6 @@ class BioLink extends Model
         'order' => 'integer',
     ];
 
-    public function team(): BelongsTo
-    {
-        return $this->belongsTo(Team::class);
-    }
-
     protected static function booted(): void
     {
         static::creating(function (BioLink $bioLink) {
@@ -28,5 +23,10 @@ class BioLink extends Model
                 $bioLink->order = static::where('team_id', $bioLink->team_id)->max('order') + 1;
             }
         });
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 }
