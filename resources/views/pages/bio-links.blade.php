@@ -102,80 +102,112 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="mt-8 grid gap-8 lg:grid-cols-2">
-                <!-- Add/Edit Form -->
-                <div class="rounded-lg border border-zinc-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
-                    <flux:heading size="md" class="mb-4">
-                        {{ $editingLink ? __('Edit Bio Link') : __('Add New Bio Link') }}
-                    </flux:heading>
+            <div class="mt-8">
+                <!-- Bio Links Table -->
+                <flux:heading size="md" class="mb-4">{{ __('Your Bio Links') }}</flux:heading>
 
-                     <form wire:submit="{{ $editingLink ? 'updateLink(' . $editingLink . ')' : 'addLink' }}" class="space-y-4">
-                        <flux:input
-                            wire:model="title"
-                            :label="__('Title')"
-                            type="text"
-                            placeholder="e.g. Instagram"
-                        />
+                <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('Title') }}</flux:table.column>
+                            <flux:table.column>{{ __('URL') }}</flux:table.column>
+                            <flux:table.column>{{ __('Actions') }}</flux:table.column>
+                        </flux:table.columns>
+                        <flux:table.rows>
+                            <!-- Existing Links -->
+                            @forelse ($this->bioLinks as $link)
+                                <flux:table.row :key="$link->id">
+                                    @if ($editingLink && $editingLink->id === $link->id)
+                                        <!-- Edit Mode -->
+                                        <flux:table.cell colspan="3">
+                                            <form wire:submit="updateLink({{ $editingLink }})" class="flex gap-4 items-end">
+                                                <div class="flex-1">
+                                                    <flux:input
+                                                        wire:model="title"
+                                                        type="text"
+                                                        size="sm"
+                                                    />
+                                                </div>
+                                                <div class="flex-1">
+                                                    <flux:input
+                                                        wire:model="url"
+                                                        type="url"
+                                                        size="sm"
+                                                    />
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <flux:button type="submit" variant="primary" size="sm">
+                                                        {{ __('Update') }}
+                                                    </flux:button>
+                                                    <flux:button wire:click="cancelEdit" variant="ghost" size="sm">
+                                                        {{ __('Cancel') }}
+                                                    </flux:button>
+                                                </div>
+                                            </form>
+                                        </flux:table.cell>
+                                    @else
+                                        <!-- Display Mode -->
+                                        <flux:table.cell>
+                                            <div class="font-medium">{{ $link->title }}</div>
+                                        </flux:table.cell>
+                                        <flux:table.cell>
+                                            <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $link->url }}</div>
+                                        </flux:table.cell>
+                                        <flux:table.cell>
+                                            <div class="flex gap-2">
+                                                <flux:button wire:click="editLink({{ $link->id }})" variant="ghost" size="sm">
+                                                    {{ __('Edit') }}
+                                                </flux:button>
+                                                <flux:button
+                                                    wire:click="deleteLink({{ $link->id }})"
+                                                    wire:confirm="Are you sure you want to delete this bio link?"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    color="red"
+                                                >
+                                                    {{ __('Delete') }}
+                                                </flux:button>
+                                            </div>
+                                        </flux:table.cell>
+                                    @endif
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="3" class="text-center py-8 text-zinc-500 dark:text-zinc-400">
+                                        {{ __('No bio links yet. Add your first link using the form below.') }}
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
 
-                        <flux:input
-                            wire:model="url"
-                            :label="__('URL')"
-                            type="url"
-                            placeholder="https://instagram.com/username"
-                        />
-
-                        <div class="flex gap-2">
-                            @if ($editingLink)
-                                <flux:button type="submit" variant="primary">
-                                    {{ __('Update Link') }}
-                                </flux:button>
-                                <flux:button wire:click="cancelEdit" variant="ghost">
-                                    {{ __('Cancel') }}
-                                </flux:button>
-                            @else
-                                <flux:button type="submit" variant="primary">
-                                    {{ __('Add Link') }}
-                                </flux:button>
-                            @endif
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Links List -->
-                <div class="rounded-lg border border-zinc-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
-                    <flux:heading size="md" class="mb-4">{{ __('Your Bio Links') }}</flux:heading>
-
-                    @if ($this->bioLinks->isNotEmpty())
-                        <div class="space-y-3">
-                            @foreach ($this->bioLinks as $link)
-                                <div class="flex items-center justify-between rounded border border-zinc-200 p-3 dark:border-white/10">
-                                    <div class="flex-1">
-                                        <div class="font-medium">{{ $link->title }}</div>
-                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $link->url }}</div>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <flux:button wire:click="editLink({{ $link->id }})" variant="ghost" size="sm">
-                                            {{ __('Edit') }}
-                                        </flux:button>
-                                        <flux:button
-                                            wire:click="deleteLink({{ $link->id }})"
-                                            wire:confirm="Are you sure you want to delete this bio link?"
-                                            variant="ghost"
-                                            size="sm"
-                                            color="red"
-                                        >
-                                            {{ __('Delete') }}
-                                        </flux:button>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-8 text-zinc-500 dark:text-zinc-400">
-                            {{ __('No bio links yet. Add your first link above.') }}
-                        </div>
-                    @endif
-                </div>
+                            <!-- Add New Link Row -->
+                            <flux:table.row>
+                                <flux:table.cell colspan="3">
+                                    <form wire:submit="addLink" class="flex gap-4 items-end">
+                                        <div class="flex-1">
+                                            <flux:input
+                                                wire:model="title"
+                                                type="text"
+                                                placeholder="e.g. Instagram"
+                                                size="sm"
+                                            />
+                                        </div>
+                                        <div class="flex-1">
+                                            <flux:input
+                                                wire:model="url"
+                                                type="url"
+                                                placeholder="https://instagram.com/username"
+                                                size="sm"
+                                            />
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <flux:button type="submit" variant="primary" size="sm">
+                                                {{ __('Add Link') }}
+                                            </flux:button>
+                                        </div>
+                                    </form>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        </flux:table.rows>
+                </flux:table>
             </div>
         </div>
     @endvolt
