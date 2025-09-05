@@ -1,5 +1,8 @@
 <x-guest-layout :font="$team->brand_font" :full-screen="true">
     <x-slot name="head">
+        @if($team->brand_logo_icon_url)
+            <link rel="icon" type="image/png" href="{{ $team->brand_logo_icon_url . '&w=32&h=32' }}" />
+        @endif
         @if(app()->environment('production'))
             @include('partials.google-analytics')
         @endif
