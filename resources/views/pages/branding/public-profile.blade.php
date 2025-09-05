@@ -156,7 +156,7 @@ new class extends Component
 
                                         @if($team->website_url)
                                             <flux:tooltip content="{{ $team->website_url }}">
-                                                <flux:avatar circle>
+                                                <flux:avatar circle color="auto">
                                                     <flux:icon.globe-alt class="w-6 h-6" />
                                                 </flux:avatar>
                                             </flux:tooltip>
@@ -164,11 +164,7 @@ new class extends Component
 
                                         @if($team->other_social_links)
                                             <flux:tooltip content="{{ $team->other_social_links['url'] }}">
-                                                <flux:avatar circle>
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                                    </svg>
-                                                </flux:avatar>
+                                                <flux:avatar circle color="auto" name="{{ $team->other_social_links['label'] }}" />
                                             </flux:tooltip>
                                         @endif
                                     </flux:avatar.group>
