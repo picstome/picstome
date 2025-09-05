@@ -55,7 +55,7 @@ new class extends Component
 
                     <div class="mt-5 w-full max-w-lg">
                         <form wire:submit="save" class="space-y-6">
-                            <flux:field class="
+                             <flux:field class="
                                 **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
                                 **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
                             >
@@ -75,6 +75,65 @@ new class extends Component
                                 </flux:description>
 
                                 <flux:error name="form.bio" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('Instagram') }}</flux:label>
+                                <flux:input wire:model="form.instagram" placeholder="username" />
+                                <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
+                                <flux:error name="form.instagram" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('YouTube') }}</flux:label>
+                                <flux:input wire:model="form.youtube" placeholder="channel/UC123 or @username" />
+                                <flux:description>{{ __('Enter your YouTube channel URL path or @username') }}</flux:description>
+                                <flux:error name="form.youtube" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('Facebook') }}</flux:label>
+                                <flux:input wire:model="form.facebook" placeholder="username" />
+                                <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
+                                <flux:error name="form.facebook" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('X (Twitter)') }}</flux:label>
+                                <flux:input wire:model="form.x" placeholder="username" />
+                                <flux:description>{{ __('Enter your X (Twitter) username (without @)') }}</flux:description>
+                                <flux:error name="form.x" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('TikTok') }}</flux:label>
+                                <flux:input wire:model="form.tiktok" placeholder="username" />
+                                <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
+                                <flux:error name="form.tiktok" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('Twitch') }}</flux:label>
+                                <flux:input wire:model="form.twitch" placeholder="username" />
+                                <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
+                                <flux:error name="form.twitch" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('Website') }}</flux:label>
+                                <flux:input wire:model="form.website" placeholder="https://example.com" />
+                                <flux:description>{{ __('Enter your website URL') }}</flux:description>
+                                <flux:error name="form.website" />
+                            </flux:field>
+
+                            <flux:field>
+                                <flux:label>{{ __('Other') }}</flux:label>
+                                <div class="flex gap-2">
+                                    <flux:input wire:model="form.other.label" placeholder="Label" class="flex-1" />
+                                    <flux:input wire:model="form.other.url" placeholder="https://example.com" class="flex-1" />
+                                </div>
+                                <flux:error name="form.other.label" />
+                                <flux:error name="form.other.url" />
                             </flux:field>
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
