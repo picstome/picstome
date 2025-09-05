@@ -70,13 +70,12 @@ new class extends Component
                     <div class="mt-5 space-y-8">
                         <!-- Bio Section -->
                         <div class="w-full max-w-lg">
-                            <flux:heading size="sm" class="mb-4">{{ __('Bio') }}</flux:heading>
                             <form wire:submit="save" class="space-y-4">
                                 <flux:field class="
                                     **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
                                     **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
                                 >
-                                    <flux:label>{{ __('Description') }}</flux:label>
+                                    <flux:label>{{ __('Bio') }}</flux:label>
 
                                     <trix-editor
                                         input="trix"
@@ -94,7 +93,7 @@ new class extends Component
                                     <flux:error name="form.bio" />
                                 </flux:field>
 
-                                <flux:button type="submit" variant="primary">{{ __('Save Bio') }}</flux:button>
+                                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                             </form>
                         </div>
 
