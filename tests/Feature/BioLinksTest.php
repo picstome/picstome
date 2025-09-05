@@ -11,21 +11,15 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-it('redirects bio links page to branding public profile', function () {
-    actingAs($user = User::factory()->withPersonalTeam()->create());
-
-    get('/bio-links')->assertRedirect(route('branding.public-profile'));
-});
-
-it('requires authentication for bio links management page', function () {
-    get('/bio-links')->assertRedirect('/login');
+it('requires authentication for branding public profile page', function () {
+    get(route('branding.public-profile'))->assertRedirect('/login');
 });
 
 it('allows users to add a new bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->set('addForm.title', 'Twitter')
         ->set('addForm.url', 'https://twitter.com/testuser')
         ->call('addLink');
@@ -47,7 +41,7 @@ it('allows users to update an existing bio link', function () {
         'url' => 'https://old-url.com',
     ]);
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->call('editLink', $bioLink->id)
         ->set('editForm.title', 'New Title')
         ->set('editForm.url', 'https://new-url.com')
@@ -85,7 +79,7 @@ it('allows users to delete a bio link', function () {
 
     $bioLink = BioLink::factory()->for($team)->create();
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->call('deleteLink', $bioLink->id);
 
     $response->assertHasNoErrors();
@@ -102,7 +96,7 @@ it('allows users to reorder bio links', function () {
     $link1 = BioLink::factory()->for($team)->create(['order' => 1]);
     $link2 = BioLink::factory()->for($team)->create(['order' => 2]);
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->call('reorderLink', $link2, 1);
 
     $response->assertHasNoErrors();
@@ -117,7 +111,7 @@ it('allows users to reorder bio links', function () {
 it('requires bio link title', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->set('addForm.title', '')
         ->set('addForm.url', 'https://example.com')
         ->call('addLink');
@@ -128,14 +122,14 @@ it('requires bio link title', function () {
 it('requires bio link url and validates format', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->set('addForm.title', 'Test Link')
         ->set('addForm.url', '')
         ->call('addLink');
 
     $response->assertHasErrors(['addForm.url' => 'required']);
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->set('addForm.title', 'Test Link')
         ->set('addForm.url', 'invalid-url')
         ->call('addLink');
@@ -146,7 +140,7 @@ it('requires bio link url and validates format', function () {
 it('validates bio link title maximum length', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->set('addForm.title', str_repeat('a', 256))
         ->set('addForm.url', 'https://example.com')
         ->call('addLink');
