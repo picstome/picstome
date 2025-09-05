@@ -104,8 +104,8 @@ new class extends Component
              <div class="mt-8">
                  <flux:table>
                     <flux:table.columns>
-                        <flux:table.column class="w-1/2">{{ __('Title') }}</flux:table.column>
-                        <flux:table.column class="w-1/2">{{ __('URL') }}</flux:table.column>
+                        <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
+                        <flux:table.column class="w-1/2 hidden sm:table-cell">{{ __('URL') }}</flux:table.column>
                         <flux:table.column></flux:table.column>
                      </flux:table.columns>
                     <flux:table.rows x-sort="handleReorder">
@@ -117,9 +117,9 @@ new class extends Component
                                         <flux:text variant="strong">{{ $link->title }}</flux:text>
                                     </div>
                                 </flux:table.cell>
-                                <flux:table.cell>
-                                    {{ $link->url }}
-                                </flux:table.cell>
+                                 <flux:table.cell class="hidden sm:table-cell">
+                                     {{ $link->url }}
+                                 </flux:table.cell>
                                 <flux:table.cell>
                                     <flux:dropdown>
                                         <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
