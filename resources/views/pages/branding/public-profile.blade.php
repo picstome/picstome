@@ -122,17 +122,21 @@ new class extends Component
                     <flux:heading>{{ __('Public Profile') }}</flux:heading>
                     <flux:subheading>{{ __('Configure your public profile information.') }}</flux:subheading>
 
+                    <div class="mt-2">
+                        <flux:button :href="route('handle.show', ['handle' => $team->handle])" target="_blank" icon:trailing="arrow-top-right-on-square" variant="filled" size="sm">
+                            {{ __('View Profile') }}
+                        </flux:button>
+                    </div>
+
                     <div class="mt-5 space-y-12">
                         <!-- Handle Section -->
                         <div class="w-full max-w-lg">
                             <form wire:submit="save" class="space-y-4">
                                 <flux:field>
-                                    <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
+                                    <flux:label>{{ __('Username') }}</flux:label>
+                                    <flux:input wire:model="form.handle" :placeholder="__('e.g. mystudio')" />
                                     <flux:description>
-                                        {{ __('This username is used for your public profile.') }}
-                                        <flux:link :href="route('handle.show', ['handle' => $team->handle])" target="_blank">
-                                            {{ __('View your public profile') }}
-                                        </flux:link>.
+                                        {{ __('This is your unique username that visitors will use to access your public profile at @') . $team->handle }}
                                     </flux:description>
                                     <flux:error name="form.handle" />
                                 </flux:field>
