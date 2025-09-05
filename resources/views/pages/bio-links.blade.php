@@ -36,6 +36,7 @@ new class extends Component
 
         $this->editForm->resetForm();
         $this->editingLink = null;
+        $this->modal('edit-link')->close();
     }
 
     public function deleteLink(BioLink $link)
@@ -58,12 +59,14 @@ new class extends Component
 
         $this->editingLink = $link;
         $this->editForm->setBioLink($link);
+        $this->modal('edit-link')->show();
     }
 
     public function cancelEdit()
     {
         $this->editForm->resetForm();
         $this->editingLink = null;
+        $this->modal('edit-link')->close();
     }
 
     #[Computed]
@@ -108,51 +111,34 @@ new class extends Component
                      </flux:table.columns>
                     <flux:table.rows x-sort="handleReorder">
                         @foreach ($this->bioLinks as $link)
-                            <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                <flux:table.cell class="w-8">
-                                    <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
-                                </flux:table.cell>
-                                @if ($editingLink && $editingLink->id === $link->id)
-                                    <flux:table.cell>
-                                        <flux:field>
-                                            <flux:input wire:model="editForm.title" type="text" class="ml-1" />
-                                            <flux:error name="editForm.title" />
-                                        </flux:field>
-                                    </flux:table.cell>
-                                    <flux:table.cell>
-                                        <flux:field>
-                                            <flux:input wire:model="editForm.url" type="url" />
-                                            <flux:error name="editForm.url" />
-                                        </flux:field>
-                                    </flux:table.cell>
-                                    <flux:table.cell>
-                                        <div class="flex gap-2">
-                                            <flux:button wire:click="updateLink({{ $editingLink }})" icon="check" variant="primary" size="sm" color="green" />
-                                            <flux:button wire:click="cancelEdit" wire:key="'cancel-'.$link->id" icon="x-mark" variant="subtle" size="sm" />
-                                        </div>
-                                    </flux:table.cell>
-                                @else
-                                    <flux:table.cell variant="strong">
-                                        {{ $link->title }}
-                                    </flux:table.cell>
-                                    <flux:table.cell>
-                                        {{ $link->url }}
-                                    </flux:table.cell>
-                                    <flux:table.cell>
-                                        <div class="flex gap-2">
-                                            <flux:button wire:click="editLink({{ $link->id }})" icon="pencil-square" variant="subtle" size="sm" />
-                                            <flux:button
-                                                wire:click="deleteLink({{ $link->id }})"
-                                                wire:confirm="Are you sure you want to delete this bio link?"
-                                                icon="trash"
-                                                variant="subtle"
-                                                size="sm"
-                                            >
-                                            </flux:button>
-                                        </div>
-                                    </flux:table.cell>
-                                @endif
-                            </flux:table.row>
+                             <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                 <flux:table.cell class="w-8">
+                                     <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                 </flux:table.cell>
+                                 <flux:table.cell variant="strong">
+                                     {{ $link->title }}
+                                 </flux:table.cell>
+                                 <flux:table.cell>
+                                     {{ $link->url }}
+                                 </flux:table.cell>
+                                 <flux:table.cell>
+                                     <flux:dropdown>
+                                         <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
+                                         <flux:menu>
+                                             <flux:menu.item icon="pencil-square" wire:click="editLink({{ $link->id }})">
+                                                 Edit
+                                             </flux:menu.item>
+                                             <flux:menu.item
+                                                 icon="trash"
+                                                 wire:click="deleteLink({{ $link->id }})"
+                                                 wire:confirm="Are you sure you want to delete this bio link?"
+                                             >
+                                                 Delete
+                                             </flux:menu.item>
+                                         </flux:menu>
+                                     </flux:dropdown>
+                                 </flux:table.cell>
+                             </flux:table.row>
                          @endforeach
                      </flux:table.rows>
                  </flux:table>
@@ -192,9 +178,39 @@ new class extends Component
                      <flux:button wire:click="addLink" variant="primary">{{ __('Add Link') }}</flux:button>
                  </div>
              </div>
-         </flux:modal>
+          </flux:modal>
 
-         @assets
+          <flux:modal name="edit-link" class="md:w-96">
+              <div class="space-y-6">
+                  <div>
+                      <flux:heading size="lg">{{ __('Edit Bio Link') }}</flux:heading>
+                      <flux:text class="mt-2">{{ __('Update your bio link details.') }}</flux:text>
+                  </div>
+
+                  <div class="space-y-4">
+                      <flux:field>
+                          <flux:label>{{ __('Title') }}</flux:label>
+                          <flux:input wire:model="editForm.title" type="text" placeholder="e.g. Instagram" />
+                          <flux:error name="editForm.title" />
+                      </flux:field>
+
+                      <flux:field>
+                          <flux:label>{{ __('URL') }}</flux:label>
+                          <flux:input wire:model="editForm.url" type="url" placeholder="https://instagram.com/username" />
+                          <flux:error name="editForm.url" />
+                      </flux:field>
+                  </div>
+
+                  <div class="flex gap-2 justify-end">
+                      <flux:modal.close>
+                          <flux:button wire:click="cancelEdit" variant="ghost">{{ __('Cancel') }}</flux:button>
+                      </flux:modal.close>
+                      <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary">{{ __('Update Link') }}</flux:button>
+                  </div>
+              </div>
+          </flux:modal>
+
+          @assets
              <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
          @endassets
      @endvolt
