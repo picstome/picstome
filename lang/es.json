@@ -331,5 +331,13 @@
     "Enter your Twitch username": "Ingresa tu nombre de usuario de Twitch",
     "Website": "Sitio Web",
     "Enter your website URL": "Ingresa la URL de tu sitio web",
-    "Label": "Etiqueta"
+    "Label": "Etiqueta",
+    "Title": "Título",
+    "URL": "URL",
+    "Add Bio Link": "Agregar Enlace Bio",
+    "Add a new link to your bio.": "Agrega un nuevo enlace a tu bio.",
+    "Add Link": "Agregar Enlace",
+    "Edit Bio Link": "Editar Enlace Bio",
+    "Update your bio link details.": "Actualiza los detalles de tu enlace bio.",
+    "Update Link": "Actualizar Enlace"
 }
