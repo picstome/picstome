@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Forms\PublicProfileForm;
+use App\Livewire\Forms\SocialLinksForm;
 use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -19,17 +20,7 @@ new class extends Component
     public Team $team;
 
     public PublicProfileForm $form;
-
-    public $socialLinks = [
-        'instagram' => '',
-        'youtube' => '',
-        'facebook' => '',
-        'x' => '',
-        'tiktok' => '',
-        'twitch' => '',
-        'website' => '',
-        'other' => ['label' => '', 'url' => '']
-    ];
+    public SocialLinksForm $socialLinksForm;
 
     public function save()
     {
@@ -42,28 +33,7 @@ new class extends Component
 
     public function saveSocialLinks()
     {
-        $this->validate([
-            'socialLinks.instagram' => ['nullable', 'string', 'max:255'],
-            'socialLinks.youtube' => ['nullable', 'string', 'max:255'],
-            'socialLinks.facebook' => ['nullable', 'string', 'max:255'],
-            'socialLinks.x' => ['nullable', 'string', 'max:255'],
-            'socialLinks.tiktok' => ['nullable', 'string', 'max:255'],
-            'socialLinks.twitch' => ['nullable', 'string', 'max:255'],
-            'socialLinks.website' => ['nullable', 'url'],
-            'socialLinks.other.label' => ['nullable', 'string'],
-            'socialLinks.other.url' => ['nullable', 'url'],
-        ]);
-
-        $this->team->update([
-            'instagram_handle' => $this->socialLinks['instagram'] ?: null,
-            'youtube_handle' => $this->socialLinks['youtube'] ?: null,
-            'facebook_handle' => $this->socialLinks['facebook'] ?: null,
-            'x_handle' => $this->socialLinks['x'] ?: null,
-            'tiktok_handle' => $this->socialLinks['tiktok'] ?: null,
-            'twitch_handle' => $this->socialLinks['twitch'] ?: null,
-            'website_url' => $this->socialLinks['website'],
-            'other_social_links' => $this->socialLinks['other']['label'] || $this->socialLinks['other']['url'] ? $this->socialLinks['other'] : null,
-        ]);
+        $this->socialLinksForm->update();
 
         $this->team = $this->team->fresh();
 
@@ -77,18 +47,7 @@ new class extends Component
         $this->team = Auth::user()->currentTeam;
 
         $this->form->setTeam($this->team);
-
-        // Initialize social links for the modal
-        $this->socialLinks = [
-            'instagram' => $this->team->instagram_handle ?? '',
-            'youtube' => $this->team->youtube_handle ?? '',
-            'facebook' => $this->team->facebook_handle ?? '',
-            'x' => $this->team->x_handle ?? '',
-            'tiktok' => $this->team->tiktok_handle ?? '',
-            'twitch' => $this->team->twitch_handle ?? '',
-            'website' => $this->team->website_url ?? '',
-            'other' => $this->team->other_social_links ?? ['label' => '', 'url' => '']
-        ];
+        $this->socialLinksForm->setTeam($this->team);
     }
 }; ?>
 
@@ -233,65 +192,65 @@ new class extends Component
                                         <flux:text class="mt-2">{{ __('Add your social media profiles and website to your public profile.') }}</flux:text>
                                     </div>
 
-                                    <form wire:submit="saveSocialLinks" class="space-y-4">
-                                        <flux:field>
-                                            <flux:label>{{ __('Instagram') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.instagram" placeholder="username" />
-                                            <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
-                                            <flux:error name="socialLinks.instagram" />
-                                        </flux:field>
+                                     <form wire:submit="saveSocialLinks" class="space-y-4">
+                                         <flux:field>
+                                             <flux:label>{{ __('Instagram') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.instagram" placeholder="username" />
+                                             <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
+                                             <flux:error name="socialLinksForm.instagram" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('YouTube') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.youtube" placeholder="channel/UC123 or @username" />
-                                            <flux:description>{{ __('Enter your YouTube channel URL path or @username') }}</flux:description>
-                                            <flux:error name="socialLinks.youtube" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('YouTube') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.youtube" placeholder="channel/UC123 or @username" />
+                                             <flux:description>{{ __('Enter your YouTube channel URL path or @username') }}</flux:description>
+                                             <flux:error name="socialLinksForm.youtube" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('Facebook') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.facebook" placeholder="username" />
-                                            <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
-                                            <flux:error name="socialLinks.facebook" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('Facebook') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.facebook" placeholder="username" />
+                                             <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
+                                             <flux:error name="socialLinksForm.facebook" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('X (Twitter)') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.x" placeholder="username" />
-                                            <flux:description>{{ __('Enter your X (Twitter) username (without @)') }}</flux:description>
-                                            <flux:error name="socialLinks.x" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('X (Twitter)') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.x" placeholder="username" />
+                                             <flux:description>{{ __('Enter your X (Twitter) username (without @)') }}</flux:description>
+                                             <flux:error name="socialLinksForm.x" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('TikTok') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.tiktok" placeholder="username" />
-                                            <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
-                                            <flux:error name="socialLinks.tiktok" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('TikTok') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.tiktok" placeholder="username" />
+                                             <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
+                                             <flux:error name="socialLinksForm.tiktok" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('Twitch') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.twitch" placeholder="username" />
-                                            <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
-                                            <flux:error name="socialLinks.twitch" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('Twitch') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.twitch" placeholder="username" />
+                                             <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
+                                             <flux:error name="socialLinksForm.twitch" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('Website') }}</flux:label>
-                                            <flux:input wire:model="socialLinks.website" placeholder="https://example.com" />
-                                            <flux:description>{{ __('Enter your website URL') }}</flux:description>
-                                            <flux:error name="socialLinks.website" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('Website') }}</flux:label>
+                                             <flux:input wire:model="socialLinksForm.website" placeholder="https://example.com" />
+                                             <flux:description>{{ __('Enter your website URL') }}</flux:description>
+                                             <flux:error name="socialLinksForm.website" />
+                                         </flux:field>
 
-                                        <flux:field>
-                                            <flux:label>{{ __('Other') }}</flux:label>
-                                            <div class="flex gap-2">
-                                                <flux:input wire:model="socialLinks.other.label" placeholder="Label" class="flex-1" />
-                                                <flux:input wire:model="socialLinks.other.url" placeholder="https://example.com" class="flex-1" />
-                                            </div>
-                                            <flux:error name="socialLinks.other.label" />
-                                            <flux:error name="socialLinks.other.url" />
-                                        </flux:field>
+                                         <flux:field>
+                                             <flux:label>{{ __('Other') }}</flux:label>
+                                             <div class="flex gap-2">
+                                                 <flux:input wire:model="socialLinksForm.other.label" placeholder="Label" class="flex-1" />
+                                                 <flux:input wire:model="socialLinksForm.other.url" placeholder="https://example.com" class="flex-1" />
+                                             </div>
+                                             <flux:error name="socialLinksForm.other.label" />
+                                             <flux:error name="socialLinksForm.other.url" />
+                                         </flux:field>
 
                                         <div class="flex gap-2 pt-4">
                                             <flux:spacer />
