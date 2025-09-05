@@ -46,46 +46,39 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.branding.general')
-        <div>
+        <section class="mx-auto max-w-6xl">
             @include('partials.branding-header')
 
-            <div class="flex">
-                @include('partials.branding-nav')
+            <div class="flex items-start max-md:flex-col">
+                <div class="mr-10 w-full pb-4 md:w-[220px]">
+                    @include('partials.branding-nav')
+                </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 p-6">
-                <div class="mx-auto max-w-xl">
-                    <div class="flex flex-wrap items-end justify-between gap-4">
-                        <div class="max-sm:w-full sm:flex-1">
-                            <x-heading level="1" size="xl">{{ __('General Settings') }}</x-heading>
-                            <x-subheading>{{ __('Basic branding information for your studio.') }}</x-subheading>
-                        </div>
-                    </div>
+                <flux:separator class="md:hidden" />
 
-                    <flux:separator class="my-10 mt-6" />
+                <div class="flex-1 self-stretch max-md:pt-6">
+                    <flux:heading>{{ __('General Settings') }}</flux:heading>
+                    <flux:subheading>{{ __('Basic branding information for your studio.') }}</flux:subheading>
 
-                    <form wire:submit="save" class="space-y-6">
-                        <flux:input wire:model="form.name" :label="__('Studio name')" />
+                    <div class="mt-5 w-full max-w-lg">
+                        <form wire:submit="save" class="space-y-6">
+                            <flux:input wire:model="form.name" :label="__('Studio name')" />
 
-                        <flux:field>
-                            <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
-                            <flux:description>
-                                {{ __('This username is used for your public profile.') }}
-                                <flux:link :href="route('handle.show', ['handle' => $team->handle])" target="_blank">
-                                    {{ __('View your public profile') }}
-                                </flux:link>.
-                            </flux:description>
-                        </flux:field>
-
-                        <div class="flex">
-                            <flux:spacer />
+                            <flux:field>
+                                <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
+                                <flux:description>
+                                    {{ __('This username is used for your public profile.') }}
+                                    <flux:link :href="route('handle.show', ['handle' => $team->handle])" target="_blank">
+                                        {{ __('View your public profile') }}
+                                    </flux:link>.
+                                </flux:description>
+                            </flux:field>
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-        </div>
+        </section>
     @endvolt
 </x-app-layout>

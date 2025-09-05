@@ -46,60 +46,53 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.branding.watermark')
-        <div>
+        <section class="mx-auto max-w-6xl">
             @include('partials.branding-header')
 
-            <div class="flex">
-                @include('partials.branding-nav')
+            <div class="flex items-start max-md:flex-col">
+                <div class="mr-10 w-full pb-4 md:w-[220px]">
+                    @include('partials.branding-nav')
+                </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 p-6">
-                <div class="mx-auto max-w-xl">
-                    <div class="flex flex-wrap items-end justify-between gap-4">
-                        <div class="max-sm:w-full sm:flex-1">
-                            <x-heading level="1" size="xl">{{ __('Watermark') }}</x-heading>
-                            <x-subheading>{{ __('Configure your watermark settings.') }}</x-subheading>
-                        </div>
-                    </div>
+                <flux:separator class="md:hidden" />
 
-                    <flux:separator class="my-10 mt-6" />
+                <div class="flex-1 self-stretch max-md:pt-6">
+                    <flux:heading>{{ __('Watermark') }}</flux:heading>
+                    <flux:subheading>{{ __('Configure your watermark settings.') }}</flux:subheading>
 
-                    <form wire:submit="save" class="space-y-6">
-                        @if ($team->brand_watermark_url)
-                            <div class="space-y-2">
-                                <flux:label>{{ __('Current Watermark') }}</flux:label>
-                                <img src="{{ $team->brand_watermark_url }}" style="max-height: 35px" />
-                            </div>
-                        @endif
+                    <div class="mt-5 w-full max-w-lg">
+                        <form wire:submit="save" class="space-y-6">
+                            @if ($team->brand_watermark_url)
+                                <div class="space-y-2">
+                                    <flux:label>{{ __('Current Watermark') }}</flux:label>
+                                    <img src="{{ $team->brand_watermark_url }}" style="max-height: 35px" />
+                                </div>
+                            @endif
 
-                        <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" />
+                            <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" />
 
-                        <flux:radio.group wire:model="form.watermarkPosition" :label="__('Watermark position')">
-                            <div class="flex gap-4 *:gap-x-2">
-                                <flux:radio value="top" :label="__('Top')" />
-                                <flux:radio value="bottom" :label="__('Bottom')" />
-                                <flux:radio value="middle" :label="__('Middle')" />
-                            </div>
-                        </flux:radio.group>
+                            <flux:radio.group wire:model="form.watermarkPosition" :label="__('Watermark position')">
+                                <div class="flex gap-4 *:gap-x-2">
+                                    <flux:radio value="top" :label="__('Top')" />
+                                    <flux:radio value="bottom" :label="__('Bottom')" />
+                                    <flux:radio value="middle" :label="__('Middle')" />
+                                </div>
+                            </flux:radio.group>
 
-                        <flux:field>
-                            <flux:label :badge="__('Optional')">{{ __('Watermark transparency') }}</flux:label>
-                            <flux:input.group>
-                                <flux:input wire:model="form.watermarkTransparency"
-                                            type="number" min="0" max="100" class="max-w-20" />
-                                <flux:input.group.suffix>%</flux:input.group.suffix>
-                            </flux:input.group>
-                        </flux:field>
-
-                        <div class="flex">
-                            <flux:spacer />
+                            <flux:field>
+                                <flux:label :badge="__('Optional')">{{ __('Watermark transparency') }}</flux:label>
+                                <flux:input.group>
+                                    <flux:input wire:model="form.watermarkTransparency"
+                                                type="number" min="0" max="100" class="max-w-20" />
+                                    <flux:input.group.suffix>%</flux:input.group.suffix>
+                                </flux:input.group>
+                            </flux:field>
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-        </div>
+        </section>
     @endvolt
 </x-app-layout>
