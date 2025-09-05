@@ -180,15 +180,13 @@ new class extends Component
                                           </flux:table.columns>
                                          <flux:table.rows x-sort="handleReorder">
                                              @foreach ($this->bioLinks as $link)
-                                                  <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                                      <flux:table.cell variant="strong">
-                                                          <div class="flex items-center gap-3">
-                                                              <flux:button variant="ghost" size="sm" x-sort:handle>
-                                                                  <flux:icon.bars-2 variant="micro" />
-                                                              </flux:button>
-                                                              {{ $link->title }}
-                                                          </div>
-                                                      </flux:table.cell>
+                                                   <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                                       <flux:table.cell>
+                                                           <div class="flex items-center gap-3">
+                                                               <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                                               <flux:text variant="strong">{{ $link->title }}</flux:text>
+                                                           </div>
+                                                       </flux:table.cell>
                                                      <flux:table.cell class="hidden sm:table-cell">
                                                          {{ $link->url }}
                                                      </flux:table.cell>
