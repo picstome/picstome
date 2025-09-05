@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Forms\BrandingForm;
+use App\Livewire\Forms\StylingForm;
 use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -21,7 +21,7 @@ new class extends Component
 
     public Team $team;
 
-    public BrandingForm $form;
+    public StylingForm $form;
 
     public function save()
     {
