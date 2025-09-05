@@ -132,7 +132,7 @@ it('can change watermark transparency', function () {
 it('allows user to update handle successfully', function () {
     $newHandle = 'newhandle';
 
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', $newHandle)
         ->call('save');
 
@@ -140,7 +140,7 @@ it('allows user to update handle successfully', function () {
 });
 
 it('validates handle must be lowercase', function () {
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', 'MixedCaseHandle')
         ->call('save')
         ->assertHasErrors(['form.handle']);
@@ -149,21 +149,21 @@ it('validates handle must be lowercase', function () {
 it('prevents duplicate handles with uniqueness validation', function () {
     Team::factory()->create(['handle' => 'existinghandle']);
 
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', 'existinghandle')
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents special characters in handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', 'invalid@handle!')
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('enforces minimum length for handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', 'a')
         ->call('save')
         ->assertHasErrors(['form.handle']);
@@ -172,14 +172,14 @@ it('enforces minimum length for handles', function () {
 it('enforces maximum length for handles', function () {
     $longHandle = str_repeat('a', 100);
 
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', $longHandle)
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents empty string handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.general')
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.handle', '')
         ->call('save')
         ->assertHasErrors(['form.handle']);
