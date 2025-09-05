@@ -129,6 +129,7 @@ new class extends Component
                                                  Edit
                                              </flux:menu.item>
                                              <flux:menu.item
+                                                 variant="danger"
                                                  wire:click="deleteLink({{ $link->id }})"
                                                  wire:confirm="Are you sure you want to delete this bio link?"
                                              >
