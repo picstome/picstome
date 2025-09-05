@@ -171,14 +171,8 @@ new class extends Component
                                      <flux:text class="mt-1">{{ __('Manage your bio links for your public profile.') }}</flux:text>
                                  </div>
 
-                                 <div class="mt-8">
-                                     <flux:modal.trigger name="add-link">
-                                         <flux:button icon="plus" variant="filled">{{ __('Add Link') }}</flux:button>
-                                     </flux:modal.trigger>
-                                 </div>
-
-                                 <div class="mt-8">
-                                     <flux:table>
+                                  <div class="mt-8">
+                                      <flux:table>
                                          <flux:table.columns>
                                              <flux:table.column class="w-8"></flux:table.column>
                                              <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
@@ -217,9 +211,15 @@ new class extends Component
                                                  </flux:table.row>
                                              @endforeach
                                          </flux:table.rows>
-                                     </flux:table>
-                                 </div>
-                             </div>
+                                      </flux:table>
+                                  </div>
+
+                                  <div class="mt-8">
+                                      <flux:modal.trigger name="add-link">
+                                          <flux:button icon="plus" variant="filled">{{ __('Add Link') }}</flux:button>
+                                      </flux:modal.trigger>
+                                  </div>
+                              </div>
 
                              <flux:modal name="add-link" class="md:w-96">
                                  <div class="space-y-6">
