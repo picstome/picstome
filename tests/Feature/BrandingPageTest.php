@@ -226,3 +226,17 @@ it('allows empty bio description', function () {
     expect($this->team->fresh()->bio)->toBe('');
 });
 
+it('sanitizes html content in bio', function () {
+    $htmlContent = '<p>This is <strong>bold</strong> and <em>italic</em> text.</p><script>alert("xss")</script>';
+
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+        ->set('form.bio', $htmlContent)
+        ->call('save');
+
+    $savedBio = $this->team->fresh()->bio;
+    expect($savedBio)->toContain('<strong>bold</strong>')
+        ->and($savedBio)->toContain('<em>italic</em>')
+        ->and($savedBio)->not->toContain('<script>')
+        ->and($savedBio)->not->toContain('alert("xss")');
+});
+

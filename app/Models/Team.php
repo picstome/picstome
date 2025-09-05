@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Casts\PurifyHtmlOnGet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -33,6 +34,7 @@ class Team extends Model
     {
         return [
             'personal_team' => 'boolean',
+            'bio' => PurifyHtmlOnGet::class,
         ];
     }
 
