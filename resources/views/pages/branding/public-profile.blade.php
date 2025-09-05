@@ -183,7 +183,9 @@ new class extends Component
                                                   <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
                                                       <flux:table.cell variant="strong">
                                                           <div class="flex items-center gap-3">
-                                                              <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                                              <flux:button variant="ghost" size="sm" x-sort:handle>
+                                                                  <flux:icon.bars-2 variant="micro" />
+                                                              </flux:button>
                                                               {{ $link->title }}
                                                           </div>
                                                       </flux:table.cell>
