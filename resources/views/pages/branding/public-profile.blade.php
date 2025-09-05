@@ -116,37 +116,37 @@ new class extends Component
                                     <flux:avatar.group>
                                         @if($team->instagram_url)
                                             <flux:tooltip content="{{ $team->instagram_url }}">
-                                                <flux:avatar size="lg" src="https://s.magecdn.com/social/tc-instagram.svg" />
+                                                <flux:avatar src="https://s.magecdn.com/social/tc-instagram.svg" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->youtube_url)
                                             <flux:tooltip content="{{ $team->youtube_url }}">
-                                                <flux:avatar size="lg" src="https://s.magecdn.com/social/tc-youtube.svg" />
+                                                <flux:avatar src="https://s.magecdn.com/social/tc-youtube.svg" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->facebook_url)
                                             <flux:tooltip content="{{ $team->facebook_url }}">
-                                                <flux:avatar size="lg" src="https://s.magecdn.com/social/tc-facebook.svg" />
+                                                <flux:avatar src="https://s.magecdn.com/social/tc-facebook.svg" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->x_url)
                                             <flux:tooltip content="{{ $team->x_url }}">
-                                                <flux:avatar size="lg" src="https://s.magecdn.com/social/tc-x.svg" />
+                                                <flux:avatar src="https://s.magecdn.com/social/tc-x.svg" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->tiktok_url)
                                             <flux:tooltip content="{{ $team->tiktok_url }}">
-                                                <flux:avatar size="lg" src="https://s.magecdn.com/social/tc-tiktok.svg" />
+                                                <flux:avatar src="https://s.magecdn.com/social/tc-tiktok.svg" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->twitch_url)
                                             <flux:tooltip content="{{ $team->twitch_url }}">
-                                                <flux:avatar size="lg" circle>
+                                                <flux:avatar circle>
                                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286H13.714L22.286 10.857V0H6zm14.571 10.857l-3.429 3.429H13.714l-3 3v-3H6.857V1.714H20.57v9.143z"/>
                                                     </svg>
@@ -156,7 +156,7 @@ new class extends Component
 
                                         @if($team->website_url)
                                             <flux:tooltip content="{{ $team->website_url }}">
-                                                <flux:avatar size="lg" circle>
+                                                <flux:avatar circle>
                                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                                                     </svg>
@@ -166,7 +166,7 @@ new class extends Component
 
                                         @if($team->other_social_links)
                                             <flux:tooltip content="{{ $team->other_social_links['url'] }}">
-                                                <flux:avatar size="lg" circle>
+                                                <flux:avatar circle>
                                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                                     </svg>
