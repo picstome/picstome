@@ -157,137 +157,137 @@ new class extends Component
 
                                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                             </form>
-                         </div>
+                        </div>
 
-                         <!-- Bio Links Section -->
-                         <div class="w-full max-w-4xl" x-data="{
-                             handleReorder: (item, position) => {
-                                 $wire.call('reorderLink', item, position);
-                             }
-                         }">
-                             <div class="space-y-4">
-                                 <div>
-                                     <flux:heading size="sm">{{ __('Bio Links') }}</flux:heading>
-                                     <flux:text class="mt-1">{{ __('Manage your bio links for your public profile.') }}</flux:text>
-                                 </div>
+                        <!-- Bio Links Section -->
+                        <div class="w-full max-w-4xl" x-data="{
+                            handleReorder: (item, position) => {
+                                $wire.call('reorderLink', item, position);
+                            }
+                        }">
+                            <div class="space-y-4">
+                                <div>
+                                    <flux:heading size="sm">{{ __('Bio Links') }}</flux:heading>
+                                    <flux:text class="mt-1">{{ __('Manage your bio links for your public profile.') }}</flux:text>
+                                </div>
 
-                                  <div class="mt-8">
-                                      <flux:table>
-                                          <flux:table.columns>
-                                              <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
-                                              <flux:table.column class="w-1/2 hidden sm:table-cell">{{ __('URL') }}</flux:table.column>
-                                              <flux:table.column></flux:table.column>
-                                          </flux:table.columns>
-                                         <flux:table.rows x-sort="handleReorder">
-                                             @foreach ($this->bioLinks as $link)
-                                                   <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                                       <flux:table.cell>
-                                                           <div class="flex items-center gap-3">
-                                                               <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
-                                                               <flux:text variant="strong">{{ $link->title }}</flux:text>
-                                                           </div>
-                                                       </flux:table.cell>
-                                                     <flux:table.cell class="hidden sm:table-cell">
-                                                         {{ $link->url }}
-                                                     </flux:table.cell>
-                                                     <flux:table.cell>
-                                                         <flux:dropdown>
-                                                             <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
-                                                             <flux:menu>
-                                                                 <flux:menu.item wire:click="editLink({{ $link->id }})">
-                                                                     Edit
-                                                                 </flux:menu.item>
-                                                                 <flux:menu.item
-                                                                     variant="danger"
-                                                                     wire:click="deleteLink({{ $link->id }})"
-                                                                     wire:confirm="Are you sure you want to delete this bio link?"
-                                                                 >
-                                                                     Delete
-                                                                 </flux:menu.item>
-                                                             </flux:menu>
-                                                         </flux:dropdown>
-                                                     </flux:table.cell>
-                                                 </flux:table.row>
-                                             @endforeach
-                                         </flux:table.rows>
-                                      </flux:table>
-                                  </div>
+                                <div>
+                                    <flux:table>
+                                        <flux:table.columns>
+                                            <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
+                                            <flux:table.column class="w-1/2 hidden sm:table-cell">{{ __('URL') }}</flux:table.column>
+                                            <flux:table.column></flux:table.column>
+                                        </flux:table.columns>
+                                        <flux:table.rows x-sort="handleReorder">
+                                            @foreach ($this->bioLinks as $link)
+                                                <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                                    <flux:table.cell>
+                                                        <div class="flex items-center gap-3">
+                                                            <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                                            <flux:text variant="strong">{{ $link->title }}</flux:text>
+                                                        </div>
+                                                    </flux:table.cell>
+                                                    <flux:table.cell class="hidden sm:table-cell">
+                                                        {{ $link->url }}
+                                                    </flux:table.cell>
+                                                    <flux:table.cell>
+                                                        <flux:dropdown>
+                                                            <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
+                                                            <flux:menu>
+                                                                <flux:menu.item wire:click="editLink({{ $link->id }})">
+                                                                    Edit
+                                                                </flux:menu.item>
+                                                                <flux:menu.item
+                                                                    variant="danger"
+                                                                    wire:click="deleteLink({{ $link->id }})"
+                                                                    wire:confirm="Are you sure you want to delete this bio link?"
+                                                                >
+                                                                    Delete
+                                                                </flux:menu.item>
+                                                            </flux:menu>
+                                                        </flux:dropdown>
+                                                    </flux:table.cell>
+                                                </flux:table.row>
+                                            @endforeach
+                                        </flux:table.rows>
+                                    </flux:table>
 
-                                  <div class="mt-8">
-                                      <flux:modal.trigger name="add-link">
-                                          <flux:button icon="plus" variant="filled">{{ __('Add Link') }}</flux:button>
-                                      </flux:modal.trigger>
-                                  </div>
-                              </div>
+                                    <div class="mt-2">
+                                        <flux:modal.trigger name="add-link">
+                                            <flux:button icon="plus" variant="filled">{{ __('Add Link') }}</flux:button>
+                                        </flux:modal.trigger>
+                                    </div>
+                                </div>
+                            </div>
 
-                             <flux:modal name="add-link" class="md:w-96">
-                                 <div class="space-y-6">
-                                     <div>
-                                         <flux:heading size="lg">{{ __('Add Bio Link') }}</flux:heading>
-                                         <flux:text class="mt-2">{{ __('Add a new link to your bio.') }}</flux:text>
-                                     </div>
+                            <flux:modal name="add-link" class="md:w-96">
+                                <div class="space-y-6">
+                                    <div>
+                                        <flux:heading size="lg">{{ __('Add Bio Link') }}</flux:heading>
+                                        <flux:text class="mt-2">{{ __('Add a new link to your bio.') }}</flux:text>
+                                    </div>
 
-                                     <div class="space-y-4">
-                                         <flux:field>
-                                             <flux:label>{{ __('Title') }}</flux:label>
-                                             <flux:input wire:model="addForm.title" type="text" placeholder="e.g. Instagram" />
-                                             <flux:error name="addForm.title" />
-                                         </flux:field>
+                                    <div class="space-y-4">
+                                        <flux:field>
+                                            <flux:label>{{ __('Title') }}</flux:label>
+                                            <flux:input wire:model="addForm.title" type="text" placeholder="e.g. Instagram" />
+                                            <flux:error name="addForm.title" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('URL') }}</flux:label>
-                                             <flux:input wire:model="addForm.url" type="url" placeholder="https://instagram.com/username" />
-                                             <flux:error name="addForm.url" />
-                                         </flux:field>
-                                     </div>
+                                        <flux:field>
+                                            <flux:label>{{ __('URL') }}</flux:label>
+                                            <flux:input wire:model="addForm.url" type="url" placeholder="https://instagram.com/username" />
+                                            <flux:error name="addForm.url" />
+                                        </flux:field>
+                                    </div>
 
-                                     <div class="flex gap-2 justify-end">
-                                         <flux:modal.close>
-                                             <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                                         </flux:modal.close>
-                                         <flux:button wire:click="addLink" variant="primary">{{ __('Add Link') }}</flux:button>
-                                     </div>
-                                 </div>
-                             </flux:modal>
+                                    <div class="flex gap-2 justify-end">
+                                        <flux:modal.close>
+                                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                                        </flux:modal.close>
+                                        <flux:button wire:click="addLink" variant="primary">{{ __('Add Link') }}</flux:button>
+                                    </div>
+                                </div>
+                            </flux:modal>
 
-                             <flux:modal name="edit-link" class="md:w-96">
-                                 <div class="space-y-6">
-                                     <div>
-                                         <flux:heading size="lg">{{ __('Edit Bio Link') }}</flux:heading>
-                                         <flux:text class="mt-2">{{ __('Update your bio link details.') }}</flux:text>
-                                     </div>
+                            <flux:modal name="edit-link" class="md:w-96">
+                                <div class="space-y-6">
+                                    <div>
+                                        <flux:heading size="lg">{{ __('Edit Bio Link') }}</flux:heading>
+                                        <flux:text class="mt-2">{{ __('Update your bio link details.') }}</flux:text>
+                                    </div>
 
-                                     <div class="space-y-4">
-                                         <flux:field>
-                                             <flux:label>{{ __('Title') }}</flux:label>
-                                             <flux:input wire:model="editForm.title" type="text" placeholder="e.g. Instagram" />
-                                             <flux:error name="editForm.title" />
-                                         </flux:field>
+                                    <div class="space-y-4">
+                                        <flux:field>
+                                            <flux:label>{{ __('Title') }}</flux:label>
+                                            <flux:input wire:model="editForm.title" type="text" placeholder="e.g. Instagram" />
+                                            <flux:error name="editForm.title" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('URL') }}</flux:label>
-                                             <flux:input wire:model="editForm.url" type="url" placeholder="https://instagram.com/username" />
-                                             <flux:error name="editForm.url" />
-                                         </flux:field>
-                                     </div>
+                                        <flux:field>
+                                            <flux:label>{{ __('URL') }}</flux:label>
+                                            <flux:input wire:model="editForm.url" type="url" placeholder="https://instagram.com/username" />
+                                            <flux:error name="editForm.url" />
+                                        </flux:field>
+                                    </div>
 
-                                     <div class="flex gap-2 justify-end">
-                                         <flux:modal.close>
-                                             <flux:button wire:click="cancelEdit" variant="ghost">{{ __('Cancel') }}</flux:button>
-                                         </flux:modal.close>
-                                         <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary">{{ __('Update Link') }}</flux:button>
-                                     </div>
-                                 </div>
-                             </flux:modal>
-                         </div>
+                                    <div class="flex gap-2 justify-end">
+                                        <flux:modal.close>
+                                            <flux:button wire:click="cancelEdit" variant="ghost">{{ __('Cancel') }}</flux:button>
+                                        </flux:modal.close>
+                                        <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary">{{ __('Update Link') }}</flux:button>
+                                    </div>
+                                </div>
+                            </flux:modal>
+                        </div>
 
-                         <!-- Social Links Section -->
+                        <!-- Social Links Section -->
                         <div class="w-full max-w-lg">
                             <div class="space-y-4">
-                                 <div>
-                                     <flux:heading size="sm">{{ __('Social Links') }}</flux:heading>
-                                     <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
-                                 </div>
+                                <div>
+                                    <flux:heading size="sm">{{ __('Social Links') }}</flux:heading>
+                                    <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
+                                </div>
 
                                 @if($team->hasSocialLinks())
                                     <flux:avatar.group>
@@ -373,65 +373,65 @@ new class extends Component
                                         <flux:text class="mt-2">{{ __('Add your social media profiles and website to your public profile.') }}</flux:text>
                                     </div>
 
-                                     <form wire:submit="saveSocialLinks" class="space-y-4">
-                                         <flux:field>
-                                             <flux:label>{{ __('Instagram') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.instagram" placeholder="username" />
-                                             <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
-                                             <flux:error name="socialLinksForm.instagram" />
-                                         </flux:field>
+                                    <form wire:submit="saveSocialLinks" class="space-y-4">
+                                        <flux:field>
+                                            <flux:label>{{ __('Instagram') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.instagram" placeholder="username" />
+                                            <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
+                                            <flux:error name="socialLinksForm.instagram" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('YouTube') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.youtube" placeholder="channel/UC123 or @username" />
-                                             <flux:description>{{ __('Enter your YouTube channel URL path or @username') }}</flux:description>
-                                             <flux:error name="socialLinksForm.youtube" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('YouTube') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.youtube" placeholder="channel/UC123 or @username" />
+                                            <flux:description>{{ __('Enter your YouTube channel URL path or @username') }}</flux:description>
+                                            <flux:error name="socialLinksForm.youtube" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('Facebook') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.facebook" placeholder="username" />
-                                             <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
-                                             <flux:error name="socialLinksForm.facebook" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('Facebook') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.facebook" placeholder="username" />
+                                            <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
+                                            <flux:error name="socialLinksForm.facebook" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('X (Twitter)') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.x" placeholder="username" />
-                                             <flux:description>{{ __('Enter your X (Twitter) username (without @)') }}</flux:description>
-                                             <flux:error name="socialLinksForm.x" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('X (Twitter)') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.x" placeholder="username" />
+                                            <flux:description>{{ __('Enter your X (Twitter) username (without @)') }}</flux:description>
+                                            <flux:error name="socialLinksForm.x" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('TikTok') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.tiktok" placeholder="username" />
-                                             <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
-                                             <flux:error name="socialLinksForm.tiktok" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('TikTok') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.tiktok" placeholder="username" />
+                                            <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
+                                            <flux:error name="socialLinksForm.tiktok" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('Twitch') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.twitch" placeholder="username" />
-                                             <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
-                                             <flux:error name="socialLinksForm.twitch" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('Twitch') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.twitch" placeholder="username" />
+                                            <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
+                                            <flux:error name="socialLinksForm.twitch" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('Website') }}</flux:label>
-                                             <flux:input wire:model="socialLinksForm.website" placeholder="https://example.com" />
-                                             <flux:description>{{ __('Enter your website URL') }}</flux:description>
-                                             <flux:error name="socialLinksForm.website" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('Website') }}</flux:label>
+                                            <flux:input wire:model="socialLinksForm.website" placeholder="https://example.com" />
+                                            <flux:description>{{ __('Enter your website URL') }}</flux:description>
+                                            <flux:error name="socialLinksForm.website" />
+                                        </flux:field>
 
-                                         <flux:field>
-                                             <flux:label>{{ __('Other') }}</flux:label>
-                                             <div class="flex gap-2">
-                                                 <flux:input wire:model="socialLinksForm.other.label" placeholder="Label" class="flex-1" />
-                                                 <flux:input wire:model="socialLinksForm.other.url" placeholder="https://example.com" class="flex-1" />
-                                             </div>
-                                             <flux:error name="socialLinksForm.other.label" />
-                                             <flux:error name="socialLinksForm.other.url" />
-                                         </flux:field>
+                                        <flux:field>
+                                            <flux:label>{{ __('Other') }}</flux:label>
+                                            <div class="flex gap-2">
+                                                <flux:input wire:model="socialLinksForm.other.label" placeholder="Label" class="flex-1" />
+                                                <flux:input wire:model="socialLinksForm.other.url" placeholder="https://example.com" class="flex-1" />
+                                            </div>
+                                            <flux:error name="socialLinksForm.other.label" />
+                                            <flux:error name="socialLinksForm.other.url" />
+                                        </flux:field>
 
                                         <div class="flex gap-2 pt-4">
                                             <flux:spacer />
