@@ -69,7 +69,10 @@ class Team extends Model
         return $this->twitch_handle ? "https://twitch.tv/{$this->twitch_handle}" : null;
     }
 
-
+    public function hasSocialLinks(): bool
+    {
+        return $this->instagram_url || $this->youtube_url || $this->facebook_url || $this->x_url || $this->tiktok_url || $this->twitch_url || $this->website_url || $this->other_social_links;
+    }
 
     public function owner()
     {

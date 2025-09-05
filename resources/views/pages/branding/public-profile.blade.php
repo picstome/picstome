@@ -49,11 +49,6 @@ new class extends Component
         $this->form->setTeam($this->team);
         $this->socialLinksForm->setTeam($this->team);
     }
-
-    public function hasSocialLinks(): bool
-    {
-        return $this->team->instagram_url || $this->team->youtube_url || $this->team->facebook_url || $this->team->x_url || $this->team->tiktok_url || $this->team->twitch_url || $this->team->website_url || $this->team->other_social_links;
-    }
 }; ?>
 
 <x-app-layout>
@@ -110,7 +105,7 @@ new class extends Component
                                      <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
                                  </div>
 
-                                @if($this->hasSocialLinks())
+                                @if($team->hasSocialLinks())
                                     <flux:avatar.group>
                                         @if($team->instagram_url)
                                             <flux:tooltip content="{{ $team->instagram_url }}">

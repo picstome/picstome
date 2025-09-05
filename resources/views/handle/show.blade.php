@@ -37,7 +37,7 @@
                 </div>
              @endif
 
-             @if($team->instagram_url || $team->youtube_url || $team->facebook_url || $team->x_url || $team->tiktok_url || $team->twitch_url || $team->website_url || $team->other_social_links)
+             @if($team->hasSocialLinks())
                  <div class="my-14">
                      <div class="flex flex-wrap justify-center gap-4">
                          @if($team->instagram_url)
