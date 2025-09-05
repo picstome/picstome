@@ -8,7 +8,7 @@
         <div class="mx-auto w-full max-w-md text-center">
             <div class="space-y-4">
                 @if($team->brand_logo_icon_url)
-                    <flux:avatar size="lg" size="xl" :src="$team->brand_logo_icon_url" class="mx-auto [:where(&)]:size-32" />
+                    <flux:avatar size="lg" size="xl" :src="$team->brand_logo_icon_url . '&w=256&h=256'" class="mx-auto [:where(&)]:size-32" />
                 @endif
 
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
