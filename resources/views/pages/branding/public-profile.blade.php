@@ -100,17 +100,10 @@ new class extends Component
                         <!-- Social Links Section -->
                         <div class="w-full max-w-lg">
                             <div class="space-y-4">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <flux:heading size="sm">{{ __('Social Links') }}</flux:heading>
-                                        <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
-                                    </div>
-                                    <flux:modal.trigger name="social-links">
-                                        <flux:button variant="outline" icon="pencil-square">
-                                            {{ __('Edit Social Links') }}
-                                        </flux:button>
-                                    </flux:modal.trigger>
-                                </div>
+                                 <div>
+                                     <flux:heading size="sm">{{ __('Social Links') }}</flux:heading>
+                                     <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
+                                 </div>
 
                                 @if($team->instagram_url || $team->youtube_url || $team->facebook_url || $team->x_url || $team->tiktok_url || $team->twitch_url || $team->website_url || $team->other_social_links)
                                     <flux:avatar.group>
@@ -180,8 +173,16 @@ new class extends Component
                                             </flux:modal.trigger>
                                         </x-slot>
                                     </flux:callout>
-                                @endif
-                            </div>
+                                 @endif
+
+                                 <div>
+                                     <flux:modal.trigger name="social-links">
+                                         <flux:button variant="filled">
+                                             {{ __('Edit Social Links') }}
+                                         </flux:button>
+                                     </flux:modal.trigger>
+                                 </div>
+                             </div>
 
                             <flux:modal name="social-links" variant="flyout" class="md:w-[32rem]">
                                 <div class="space-y-6">
