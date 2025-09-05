@@ -9,6 +9,7 @@ class PublicProfileForm extends Form
 {
     public Team $team;
 
+    public $handle;
     public $bio;
 
     public $instagram;
@@ -23,6 +24,15 @@ class PublicProfileForm extends Form
     public function rules()
     {
         return [
+            'handle' => [
+                'required',
+                'string',
+                'lowercase',
+                'min:2',
+                'max:50',
+                'regex:/^[a-z0-9]+$/',
+                'unique:teams,handle,' . ($this->team->id ?? 'null'),
+            ],
             'bio' => ['nullable', 'string', 'max:1000'],
             'instagram' => ['nullable', 'string', 'max:255'],
             'youtube' => ['nullable', 'string', 'max:255'],
@@ -40,6 +50,7 @@ class PublicProfileForm extends Form
     {
         $this->team = $team;
 
+        $this->handle = $team->handle;
         $this->bio = $team->bio;
         $this->instagram = $team->instagram_handle;
         $this->youtube = $team->youtube_handle;
@@ -56,6 +67,7 @@ class PublicProfileForm extends Form
         $this->validate();
 
         $this->team->update([
+            'handle' => $this->handle,
             'bio' => $this->bio,
             'instagram_handle' => $this->instagram ?: null,
             'youtube_handle' => $this->youtube ?: null,

@@ -123,9 +123,20 @@ new class extends Component
                     <flux:subheading>{{ __('Configure your public profile information.') }}</flux:subheading>
 
                     <div class="mt-5 space-y-12">
-                        <!-- Bio Section -->
+                        <!-- Handle Section -->
                         <div class="w-full max-w-lg">
                             <form wire:submit="save" class="space-y-4">
+                                <flux:field>
+                                    <flux:input wire:model="form.handle" :label="__('Username')" :placeholder="__('e.g. mystudio')" />
+                                    <flux:description>
+                                        {{ __('This username is used for your public profile.') }}
+                                        <flux:link :href="route('handle.show', ['handle' => $team->handle])" target="_blank">
+                                            {{ __('View your public profile') }}
+                                        </flux:link>.
+                                    </flux:description>
+                                    <flux:error name="form.handle" />
+                                </flux:field>
+
                                 <flux:field class="
                                     **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
                                     **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
