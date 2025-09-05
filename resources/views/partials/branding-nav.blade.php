@@ -11,4 +11,7 @@
     <flux:navlist.item href="{{ route('branding.styling') }}" wire:navigate :active="request()->routeIs('branding.styling')">
         {{ __('Styling') }}
     </flux:navlist.item>
+    <flux:navlist.item href="{{ route('branding.public-profile') }}" wire:navigate :active="request()->routeIs('branding.public-profile')">
+        {{ __('Public Profile') }}
+    </flux:navlist.item>
 </flux:navlist>
