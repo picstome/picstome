@@ -15,10 +15,6 @@ name('branding.watermark');
 
 middleware('auth');
 
-render(function (View $view) {
-    return $view->with('team', Team::first());
-});
-
 new class extends Component
 {
     use WithFileUploads;
