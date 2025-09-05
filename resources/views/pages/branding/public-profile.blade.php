@@ -67,7 +67,7 @@ new class extends Component
                     <flux:heading>{{ __('Public Profile') }}</flux:heading>
                     <flux:subheading>{{ __('Configure your public profile information.') }}</flux:subheading>
 
-                    <div class="mt-5 space-y-8">
+                    <div class="mt-5 space-y-12">
                         <!-- Bio Section -->
                         <div class="w-full max-w-lg">
                             <form wire:submit="save" class="space-y-4">
@@ -149,15 +149,13 @@ new class extends Component
 
                                         @if($team->website_url)
                                             <flux:tooltip content="{{ $team->website_url }}">
-                                                <flux:avatar circle color="auto">
-                                                    <flux:icon.globe-alt class="w-6 h-6" />
-                                                </flux:avatar>
+                                                <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->website_url, PHP_URL_HOST) }}" />
                                             </flux:tooltip>
                                         @endif
 
                                         @if($team->other_social_links)
                                             <flux:tooltip content="{{ $team->other_social_links['url'] }}">
-                                                <flux:avatar circle color="auto" name="{{ $team->other_social_links['label'] }}" />
+                                                <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->other_social_links['url'], PHP_URL_HOST) }}" />
                                             </flux:tooltip>
                                         @endif
                                     </flux:avatar.group>
@@ -175,13 +173,13 @@ new class extends Component
                                     </flux:callout>
                                  @endif
 
-                                 <div>
-                                     <flux:modal.trigger name="social-links">
-                                         <flux:button variant="filled">
-                                             {{ __('Edit Social Links') }}
-                                         </flux:button>
-                                     </flux:modal.trigger>
-                                 </div>
+                                <div>
+                                    <flux:modal.trigger name="social-links">
+                                        <flux:button variant="filled">
+                                            {{ __('Edit Social Links') }}
+                                        </flux:button>
+                                    </flux:modal.trigger>
+                                </div>
                              </div>
 
                             <flux:modal name="social-links" variant="flyout" class="md:w-[32rem]">
