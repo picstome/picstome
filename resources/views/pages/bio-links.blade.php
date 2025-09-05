@@ -104,41 +104,40 @@ new class extends Component
              <div class="mt-8">
                  <flux:table>
                     <flux:table.columns>
-                        <flux:table.column class="w-8"></flux:table.column>
                         <flux:table.column class="w-1/2">{{ __('Title') }}</flux:table.column>
                         <flux:table.column class="w-1/2">{{ __('URL') }}</flux:table.column>
                         <flux:table.column></flux:table.column>
                      </flux:table.columns>
                     <flux:table.rows x-sort="handleReorder">
                         @foreach ($this->bioLinks as $link)
-                             <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                 <flux:table.cell class="w-8">
-                                     <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
-                                 </flux:table.cell>
-                                 <flux:table.cell variant="strong">
-                                     {{ $link->title }}
-                                 </flux:table.cell>
-                                 <flux:table.cell>
-                                     {{ $link->url }}
-                                 </flux:table.cell>
-                                 <flux:table.cell>
-                                     <flux:dropdown>
-                                         <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
-                                         <flux:menu>
-                                             <flux:menu.item wire:click="editLink({{ $link->id }})">
-                                                 Edit
-                                             </flux:menu.item>
-                                             <flux:menu.item
-                                                 variant="danger"
-                                                 wire:click="deleteLink({{ $link->id }})"
-                                                 wire:confirm="Are you sure you want to delete this bio link?"
-                                             >
-                                                 Delete
-                                             </flux:menu.item>
-                                         </flux:menu>
-                                     </flux:dropdown>
-                                 </flux:table.cell>
-                             </flux:table.row>
+                            <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                <flux:table.cell>
+                                    <div class="flex items-center gap-3">
+                                        <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                        <flux:text variant="strong">{{ $link->title }}</flux:text>
+                                    </div>
+                                </flux:table.cell>
+                                <flux:table.cell>
+                                    {{ $link->url }}
+                                </flux:table.cell>
+                                <flux:table.cell>
+                                    <flux:dropdown>
+                                        <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
+                                        <flux:menu>
+                                            <flux:menu.item wire:click="editLink({{ $link->id }})">
+                                                Edit
+                                            </flux:menu.item>
+                                            <flux:menu.item
+                                                variant="danger"
+                                                wire:click="deleteLink({{ $link->id }})"
+                                                wire:confirm="Are you sure you want to delete this bio link?"
+                                            >
+                                                Delete
+                                            </flux:menu.item>
+                                        </flux:menu>
+                                    </flux:dropdown>
+                                </flux:table.cell>
+                            </flux:table.row>
                          @endforeach
                      </flux:table.rows>
                  </flux:table>
