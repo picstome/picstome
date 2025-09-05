@@ -67,30 +67,39 @@ new class extends Component
                     <flux:heading>{{ __('Public Profile') }}</flux:heading>
                     <flux:subheading>{{ __('Configure your public profile information.') }}</flux:subheading>
 
-                    <div class="mt-5 w-full max-w-lg">
-                        <form wire:submit="save" class="space-y-6">
-                             <flux:field class="
-                                **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
-                                **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
-                            >
-                                <flux:label>{{ __('Bio') }}</flux:label>
+                    <div class="mt-5 space-y-8">
+                        <!-- Bio Section -->
+                        <div class="w-full max-w-lg">
+                            <flux:heading size="sm" class="mb-4">{{ __('Bio') }}</flux:heading>
+                            <form wire:submit="save" class="space-y-4">
+                                <flux:field class="
+                                    **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
+                                    **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                                >
+                                    <flux:label>{{ __('Description') }}</flux:label>
 
-                                <trix-editor
-                                    input="trix"
-                                    x-init="$nextTick(() => $el.editor.loadHTML($wire.form.bio))"
-                                    x-on:trix-change="$wire.form.bio = $event.target.value"
-                                    class="prose prose-sm mt-2"
-                                ></trix-editor>
+                                    <trix-editor
+                                        input="trix"
+                                        x-init="$nextTick(() => $el.editor.loadHTML($wire.form.bio))"
+                                        x-on:trix-change="$wire.form.bio = $event.target.value"
+                                        class="prose prose-sm mt-2"
+                                    ></trix-editor>
 
-                                <input wire:model="form.bio" id="trix" type="text" class="hidden" />
+                                    <input wire:model="form.bio" id="trix" type="text" class="hidden" />
 
-                                <flux:description>
-                                    {{ __('A short description that appears on your public profile. Maximum 1000 characters.') }}
-                                </flux:description>
+                                    <flux:description>
+                                        {{ __('A short description that appears on your public profile. Maximum 1000 characters.') }}
+                                    </flux:description>
 
-                                <flux:error name="form.bio" />
-                            </flux:field>
+                                    <flux:error name="form.bio" />
+                                </flux:field>
 
+                                <flux:button type="submit" variant="primary">{{ __('Save Bio') }}</flux:button>
+                            </form>
+                        </div>
+
+                        <!-- Social Links Section -->
+                        <div class="w-full max-w-lg">
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between">
                                     <div>
@@ -262,9 +271,7 @@ new class extends Component
                                     </form>
                                 </div>
                             </flux:modal>
-
-                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
