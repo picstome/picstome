@@ -91,13 +91,6 @@ new class extends Component
         $this->modal('edit-link')->show();
     }
 
-    public function cancelEdit()
-    {
-        $this->editForm->resetForm();
-        $this->editingLink = null;
-        $this->modal('edit-link')->close();
-    }
-
     #[Computed]
     public function bioLinks()
     {
@@ -273,7 +266,7 @@ new class extends Component
 
                                     <div class="flex gap-2 justify-end">
                                         <flux:modal.close>
-                                            <flux:button wire:click="cancelEdit" variant="ghost">{{ __('Cancel') }}</flux:button>
+                                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                                         </flux:modal.close>
                                         <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary">{{ __('Update Link') }}</flux:button>
                                     </div>
