@@ -173,21 +173,20 @@ new class extends Component
 
                                   <div class="mt-8">
                                       <flux:table>
-                                         <flux:table.columns>
-                                             <flux:table.column class="w-8"></flux:table.column>
-                                             <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
-                                             <flux:table.column class="w-1/2 hidden sm:table-cell">{{ __('URL') }}</flux:table.column>
-                                             <flux:table.column></flux:table.column>
-                                         </flux:table.columns>
+                                          <flux:table.columns>
+                                              <flux:table.column class="w-full sm:w-1/2">{{ __('Title') }}</flux:table.column>
+                                              <flux:table.column class="w-1/2 hidden sm:table-cell">{{ __('URL') }}</flux:table.column>
+                                              <flux:table.column></flux:table.column>
+                                          </flux:table.columns>
                                          <flux:table.rows x-sort="handleReorder">
                                              @foreach ($this->bioLinks as $link)
-                                                 <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                                     <flux:table.cell class="w-8">
-                                                         <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
-                                                     </flux:table.cell>
-                                                     <flux:table.cell variant="strong">
-                                                         {{ $link->title }}
-                                                     </flux:table.cell>
+                                                  <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                                      <flux:table.cell variant="strong">
+                                                          <div class="flex items-center gap-3">
+                                                              <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                                              {{ $link->title }}
+                                                          </div>
+                                                      </flux:table.cell>
                                                      <flux:table.cell class="hidden sm:table-cell">
                                                          {{ $link->url }}
                                                      </flux:table.cell>
