@@ -39,6 +39,38 @@ class Team extends Model
         ];
     }
 
+    public function getInstagramUrlAttribute()
+    {
+        return $this->instagram_handle ? "https://instagram.com/{$this->instagram_handle}" : null;
+    }
+
+    public function getYoutubeUrlAttribute()
+    {
+        return $this->youtube_handle ? "https://youtube.com/{$this->youtube_handle}" : null;
+    }
+
+    public function getFacebookUrlAttribute()
+    {
+        return $this->facebook_handle ? "https://facebook.com/{$this->facebook_handle}" : null;
+    }
+
+    public function getXUrlAttribute()
+    {
+        return $this->x_handle ? "https://x.com/{$this->x_handle}" : null;
+    }
+
+    public function getTiktokUrlAttribute()
+    {
+        return $this->tiktok_handle ? "https://tiktok.com/@{$this->tiktok_handle}" : null;
+    }
+
+    public function getTwitchUrlAttribute()
+    {
+        return $this->twitch_handle ? "https://twitch.tv/{$this->twitch_handle}" : null;
+    }
+
+
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'user_id');

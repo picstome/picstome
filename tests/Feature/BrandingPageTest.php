@@ -255,63 +255,75 @@ it('adds nofollow to links in bio', function () {
 });
 
 it('can save instagram link', function () {
-    expect($this->team->instagram_url)->toBeNull();
+    expect($this->team->instagram_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.instagram', 'username')
         ->call('save');
 
-    expect($this->team->fresh()->instagram_url)->toBe('https://instagram.com/username');
+    $team = $this->team->fresh();
+    expect($team->instagram_handle)->toBe('username');
+    expect($team->instagram_url)->toBe('https://instagram.com/username');
 });
 
 it('can save youtube link', function () {
-    expect($this->team->youtube_url)->toBeNull();
+    expect($this->team->youtube_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.youtube', 'channel/UC123')
         ->call('save');
 
-    expect($this->team->fresh()->youtube_url)->toBe('https://youtube.com/channel/UC123');
+    $team = $this->team->fresh();
+    expect($team->youtube_handle)->toBe('channel/UC123');
+    expect($team->youtube_url)->toBe('https://youtube.com/channel/UC123');
 });
 
 it('can save facebook link', function () {
-    expect($this->team->facebook_url)->toBeNull();
+    expect($this->team->facebook_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.facebook', 'username')
         ->call('save');
 
-    expect($this->team->fresh()->facebook_url)->toBe('https://facebook.com/username');
+    $team = $this->team->fresh();
+    expect($team->facebook_handle)->toBe('username');
+    expect($team->facebook_url)->toBe('https://facebook.com/username');
 });
 
 it('can save x link', function () {
-    expect($this->team->x_url)->toBeNull();
+    expect($this->team->x_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.x', 'username')
         ->call('save');
 
-    expect($this->team->fresh()->x_url)->toBe('https://x.com/username');
+    $team = $this->team->fresh();
+    expect($team->x_handle)->toBe('username');
+    expect($team->x_url)->toBe('https://x.com/username');
 });
 
 it('can save tiktok link', function () {
-    expect($this->team->tiktok_url)->toBeNull();
+    expect($this->team->tiktok_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.tiktok', 'username')
         ->call('save');
 
-    expect($this->team->fresh()->tiktok_url)->toBe('https://tiktok.com/@username');
+    $team = $this->team->fresh();
+    expect($team->tiktok_handle)->toBe('username');
+    expect($team->tiktok_url)->toBe('https://tiktok.com/@username');
 });
 
 it('can save twitch link', function () {
-    expect($this->team->twitch_url)->toBeNull();
+    expect($this->team->twitch_handle)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.twitch', 'username')
         ->call('save');
 
-    expect($this->team->fresh()->twitch_url)->toBe('https://twitch.tv/username');
+    $team = $this->team->fresh();
+    expect($team->twitch_handle)->toBe('username');
+    expect($team->twitch_url)->toBe('https://twitch.tv/username');
 });
 
 it('can save website link', function () {
@@ -321,7 +333,9 @@ it('can save website link', function () {
         ->set('form.website', 'https://example.com')
         ->call('save');
 
-    expect($this->team->fresh()->website_url)->toBe('https://example.com');
+    $team = $this->team->fresh();
+    expect($team->website_url)->toBe('https://example.com');
+    expect($team->website_url)->toBe('https://example.com'); // Same for website
 });
 
 it('can save other social link', function () {
@@ -391,20 +405,22 @@ it('validates other social link url format', function () {
 });
 
 it('allows empty social links', function () {
-    $this->team->update(['instagram_url' => 'https://instagram.com/old']);
+    $this->team->update(['instagram_handle' => 'old']);
 
     Volt::actingAs($this->user)->test('pages.branding.public-profile')
         ->set('form.instagram', '')
         ->call('save');
 
-    expect($this->team->fresh()->instagram_url)->toBeNull();
+    $team = $this->team->fresh();
+    expect($team->instagram_handle)->toBeNull();
+    expect($team->instagram_url)->toBeNull();
 });
 
-it('extracts handles from existing urls when loading form', function () {
+it('loads handles from database when form initializes', function () {
     $this->team->update([
-        'instagram_url' => 'https://instagram.com/testuser',
-        'tiktok_url' => 'https://tiktok.com/@testuser',
-        'youtube_url' => 'https://youtube.com/channel/UC123',
+        'instagram_handle' => 'testuser',
+        'tiktok_handle' => 'testuser',
+        'youtube_handle' => 'channel/UC123',
     ]);
 
     $component = Volt::actingAs($this->user)->test('pages.branding.public-profile');
