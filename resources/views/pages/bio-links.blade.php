@@ -125,11 +125,10 @@ new class extends Component
                                      <flux:dropdown>
                                          <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
                                          <flux:menu>
-                                             <flux:menu.item icon="pencil-square" wire:click="editLink({{ $link->id }})">
+                                             <flux:menu.item wire:click="editLink({{ $link->id }})">
                                                  Edit
                                              </flux:menu.item>
                                              <flux:menu.item
-                                                 icon="trash"
                                                  wire:click="deleteLink({{ $link->id }})"
                                                  wire:confirm="Are you sure you want to delete this bio link?"
                                              >
