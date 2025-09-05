@@ -9,10 +9,15 @@ use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
+use function Laravel\Folio\render;
 
 name('bio-links');
 
 middleware(['auth', 'verified']);
+
+render(function () {
+    return redirect()->route('branding.public-profile');
+});
 
 new class extends Component
 {

@@ -11,10 +11,10 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
-it('displays bio links management page', function () {
+it('redirects bio links page to branding public profile', function () {
     actingAs($user = User::factory()->withPersonalTeam()->create());
 
-    get('/bio-links')->assertOk();
+    get('/bio-links')->assertRedirect(route('branding.public-profile'));
 });
 
 it('requires authentication for bio links management page', function () {
@@ -71,9 +71,9 @@ it('prevents users from updating bio links for other teams', function () {
 
     actingAs($user);
 
-    get('/bio-links')->assertOk();
+    get(route('branding.public-profile'))->assertOk();
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->call('editLink', $otherBioLink->id);
 
     $response->assertForbidden();
@@ -227,11 +227,11 @@ it('prevents users from managing bio links for other teams', function () {
 
     actingAs($user);
 
-    get('/bio-links')
+    get(route('branding.public-profile'))
         ->assertOk()
         ->assertDontSee($otherBioLink->title);
 
-    $response = Volt::actingAs($user)->test('pages.bio-links')
+    $response = Volt::actingAs($user)->test('pages.branding.public-profile')
         ->call('deleteLink', $otherBioLink);
 
     $response->assertForbidden();
