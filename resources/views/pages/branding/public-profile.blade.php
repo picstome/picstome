@@ -192,7 +192,9 @@ new class extends Component
                                                     <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
                                                         <flux:table.cell>
                                                             <div class="flex items-center gap-3">
-                                                                <flux:icon.bars-2 variant="micro" x-sort:handle class="cursor-move" />
+                                                                <flux:button x-sort:handle variant="ghost" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
+                                                                    <flux:icon.bars-2 variant="micro" />
+                                                                </flux:button>
                                                                 <flux:text variant="strong">{{ $link->title }}</flux:text>
                                                             </div>
                                                         </flux:table.cell>
@@ -201,7 +203,7 @@ new class extends Component
                                                         </flux:table.cell>
                                                         <flux:table.cell>
                                                             <flux:dropdown>
-                                                                <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
+                                                                <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" inset="top bottom" />
                                                                 <flux:menu>
                                                                     <flux:menu.item wire:click="editLink({{ $link->id }})">
                                                                         {{ __('Edit') }}
