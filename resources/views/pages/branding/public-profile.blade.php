@@ -195,14 +195,14 @@ new class extends Component
                                                             <flux:button icon="ellipsis-vertical" variant="ghost" size="sm" />
                                                             <flux:menu>
                                                                 <flux:menu.item wire:click="editLink({{ $link->id }})">
-                                                                    Edit
+                                                                    {{ __('Edit') }}
                                                                 </flux:menu.item>
                                                                 <flux:menu.item
                                                                     variant="danger"
                                                                     wire:click="deleteLink({{ $link->id }})"
-                                                                    wire:confirm="Are you sure you want to delete this bio link?"
+                                                                    wire:confirm="{{ __('Are you sure you want to delete this bio link?') }}"
                                                                 >
-                                                                    Delete
+                                                                    {{ __('Delete') }}
                                                                 </flux:menu.item>
                                                             </flux:menu>
                                                         </flux:dropdown>
@@ -438,7 +438,7 @@ new class extends Component
                                             <flux:modal.close>
                                                 <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                                             </flux:modal.close>
-                                            <flux:button type="submit" variant="primary">{{ __('Save Changes') }}</flux:button>
+                                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                                         </div>
                                     </form>
                                 </div>
