@@ -187,7 +187,7 @@ new class extends Component
                                         @endif
                                     </div>
                                 @else
-                                    <flux:callout icon="link" color="blue">
+                                    <flux:callout icon="link" variant="secondary">
                                         <flux:callout.heading>{{ __('Add Social Links') }}</flux:callout.heading>
                                         <flux:callout.text>
                                             {{ __('Connect your social media profiles and website to your public profile to help visitors find and follow you.') }}
