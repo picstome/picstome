@@ -185,4 +185,44 @@ it('prevents empty string handles', function () {
         ->assertHasErrors(['form.handle']);
 });
 
+it('allows users to see the public profile branding page', function () {
+    $response = actingAs($this->user)->get('/branding/public-profile');
+
+    $response->assertStatus(200);
+});
+
+it('prevents guests from viewing public profile page', function () {
+    $response = get('/branding/public-profile');
+
+    $response->assertRedirect('/login');
+});
+
+it('can save a bio description', function () {
+    expect($this->team->bio)->toBeNull();
+
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+        ->set('form.bio', 'This is my bio description')
+        ->call('save');
+
+    expect($this->team->fresh()->bio)->toBe('This is my bio description');
+});
+
+it('validates bio description maximum length', function () {
+    $longBio = str_repeat('a', 1001);
+
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+        ->set('form.bio', $longBio)
+        ->call('save')
+        ->assertHasErrors(['form.bio']);
+});
+
+it('allows empty bio description', function () {
+    $this->team->update(['bio' => 'Existing bio']);
+
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+        ->set('form.bio', '')
+        ->call('save');
+
+    expect($this->team->fresh()->bio)->toBe('');
+});
 
