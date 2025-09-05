@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\BioLinkForm;
 use App\Models\BioLink;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
@@ -24,6 +25,7 @@ new class extends Component
     {
         $this->addForm->store();
         $this->addForm->resetForm();
+        $this->modal('add-link')->close();
     }
 
     public function updateLink(BioLink $link)
@@ -94,10 +96,10 @@ new class extends Component
                         </flux:link>.
                     </flux:text>
                 </div>
-            </div>
+             </div>
 
-            <div class="mt-8">
-                <flux:table>
+             <div class="mt-8">
+                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column class="w-8"></flux:table.column>
                         <flux:table.column class="w-1/2">{{ __('Title') }}</flux:table.column>
@@ -151,42 +153,49 @@ new class extends Component
                                     </flux:table.cell>
                                 @endif
                             </flux:table.row>
-                        @endforeach
+                         @endforeach
+                     </flux:table.rows>
+                 </flux:table>
+             </div>
 
-                         <flux:table.row>
-                             <flux:table.cell></flux:table.cell>
-                             <flux:table.cell>
-                                 <flux:field>
-                                    <flux:input
-                                        wire:model="addForm.title"
-                                        type="text"
-                                        placeholder="e.g. Instagram"
-                                        class="ml-1 min-w-40"
-                                    />
-                                    <flux:error name="addForm.title" />
-                                </flux:field>
-                            </flux:table.cell>
-                            <flux:table.cell>
-                                <flux:field>
-                                    <flux:input
-                                        wire:model="addForm.url"
-                                        type="url"
-                                        class="min-w-40"
-                                        placeholder="https://instagram.com/username"
-                                    />
-                                    <flux:error name="addForm.url" />
-                                </flux:field>
-                            </flux:table.cell>
-                            <flux:table.cell>
-                                <flux:button wire:click="addLink" icon="plus" variant="primary" size="sm" />
-                            </flux:table.cell>
-                        </flux:table.row>
-                    </flux:table.rows>
-                </flux:table>
-            </div>
-        </div>
-        @assets
-            <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
-        @endassets
-    @endvolt
+             <div class="mt-8">
+                 <flux:modal.trigger name="add-link">
+                     <flux:button icon="plus" variant="filled">{{ __('Add Link') }}</flux:button>
+                 </flux:modal.trigger>
+             </div>
+
+             <flux:modal name="add-link" class="md:w-96">
+             <div class="space-y-6">
+                 <div>
+                     <flux:heading size="lg">{{ __('Add Bio Link') }}</flux:heading>
+                     <flux:text class="mt-2">{{ __('Add a new link to your bio.') }}</flux:text>
+                 </div>
+
+                 <div class="space-y-4">
+                     <flux:field>
+                         <flux:label>{{ __('Title') }}</flux:label>
+                         <flux:input wire:model="addForm.title" type="text" placeholder="e.g. Instagram" />
+                         <flux:error name="addForm.title" />
+                     </flux:field>
+
+                     <flux:field>
+                         <flux:label>{{ __('URL') }}</flux:label>
+                         <flux:input wire:model="addForm.url" type="url" placeholder="https://instagram.com/username" />
+                         <flux:error name="addForm.url" />
+                     </flux:field>
+                 </div>
+
+                 <div class="flex gap-2 justify-end">
+                     <flux:modal.close>
+                         <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                     </flux:modal.close>
+                     <flux:button wire:click="addLink" variant="primary">{{ __('Add Link') }}</flux:button>
+                 </div>
+             </div>
+         </flux:modal>
+
+         @assets
+             <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
+         @endassets
+     @endvolt
 </x-app-layout>
