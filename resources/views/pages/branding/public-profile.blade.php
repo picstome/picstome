@@ -55,11 +55,25 @@ new class extends Component
 
                     <div class="mt-5 w-full max-w-lg">
                         <form wire:submit="save" class="space-y-6">
-                            <flux:field>
-                                <flux:textarea wire:model="form.bio" :label="__('Bio')" :placeholder="__('Tell visitors about your studio...')" rows="4" />
+                            <flux:field class="
+                                **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
+                                **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                            >
+                                <flux:label>{{ __('Bio') }}</flux:label>
+
+                                <trix-editor
+                                    class="prose prose-sm mt-2"
+                                    x-on:trix-change="$wire.form.bio = $event.target.value"
+                                    input="trix"
+                                ></trix-editor>
+
+                                <input wire:model="form.bio" id="trix" type="text" class="hidden" />
+
                                 <flux:description>
                                     {{ __('A short description that appears on your public profile. Maximum 1000 characters.') }}
                                 </flux:description>
+
+                                <flux:error name="form.bio" />
                             </flux:field>
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
@@ -68,5 +82,9 @@ new class extends Component
                 </div>
             </div>
         </section>
+        @assets
+            <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />
+            <script type="text/javascript" src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
+        @endassets
     @endvolt
 </x-app-layout>

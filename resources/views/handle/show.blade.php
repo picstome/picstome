@@ -9,7 +9,9 @@
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
 
                 @if($team->bio)
-                    <flux:text class="mt-4">{{ $team->bio }}</flux:text>
+                    <div class="mt-4 prose prose-sm max-w-none">
+                        {!! $team->bio !!}
+                    </div>
                 @endif
             </div>
 
