@@ -1,4 +1,9 @@
 <x-guest-layout :font="$team->brand_font" :full-screen="true">
+    <x-slot name="head">
+        @if(app()->environment('production'))
+            @include('partials.google-analytics')
+        @endif
+    </x-slot>
     <div class="flex min-h-screen items-center justify-center px-4">
         <div class="mx-auto w-full max-w-md text-center">
             <div class="space-y-4">
