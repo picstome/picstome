@@ -24,7 +24,7 @@
                                 :color="$team->brand_color ?? null"
                                 href="{{ $link->url }}"
                                 target="_blank"
-                                rel="noopener noreferrer"
+                                rel="noopener noreferrer nofollow"
                                 class="w-full text-base!"
                             ><span class="truncate">{{ $link->title }}</span></flux:button>
                         @endforeach
