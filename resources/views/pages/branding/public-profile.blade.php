@@ -313,81 +313,81 @@ new class extends Component
                                     <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
                                 </div>
 
-                                @if($team->hasSocialLinks())
-                                    <flux:avatar.group>
-                                        @if($team->instagram_url)
-                                            <flux:tooltip content="{{ $team->instagram_url }}">
-                                                <flux:avatar circle src="https://s.magecdn.com/social/tc-instagram.svg" />
-                                            </flux:tooltip>
-                                        @endif
+                                 @if($team->hasSocialLinks())
+                                     <flux:avatar.group>
+                                         @if($team->instagram_url)
+                                             <flux:tooltip content="{{ $team->instagram_url }}">
+                                                 <flux:avatar circle src="https://s.magecdn.com/social/tc-instagram.svg" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->youtube_url)
-                                            <flux:tooltip content="{{ $team->youtube_url }}">
-                                                <flux:avatar circle src="https://s.magecdn.com/social/tc-youtube.svg" />
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->youtube_url)
+                                             <flux:tooltip content="{{ $team->youtube_url }}">
+                                                 <flux:avatar circle src="https://s.magecdn.com/social/tc-youtube.svg" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->facebook_url)
-                                            <flux:tooltip content="{{ $team->facebook_url }}">
-                                                <flux:avatar circle src="https://s.magecdn.com/social/tc-facebook.svg" />
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->facebook_url)
+                                             <flux:tooltip content="{{ $team->facebook_url }}">
+                                                 <flux:avatar circle src="https://s.magecdn.com/social/tc-facebook.svg" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->x_url)
-                                            <flux:tooltip content="{{ $team->x_url }}">
-                                                <flux:avatar circle src="https://s.magecdn.com/social/tc-x.svg" />
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->x_url)
+                                             <flux:tooltip content="{{ $team->x_url }}">
+                                                 <flux:avatar circle src="https://s.magecdn.com/social/tc-x.svg" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->tiktok_url)
-                                            <flux:tooltip content="{{ $team->tiktok_url }}">
-                                                <flux:avatar circle src="https://s.magecdn.com/social/tc-tiktok.svg" />
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->tiktok_url)
+                                             <flux:tooltip content="{{ $team->tiktok_url }}">
+                                                 <flux:avatar circle src="https://s.magecdn.com/social/tc-tiktok.svg" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->twitch_url)
-                                            <flux:tooltip content="{{ $team->twitch_url }}">
-                                                <flux:avatar circle>
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286H13.714L22.286 10.857V0H6zm14.571 10.857l-3.429 3.429H13.714l-3 3v-3H6.857V1.714H20.57v9.143z"/>
-                                                    </svg>
-                                                </flux:avatar>
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->twitch_url)
+                                             <flux:tooltip content="{{ $team->twitch_url }}">
+                                                 <flux:avatar circle>
+                                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286H13.714L22.286 10.857V0H6zm14.571 10.857l-3.429 3.429H13.714l-3 3v-3H6.857V1.714H20.57v9.143z"/>
+                                                     </svg>
+                                                 </flux:avatar>
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->website_url)
-                                            <flux:tooltip content="{{ $team->website_url }}">
-                                                <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->website_url, PHP_URL_HOST) }}" />
-                                            </flux:tooltip>
-                                        @endif
+                                         @if($team->website_url)
+                                             <flux:tooltip content="{{ $team->website_url }}">
+                                                 <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->website_url, PHP_URL_HOST) }}" />
+                                             </flux:tooltip>
+                                         @endif
 
-                                        @if($team->other_social_links)
-                                            <flux:tooltip content="{{ $team->other_social_links['url'] }}">
-                                                <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->other_social_links['url'], PHP_URL_HOST) }}" />
-                                            </flux:tooltip>
-                                        @endif
-                                    </flux:avatar.group>
-                                @else
-                                    <flux:callout icon="link" variant="secondary">
-                                        <flux:callout.heading>{{ __('Add Social Links') }}</flux:callout.heading>
-                                        <flux:callout.text>
-                                            {{ __('Connect your social media profiles and website to your public profile to help visitors find and follow you.') }}
-                                        </flux:callout.text>
-                                        <x-slot name="actions">
-                                            <flux:modal.trigger name="social-links">
-                                                <flux:button>{{ __('Add Social Links') }}</flux:button>
-                                            </flux:modal.trigger>
-                                        </x-slot>
-                                    </flux:callout>
-                                 @endif
+                                         @if($team->other_social_links)
+                                             <flux:tooltip content="{{ $team->other_social_links['url'] }}">
+                                                 <flux:avatar circle src="https://unavatar.io/google/{{ parse_url($team->other_social_links['url'], PHP_URL_HOST) }}" />
+                                             </flux:tooltip>
+                                         @endif
+                                     </flux:avatar.group>
 
-                                <div>
-                                    <flux:modal.trigger name="social-links">
-                                        <flux:button variant="filled">
-                                            {{ __('Edit Social Links') }}
-                                        </flux:button>
-                                    </flux:modal.trigger>
-                                </div>
+                                     <div>
+                                         <flux:modal.trigger name="social-links">
+                                             <flux:button variant="filled">
+                                                 {{ __('Edit Social Links') }}
+                                             </flux:button>
+                                         </flux:modal.trigger>
+                                     </div>
+                                 @else
+                                     <flux:callout icon="link" variant="secondary">
+                                         <flux:callout.heading>{{ __('Add Social Links') }}</flux:callout.heading>
+                                         <flux:callout.text>
+                                             {{ __('Connect your social media profiles and website to your public profile to help visitors find and follow you.') }}
+                                         </flux:callout.text>
+                                         <x-slot name="actions">
+                                             <flux:modal.trigger name="social-links">
+                                                 <flux:button>{{ __('Add Social Links') }}</flux:button>
+                                             </flux:modal.trigger>
+                                         </x-slot>
+                                     </flux:callout>
+                                  @endif
                              </div>
 
                             <flux:modal name="social-links" variant="flyout" class="md:w-[32rem]">
