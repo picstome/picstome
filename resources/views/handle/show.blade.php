@@ -7,6 +7,10 @@
                 @endif
 
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
+
+                @if($team->bio)
+                    <flux:text class="mt-4">{{ $team->bio }}</flux:text>
+                @endif
             </div>
 
             @if($team->bioLinks->isNotEmpty())
