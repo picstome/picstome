@@ -101,6 +101,10 @@
                         <flux:navlist.item :href="route('branding')" icon="paint-brush">
                             {{ __('Branding') }}
                         </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="eye" target="_blank">
+                            {{ __('View Profile') }}
+                        </flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
 
