@@ -240,3 +240,18 @@ it('sanitizes html content in bio', function () {
         ->and($savedBio)->not->toContain('alert("xss")');
 });
 
+it('adds nofollow to links in bio', function () {
+    $htmlContent = '<p>Check out my <a href="https://example.com">website</a> and <a href="https://google.com" rel="noopener">google</a>.</p>';
+
+    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+        ->set('form.bio', $htmlContent)
+        ->call('save');
+
+    $savedBio = $this->team->fresh()->bio;
+
+    expect($savedBio)->toContain('rel="nofollow"')
+        ->and($savedBio)->toContain('<a href="https://example.com" rel="nofollow">')
+        ->and($savedBio)->toContain('<a href="https://google.com" rel="nofollow">');
+});
+
+
