@@ -11,7 +11,7 @@
     "All photos": "Todas las fotos",
     "Amber": "Ámbar",
     "Appearance": "Apariencia",
-    "Are you sure you want to delete this bio link?": "¿Estás seguro de que quieres eliminar este enlace bio?",
+    "Are you sure you want to delete this bio link?": "¿Estás seguro de que quieres eliminar este enlace Bio?",
     "Are you sure?": "¿Estás seguro?",
     "As list": "Como lista",
     "Assign": "Asignar",
@@ -337,6 +337,8 @@
     "Add Bio Link": "Agregar Enlace Bio",
     "Add a new link to your bio.": "Agrega un nuevo enlace a tu bio.",
     "Add Link": "Agregar Enlace",
+    "Edit": "Editar",
+    "Delete": "Eliminar",
     "Edit Bio Link": "Editar Enlace Bio",
     "Update your bio link details.": "Actualiza los detalles de tu enlace bio.",
     "Update Link": "Actualizar Enlace"
