@@ -170,7 +170,7 @@ new class extends Component
                         </div>
 
                         <!-- Bio Links Section -->
-                        <div class="w-full max-w-4xl" x-data="{
+                        <div class="w-full max-w-lg" x-data="{
                             handleReorder: (item, position) => {
                                 $wire.call('reorderLink', item, position);
                             }
