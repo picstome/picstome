@@ -36,7 +36,7 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        $this->redirectRoute('branding.public-profile');
+        Flux::toast('Your changes have been saved.', variant: 'success');
     }
 
     public function saveSocialLinks()
@@ -48,6 +48,8 @@ new class extends Component
         $this->modal('social-links')->close();
 
         $this->dispatch('social-links-updated');
+
+        Flux::toast('Your changes have been saved.', variant: 'success');
     }
 
     public function addLink()
