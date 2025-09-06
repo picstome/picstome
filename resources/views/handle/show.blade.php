@@ -9,7 +9,7 @@
         <meta property="og:type" content="profile" />
         <meta property="og:url" content="{{ url()->current() }}" />
         <meta property="og:title" content="{{ $team->name }}" />
-        <meta property="og:description" content="{{ $team->name }}" />
+        <meta property="og:description" content="{{ $team->bio ?: $team->name }}" />
         <meta property="og:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
         @if(app()->environment('production'))
             @include('partials.google-analytics')
