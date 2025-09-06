@@ -259,6 +259,7 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBeNull();
 
         $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', 'This is a beautiful wedding gallery')
             ->call('share');
 
@@ -271,6 +272,7 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBe('Old description');
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', 'Updated description')
             ->call('share');
 
@@ -281,7 +283,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->create();
 
         $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.description', '')
+            ->set('shareForm.descriptionEnabled', false)
             ->call('share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
@@ -293,9 +295,32 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBe('Some description');
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', false)
+            ->call('share');
+
+        expect($gallery->fresh()->share_description)->toBeNull();
+    });
+
+    it('requires description when description is enabled', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', '')
             ->call('share');
 
+        $component->assertHasErrors('shareForm.description');
+    });
+
+    it('does not require description when description is disabled', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', false)
+            ->set('shareForm.description', '')
+            ->call('share');
+
+        $component->assertHasNoErrors('shareForm.description');
         expect($gallery->fresh()->share_description)->toBeNull();
     });
 });

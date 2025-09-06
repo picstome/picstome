@@ -32,7 +32,9 @@ class ShareGalleryForm extends Form
     #[Validate('required|boolean')]
     public $watermarked = false;
 
-    #[Validate('nullable|string|max:1000')]
+    #[Validate('required|boolean')]
+    public $descriptionEnabled = false;
+
     public $description = null;
 
     public function setGallery(Gallery $gallery)
@@ -45,12 +47,15 @@ class ShareGalleryForm extends Form
         $this->limitedSelection = $gallery->is_share_selectable && $gallery->share_selection_limit;
         $this->passwordProtected = (bool) $gallery->share_password;
         $this->watermarked = (bool) $gallery->is_share_watermarked;
+        $this->descriptionEnabled = !empty($gallery->share_description);
         $this->description = $gallery->share_description;
     }
 
     public function update()
     {
-        $this->validate();
+        $this->validate([
+            'description' => $this->descriptionEnabled ? 'required|string|max:1000' : 'nullable|string|max:1000',
+        ]);
 
         $this->gallery->update([
             'is_share_selectable' => $this->selectable,
@@ -62,7 +67,9 @@ class ShareGalleryForm extends Form
             'share_password' => $this->passwordProtected && $this->password
                 ? Hash::make($this->password)
                 : null,
-            'share_description' => $this->description ?: null,
+            'share_description' => $this->descriptionEnabled && $this->description
+                ? $this->description
+                : null,
         ]);
     }
 }
