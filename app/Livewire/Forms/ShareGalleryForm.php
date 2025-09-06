@@ -35,6 +35,7 @@ class ShareGalleryForm extends Form
     #[Validate('required|boolean')]
     public $descriptionEnabled = false;
 
+    #[Validate('nullable|required_if:descriptionEnabled,true|string|max:1000')]
     public $description = null;
 
     public function setGallery(Gallery $gallery)
@@ -53,9 +54,7 @@ class ShareGalleryForm extends Form
 
     public function update()
     {
-        $this->validate([
-            'description' => $this->descriptionEnabled ? 'required|string|max:1000' : 'nullable|string|max:1000',
-        ]);
+        $this->validate();
 
         $this->gallery->update([
             'is_share_selectable' => $this->selectable,
