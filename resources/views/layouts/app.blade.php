@@ -130,5 +130,7 @@
         @endguest
 
         @fluxScripts
+
+        <flux:toast />
     </body>
 </html>

@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\StylingForm;
 use App\Models\Team;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Volt\Component;
@@ -29,7 +30,7 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        $this->redirectRoute('branding.styling');
+        Flux::toast('Your changes have been saved.', variant: 'success');
     }
 
     public function mount()
