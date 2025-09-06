@@ -33,6 +33,7 @@ class Gallery extends Model
             'is_share_watermarked' => 'boolean',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
+            'share_description' => 'string',
             'expiration_date' => 'date',
             'selection_limit_notification_sent_at' => 'datetime',
         ];

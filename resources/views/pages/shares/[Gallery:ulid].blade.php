@@ -63,12 +63,17 @@ new class extends Component
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto" />
             </div>
 
-            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-                <div class="max-sm:w-full sm:flex-1">
-                    <div class="flex items-center gap-4">
-                        <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                    </div>
-                </div>
+             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
+                 <div class="max-sm:w-full sm:flex-1">
+                     <div class="flex items-center gap-4">
+                         <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                     </div>
+                     @if($gallery->share_description)
+                         <x-subheading class="mt-2">
+                             {{ $gallery->share_description }}
+                         </x-subheading>
+                     @endif
+                 </div>
                 <div class="flex gap-4">
                     @if ($this->gallery->is_share_downloadable)
                         <flux:button x-show="$wire.activeTab !== 'favorited'" :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
