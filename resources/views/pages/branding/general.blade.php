@@ -32,7 +32,7 @@ new class extends Component
 
         Flux::toast('Your changes have been saved.', variant: 'success');
 
-        $this->redirectRoute('branding.general');
+        $this->redirectRoute('branding.general', navigate: true);
     }
 
     public function mount()
