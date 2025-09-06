@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\GeneralForm;
 use App\Models\Team;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Volt\Component;
@@ -28,6 +29,8 @@ new class extends Component
         $this->form->update();
 
         $this->team = $this->team->fresh();
+
+        Flux::toast('Your changes have been saved.', variant: 'success');
 
         $this->redirectRoute('branding.general');
     }
