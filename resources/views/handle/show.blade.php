@@ -1,8 +1,16 @@
 <x-guest-layout :font="$team->brand_font" :full-screen="true" :title="$team->name">
     <x-slot name="head">
         @if($team->brand_logo_icon_url)
-            <link rel="icon" type="image/png" href="{{ $team->brand_logo_icon_url . '&w=32&h=32' }}" />
+            <link rel="apple-touch-icon" sizes="300x300" href="{{ $team->brand_logo_icon_url . '&w=300&h=300' }}" />
+            <link rel="icon" type="image/png" sizes="300x300" href="{{ $team->brand_logo_icon_url . '&w=300&h=300' }}" />
         @endif
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
+        <meta property="og:type" content="profile" />
+        <meta property="og:url" content="{{ url()->current() }}" />
+        <meta property="og:title" content="{{ $team->name }}" />
+        <meta property="og:description" content="{{ $team->bio ?: $team->name }}" />
+        <meta property="og:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
         @if(app()->environment('production'))
             @include('partials.google-analytics')
         @endif
