@@ -36,7 +36,7 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        Flux::toast('Your changes have been saved.', variant: 'success');
+        Flux::toast(__('Your changes have been saved.'), variant: 'success');
     }
 
     public function saveSocialLinks()
@@ -49,7 +49,7 @@ new class extends Component
 
         $this->dispatch('social-links-updated');
 
-        Flux::toast('Your changes have been saved.', variant: 'success');
+        Flux::toast(__('Your changes have been saved.'), variant: 'success');
     }
 
     public function addLink()
