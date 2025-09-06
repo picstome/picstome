@@ -440,11 +440,13 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
+                     <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
 
-                    <div x-show="$wire.shareForm.passwordProtected">
-                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
-                    </div>
+                     <div x-show="$wire.shareForm.passwordProtected">
+                         <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
+                     </div>
+
+                     <flux:textarea wire:model="shareForm.description" :label="__('Description')" :placeholder="__('Add a description for your shared gallery...')" rows="3" />
 
                     <div class="flex">
                         <flux:spacer />

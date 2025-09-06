@@ -247,11 +247,56 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->protected('password')->create();
         expect($gallery->share_password)->not->toBeNull();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.passwordProtected', false)
             ->call('share');
 
         expect($gallery->fresh()->share_password)->toBeNull();
+    });
+
+    it('can be shared with a description', function () {
+        $gallery = Gallery::factory()->create();
+        expect($gallery->share_description)->toBeNull();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.description', 'This is a beautiful wedding gallery')
+            ->call('share');
+
+        expect($gallery->fresh()->is_shared)->toBeTrue();
+        expect($gallery->fresh()->share_description)->toBe('This is a beautiful wedding gallery');
+    });
+
+    it('can update the share description', function () {
+        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Old description']);
+        expect($gallery->share_description)->toBe('Old description');
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.description', 'Updated description')
+            ->call('share');
+
+        expect($gallery->fresh()->share_description)->toBe('Updated description');
+    });
+
+    it('can be shared without a description', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.description', '')
+            ->call('share');
+
+        expect($gallery->fresh()->is_shared)->toBeTrue();
+        expect($gallery->fresh()->share_description)->toBeNull();
+    });
+
+    it('can remove the share description', function () {
+        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Some description']);
+        expect($gallery->share_description)->toBe('Some description');
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.description', '')
+            ->call('share');
+
+        expect($gallery->fresh()->share_description)->toBeNull();
     });
 });
 
