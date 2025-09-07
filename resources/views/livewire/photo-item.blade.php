@@ -29,7 +29,7 @@ new class extends Component
     {
         $this->authorize('updateCover', $this->photo->gallery);
 
-        if ($this->photo->gallery->cover_photo_id === $this->photo->id) {
+        if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
             $this->photo->gallery->removeCoverPhoto();
         }
     }
