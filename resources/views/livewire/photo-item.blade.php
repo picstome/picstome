@@ -73,14 +73,14 @@ new class extends Component
                         wire:click="removeAsCover"
                         icon="x-mark"
                     >
-                        Remove as Cover
+                        {{ __('Remove as Cover') }}
                     </flux:menu.item>
                 @else
                     <flux:menu.item
                         wire:click="setAsCover"
                         icon="star"
                     >
-                        Set as Cover
+                        {{ __('Set as Cover') }}
                     </flux:menu.item>
                 @endif
                 <flux:menu.item
@@ -89,7 +89,7 @@ new class extends Component
                     icon="trash"
                     variant="danger"
                 >
-                    Delete
+                    {{ __('Delete') }}
                 </flux:menu.item>
             </flux:menu>
         </flux:dropdown>
