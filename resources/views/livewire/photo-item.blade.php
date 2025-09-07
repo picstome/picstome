@@ -1,21 +1,22 @@
 <?php
 
+use App\Models\Gallery;
 use App\Models\Photo;
 use Livewire\Volt\Component;
-use Livewire\Attributes\Computed;
 
 new class extends Component
 {
     public Photo $photo;
 
+    public Gallery $gallery;
+
     public ?string $htmlId = null;
 
     public $asFavorite = false;
 
-    #[Computed]
-    public function gallery()
+    public function mount()
     {
-        return $this->photo->gallery;
+        $this->gallery = $this->photo->gallery;
     }
 
     public function favorite()
