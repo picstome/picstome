@@ -148,22 +148,6 @@ new class extends Component
                                 <p>{{ $photo->name }}</p>
                             </flux:tooltip.content>
                         </flux:tooltip>
-                        <flux:button
-                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                            icon="cloud-arrow-down"
-                            icon:variant="mini"
-                            size="sm"
-                            square
-                        />
-                        <flux:button
-                            wire:click="favorite"
-                            icon="heart"
-                            :variant="$photo->isFavorited() ? 'primary' : null"
-                            :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
-                            :color="$photo->isFavorited() ? 'rose' : 'lime'"
-                            size="sm"
-                            square
-                        />
                         <flux:dropdown>
                             <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
                             <flux:menu>
@@ -192,6 +176,22 @@ new class extends Component
                                 </flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
+                        <flux:button
+                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                            icon="cloud-arrow-down"
+                            icon:variant="mini"
+                            size="sm"
+                            square
+                        />
+                        <flux:button
+                            wire:click="favorite"
+                            icon="heart"
+                            :variant="$photo->isFavorited() ? 'primary' : null"
+                            :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                            :color="$photo->isFavorited() ? 'rose' : 'lime'"
+                            size="sm"
+                            square
+                        />
                     </div>
                 </div>
             </div>
