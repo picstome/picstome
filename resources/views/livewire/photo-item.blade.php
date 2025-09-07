@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use Livewire\Volt\Component;
+use Livewire\Attributes\Computed;
 
 new class extends Component
 {
@@ -10,6 +11,12 @@ new class extends Component
     public ?string $htmlId = null;
 
     public $asFavorite = false;
+
+    #[Computed]
+    public function gallery()
+    {
+        return $this->photo->gallery;
+    }
 
     public function favorite()
     {
@@ -20,17 +27,17 @@ new class extends Component
 
     public function setAsCover()
     {
-        $this->authorize('updateCover', $this->photo->gallery);
+        $this->authorize('updateCover', $this->gallery);
 
-        $this->photo->gallery->setCoverPhoto($this->photo);
+        $this->gallery->setCoverPhoto($this->photo);
     }
 
     public function removeAsCover()
     {
-        $this->authorize('updateCover', $this->photo->gallery);
+        $this->authorize('updateCover', $this->gallery);
 
-        if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
-            $this->photo->gallery->removeCoverPhoto();
+        if ($this->gallery->coverPhoto?->is($this->photo)) {
+            $this->gallery->removeCoverPhoto();
         }
     }
 }; ?>
@@ -38,7 +45,7 @@ new class extends Component
 <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
     <a
         id="{{ $htmlId }}"
-        href="/galleries/{{ $photo->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
+        href="/galleries/{{ $this->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate.hover
         class="mx-auto flex"
     >
@@ -53,7 +60,7 @@ new class extends Component
             @endif
         </flux:button>
         <flux:button
-            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+            :href="route('galleries.photos.download', ['gallery' => $this->gallery, 'photo' => $photo])"
             icon="arrow-down-tray"
             square
             size="sm"
