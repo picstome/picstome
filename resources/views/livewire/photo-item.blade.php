@@ -20,14 +20,8 @@ new class extends Component
         $this->gallery = $this->photo->gallery;
     }
 
-    #[On('gallery-shared')]
-    public function refreshGalleryOnShare()
-    {
-        $this->gallery = $this->photo->gallery;
-    }
-
-    #[On('gallery-sharing-disabled')]
-    public function refreshGalleryOnDisableShare()
+    #[On('gallery-sharing-changed')]
+    public function refreshGallery()
     {
         $this->gallery = $this->photo->gallery;
     }
