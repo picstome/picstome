@@ -208,8 +208,7 @@ class Gallery extends Model
 
     public function removeCoverPhoto()
     {
-        $this->cover_photo_id = null;
+        $this->update(['cover_photo_id' => null]);
         $this->setRelation('coverPhoto', null);
-        $this->save();
     }
 }
