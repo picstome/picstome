@@ -49,14 +49,16 @@ new class extends Component
     public function setAsCover()
     {
         $this->authorize('updateCover', $this->photo->gallery);
-        $this->photo->gallery->update(['cover_photo_id' => $this->photo->id]);
+
+        $this->photo->gallery->setCoverPhoto($this->photo);
     }
 
     public function removeAsCover()
     {
         $this->authorize('updateCover', $this->photo->gallery);
-        if ($this->photo->gallery->cover_photo_id === $this->photo->id) {
-            $this->photo->gallery->update(['cover_photo_id' => null]);
+
+        if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
+            $this->photo->gallery->removeCoverPhoto();
         }
     }
 
@@ -165,7 +167,7 @@ new class extends Component
                         <flux:dropdown>
                             <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
                             <flux:menu>
-                                @if ($photo->gallery->cover_photo_id === $photo->id)
+                                @if ($photo->gallery->coverPhoto?->is($photo))
                                     <flux:menu.item
                                         wire:click="removeAsCover"
                                         icon="x-mark"
