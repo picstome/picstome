@@ -7,9 +7,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('contract-templates');
+middleware(['auth', 'verified']);
 
 new class extends Component
 {
