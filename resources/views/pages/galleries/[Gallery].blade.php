@@ -34,6 +34,8 @@ new class extends Component
 
     public Collection $favorites;
 
+    public Collection $allPhotos;
+
     public array $existingPhotoNames = [];
 
     public ?Collection $photoshoots;
@@ -50,6 +52,7 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
+        $this->getAllPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
@@ -82,6 +85,7 @@ new class extends Component
 
         $this->addPhotoToGallery($uploadedPhoto);
 
+        $this->getAllPhotos();
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
@@ -114,11 +118,16 @@ new class extends Component
         });
 
         $this->gallery = $this->gallery->fresh();
+        $this->getAllPhotos();
+
+        $this->dispatch('gallery-sharing-changed');
     }
 
     public function disableSharing()
     {
         $this->gallery->update(['is_shared' => false]);
+
+        $this->dispatch('gallery-sharing-changed');
     }
 
     public function deletePhoto(Photo $photo)
@@ -128,6 +137,7 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
+        $this->getAllPhotos();
 
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
@@ -137,6 +147,7 @@ new class extends Component
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
+        $this->getAllPhotos();
 
         $this->modal('edit')->close();
     }
@@ -156,16 +167,14 @@ new class extends Component
         $this->favorites = $favorites->naturalSortBy('name');
     }
 
-    public function with()
+    public function getAllPhotos()
     {
         $photos = $this->gallery->photos()->with('gallery')->get();
 
-        $sortedPhotos = $photos->naturalSortBy('name');
-
-        return [
-            'allPhotos' => $sortedPhotos,
-        ];
+        $this->allPhotos = $photos->naturalSortBy('name');
     }
+
+
 }; ?>
 
 <x-app-layout>

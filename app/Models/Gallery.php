@@ -63,6 +63,11 @@ class Gallery extends Model
         return $this->belongsTo(Photoshoot::class);
     }
 
+    public function coverPhoto()
+    {
+        return $this->belongsTo(Photo::class, 'cover_photo_id');
+    }
+
     public function favorites()
     {
         return $this->photos()->favorited();
@@ -190,5 +195,20 @@ class Gallery extends Model
     public function getFormattedStorageSize()
     {
         return $this->formatFileSize($this->getTotalStorageSize());
+    }
+
+    public function setCoverPhoto(Photo $photo)
+    {
+        if (!$this->is($photo->gallery)) {
+            throw new \Exception('Photo does not belong to this gallery');
+        }
+
+        $this->update(['cover_photo_id' => $photo->id]);
+    }
+
+    public function removeCoverPhoto()
+    {
+        $this->update(['cover_photo_id' => null]);
+        $this->setRelation('coverPhoto', null);
     }
 }

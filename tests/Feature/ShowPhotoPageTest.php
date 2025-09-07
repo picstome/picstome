@@ -82,3 +82,48 @@ test('can favorite a photo', function () {
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
 });
+
+test('can set a photo as the gallery cover', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('setAsCover');
+
+    expect($photo->gallery->fresh()->cover_photo_id)->toBe($photo->id);
+});
+
+test('can change the cover photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo1 = Photo::factory()->for($gallery)->create();
+    $photo2 = Photo::factory()->for($gallery)->create();
+    $gallery->update(['cover_photo_id' => $photo1->id]);
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo2])
+        ->call('setAsCover');
+
+    expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
+});
+
+test('can remove the cover photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+    $gallery->update(['cover_photo_id' => $photo->id]);
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('removeAsCover');
+
+    expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});
+
+test('prevents setting cover photo from another team', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $otherTeam = Team::factory()->create();
+    $otherGallery = Gallery::factory()->for($otherTeam)->create();
+    $photo = Photo::factory()->for($otherGallery)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('setAsCover');
+
+    $component->assertStatus(403);
+    expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});
