@@ -119,11 +119,15 @@ new class extends Component
 
         $this->gallery = $this->gallery->fresh();
         $this->getAllPhotos();
+
+        $this->dispatch('gallery-shared');
     }
 
     public function disableSharing()
     {
         $this->gallery->update(['is_shared' => false]);
+
+        $this->dispatch('gallery-sharing-disabled');
     }
 
     public function deletePhoto(Photo $photo)

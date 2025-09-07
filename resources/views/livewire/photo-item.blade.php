@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -15,6 +16,18 @@ new class extends Component
     public $asFavorite = false;
 
     public function mount()
+    {
+        $this->gallery = $this->photo->gallery;
+    }
+
+    #[On('gallery-shared')]
+    public function refreshGalleryOnShare()
+    {
+        $this->gallery = $this->photo->gallery;
+    }
+
+    #[On('gallery-sharing-disabled')]
+    public function refreshGalleryOnDisableShare()
     {
         $this->gallery = $this->photo->gallery;
     }
