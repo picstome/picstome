@@ -1,16 +1,36 @@
 <x-guest-layout :font="$team->brand_font" :full-screen="true" :title="$team->name">
     <x-slot name="head">
-        @if($team->brand_logo_icon_url)
-            <link rel="apple-touch-icon" sizes="300x300" href="{{ $team->brand_logo_icon_url . '&w=300&h=300' }}" />
-            <link rel="icon" type="image/png" sizes="300x300" href="{{ $team->brand_logo_icon_url . '&w=300&h=300' }}" />
+        @php
+            $metaImage = $team->brand_logo_icon_url;
+
+            if (!$metaImage) {
+                // Try to find a gallery with a cover photo
+                $galleryWithCover = $team->galleries()->whereNotNull('cover_photo_id')->first();
+
+                if ($galleryWithCover && $galleryWithCover->coverPhoto) {
+                    $metaImage = $galleryWithCover->coverPhoto->url;
+                } else {
+                    // Fallback to first photo from any gallery
+                    $galleryWithPhotos = $team->galleries()->whereHas('photos')->first();
+
+                    if ($galleryWithPhotos && $galleryWithPhotos->photos->isNotEmpty()) {
+                        $metaImage = $galleryWithPhotos->photos->first()->url;
+                    }
+                }
+            }
+        @endphp
+
+        @if($metaImage)
+            <link rel="apple-touch-icon" sizes="300x300" href="{{ $metaImage . ($team->brand_logo_icon_url ? '&w=300&h=300' : '') }}" />
+            <link rel="icon" type="image/png" sizes="300x300" href="{{ $metaImage . ($team->brand_logo_icon_url ? '&w=300&h=300' : '') }}" />
         @endif
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
+        <meta name="twitter:image" content="{{ $metaImage ?: '' }}" />
         <meta property="og:type" content="profile" />
         <meta property="og:url" content="{{ url()->current() }}" />
         <meta property="og:title" content="{{ $team->name }}" />
         <meta property="og:description" content="{{ $team->bio ?: $team->name }}" />
-        <meta property="og:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
+        <meta property="og:image" content="{{ $metaImage ?: '' }}" />
         @if(app()->environment('production'))
             @include('partials.google-analytics')
         @endif
@@ -18,8 +38,28 @@
     <div class="flex min-h-screen items-center justify-center px-4">
         <div class="mx-auto w-full max-w-md text-center">
             <div class="space-y-4">
-                @if($team->brand_logo_icon_url)
-                    <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
+                @php
+                    $displayImage = $team->brand_logo_icon_url;
+
+                    if (!$displayImage) {
+                        // Try to find a gallery with a cover photo
+                        $galleryWithCover = $team->galleries()->whereNotNull('cover_photo_id')->first();
+
+                        if ($galleryWithCover && $galleryWithCover->coverPhoto) {
+                            $displayImage = $galleryWithCover->coverPhoto->thumbnail_url;
+                        } else {
+                            // Fallback to first photo from any gallery
+                            $galleryWithPhotos = $team->galleries()->whereHas('photos')->first();
+
+                            if ($galleryWithPhotos && $galleryWithPhotos->photos->isNotEmpty()) {
+                                $displayImage = $galleryWithPhotos->photos->first()->thumbnail_url;
+                            }
+                        }
+                    }
+                @endphp
+
+                @if($displayImage)
+                    <img src="{{ $displayImage . ($team->brand_logo_icon_url ? '&w=256&h=256' : '') }}" class="mx-auto size-32" alt="{{ $team->name }}" />
                 @endif
 
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
