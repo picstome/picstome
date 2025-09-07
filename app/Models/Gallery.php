@@ -63,6 +63,11 @@ class Gallery extends Model
         return $this->belongsTo(Photoshoot::class);
     }
 
+    public function coverPhoto()
+    {
+        return $this->belongsTo(Photo::class, 'cover_photo_id');
+    }
+
     public function favorites()
     {
         return $this->photos()->favorited();
