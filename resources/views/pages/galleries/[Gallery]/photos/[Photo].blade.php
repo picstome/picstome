@@ -2,7 +2,6 @@
 
 use App\Models\Photo;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
@@ -21,6 +20,8 @@ new class extends Component
     #[Url]
     public $navigateFavorites = false;
 
+    public string $galleryUrl;
+
     public function mount()
     {
         $this->next = $this->navigateFavorites
@@ -30,6 +31,12 @@ new class extends Component
         $this->previous = $this->navigateFavorites
             ? $this->photo->previousFavorite()
             : $this->photo->previous();
+
+        $this->galleryUrl = Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
+            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
+            ->append('#')
+            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->photo->id);
     }
 
     public function favorite()
@@ -62,15 +69,7 @@ new class extends Component
         }
     }
 
-    #[Computed]
-    public function galleryUrl()
-    {
-        return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
-            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
-            ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
-            ->append($this->photo->id);
-    }
+
 }; ?>
 
 <x-app-layout :full-screen="true">
