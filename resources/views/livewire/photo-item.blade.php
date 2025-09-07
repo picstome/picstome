@@ -21,6 +21,7 @@ new class extends Component
     }
 
     #[On('gallery-sharing-changed')]
+    #[On('gallery-cover-changed')]
     public function refreshGallery()
     {
         $this->gallery = $this->photo->gallery;
@@ -38,6 +39,8 @@ new class extends Component
         $this->authorize('updateCover', $this->gallery);
 
         $this->gallery->setCoverPhoto($this->photo);
+
+        $this->dispatch('gallery-cover-changed');
     }
 
     public function removeAsCover()
@@ -46,6 +49,8 @@ new class extends Component
 
         if ($this->gallery->coverPhoto?->is($this->photo)) {
             $this->gallery->removeCoverPhoto();
+
+            $this->dispatch('gallery-cover-changed');
         }
     }
 }; ?>
