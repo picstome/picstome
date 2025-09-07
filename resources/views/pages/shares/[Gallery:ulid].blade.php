@@ -60,11 +60,12 @@ new class extends Component
             class="h-full"
         >
             @if($allPhotos->isNotEmpty())
-                <div class="relative max-h-[164px] md:max-h-[240px] overflow-hidden max-sm:-mt-6 max-sm:-mx-6">
-                    <img src="{{ $allPhotos->first()->url }}" class="w-full h-full object-cover" />
-                </div>
-                <div class="relative mt-[-64px] max-sm:mt-[-48px]">
+                <div class="relative">
                     <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                </div>
+
+                <div class="relative max-h-[164px] md:max-h-[240px] overflow-hidden mt-4 max-sm:-mx-6">
+                    <img src="{{ $allPhotos->first()->url }}" class="w-full h-full object-cover" />
                 </div>
             @else
                 <div>
