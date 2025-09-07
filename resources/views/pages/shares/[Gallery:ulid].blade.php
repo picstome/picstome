@@ -59,9 +59,18 @@ new class extends Component
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             class="h-full"
         >
-            <div>
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto" />
-            </div>
+            @if($allPhotos->isNotEmpty())
+                <div class="relative max-h-[164px] md:max-h-[240px] overflow-hidden max-sm:-mt-6 max-sm:-mx-6">
+                    <img src="{{ $allPhotos->first()->url }}" class="w-full h-full object-cover" />
+                </div>
+                <div class="relative mt-[-64px] max-sm:mt-[-48px]">
+                    <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                </div>
+            @else
+                <div>
+                    <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                </div>
+            @endif
 
              <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
                  <div class="max-sm:w-full sm:flex-1">
