@@ -64,7 +64,7 @@ new class extends Component
                     <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto h-[90px] md:h-[160px]" />
                 </div>
 
-                <div class="relative max-h-[164px] md:max-h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
+                <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
                     <img src="{{ $allPhotos->first()->url }}" class="w-full h-full object-cover" />
                 </div>
             @else
