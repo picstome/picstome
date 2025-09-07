@@ -68,20 +68,22 @@ new class extends Component
         <flux:dropdown x-model="moreActionsOpen">
             <flux:button icon="ellipsis-vertical" square size="sm" />
             <flux:menu>
-                @if ($this->gallery->coverPhoto?->is($this->photo))
-                    <flux:menu.item
-                        wire:click="removeAsCover"
-                        icon="x-mark"
-                    >
-                        {{ __('Remove as Cover') }}
-                    </flux:menu.item>
-                @else
-                    <flux:menu.item
-                        wire:click="setAsCover"
-                        icon="star"
-                    >
-                        {{ __('Set as Cover') }}
-                    </flux:menu.item>
+                @if ($this->gallery->is_shared)
+                    @if ($this->gallery->coverPhoto?->is($this->photo))
+                        <flux:menu.item
+                            wire:click="removeAsCover"
+                            icon="x-mark"
+                        >
+                            {{ __('Remove as Cover') }}
+                        </flux:menu.item>
+                    @else
+                        <flux:menu.item
+                            wire:click="setAsCover"
+                            icon="star"
+                        >
+                            {{ __('Set as Cover') }}
+                        </flux:menu.item>
+                    @endif
                 @endif
                 <flux:menu.item
                     wire:click="$parent.deletePhoto({{ $photo->id }})"
