@@ -46,7 +46,7 @@ new class extends Component
 <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10" x-data="{ showActions: false, moreActionsOpen: false }" @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false">
     <a
         id="{{ $htmlId }}"
-        href="/galleries/{{ $this->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
+        href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate.hover
         class="mx-auto flex"
     >
@@ -61,7 +61,7 @@ new class extends Component
             @endif
         </flux:button>
         <flux:button
-            :href="route('galleries.photos.download', ['gallery' => $this->gallery, 'photo' => $photo])"
+            :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
             icon="arrow-down-tray"
             square
             size="sm"
@@ -69,8 +69,8 @@ new class extends Component
         <flux:dropdown x-model="moreActionsOpen">
             <flux:button icon="ellipsis-vertical" square size="sm" />
             <flux:menu>
-                @if ($this->gallery->is_shared)
-                    @if ($this->gallery->coverPhoto?->is($this->photo))
+                @if ($gallery->is_shared)
+                    @if ($gallery->coverPhoto?->is($this->photo))
                         <flux:menu.item
                             wire:click="removeAsCover"
                             icon="x-mark"
