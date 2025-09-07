@@ -62,4 +62,12 @@ class GalleryPolicy
     {
         return false;
     }
+
+    /**
+     * Determine whether the user can update the cover photo of the gallery.
+     */
+    public function updateCover(User $user, Gallery $gallery): bool
+    {
+        return $gallery->team->is($user->currentTeam);
+    }
 }
