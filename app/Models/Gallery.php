@@ -199,7 +199,7 @@ class Gallery extends Model
 
     public function setCoverPhoto(Photo $photo)
     {
-        if ($photo->gallery_id !== $this->id) {
+        if (!$this->is($photo->gallery)) {
             throw new \Exception('Photo does not belong to this gallery');
         }
 
