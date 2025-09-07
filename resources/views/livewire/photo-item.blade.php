@@ -42,7 +42,7 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
+<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10" x-data="{ showActions: false, moreActionsOpen: false }" @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false">
     <a
         id="{{ $htmlId }}"
         href="/galleries/{{ $this->gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
@@ -51,7 +51,7 @@ new class extends Component
     >
         <img src="{{ $photo->thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
     </a>
-    <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
+    <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
             @if ($photo->isFavorited())
                 <flux:icon.heart class="size-5" variant="solid" />
@@ -65,12 +65,17 @@ new class extends Component
             square
             size="sm"
         />
-        <flux:button
-            wire:click="$parent.deletePhoto({{ $photo->id }})"
-            wire:confirm="{{ __('Are you sure?') }}"
-            icon="trash"
-            square
-            size="sm"
-        />
+        <flux:dropdown x-model="moreActionsOpen">
+            <flux:button icon="ellipsis-vertical" square size="sm" />
+            <flux:menu>
+                <flux:menu.item
+                    wire:click="$parent.deletePhoto({{ $photo->id }})"
+                    wire:confirm="{{ __('Are you sure?') }}"
+                    icon="trash"
+                >
+                    Delete
+                </flux:menu.item>
+            </flux:menu>
+        </flux:dropdown>
     </div>
 </div>
