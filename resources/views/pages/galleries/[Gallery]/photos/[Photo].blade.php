@@ -46,6 +46,20 @@ new class extends Component
         return $this->redirect("/galleries/{$gallery->id}");
     }
 
+    public function setAsCover()
+    {
+        $this->authorize('updateCover', $this->photo->gallery);
+        $this->photo->gallery->update(['cover_photo_id' => $this->photo->id]);
+    }
+
+    public function removeAsCover()
+    {
+        $this->authorize('updateCover', $this->photo->gallery);
+        if ($this->photo->gallery->cover_photo_id === $this->photo->id) {
+            $this->photo->gallery->update(['cover_photo_id' => null]);
+        }
+    }
+
     #[Computed]
     public function galleryUrl()
     {
@@ -133,14 +147,6 @@ new class extends Component
                             </flux:tooltip.content>
                         </flux:tooltip>
                         <flux:button
-                            wire:click="delete"
-                            wire:confirm="{{ __('Are you sure?') }}"
-                            icon="trash"
-                            icon:variant="mini"
-                            size="sm"
-                            square
-                        ></flux:button>
-                        <flux:button
                             :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
                             icon="cloud-arrow-down"
                             icon:variant="mini"
@@ -156,6 +162,34 @@ new class extends Component
                             size="sm"
                             square
                         />
+                        <flux:dropdown>
+                            <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
+                            <flux:menu>
+                                @if ($photo->gallery->cover_photo_id === $photo->id)
+                                    <flux:menu.item
+                                        wire:click="removeAsCover"
+                                        icon="x-mark"
+                                    >
+                                        {{ __('Remove as Cover') }}
+                                    </flux:menu.item>
+                                @else
+                                    <flux:menu.item
+                                        wire:click="setAsCover"
+                                        icon="star"
+                                    >
+                                        {{ __('Set as Cover') }}
+                                    </flux:menu.item>
+                                @endif
+                                <flux:menu.item
+                                    wire:click="delete"
+                                    wire:confirm="{{ __('Are you sure?') }}"
+                                    icon="trash"
+                                    variant="danger"
+                                >
+                                    {{ __('Delete') }}
+                                </flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
                     </div>
                 </div>
             </div>
