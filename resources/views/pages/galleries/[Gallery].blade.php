@@ -170,10 +170,7 @@ new class extends Component
         $this->allPhotos = $photos->naturalSortBy('name');
     }
 
-    public function with()
-    {
-        return [];
-    }
+
 }; ?>
 
 <x-app-layout>
