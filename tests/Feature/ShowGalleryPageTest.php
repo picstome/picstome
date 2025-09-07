@@ -687,3 +687,63 @@ describe('Storage Limits', function () {
         $component->assertHasNoErrors();
     });
 });
+
+describe('Cover Photo', function () {
+    it('allows setting a photo as the gallery cover', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('allows changing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo1 = Photo::factory()->for($gallery)->create();
+        $photo2 = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo1->id]);
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo2])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
+    });
+
+    it('allows removing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo->id]);
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('removeAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+
+    it('prevents setting cover photo from another team', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherTeam = Team::factory()->create();
+        $otherGallery = Gallery::factory()->for($otherTeam)->create();
+        $photo = Photo::factory()->for($otherGallery)->create();
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        $component->assertStatus(403);
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+
+    it('prevents setting cover photo that does not belong to the gallery', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherGallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($otherGallery)->create();
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        $component->assertStatus(403);
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+});
