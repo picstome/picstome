@@ -196,4 +196,18 @@ class Gallery extends Model
     {
         return $this->formatFileSize($this->getTotalStorageSize());
     }
+
+    public function setCoverPhoto(Photo $photo)
+    {
+        if ($photo->gallery_id !== $this->id) {
+            throw new \Exception('Photo does not belong to this gallery');
+        }
+
+        $this->update(['cover_photo_id' => $photo->id]);
+    }
+
+    public function removeCoverPhoto()
+    {
+        $this->update(['cover_photo_id' => null]);
+    }
 }

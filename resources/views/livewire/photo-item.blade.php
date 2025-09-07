@@ -22,7 +22,7 @@ new class extends Component
     {
         $this->authorize('updateCover', $this->photo->gallery);
 
-        $this->photo->gallery->update(['cover_photo_id' => $this->photo->id]);
+        $this->photo->gallery->setCoverPhoto($this->photo);
     }
 
     public function removeAsCover()
@@ -30,7 +30,7 @@ new class extends Component
         $this->authorize('updateCover', $this->photo->gallery);
 
         if ($this->photo->gallery->cover_photo_id === $this->photo->id) {
-            $this->photo->gallery->update(['cover_photo_id' => null]);
+            $this->photo->gallery->removeCoverPhoto();
         }
     }
 }; ?>
