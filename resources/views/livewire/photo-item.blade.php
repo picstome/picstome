@@ -11,8 +11,6 @@ new class extends Component
 
     public $asFavorite = false;
 
-    public $gallery;
-
     public function favorite()
     {
         $this->photo->toggleFavorite();
@@ -26,20 +24,12 @@ new class extends Component
             abort(403);
         }
 
-        if ($this->gallery && $this->photo->gallery_id !== $this->gallery->id) {
-            abort(403);
-        }
-
         $this->photo->gallery->update(['cover_photo_id' => $this->photo->id]);
     }
 
     public function removeAsCover()
     {
         if ($this->photo->gallery->team_id !== auth()->user()->currentTeam->id) {
-            abort(403);
-        }
-
-        if ($this->gallery && $this->photo->gallery_id !== $this->gallery->id) {
             abort(403);
         }
 
