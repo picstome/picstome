@@ -33,8 +33,6 @@ new class extends Component
 
     public ShareGalleryForm $shareForm;
 
-    public PublicGalleryForm $publicForm;
-
     public Collection $favorites;
 
     public Collection $allPhotos;
@@ -54,7 +52,6 @@ new class extends Component
     {
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
-        $this->publicForm->setGallery($gallery);
         $this->getFavorites();
         $this->getAllPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
@@ -136,7 +133,7 @@ new class extends Component
 
     public function togglePublic()
     {
-        $this->publicForm->update();
+        $this->gallery->togglePublic();
 
         $this->dispatch('gallery-public-changed');
     }
