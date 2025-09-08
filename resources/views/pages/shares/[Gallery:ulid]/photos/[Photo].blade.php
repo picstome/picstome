@@ -161,6 +161,7 @@ new class extends Component
                         @endif
                         @if ($this->photo->gallery->is_share_selectable)
                             <flux:button
+                                name="favorite"
                                 wire:click="favorite"
                                 icon="heart"
                                 :variant="$photo->isFavorited() ? 'primary' : null"

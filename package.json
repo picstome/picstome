@@ -18,5 +18,8 @@
         "prettier-plugin-tailwindcss": "^0.6.11",
         "tailwindcss": "^4.0.12",
         "vite": "^6.0.11"
+    },
+    "dependencies": {
+        "playwright": "^1.55.0"
     }
 }

@@ -97,6 +97,24 @@ class GalleryFactory extends Factory
         });
     }
 
+    public function watermarked(): Factory
+    {
+        return $this->state(function () {
+            return [
+                'is_share_watermarked' => true,
+            ];
+        });
+    }
+
+    public function unwatermarked(): Factory
+    {
+        return $this->state(function () {
+            return [
+                'is_share_watermarked' => false,
+            ];
+        });
+    }
+
     public function withExpirationDate($days = 30): Factory
     {
         return $this->state(function () use ($days) {
