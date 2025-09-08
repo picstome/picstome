@@ -738,7 +738,7 @@ describe('Cover Photo', function () {
 
 describe('Gallery Public Access', function () {
     it('allows marking a gallery as public', function () {
-        $gallery = Gallery::factory()->for($this->team)->create()->fresh();
+        $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->is_public)->toBeFalse();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -749,7 +749,7 @@ describe('Gallery Public Access', function () {
     });
 
     it('allows marking a public gallery as private', function () {
-        $gallery = Gallery::factory()->for($this->team)->public()->create()->fresh();
+        $gallery = Gallery::factory()->for($this->team)->public()->create();
         expect($gallery->is_public)->toBeTrue();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -760,7 +760,7 @@ describe('Gallery Public Access', function () {
     });
 
     it('allows guests to view public galleries via public route', function () {
-        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY'])->fresh();
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
         $photo = Photo::factory()->for($gallery)->create();
 
         $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
@@ -771,7 +771,7 @@ describe('Gallery Public Access', function () {
     });
 
     it('prevents guests from viewing private galleries via public route', function () {
-        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY'])->fresh();
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
         expect($gallery->is_public)->toBeFalse();
 
         $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
