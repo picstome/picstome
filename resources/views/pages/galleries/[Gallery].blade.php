@@ -198,12 +198,14 @@ new class extends Component
                 <div class="max-sm:w-full sm:flex-1">
                     <div class="flex items-center gap-4">
                         <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                        @if ($gallery->is_shared)
-                            <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
-                        @endif
-                        @if ($gallery->is_public)
-                            <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if ($gallery->is_shared)
+                                <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
+                            @endif
+                            @if ($gallery->is_public)
+                                <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
+                            @endif
+                        </div>
                     </div>
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
