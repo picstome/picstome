@@ -32,6 +32,10 @@ new class extends Component
 
     public ShareGalleryForm $shareForm;
 
+    public array $publicForm = [
+        'isPublic' => false,
+    ];
+
     public Collection $favorites;
 
     public Collection $allPhotos;
@@ -128,6 +132,13 @@ new class extends Component
         $this->gallery->update(['is_shared' => false]);
 
         $this->dispatch('gallery-sharing-changed');
+    }
+
+    public function togglePublic()
+    {
+        $this->gallery->update(['is_public' => $this->publicForm['isPublic']]);
+
+        $this->dispatch('gallery-public-changed');
     }
 
     public function deletePhoto(Photo $photo)

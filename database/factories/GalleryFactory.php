@@ -21,6 +21,7 @@ class GalleryFactory extends Factory
         return [
             'team_id' => Team::factory(),
             'name' => 'Just a Gallery',
+            'is_public' => false,
         ];
     }
 
@@ -120,6 +121,15 @@ class GalleryFactory extends Factory
         return $this->state(function () use ($days) {
             return [
                 'expiration_date' => now()->addDays($days),
+            ];
+        });
+    }
+
+    public function public(): Factory
+    {
+        return $this->state(function () {
+            return [
+                'is_public' => true,
             ];
         });
     }
