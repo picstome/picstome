@@ -7,9 +7,12 @@ use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('photoshoots');
+
+middleware(['auth', 'verified']);
 
 new class extends Component
 {
