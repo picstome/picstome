@@ -212,4 +212,9 @@ class Gallery extends Model
         $this->update(['cover_photo_id' => null]);
         $this->setRelation('coverPhoto', null);
     }
+
+    public function togglePublic()
+    {
+        $this->update(['is_public' => !$this->is_public]);
+    }
 }

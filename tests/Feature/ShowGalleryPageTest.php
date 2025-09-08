@@ -742,7 +742,6 @@ describe('Gallery Public Access', function () {
         expect($gallery->is_public)->toBeFalse();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
-            ->set('publicForm.isPublic', true)
             ->call('togglePublic');
 
         expect($gallery->fresh()->is_public)->toBeTrue();
@@ -753,7 +752,6 @@ describe('Gallery Public Access', function () {
         expect($gallery->is_public)->toBeTrue();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
-            ->set('publicForm.isPublic', false)
             ->call('togglePublic');
 
         expect($gallery->fresh()->is_public)->toBeFalse();
