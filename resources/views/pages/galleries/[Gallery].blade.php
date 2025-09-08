@@ -202,17 +202,17 @@ new class extends Component
                             @if ($gallery->is_shared)
                                 <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
                             @endif
-                        @if ($gallery->is_public)
-                            <div class="flex items-center gap-1">
-                                <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
-                                <flux:tooltip toggleable>
-                                    <flux:button icon="information-circle" size="xs" variant="subtle" />
-                                    <flux:tooltip.content class="max-w-[20rem]">
-                                        <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
-                                    </flux:tooltip.content>
-                                </flux:tooltip>
-                            </div>
-                        @endif
+                            @if ($gallery->is_public)
+                                <div class="flex items-center gap-1">
+                                    <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
+                                    <flux:tooltip toggleable>
+                                        <flux:button icon="information-circle" size="xs" variant="subtle" />
+                                        <flux:tooltip.content class="max-w-[20rem]">
+                                            <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <x-subheading class="mt-2">
