@@ -3,6 +3,7 @@
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
+use App\Livewire\Forms\PublicGalleryForm;
 use App\Models\Gallery;
 use App\Models\Photo;
 use Flux\Flux;
@@ -32,9 +33,7 @@ new class extends Component
 
     public ShareGalleryForm $shareForm;
 
-    public array $publicForm = [
-        'isPublic' => false,
-    ];
+    public PublicGalleryForm $publicForm;
 
     public Collection $favorites;
 
@@ -55,6 +54,7 @@ new class extends Component
     {
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
+        $this->publicForm->setGallery($gallery);
         $this->getFavorites();
         $this->getAllPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
@@ -136,7 +136,7 @@ new class extends Component
 
     public function togglePublic()
     {
-        $this->gallery->update(['is_public' => $this->publicForm['isPublic']]);
+        $this->publicForm->update();
 
         $this->dispatch('gallery-public-changed');
     }
