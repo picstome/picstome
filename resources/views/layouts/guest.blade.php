@@ -42,7 +42,7 @@
         {{ $head ?? '' }}
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:main :container="!$fullScreen" @class(['p-0!' => $fullScreen])>
+        <flux:main :container="! ($fullScreen ?? false)" @class(['p-0!' => ($fullScreen) ?? false])>
             {{ $slot }}
         </flux:main>
 

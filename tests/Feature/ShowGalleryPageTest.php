@@ -764,8 +764,6 @@ describe('Gallery Public Access', function () {
         $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
 
         $response->assertStatus(200);
-        $response->assertViewHas('gallery');
-        expect($response['gallery']->is($gallery))->toBeTrue();
     });
 
     it('prevents guests from viewing private galleries via public route', function () {

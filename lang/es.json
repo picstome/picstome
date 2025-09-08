@@ -156,6 +156,8 @@
     "Low storage space": "Espacio de almacenamiento bajo",
     "Make Up Artist": "Maquillador\/a",
     "Make changes to the user details.": "Realiza cambios en los detalles del usuario.",
+    "Make private": "Hacer privado",
+    "Make public": "Hacer público",
     "Manage your bio links for your public profile.": "Gestiona tus enlaces bio para tu perfil público.",
     "Manage your profile and account settings": "Gestiona tu perfil y configuraciones de cuenta",
     "Manage your social media profiles and website.": "Gestiona tus perfiles de redes sociales y sitio web.",
@@ -195,6 +197,7 @@
     "Profile photo": "Foto de perfil",
     "Protect with a password": "Proteger con una contraseña",
     "Protected gallery": "Galería protegida",
+    "Public": "Público",
     "Public Profile": "Perfil Público",
     "Purple": "Púrpura",
     "Red": "Rojo",
@@ -261,6 +264,7 @@
     "Templates": "Plantillas",
     "Terms": "Términos",
     "Thank you for using our application!": "¡Gracias por usar nuestra aplicación!",
+    "This gallery is public and visible in your portfolio section.": "Esta galería es pública y visible en la sección de portafolio.",
     "This is your unique username that visitors will use to access your public profile at @": "Este es tu nombre de usuario único que los visitantes usarán para acceder a tu perfil público en @",
     "This password reset link will expire in :count minutes.": "Este enlace de restablecimiento de contraseña expirará en :count minutos.",
     "This username is used for your public profile.": "Este nombre de usuario se utiliza para tu perfil público.",
@@ -280,6 +284,7 @@
     "Unique Test Key 68baf5d472ff5": "Unique Test Key 68baf5d472ff5",
     "Unique Test Key 68bcc24cc8175": "Unique Test Key 68bcc24cc8175",
     "Unique Test Key 68bed2dadfbc0": "Unique Test Key 68bed2dadfbc0",
+    "Unique Test Key 68bf6c4db8356": "Unique Test Key 68bf6c4db8356",
     "Unlimited": "Ilimitado",
     "Unlock": "Desbloquear",
     "Unsigned": "Sin firmar",
@@ -352,9 +357,5 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total",
-    "This gallery is public and visible in your portfolio section.": "Esta galería es pública y visible en la sección de portafolio.",
-    "Public": "Público",
-    "Make private": "Hacer privado",
-    "Make public": "Hacer público"
+    "total storage": "almacenamiento total"
 }
