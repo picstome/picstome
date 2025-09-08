@@ -28,7 +28,9 @@ class TeamFactory extends Factory
             'handle' => $handle,
             'user_id' => User::factory(),
             'personal_team' => true,
+            'brand_watermark_path' => 'teams/watermark.png',
             'brand_watermark_position' => 'top',
+            'brand_watermark_transparency' => 50,
             'brand_color' => 'blue',
         ];
     }

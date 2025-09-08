@@ -79,7 +79,7 @@ it('can save a brand logo icon', function () {
 
 it('can save a brand watermark', function () {
     Storage::fake('s3');
-    expect($this->team->brand_watermark_path)->toBeNull();
+    $this->team->update(['brand_watermark_path' => null]);
 
     Volt::actingAs($this->user)->test('pages.branding.watermark')
         ->set('form.watermark', UploadedFile::fake()->image('watermark.png'))
@@ -120,7 +120,7 @@ it('can change brand font', function () {
 });
 
 it('can change watermark transparency', function () {
-    expect($this->team->brand_watermark_transparency)->toBeNull();
+    $this->team->update(['brand_watermark_transparency' => null]);
 
     Volt::actingAs($this->user)->test('pages.branding.watermark')
         ->set('form.watermarkTransparency', 50)
@@ -429,5 +429,3 @@ it('loads handles from database when form initializes', function () {
     expect($component->get('socialLinksForm.tiktok'))->toBe('testuser');
     expect($component->get('socialLinksForm.youtube'))->toBe('channel/UC123');
 });
-
-

@@ -74,3 +74,14 @@ test('visitors with unlocked gallery can view the password-protected photo', fun
 
     $response->assertStatus(200);
 });
+
+test('favorite photo via browser on watermarked gallery', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->watermarked()->has(Photo::factory()->unfavorited())->create(['ulid' => 'test123']);
+    $photo = $gallery->photos()->first();
+
+    $page = visit("/shares/test123/photos/{$photo->id}");
+
+    $page->pressAndWaitFor('favorite', 0.1);
+
+    expect($photo->fresh()->isFavorited())->toBeTrue();
+});
