@@ -204,6 +204,9 @@ new class extends Component
                         @if ($gallery->is_shared)
                             <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
                         @endif
+                        @if ($gallery->is_public)
+                            <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
+                        @endif
                     </div>
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
@@ -238,6 +241,13 @@ new class extends Component
                             <flux:modal.trigger name="edit">
                                 <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
                             </flux:modal.trigger>
+
+                            <flux:menu.item
+                                wire:click="togglePublic"
+                                :icon="$gallery->is_public ? 'eye-slash' : 'eye'"
+                            >
+                                {{ $gallery->is_public ? __('Make private') : __('Make public') }}
+                            </flux:menu.item>
 
                             <flux:menu.separator />
 
