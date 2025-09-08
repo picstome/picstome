@@ -353,5 +353,8 @@
     "signatures": "firmas",
     "to": "al",
     "total storage": "almacenamiento total",
-    "This gallery is public and visible in your portfolio section.": "Esta galería es pública y visible en la sección de portafolio."
+    "This gallery is public and visible in your portfolio section.": "Esta galería es pública y visible en la sección de portafolio.",
+    "Public": "Público",
+    "Make private": "Hacer privado",
+    "Make public": "Hacer público"
 }
