@@ -96,7 +96,18 @@ new class extends Component
                     :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
-
+                @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+                    <div
+                        @class([
+                            'absolute flex justify-center',
+                            'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
+                            'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
+                            'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
+                        ])
+                    >
+                        <img class="h-8" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" />
+                    </div>
+                @endif
                 <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
                     :class="zoom ? 'hidden' : 'flex'">
                     @if ($previous)
@@ -161,19 +172,6 @@ new class extends Component
                         @endif
                     </div>
                 </div>
-
-                @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                    <div
-                        @class([
-                            'absolute flex justify-center',
-                            'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
-                            'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
-                            'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-                        ])
-                    >
-                        <img class="h-8" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" />
-                    </div>
-                @endif
             </div>
 
             @unlesssubscribed($photo->gallery->team)
