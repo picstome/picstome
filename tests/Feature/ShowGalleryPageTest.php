@@ -734,6 +734,48 @@ describe('Cover Photo', function () {
         $component->assertStatus(403);
         expect($gallery->fresh()->cover_photo_id)->toBeNull();
     });
+});
 
+describe('Gallery Public Access', function () {
+    it('allows marking a gallery as public', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        expect($gallery->is_public)->toBeFalse();
 
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('publicForm.isPublic', true)
+            ->call('togglePublic');
+
+        expect($gallery->fresh()->is_public)->toBeTrue();
+    });
+
+    it('allows marking a public gallery as private', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create();
+        expect($gallery->is_public)->toBeTrue();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('publicForm.isPublic', false)
+            ->call('togglePublic');
+
+        expect($gallery->fresh()->is_public)->toBeFalse();
+    });
+
+    it('allows guests to view public galleries via public route', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+
+        $response->assertStatus(200);
+        $response->assertViewHas('gallery');
+        expect($response['gallery']->is($gallery))->toBeTrue();
+    });
+
+    it('prevents guests from viewing private galleries via public route', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
+        expect($gallery->is_public)->toBeFalse();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+
+        $response->assertStatus(404);
+    });
 });
