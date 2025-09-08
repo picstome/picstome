@@ -79,13 +79,13 @@ it('can save a brand logo icon', function () {
 
 it('can save a brand watermark', function () {
     Storage::fake('s3');
-    $this->team->update(['brand_watermark_path' => null]);
+    expect($this->team->brand_watermark_path)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.watermark')
         ->set('form.watermark', UploadedFile::fake()->image('watermark.png'))
         ->call('save');
 
-    expect(Team::first()->brand_watermark_path)->not->toBeNull();
+    expect($this->team->fresh()->brand_watermark_path)->not->toBeNull();
     expect(Team::first()->brand_watermark_url)->not->toBeNull();
 });
 
@@ -120,7 +120,7 @@ it('can change brand font', function () {
 });
 
 it('can change watermark transparency', function () {
-    $this->team->update(['brand_watermark_transparency' => null]);
+    expect($this->team->brand_watermark_transparency)->toBeNull();
 
     Volt::actingAs($this->user)->test('pages.branding.watermark')
         ->set('form.watermarkTransparency', 50)

@@ -28,10 +28,21 @@ class TeamFactory extends Factory
             'handle' => $handle,
             'user_id' => User::factory(),
             'personal_team' => true,
-            'brand_watermark_path' => 'teams/watermark.png',
-            'brand_watermark_position' => 'top',
-            'brand_watermark_transparency' => 50,
             'brand_color' => 'blue',
+            'brand_watermark_position' => 'top',
         ];
+    }
+
+    /**
+     * Indicate that the team should have watermark branding.
+     *
+     * @return $this
+     */
+    public function withWatermark(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'brand_watermark_path' => 'teams/watermark.png',
+            'brand_watermark_transparency' => 50,
+        ]);
     }
 }
