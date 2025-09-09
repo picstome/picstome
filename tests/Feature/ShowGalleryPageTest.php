@@ -775,3 +775,24 @@ describe('Gallery Public Access', function () {
         $response->assertStatus(404);
     });
 });
+
+describe('Portfolio Photo Public Access', function () {
+    it('allows guests to view public portfolio photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $response = get('/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+
+        $response->assertStatus(200);
+    });
+
+    it('prevents guests from viewing private portfolio photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+        expect($gallery->is_public)->toBeFalse();
+
+        $response = get('/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+
+        $response->assertStatus(404);
+    });
+});
