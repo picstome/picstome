@@ -7,7 +7,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new
-#[Layout('layouts.guest')]
+#[Layout('layouts.guest', ['fullScreen' => true])]
 class extends Component
 {
     public Photo $photo;
