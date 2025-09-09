@@ -12,7 +12,7 @@ use function Pest\Laravel\get;
 uses(RefreshDatabase::class);
 
 it('requires authentication for manage portfolio page', function () {
-    get(route('portfolio.edit'))->assertRedirect('/login');
+    get(route('portfolio'))->assertRedirect('/login');
 });
 
 it('allows users to add a gallery to portfolio', function () {
@@ -21,7 +21,7 @@ it('allows users to add a gallery to portfolio', function () {
 
     $gallery = Gallery::factory()->for($team)->create(['is_public' => false]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio.edit')
+    $response = Volt::actingAs($user)->test('pages.portfolio')
         ->call('addToPortfolio', $gallery);
 
     $response->assertHasNoErrors();
@@ -36,7 +36,7 @@ it('allows users to remove a gallery from portfolio', function () {
 
     $gallery = Gallery::factory()->for($team)->create(['is_public' => true]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio.edit')
+    $response = Volt::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $gallery);
 
     $response->assertHasNoErrors();
@@ -53,9 +53,9 @@ it('prevents users from managing portfolio galleries for other teams', function 
 
     actingAs($user);
 
-    get(route('portfolio.edit'))->assertOk();
+    get(route('portfolio'))->assertOk();
 
-    $response = Volt::actingAs($user)->test('pages.portfolio.edit')
+    $response = Volt::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
@@ -68,7 +68,7 @@ it('allows users to reorder portfolio galleries', function () {
     $gallery1 = Gallery::factory()->for($team)->create(['is_public' => true, 'portfolio_order' => 1]);
     $gallery2 = Gallery::factory()->for($team)->create(['is_public' => true, 'portfolio_order' => 2]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio.edit')
+    $response = Volt::actingAs($user)->test('pages.portfolio')
         ->call('reorderGallery', $gallery2, 1);
 
     $response->assertHasNoErrors();
@@ -88,11 +88,11 @@ it('prevents users from managing portfolio for other teams', function () {
 
     actingAs($user);
 
-    get(route('portfolio.edit'))
+    get(route('portfolio'))
         ->assertOk()
         ->assertDontSee($otherGallery->name);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio.edit')
+    $response = Volt::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
