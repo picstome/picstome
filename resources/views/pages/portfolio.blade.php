@@ -30,36 +30,11 @@ new class extends Component
         $gallery->makePrivate();
     }
 
-    public function reorderGallery($gallery, $newOrder)
+    public function reorderGallery(Gallery $gallery, int $newOrder)
     {
         $this->authorize('update', $gallery);
 
-        // Get all portfolio galleries for this team
-        $portfolioGalleries = $this->team->galleries()
-            ->public()
-            ->get();
-
-        // Find current position
-        $currentIndex = $portfolioGalleries->search(function ($g) use ($gallery) {
-            return $g->id === $gallery->id;
-        });
-
-        if ($currentIndex === false) {
-            return; // Gallery not found in portfolio
-        }
-
-        $newIndex = $newOrder - 1; // Convert to 0-based index
-
-        // Remove the gallery from its current position
-        $portfolioGalleries->splice($currentIndex, 1);
-
-        // Insert at new position
-        $portfolioGalleries->splice($newIndex, 0, [$gallery]);
-
-        // Update order for all galleries
-        foreach ($portfolioGalleries as $index => $gal) {
-            $gal->update(['portfolio_order' => $index + 1]);
-        }
+        $gallery->reorder($newOrder);
     }
 
     #[Computed]
