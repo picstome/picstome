@@ -71,7 +71,7 @@ class extends Component
                                 <a
                                     id="photo-{{ $photo->id }}"
                                     wire:navigate
-                                    href="{{ route('portfolio.photos.show', ['gallery' => $gallery, 'photo' => $photo]) }}"
+                                    href="{{ route('portfolio.photos.show', ['handle' => $team->handle, 'gallery' => $gallery, 'photo' => $photo]) }}"
                                     class="mx-auto flex"
                                 >
                                     <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
