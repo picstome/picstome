@@ -19,6 +19,19 @@
         <div class="mx-auto w-full max-w-md text-center">
             @include('partials.public-branding')
 
+            @if($team->galleries()->public()->exists())
+                <div class="mt-6 flex justify-center">
+                    <flux:button
+                        variant="primary"
+                        :color="$team->brand_color ?? null"
+                        href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
+                        wire:navigate
+                    >
+                        View Portfolio
+                    </flux:button>
+                </div>
+            @endif
+
             @if($team->bioLinks->isNotEmpty())
                 <div class="my-14">
                     <div class="space-y-3">

@@ -27,10 +27,10 @@ class extends Component
 
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
-        @if($galleries->isNotEmpty())
-            @include('partials.public-branding')
+        @include('partials.public-branding')
 
-            <div class="mt-8">
+        @if($galleries->isNotEmpty())
+            <div class="my-14">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach ($galleries as $gallery)
                         <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
@@ -83,18 +83,6 @@ class extends Component
                         </flux:card>
                     @endforeach
                 </div>
-            </div>
-        @else
-            <div class="relative">
-                <img src="{{ $team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-            </div>
-
-            <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-                <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-                <flux:heading size="lg" level="2">{{ __('No public galleries') }}</flux:heading>
-                <flux:text class="mb-6 max-w-72 text-center" variant="subtle">
-                    {{ __('This portfolio doesn\'t have any public galleries yet.') }}
-                </flux:text>
             </div>
         @endif
 
