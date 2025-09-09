@@ -106,7 +106,7 @@
                             {{ __('Public Profile') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('portfolio')" icon="photo" wire:navigate>
+                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate>
                             {{ __('Portfolio') }}
                         </flux:navlist.item>
 
