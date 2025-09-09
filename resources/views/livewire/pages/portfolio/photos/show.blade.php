@@ -77,7 +77,7 @@ class extends Component
             :class="zoom ? 'hidden' : 'flex'">
             @if ($previous)
                 <flux:button
-                    href="{{ route('portfolio.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous]) }}"
+                    href="{{ route('portfolio.photos.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery, 'photo' => $previous]) }}"
                     wire:navigate
                     x-ref="previous"
                     icon="chevron-left"
@@ -91,7 +91,7 @@ class extends Component
             :class="zoom ? 'hidden' : 'flex'">
             @if ($next)
                 <flux:button
-                    href="{{ route('portfolio.photos.show', ['gallery' => $photo->gallery, 'photo' => $next]) }}"
+                    href="{{ route('portfolio.photos.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery, 'photo' => $next]) }}"
                     wire:navigate
                     x-ref="next"
                     icon="chevron-right"
