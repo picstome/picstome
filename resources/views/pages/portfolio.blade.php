@@ -8,7 +8,7 @@ use Livewire\Volt\Component;
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
-name('portfolio.edit');
+name('portfolio');
 
 middleware(['auth', 'verified']);
 
@@ -85,7 +85,7 @@ new class extends Component
 }; ?>
 
 <x-app-layout>
-    @volt('pages.portfolio.edit')
+    @volt('pages.portfolio')
         <div>
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
