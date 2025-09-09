@@ -116,8 +116,8 @@ new class extends Component
                                     @endif
                                     <div class="flex items-center justify-between py-6">
                                         <div class="flex items-center gap-4">
-                                            <flux:button x-sort:handle variant="ghost" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
-                                                <flux:icon.bars-2 variant="micro" />
+                                            <flux:button x-sort:handle variant="subtle" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
+                                                <flux:icon.bars-2 variant="mini" />
                                             </flux:button>
                                             <img
                                                 src="{{ $gallery->photos()->first()?->thumbnail_url }}"
