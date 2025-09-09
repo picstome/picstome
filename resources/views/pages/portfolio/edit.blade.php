@@ -18,14 +18,14 @@ new class extends Component
     {
         $this->authorize('update', $gallery);
 
-        $gallery->update(['is_public' => true]);
+        $gallery->makePublic();
     }
 
     public function removeFromPortfolio(Gallery $gallery)
     {
         $this->authorize('update', $gallery);
 
-        $gallery->update(['is_public' => false, 'portfolio_order' => null]);
+        $gallery->makePrivate();
     }
 
     public function reorderGallery($gallery, $newOrder)
