@@ -106,6 +106,10 @@
                             {{ __('Public Profile') }}
                         </flux:navlist.item>
 
+                        <flux:navlist.item :href="route('portfolio')" icon="photo" wire:navigate>
+                            {{ __('Portfolio') }}
+                        </flux:navlist.item>
+
                         <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="arrow-top-right-on-square" target="_blank">
                             {{ __('View Profile') }}
                         </flux:navlist.item>
