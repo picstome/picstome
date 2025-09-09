@@ -101,26 +101,31 @@ new class extends Component
                     <x-subheading>{{ __('These galleries are publicly visible on your portfolio page.') }}</x-subheading>
 
                     @if ($this->portfolioGalleries?->isNotEmpty())
-                        <div class="mt-6 space-y-4">
+                        <ul class="mt-6">
                             @foreach ($this->portfolioGalleries as $gallery)
-                                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-                                    <div class="flex items-center gap-4">
-                                        <img
-                                            src="{{ $gallery->photos()->first()?->thumbnail_url }}"
-                                            alt=""
-                                            class="size-16 rounded-lg object-cover"
-                                        />
-                                        <div>
-                                            <flux:heading>{{ $gallery->name }}</flux:heading>
-                                            <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                <li>
+                                    @if (!$loop->first)
+                                        <flux:separator variant="subtle" />
+                                    @endif
+                                    <div class="flex items-center justify-between py-6">
+                                        <div class="flex items-center gap-4">
+                                            <img
+                                                src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                                alt=""
+                                                class="size-16 rounded-lg object-cover"
+                                            />
+                                            <div>
+                                                <flux:heading>{{ $gallery->name }}</flux:heading>
+                                                <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <flux:button wire:click="removeFromPortfolio({{ $gallery->id }})" variant="danger" size="sm">
-                                        {{ __('Remove') }}
+                                    <flux:button wire:click="removeFromPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
+                                        <flux:icon.x-mark variant="mini" />
                                     </flux:button>
-                                </div>
+                                    </div>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
                     @else
                         <div class="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
                             <flux:text>{{ __('No galleries in your portfolio yet.') }}</flux:text>
@@ -134,26 +139,31 @@ new class extends Component
                     <x-subheading>{{ __('Add galleries to your portfolio to make them publicly visible.') }}</x-subheading>
 
                     @if ($this->availableGalleries?->isNotEmpty())
-                        <div class="mt-6 space-y-4">
+                        <ul class="mt-6">
                             @foreach ($this->availableGalleries as $gallery)
-                                <div class="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-                                    <div class="flex items-center gap-4">
-                                        <img
-                                            src="{{ $gallery->photos()->first()?->thumbnail_url }}"
-                                            alt=""
-                                            class="size-16 rounded-lg object-cover"
-                                        />
-                                        <div>
-                                            <flux:heading>{{ $gallery->name }}</flux:heading>
-                                            <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                <li>
+                                    @if (!$loop->first)
+                                        <flux:separator variant="subtle" />
+                                    @endif
+                                    <div class="flex items-center justify-between py-6">
+                                        <div class="flex items-center gap-4">
+                                            <img
+                                                src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                                alt=""
+                                                class="size-16 rounded-lg object-cover"
+                                            />
+                                            <div>
+                                                <flux:heading>{{ $gallery->name }}</flux:heading>
+                                                <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                            </div>
                                         </div>
+                                        <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="primary" size="sm">
+                                            {{ __('Add to Portfolio') }}
+                                        </flux:button>
                                     </div>
-                                    <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="primary" size="sm">
-                                        {{ __('Add to Portfolio') }}
-                                    </flux:button>
-                                </div>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
                     @else
                         <div class="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
                             <flux:text>{{ __('All your galleries are already in your portfolio.') }}</flux:text>
