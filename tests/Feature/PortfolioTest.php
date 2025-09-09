@@ -22,7 +22,7 @@ it('allows users to add a gallery to portfolio', function () {
     $gallery = Gallery::factory()->for($team)->create(['is_public' => false]);
 
     $response = Volt::actingAs($user)->test('pages.portfolio.edit')
-        ->call('addToPortfolio', $gallery->id);
+        ->call('addToPortfolio', $gallery);
 
     $response->assertHasNoErrors();
 
@@ -37,7 +37,7 @@ it('allows users to remove a gallery from portfolio', function () {
     $gallery = Gallery::factory()->for($team)->create(['is_public' => true]);
 
     $response = Volt::actingAs($user)->test('pages.portfolio.edit')
-        ->call('removeFromPortfolio', $gallery->id);
+        ->call('removeFromPortfolio', $gallery);
 
     $response->assertHasNoErrors();
 
@@ -56,7 +56,7 @@ it('prevents users from managing portfolio galleries for other teams', function 
     get(route('portfolio.edit'))->assertOk();
 
     $response = Volt::actingAs($user)->test('pages.portfolio.edit')
-        ->call('removeFromPortfolio', $otherGallery->id);
+        ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
 });
@@ -93,7 +93,7 @@ it('prevents users from managing portfolio for other teams', function () {
         ->assertDontSee($otherGallery->name);
 
     $response = Volt::actingAs($user)->test('pages.portfolio.edit')
-        ->call('removeFromPortfolio', $otherGallery->id);
+        ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
 });
