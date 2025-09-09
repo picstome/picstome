@@ -796,3 +796,32 @@ describe('Portfolio Photo Public Access', function () {
         $response->assertStatus(404);
     });
 });
+
+describe('Portfolio Index Public Access', function () {
+    it('allows guests to view portfolio index with public galleries', function () {
+        $publicGallery = Gallery::factory()->for($this->team)->public()->create(['name' => 'Public Gallery']);
+        $privateGallery = Gallery::factory()->for($this->team)->create(['name' => 'Private Gallery']);
+        Photo::factory()->for($publicGallery)->create();
+
+        $response = get('/@' . $this->team->handle . '/portfolio');
+
+        $response->assertStatus(200);
+        $response->assertSee($publicGallery->name);
+        $response->assertDontSee($privateGallery->name);
+    });
+
+    it('shows empty state when no public galleries exist', function () {
+        Gallery::factory()->for($this->team)->create(['is_public' => false]);
+
+        $response = get('/@' . $this->team->handle . '/portfolio');
+
+        $response->assertStatus(200);
+        $response->assertSee('No public galleries');
+    });
+
+    it('returns 404 for non-existent team handle', function () {
+        $response = get('/@nonexistent/portfolio');
+
+        $response->assertStatus(404);
+    });
+});
