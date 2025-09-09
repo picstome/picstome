@@ -24,12 +24,24 @@
 
                 <flux:heading size="xl">{{ $team->name }}</flux:heading>
 
-                @if($team->bio)
-                    <div class="mt-4 prose prose-sm max-w-none dark:prose-invert">
-                        {!! $team->bio !!}
-                    </div>
-                @endif
-            </div>
+                 @if($team->bio)
+                     <div class="mt-4 prose prose-sm max-w-none dark:prose-invert">
+                         {!! $team->bio !!}
+                     </div>
+                 @endif
+
+                 <div class="mt-6">
+                     <flux:button
+                         variant="outline"
+                         href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
+                         wire:navigate.hover
+                         class="w-full"
+                     >
+                         <flux:icon.photo class="mr-2" />
+                         View Portfolio
+                     </flux:button>
+                 </div>
+             </div>
 
             @if($team->bioLinks->isNotEmpty())
                 <div class="my-14">
