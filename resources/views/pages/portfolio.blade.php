@@ -106,7 +106,7 @@ new class extends Component
                         @endforeach
                      </ul>
 
-                     <div class="mt-6">
+                     <div>
                          <flux:modal.trigger name="available-galleries">
                              <flux:button icon="plus" variant="filled">{{ __('Add Galleries') }}</flux:button>
                          </flux:modal.trigger>
@@ -124,9 +124,6 @@ new class extends Component
                          </x-slot>
                      </flux:callout>
                  @endif
-
-
-
              </div>
 
              <flux:modal name="available-galleries" class="md:w-[32rem]">
@@ -137,13 +134,13 @@ new class extends Component
                      </div>
 
                      @if ($this->availableGalleries?->isNotEmpty())
-                         <ul class="space-y-4">
+                         <ul>
                              @foreach ($this->availableGalleries as $gallery)
                                  <li>
                                      @if (!$loop->first)
                                          <flux:separator variant="subtle" />
                                      @endif
-                                     <div class="flex items-center justify-between py-4">
+                                     <div class="flex items-center justify-between py-6">
                                          <div class="flex items-center gap-4">
                                              <img
                                                  src="{{ $gallery->photos()->first()?->thumbnail_url }}"
@@ -155,7 +152,7 @@ new class extends Component
                                                  <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
                                              </div>
                                          </div>
-                                         <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="subtle" size="xs" square>
+                                         <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
                                              <flux:icon.plus variant="mini" />
                                          </flux:button>
                                      </div>
@@ -174,12 +171,6 @@ new class extends Component
                              <flux:pagination :paginator="$this->availableGalleries" />
                          </div>
                      @endif
-
-                     <div class="flex gap-2 justify-end">
-                         <flux:modal.close>
-                             <flux:button variant="ghost">{{ __('Done') }}</flux:button>
-                         </flux:modal.close>
-                     </div>
                  </div>
              </flux:modal>
          </div>
