@@ -31,6 +31,12 @@ class extends Component
     }
 }; ?>
 
+<x-slot name="head">
+    @if(app()->environment('production'))
+        @include('partials.google-analytics')
+    @endif
+</x-slot>
+
 <div
     x-data="{
         swipe: '',
