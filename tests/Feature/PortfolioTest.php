@@ -93,7 +93,7 @@ it('prevents users from managing portfolio for other teams', function () {
         ->assertDontSee($otherGallery->name);
 
     $response = Volt::actingAs($user)->test('pages.portfolio.edit')
-        ->call('removeFromPortfolio', $otherGallery);
+        ->call('removeFromPortfolio', $otherGallery->id);
 
     $response->assertForbidden();
 });

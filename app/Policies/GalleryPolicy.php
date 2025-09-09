@@ -36,7 +36,7 @@ class GalleryPolicy
      */
     public function update(User $user, Gallery $gallery): bool
     {
-        return false;
+        return $gallery->team->is($user->currentTeam);
     }
 
     /**

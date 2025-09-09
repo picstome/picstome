@@ -37,6 +37,7 @@ class Gallery extends Model
             'share_description' => 'string',
             'expiration_date' => 'date',
             'selection_limit_notification_sent_at' => 'datetime',
+            'portfolio_order' => 'integer',
         ];
     }
 
