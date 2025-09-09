@@ -102,7 +102,7 @@
                             {{ __('Branding') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('branding.public-profile', ['handle' => auth()->user()->currentTeam->handle])" icon="eye" wire:navigate>
+                        <flux:navlist.item :href="route('branding.public-profile', ['handle' => auth()->user()->currentTeam->handle])" icon="at-symbol" wire:navigate>
                             {{ __('Public Profile') }}
                         </flux:navlist.item>
 
