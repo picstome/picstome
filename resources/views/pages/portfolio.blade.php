@@ -95,7 +95,7 @@ new class extends Component
                                         />
                                         <div>
                                             <flux:heading>{{ $gallery->name }}</flux:heading>
-                                            <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                             <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
                                         </div>
                                     </div>
                                 <flux:button wire:click="removeFromPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
@@ -149,7 +149,7 @@ new class extends Component
                                              />
                                              <div>
                                                  <flux:heading size="sm">{{ $gallery->name }}</flux:heading>
-                                                 <flux:text>{{ $gallery->photos()->count() }} photos</flux:text>
+                                                 <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
                                              </div>
                                          </div>
                                          <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
