@@ -89,7 +89,7 @@ new class extends Component
                                             <flux:icon.bars-2 variant="mini" />
                                         </flux:button>
                                         <img
-                                            src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                            src="{{ $gallery->coverPhoto?->thumbnail_url ?? $gallery->photos()->first()?->thumbnail_url }}"
                                             alt=""
                                             class="size-16 rounded-lg object-cover"
                                         />
@@ -142,11 +142,11 @@ new class extends Component
                                      @endif
                                      <div class="flex items-center justify-between py-6">
                                          <div class="flex items-center gap-4">
-                                             <img
-                                                 src="{{ $gallery->photos()->first()?->thumbnail_url }}"
-                                                 alt=""
-                                                 class="size-16 rounded-lg object-cover"
-                                             />
+                                              <img
+                                                  src="{{ $gallery->coverPhoto?->thumbnail_url ?? $gallery->photos()->first()?->thumbnail_url }}"
+                                                  alt=""
+                                                  class="size-16 rounded-lg object-cover"
+                                              />
                                              <div>
                                                  <flux:heading size="sm">{{ $gallery->name }}</flux:heading>
                                                  <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>

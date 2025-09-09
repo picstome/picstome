@@ -74,7 +74,7 @@ new class extends Component
                             >
                                 <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
                                     <img
-                                        src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                        src="{{ $gallery->coverPhoto?->thumbnail_url ?? $gallery->photos()->first()?->thumbnail_url }}"
                                         alt=""
                                         class="mx-auto object-contain"
                                     />
