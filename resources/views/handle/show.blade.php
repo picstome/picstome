@@ -20,7 +20,7 @@
             @include('partials.public-branding')
 
             @if($team->galleries()->public()->exists())
-                <div class="mt-6 flex justify-center">
+                <div class="mt-4 flex justify-center">
                     <flux:button
                         variant="primary"
                         :color="$team->brand_color ?? null"
