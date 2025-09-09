@@ -28,23 +28,7 @@ class extends Component
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
         @if($galleries->isNotEmpty())
-            <div class="relative">
-                <img src="{{ $team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-            </div>
-
-            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-                <div class="max-sm:w-full sm:flex-1">
-                    <div class="flex items-center gap-4">
-                        <flux:heading size="xl" level="1">{{ $team->name }}</flux:heading>
-                    </div>
-
-                    @if($team->bio)
-                        <flux:text class="mt-2" variant="subtle">
-                            {{ $team->bio }}
-                        </flux:text>
-                    @endif
-                </div>
-            </div>
+            @include('partials.public-branding')
 
             <div class="mt-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
