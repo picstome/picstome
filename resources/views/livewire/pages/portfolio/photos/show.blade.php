@@ -72,7 +72,7 @@ class extends Component
             @if ($previous)
                 <flux:button
                     href="{{ route('portfolio.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous]) }}"
-                    wire:navigate.hover
+                    wire:navigate
                     x-ref="previous"
                     icon="chevron-left"
                     size="sm"
@@ -86,7 +86,7 @@ class extends Component
             @if ($next)
                 <flux:button
                     href="{{ route('portfolio.photos.show', ['gallery' => $photo->gallery, 'photo' => $next]) }}"
-                    wire:navigate.hover
+                    wire:navigate
                     x-ref="next"
                     icon="chevron-right"
                     size="sm"
@@ -100,7 +100,7 @@ class extends Component
             <div class="flex gap-3">
                 <flux:button
                     href="{{ route('portfolio.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery]) }}"
-                    wire:navigate.hover
+                    wire:navigate
                     icon="arrow-left"
                     size="sm"
                     icon:variant="micro"

@@ -70,7 +70,7 @@ class extends Component
                             <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
                                 <a
                                     id="photo-{{ $photo->id }}"
-                                    wire:navigate.hover
+                                    wire:navigate
                                     href="{{ route('portfolio.photos.show', ['gallery' => $gallery, 'photo' => $photo]) }}"
                                     class="mx-auto flex"
                                 >

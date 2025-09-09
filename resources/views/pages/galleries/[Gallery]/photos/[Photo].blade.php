@@ -105,7 +105,7 @@ new class extends Component
                     @if ($previous)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
-                            wire:navigate.hover
+                            wire:navigate
                             x-ref="previous"
                             icon="chevron-left"
                             size="sm"
@@ -119,7 +119,7 @@ new class extends Component
                     @if ($next)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
-                            wire:navigate.hover
+                            wire:navigate
                             x-ref="next"
                             icon="chevron-right"
                             size="sm"
@@ -133,7 +133,7 @@ new class extends Component
                     <div class="flex gap-3">
                         <flux:button
                             :href="$this->galleryUrl"
-                            wire:navigate.hover
+                            wire:navigate
                             icon="arrow-left"
                             size="sm"
                             icon:variant="micro"

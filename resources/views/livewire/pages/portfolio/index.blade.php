@@ -51,7 +51,7 @@ class extends Component
                     @foreach ($galleries as $gallery)
                         <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
                             <a
-                                wire:navigate.hover
+                                wire:navigate
                                 href="{{ route('portfolio.show', ['handle' => $team->handle, 'gallery' => $gallery]) }}"
                                 class="block"
                             >
