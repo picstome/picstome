@@ -95,6 +95,12 @@ class Gallery extends Model
         $query->whereNull('reminder_sent_at');
     }
 
+    #[Scope]
+    protected function public(Builder $query): void
+    {
+        $query->where('is_public', true);
+    }
+
     public function sendExpirationReminder(): void
     {
         $this->team->owner->notify(new GalleryExpirationReminder($this));
