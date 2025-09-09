@@ -810,14 +810,7 @@ describe('Portfolio Index Public Access', function () {
         $response->assertDontSee($privateGallery->name);
     });
 
-    it('shows empty state when no public galleries exist', function () {
-        Gallery::factory()->for($this->team)->create(['is_public' => false]);
 
-        $response = get('/@' . $this->team->handle . '/portfolio');
-
-        $response->assertStatus(200);
-        $response->assertSee('No public galleries');
-    });
 
     it('returns 404 for non-existent team handle', function () {
         $response = get('/@nonexistent/portfolio');

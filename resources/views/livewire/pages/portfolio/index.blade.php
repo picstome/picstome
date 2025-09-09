@@ -84,13 +84,7 @@ class extends Component
                     @endforeach
                 </div>
             </div>
-        @else
-            <div class="my-14 flex flex-col items-center justify-center py-16">
-                <flux:icon.photo class="size-16 text-zinc-400 dark:text-zinc-500 mb-4" />
-                <flux:heading size="lg" class="mb-2">No public galleries</flux:heading>
-                <flux:text variant="subtle">This portfolio doesn't have any public galleries yet.</flux:text>
-            </div>
-        @endif
+         @endif
 
         @unlesssubscribed($team)
             <div class="mt-10">
