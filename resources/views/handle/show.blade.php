@@ -39,7 +39,7 @@
             </div>
 
             @if($team->bioLinks->isNotEmpty())
-                <div class="my-14">
+                <div class="mt-7 mb-14">
                     <div class="space-y-3">
                         @foreach($team->bioLinks as $link)
                             <flux:button
