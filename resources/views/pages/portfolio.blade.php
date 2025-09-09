@@ -104,7 +104,13 @@ new class extends Component
                                 </div>
                             </li>
                         @endforeach
-                    </ul>
+                     </ul>
+
+                     <div class="mt-6">
+                         <flux:modal.trigger name="available-galleries">
+                             <flux:button icon="plus" variant="filled">{{ __('Add Galleries') }}</flux:button>
+                         </flux:modal.trigger>
+                     </div>
                  @else
                      <flux:callout icon="briefcase" variant="secondary">
                          <flux:callout.heading>{{ __('Add Galleries to Portfolio') }}</flux:callout.heading>
