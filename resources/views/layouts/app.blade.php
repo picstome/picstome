@@ -77,6 +77,16 @@
                         </flux:navlist.item>
                     </flux:navlist.group>
 
+                    <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
+                        <flux:navlist.item :href="route('branding.public-profile', ['handle' => auth()->user()->currentTeam->handle])" icon="at-symbol" wire:navigate>
+                            {{ __('Profile') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate>
+                            {{ __('Portfolio') }}
+                        </flux:navlist.item>
+                    </flux:navlist.group>
+
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
                             <flux:navlist.item :href="route('users')" icon="user">
