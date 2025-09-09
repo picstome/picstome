@@ -224,4 +224,14 @@ class Gallery extends Model
     {
         $this->update(['is_public' => !$this->is_public]);
     }
+
+    public function makePublic()
+    {
+        $this->update(['is_public' => true]);
+    }
+
+    public function makePrivate()
+    {
+        $this->update(['is_public' => false, 'portfolio_order' => null]);
+    }
 }
