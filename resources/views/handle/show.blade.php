@@ -33,7 +33,8 @@
                  @if($team->galleries()->public()->exists())
                      <div class="mt-6 flex justify-center">
                          <flux:button
-                             variant="outline"
+                             variant="primary"
+                             :color="$team->brand_color ?? null"
                              href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
                              wire:navigate.hover
                          >
