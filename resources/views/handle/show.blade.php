@@ -17,20 +17,26 @@
     </x-slot>
     <div class="flex min-h-screen items-center justify-center px-4">
         <div class="mx-auto w-full max-w-md text-center">
-            @include('partials.public-branding')
-
-            @if($team->galleries()->public()->exists())
-                <div class="mt-4 flex justify-center">
-                    <flux:button
-                        variant="primary"
-                        :color="$team->brand_color ?? null"
-                        href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
-                        wire:navigate
-                    >
-                         {{ __('View Portfolio') }}
-                    </flux:button>
-                </div>
-            @endif
+            <div class="space-y-4">
+                @include('partials.public-branding')
+                @if($team->bio)
+                    <div class="prose prose-sm max-w-none dark:prose-invert">
+                        {!! $team->bio !!}
+                    </div>
+                @endif
+                @if($team->galleries()->public()->exists())
+                    <div class="flex justify-center">
+                        <flux:button
+                            variant="primary"
+                            :color="$team->brand_color ?? null"
+                            href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
+                            wire:navigate
+                        >
+                             {{ __('View Portfolio') }}
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
 
             @if($team->bioLinks->isNotEmpty())
                 <div class="my-14">

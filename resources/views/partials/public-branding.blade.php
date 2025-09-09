@@ -7,10 +7,4 @@
 
         <flux:heading size="xl">{{ $team->name }}</flux:heading>
     </a>
-
-    @if($team->bio)
-        <div class="prose prose-sm max-w-none dark:prose-invert">
-            {!! $team->bio !!}
-        </div>
-    @endif
 </div>
