@@ -14,17 +14,15 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
-    public function addToPortfolio($galleryId)
+    public function addToPortfolio(Gallery $gallery)
     {
-        $gallery = Gallery::findOrFail($galleryId);
         $this->authorize('update', $gallery);
 
         $gallery->update(['is_public' => true]);
     }
 
-    public function removeFromPortfolio($galleryId)
+    public function removeFromPortfolio(Gallery $gallery)
     {
-        $gallery = Gallery::findOrFail($galleryId);
         $this->authorize('update', $gallery);
 
         $gallery->update(['is_public' => false, 'portfolio_order' => null]);
