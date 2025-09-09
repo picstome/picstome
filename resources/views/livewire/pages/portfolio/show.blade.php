@@ -30,6 +30,12 @@ class extends Component
     }
 }; ?>
 
+<x-slot name="head">
+    @if(app()->environment('production'))
+        @include('partials.google-analytics')
+    @endif
+</x-slot>
+
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
         @include('partials.public-branding')
