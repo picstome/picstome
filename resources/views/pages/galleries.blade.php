@@ -35,7 +35,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function currentTeam()
+    public function team()
     {
         return Auth::user()?->currentTeam;
     }
@@ -43,7 +43,7 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return $this->currentTeam?->galleries()
+        return $this->team?->galleries()
             ->latest()
             ->paginate(24);
     }
@@ -130,9 +130,9 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="$this->currentTeam?->subscribed() ? __('Optional') : null" type="date" :clearable="$this->currentTeam?->subscribed()" />
+                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="$this->team?->subscribed() ? __('Optional') : null" type="date" :clearable="$this->team?->subscribed()" />
 
-                    @if (!$this->currentTeam?->subscribed())
+                    @if (!$this->team?->subscribed())
                         <flux:callout icon="bolt" variant="secondary">
                             <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
                             <flux:callout.text>

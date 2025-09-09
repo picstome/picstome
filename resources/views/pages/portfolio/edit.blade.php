@@ -33,9 +33,8 @@ new class extends Component
         $this->authorize('update', $gallery);
 
         // Get all portfolio galleries for this team
-        $portfolioGalleries = Gallery::where('team_id', $gallery->team_id)
-            ->where('is_public', true)
-            ->orderBy('portfolio_order')
+        $portfolioGalleries = $this->team->galleries()
+            ->public()
             ->get();
 
         // Find current position
@@ -62,7 +61,7 @@ new class extends Component
     }
 
     #[Computed]
-    public function currentTeam()
+    public function team()
     {
         return Auth::user()?->currentTeam;
     }
@@ -70,7 +69,7 @@ new class extends Component
     #[Computed]
     public function portfolioGalleries()
     {
-        return Gallery::where('team_id', $this->currentTeam?->id)
+        return $this->team?->galleries()
             ->public()
             ->get();
     }
@@ -78,7 +77,7 @@ new class extends Component
     #[Computed]
     public function availableGalleries()
     {
-        return Gallery::where('team_id', $this->currentTeam?->id)
+        return $this->team?->galleries()
             ->private()
             ->latest()
             ->get();
