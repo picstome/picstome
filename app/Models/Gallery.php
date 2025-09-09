@@ -235,7 +235,7 @@ class Gallery extends Model
 
     public function makePublic()
     {
-        $maxOrder = $this->team->galleries()->public()->max('portfolio_order') ?? 0;
+        $maxOrder = $this->team->galleries()->public()->whereNotNull('portfolio_order')->max('portfolio_order') ?? 0;
         $this->update([
             'is_public' => true,
             'portfolio_order' => $maxOrder + 1
@@ -251,15 +251,23 @@ class Gallery extends Model
     {
         $currentOrder = $this->portfolio_order;
 
+        if (is_null($currentOrder)) {
+            // If current gallery doesn't have an order, just set it
+            $this->update(['portfolio_order' => $newOrder]);
+            return;
+        }
+
         if ($newOrder > $currentOrder) {
             $this->team->galleries()
                 ->public()
+                ->whereNotNull('portfolio_order')
                 ->where('portfolio_order', '>', $currentOrder)
                 ->where('portfolio_order', '<=', $newOrder)
                 ->decrement('portfolio_order');
         } elseif ($newOrder < $currentOrder) {
             $this->team->galleries()
                 ->public()
+                ->whereNotNull('portfolio_order')
                 ->where('portfolio_order', '>=', $newOrder)
                 ->where('portfolio_order', '<', $currentOrder)
                 ->increment('portfolio_order');
