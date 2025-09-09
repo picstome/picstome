@@ -16,7 +16,7 @@ class extends Component
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
-        $this->galleries = $this->team->galleries()->where('is_public', true)->with('photos')->get();
+        $this->galleries = $this->team->galleries()->public()->with('photos')->get();
     }
 
     public function rendering(View $view): void
