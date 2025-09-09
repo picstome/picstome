@@ -73,7 +73,6 @@ new class extends Component
     {
         return $this->team?->galleries()
             ->public()
-            ->orderBy('portfolio_order')
             ->get();
     }
 
