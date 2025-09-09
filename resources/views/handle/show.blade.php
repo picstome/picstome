@@ -31,14 +31,12 @@
                  @endif
 
                  @if($team->galleries()->public()->exists())
-                     <div class="mt-6">
+                     <div class="mt-6 flex justify-center">
                          <flux:button
                              variant="outline"
                              href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
                              wire:navigate.hover
-                             class="w-full"
                          >
-                             <flux:icon.photo class="mr-2" />
                              View Portfolio
                          </flux:button>
                      </div>
