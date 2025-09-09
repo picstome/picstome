@@ -32,17 +32,11 @@ class extends Component
 
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
-        @if($photos->isNotEmpty())
-            <div class="relative">
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-            </div>
+        @include('partials.public-branding')
 
+        @if($photos->isNotEmpty())
             <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
                 <img src="{{ ($gallery->coverPhoto ?? $photos->first())->url }}" class="w-full h-full object-cover" />
-            </div>
-        @else
-            <div>
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
             </div>
         @endif
 
