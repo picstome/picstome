@@ -75,18 +75,6 @@ class extends Component
                                     class="mx-auto flex"
                                 >
                                     <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
-                                    @if ($photo->gallery->team->brand_watermark_url)
-                                        <div
-                                            @class([
-                                                'absolute flex justify-center',
-                                                'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
-                                                'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
-                                                'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-                                            ])
-                                        >
-                                            <img class="h-5" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" />
-                                        </div>
-                                    @endif
                                 </a>
                             </div>
                         @endforeach
