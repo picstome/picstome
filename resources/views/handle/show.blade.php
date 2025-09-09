@@ -18,7 +18,7 @@
     <div class="flex min-h-screen items-center justify-center px-4">
         <div class="mx-auto w-full max-w-md text-center">
              <div class="space-y-4">
-                 <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block">
+                 <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block py-4">
                      @if($team->brand_logo_icon_url)
                          <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
                      @endif
