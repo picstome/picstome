@@ -235,11 +235,36 @@ class Gallery extends Model
 
     public function makePublic()
     {
-        $this->update(['is_public' => true]);
+        $maxOrder = $this->team->galleries()->public()->max('portfolio_order') ?? 0;
+        $this->update([
+            'is_public' => true,
+            'portfolio_order' => $maxOrder + 1
+        ]);
     }
 
     public function makePrivate()
     {
         $this->update(['is_public' => false, 'portfolio_order' => null]);
+    }
+
+    public function reorder(int $newOrder): void
+    {
+        $currentOrder = $this->portfolio_order;
+
+        if ($newOrder > $currentOrder) {
+            $this->team->galleries()
+                ->public()
+                ->where('portfolio_order', '>', $currentOrder)
+                ->where('portfolio_order', '<=', $newOrder)
+                ->decrement('portfolio_order');
+        } elseif ($newOrder < $currentOrder) {
+            $this->team->galleries()
+                ->public()
+                ->where('portfolio_order', '>=', $newOrder)
+                ->where('portfolio_order', '<', $currentOrder)
+                ->increment('portfolio_order');
+        }
+
+        $this->update(['portfolio_order' => $newOrder]);
     }
 }
