@@ -73,6 +73,7 @@ new class extends Component
     {
         return $this->team?->galleries()
             ->public()
+            ->orderBy('portfolio_order')
             ->get();
     }
 
@@ -103,14 +104,21 @@ new class extends Component
                     <x-subheading>{{ __('These galleries are publicly visible on your portfolio page.') }}</x-subheading>
 
                     @if ($this->portfolioGalleries?->isNotEmpty())
-                        <ul class="mt-6">
+                        <ul class="mt-6" x-data="{
+                            handleReorder: (item, position) => {
+                                $wire.call('reorderGallery', item, position);
+                            }
+                        }" x-sort="handleReorder">
                             @foreach ($this->portfolioGalleries as $gallery)
-                                <li>
+                                <li x-sort:item="{{ $gallery->id }}">
                                     @if (!$loop->first)
                                         <flux:separator variant="subtle" />
                                     @endif
                                     <div class="flex items-center justify-between py-6">
                                         <div class="flex items-center gap-4">
+                                            <flux:button x-sort:handle variant="ghost" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
+                                                <flux:icon.bars-2 variant="micro" />
+                                            </flux:button>
                                             <img
                                                 src="{{ $gallery->photos()->first()?->thumbnail_url }}"
                                                 alt=""
@@ -192,4 +200,7 @@ new class extends Component
             </div>
         </div>
     @endvolt
+    @assets
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
+    @endassets
 </x-app-layout>
