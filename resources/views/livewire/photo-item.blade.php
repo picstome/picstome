@@ -59,7 +59,7 @@ new class extends Component
     <a
         id="{{ $htmlId }}"
         href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
-        wire:navigate.hover
+        wire:navigate
         class="mx-auto flex"
     >
         <img src="{{ $photo->thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
