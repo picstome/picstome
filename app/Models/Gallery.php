@@ -99,7 +99,15 @@ class Gallery extends Model
     #[Scope]
     protected function public(Builder $query): void
     {
-        $query->where('is_public', true);
+        $query->where('is_public', true)
+            ->orderBy('portfolio_order')
+            ->orderBy('created_at', 'desc');
+    }
+
+    #[Scope]
+    protected function private(Builder $query): void
+    {
+        $query->where('is_public', false);
     }
 
     public function sendExpirationReminder(): void

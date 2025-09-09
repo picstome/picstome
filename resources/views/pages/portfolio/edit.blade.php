@@ -71,9 +71,7 @@ new class extends Component
     public function portfolioGalleries()
     {
         return Gallery::where('team_id', $this->currentTeam?->id)
-            ->where('is_public', true)
-            ->orderBy('portfolio_order')
-            ->orderBy('created_at', 'desc')
+            ->public()
             ->get();
     }
 
@@ -81,7 +79,7 @@ new class extends Component
     public function availableGalleries()
     {
         return Gallery::where('team_id', $this->currentTeam?->id)
-            ->where('is_public', false)
+            ->private()
             ->latest()
             ->get();
     }

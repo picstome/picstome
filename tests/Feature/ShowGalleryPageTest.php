@@ -781,7 +781,7 @@ describe('Portfolio Photo Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
         $photo = Photo::factory()->for($gallery)->create();
 
-        $response = get('/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
 
         $response->assertStatus(200);
     });
@@ -791,7 +791,7 @@ describe('Portfolio Photo Public Access', function () {
         $photo = Photo::factory()->for($gallery)->create();
         expect($gallery->is_public)->toBeFalse();
 
-        $response = get('/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
 
         $response->assertStatus(404);
     });
