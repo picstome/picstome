@@ -17,7 +17,7 @@
     </x-slot>
     <div class="flex min-h-screen items-center justify-center px-4">
         <div class="mx-auto w-full max-w-md text-center">
-            @include('partials.team-branding')
+            @include('partials.public-branding')
 
             @if($team->bioLinks->isNotEmpty())
                 <div class="my-14">
