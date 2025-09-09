@@ -30,17 +30,19 @@
                      </div>
                  @endif
 
-                 <div class="mt-6">
-                     <flux:button
-                         variant="outline"
-                         href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
-                         wire:navigate.hover
-                         class="w-full"
-                     >
-                         <flux:icon.photo class="mr-2" />
-                         View Portfolio
-                     </flux:button>
-                 </div>
+                 @if($team->galleries()->public()->exists())
+                     <div class="mt-6">
+                         <flux:button
+                             variant="outline"
+                             href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
+                             wire:navigate.hover
+                             class="w-full"
+                         >
+                             <flux:icon.photo class="mr-2" />
+                             View Portfolio
+                         </flux:button>
+                     </div>
+                 @endif
              </div>
 
             @if($team->bioLinks->isNotEmpty())
