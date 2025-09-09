@@ -67,7 +67,28 @@ class extends Component
                         class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                     >
                         @foreach ($photos as $photo)
-                            <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                            <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
+                                <a
+                                    id="photo-{{ $photo->id }}"
+                                    wire:navigate.hover
+                                    href="{{ route('portfolio.photos.show', ['gallery' => $gallery, 'photo' => $photo]) }}"
+                                    class="mx-auto flex"
+                                >
+                                    <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
+                                    @if ($photo->gallery->team->brand_watermark_url)
+                                        <div
+                                            @class([
+                                                'absolute flex justify-center',
+                                                'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
+                                                'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
+                                                'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
+                                            ])
+                                        >
+                                            <img class="h-5" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" />
+                                        </div>
+                                    @endif
+                                </a>
+                            </div>
                         @endforeach
                     </div>
                 </div>
