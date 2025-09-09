@@ -27,7 +27,7 @@
                         href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
                         wire:navigate
                     >
-                        View Portfolio
+                         {{ __('View Portfolio') }}
                     </flux:button>
                 </div>
             @endif
