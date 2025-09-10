@@ -66,7 +66,7 @@ new class extends Component
                 <div class="mt-12">
                     <div
                         id="grid"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
                     >
                         @foreach ($this->galleries as $gallery)
                             <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
@@ -79,16 +79,16 @@ new class extends Component
                                         <img
                                             src="{{ $gallery->coverPhoto->thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                            class="w-full aspect-3/2 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
                                         />
                                     @elseif($gallery->photos()->count())
                                         <img
                                             src="{{ optional($gallery->photos()->first())->thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                            class="w-full aspect-3/2 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
                                         />
                                     @else
-                                        <div class="w-full h-48 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
+                                        <div class="w-full aspect-3/2 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
                                             <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
                                         </div>
                                     @endif
