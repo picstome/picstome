@@ -87,7 +87,9 @@ class extends Component
                     @endforeach
                 </div>
             </div>
-         @endif
+        @endif
+
+        @include('partials.social-links')
 
         @unlesssubscribed($team)
             <div class="mt-10">

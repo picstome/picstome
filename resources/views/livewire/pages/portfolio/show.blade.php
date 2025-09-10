@@ -99,6 +99,8 @@ class extends Component
             </div>
         @endif
 
+        @include('partials.social-links')
+
         @unlesssubscribed($gallery->team)
             <div class="mt-10">
                 @include('partials.powered-by')
