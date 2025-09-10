@@ -63,15 +63,16 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.portfolio')
-        <div class="max-w-6xl mx-auto">
-            <div class="flex flex-wrap items-end justify-between gap-4">
-                <div class="max-sm:w-full sm:flex-1">
-                    <x-heading level="1" size="xl">{{ __('Portfolio') }}</x-heading>
-                    <x-subheading>{{ __('Manage your public portfolio galleries.') }}</x-subheading>
-                </div>
+        <div class="max-w-lg mx-auto">
+            <div class="relative mb-4 w-full">
+                <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
+                <flux:subheading size="lg">
+                    {{ __('Manage your public portfolio galleries.') }}
+                </flux:subheading>
+                <flux:separator variant="subtle" class="mt-6" />
             </div>
 
-            <div class="mt-4 space-y-4">
+            <div class="space-y-4">
                 @if ($this->portfolioGalleries?->isNotEmpty())
                     <ul x-data="{
                         handleReorder: (item, position) => {
