@@ -56,6 +56,14 @@ class extends Component
 
         <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
             <div class="max-sm:w-full sm:flex-1">
+                <flux:breadcrumbs class="mb-2">
+                    <flux:breadcrumbs.item href="{{ route('portfolio.index', ['handle' => $team->handle]) }}">
+                        {{ __('Portfolio') }}
+                    </flux:breadcrumbs.item>
+                    <flux:breadcrumbs.item>
+                        {{ $gallery->name }}
+                    </flux:breadcrumbs.item>
+                </flux:breadcrumbs>
                 <div class="flex items-center gap-4">
                     <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
                 </div>
