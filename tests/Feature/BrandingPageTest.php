@@ -132,7 +132,7 @@ it('can change watermark transparency', function () {
 it('allows user to update handle successfully', function () {
     $newHandle = 'newhandle';
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', $newHandle)
         ->call('save');
 
@@ -140,7 +140,7 @@ it('allows user to update handle successfully', function () {
 });
 
 it('validates handle must be lowercase', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', 'MixedCaseHandle')
         ->call('save')
         ->assertHasErrors(['form.handle']);
@@ -149,21 +149,21 @@ it('validates handle must be lowercase', function () {
 it('prevents duplicate handles with uniqueness validation', function () {
     Team::factory()->create(['handle' => 'existinghandle']);
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', 'existinghandle')
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents special characters in handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', 'invalid@handle!')
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('enforces minimum length for handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', 'a')
         ->call('save')
         ->assertHasErrors(['form.handle']);
@@ -172,27 +172,27 @@ it('enforces minimum length for handles', function () {
 it('enforces maximum length for handles', function () {
     $longHandle = str_repeat('a', 100);
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', $longHandle)
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents empty string handles', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.handle', '')
         ->call('save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('allows users to see the public profile branding page', function () {
-    $response = actingAs($this->user)->get('/branding/public-profile');
+    $response = actingAs($this->user)->get('/public-profile');
 
     $response->assertStatus(200);
 });
 
 it('prevents guests from viewing public profile page', function () {
-    $response = get('/branding/public-profile');
+    $response = get('/public-profile');
 
     $response->assertRedirect('/login');
 });
@@ -200,7 +200,7 @@ it('prevents guests from viewing public profile page', function () {
 it('can save a bio description', function () {
     expect($this->team->bio)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.bio', 'This is my bio description')
         ->call('save');
 
@@ -210,7 +210,7 @@ it('can save a bio description', function () {
 it('validates bio description maximum length', function () {
     $longBio = str_repeat('a', 1001);
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.bio', $longBio)
         ->call('save')
         ->assertHasErrors(['form.bio']);
@@ -219,7 +219,7 @@ it('validates bio description maximum length', function () {
 it('allows empty bio description', function () {
     $this->team->update(['bio' => 'Existing bio']);
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.bio', '')
         ->call('save');
 
@@ -229,7 +229,7 @@ it('allows empty bio description', function () {
 it('sanitizes html content in bio', function () {
     $htmlContent = '<p>This is <strong>bold</strong> and <em>italic</em> text.</p><script>alert("xss")</script>';
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.bio', $htmlContent)
         ->call('save');
 
@@ -243,7 +243,7 @@ it('sanitizes html content in bio', function () {
 it('adds nofollow to links in bio', function () {
     $htmlContent = '<p>Check out my <a href="https://example.com">website</a> and <a href="https://google.com" rel="noopener">google</a>.</p>';
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('form.bio', $htmlContent)
         ->call('save');
 
@@ -257,7 +257,7 @@ it('adds nofollow to links in bio', function () {
 it('can save instagram link', function () {
     expect($this->team->instagram_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.instagram', 'username')
         ->call('saveSocialLinks');
 
@@ -269,7 +269,7 @@ it('can save instagram link', function () {
 it('can save youtube link', function () {
     expect($this->team->youtube_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.youtube', 'channel/UC123')
         ->call('saveSocialLinks');
 
@@ -281,7 +281,7 @@ it('can save youtube link', function () {
 it('can save facebook link', function () {
     expect($this->team->facebook_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.facebook', 'username')
         ->call('saveSocialLinks');
 
@@ -293,7 +293,7 @@ it('can save facebook link', function () {
 it('can save x link', function () {
     expect($this->team->x_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.x', 'username')
         ->call('saveSocialLinks');
 
@@ -305,7 +305,7 @@ it('can save x link', function () {
 it('can save tiktok link', function () {
     expect($this->team->tiktok_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.tiktok', 'username')
         ->call('saveSocialLinks');
 
@@ -317,7 +317,7 @@ it('can save tiktok link', function () {
 it('can save twitch link', function () {
     expect($this->team->twitch_handle)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.twitch', 'username')
         ->call('saveSocialLinks');
 
@@ -329,7 +329,7 @@ it('can save twitch link', function () {
 it('can save website link', function () {
     expect($this->team->website_url)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.website', 'https://example.com')
         ->call('saveSocialLinks');
 
@@ -341,7 +341,7 @@ it('can save website link', function () {
 it('can save other social link', function () {
     expect($this->team->other_social_links)->toBeNull();
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.other', ['label' => 'MySite', 'url' => 'https://mysite.com'])
         ->call('saveSocialLinks');
 
@@ -349,56 +349,56 @@ it('can save other social link', function () {
 });
 
 it('validates instagram handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.instagram', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.instagram']);
 });
 
 it('validates youtube handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.youtube', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.youtube']);
 });
 
 it('validates facebook handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.facebook', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.facebook']);
 });
 
 it('validates x handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.x', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.x']);
 });
 
 it('validates tiktok handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.tiktok', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.tiktok']);
 });
 
 it('validates twitch handle length', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.twitch', str_repeat('a', 256))
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.twitch']);
 });
 
 it('validates website url format', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.website', 'invalid-url')
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.website']);
 });
 
 it('validates other social link url format', function () {
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.other', ['label' => 'MySite', 'url' => 'invalid-url'])
         ->call('saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.other.url']);
@@ -407,7 +407,7 @@ it('validates other social link url format', function () {
 it('allows empty social links', function () {
     $this->team->update(['instagram_handle' => 'old']);
 
-    Volt::actingAs($this->user)->test('pages.branding.public-profile')
+    Volt::actingAs($this->user)->test('pages.public-profile')
         ->set('socialLinksForm.instagram', '')
         ->call('saveSocialLinks');
 
@@ -423,7 +423,7 @@ it('loads handles from database when form initializes', function () {
         'youtube_handle' => 'channel/UC123',
     ]);
 
-    $component = Volt::actingAs($this->user)->test('pages.branding.public-profile');
+    $component = Volt::actingAs($this->user)->test('pages.public-profile');
 
     expect($component->get('socialLinksForm.instagram'))->toBe('testuser');
     expect($component->get('socialLinksForm.tiktok'))->toBe('testuser');

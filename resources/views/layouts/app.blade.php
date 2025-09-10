@@ -78,7 +78,7 @@
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
-                        <flux:navlist.item :href="route('branding.public-profile')" icon="at-symbol" wire:navigate>
+                        <flux:navlist.item :href="route('public-profile')" icon="at-symbol" wire:navigate>
                             {{ __('Configure') }}
                         </flux:navlist.item>
 

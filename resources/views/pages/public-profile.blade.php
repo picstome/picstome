@@ -15,7 +15,7 @@ use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 use function Laravel\Folio\render;
 
-name('branding.public-profile');
+name('public-profile');
 
 middleware('auth');
 
@@ -109,15 +109,11 @@ new class extends Component
 }; ?>
 
 <x-app-layout>
-    @volt('pages.branding.public-profile')
+    @volt('pages.public-profile')
         <section class="mx-auto max-w-6xl">
             @include('partials.branding-header')
 
             <div class="flex items-start max-md:flex-col">
-                <div class="mr-10 w-full pb-4 md:w-[220px]">
-                    @include('partials.branding-nav')
-                </div>
-
                 <flux:separator class="md:hidden" />
 
                 <div class="flex-1 self-stretch max-md:pt-6">
