@@ -62,8 +62,8 @@ new class extends Component
             @if($allPhotos->isNotEmpty())
                 <div class="relative">
                     <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
-    <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-</a>
+                        <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                    </a>
                 </div>
 
                 <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
