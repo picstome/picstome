@@ -16,3 +16,26 @@
         Inter, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 }
+
+/* Touch-friendly drag handle for portfolio page */
+.portfolio-drag-handle {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    transition: background 0.2s;
+    touch-action: pan-y;
+}
+.portfolio-drag-handle:active,
+.portfolio-drag-handle:focus {
+    background: rgba(0, 0, 0, 0.07);
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+@media (hover: hover) {
+    .portfolio-drag-handle:hover {
+        background: rgba(0, 0, 0, 0.07);
+    }
+}
