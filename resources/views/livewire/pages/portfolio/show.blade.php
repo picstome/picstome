@@ -38,7 +38,15 @@ class extends Component
 
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
-        @include('partials.public-branding')
+        <div class="space-y-4 text-center">
+            <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block space-y-4" wire:navigate>
+                @if($team->brand_logo_icon_url)
+                    <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
+                @else
+                    <flux:heading size="xl">{{ $team->name }}</flux:heading>
+                @endif
+            </a>
+        </div>
 
         @if($photos->isNotEmpty())
             <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
