@@ -78,7 +78,7 @@ new class extends Component
                         handleReorder: (item, position) => {
                             $wire.call('reorderGallery', item, position);
                         }
-                    }" x-sort="handleReorder" x-sort:config="{ touchStartThreshold: 10, forceFallback: true }">
+                    }" x-sort="handleReorder">
                         @foreach ($this->portfolioGalleries as $gallery)
                             <li x-sort:item="{{ $gallery->id }}">
                                 @if (!$loop->first)
@@ -86,9 +86,9 @@ new class extends Component
                                 @endif
                                 <div class="flex items-center justify-between py-6">
                                     <div class="flex items-center gap-4">
-                                        <span x-sort:handle class="portfolio-drag-handle cursor-move touch-manipulation flex items-center justify-center select-none" tabindex="0" aria-label="Reorder gallery" role="button">
+                                        <flux:button x-sort:handle variant="subtle" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
                                             <flux:icon.bars-2 variant="mini" />
-                                        </span>
+                                        </flux:button>
                                         <img
                                             src="{{ $gallery->coverPhoto?->thumbnail_url ?? $gallery->photos()->first()?->thumbnail_url }}"
                                             alt=""
