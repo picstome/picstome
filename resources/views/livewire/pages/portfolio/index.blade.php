@@ -62,16 +62,11 @@ class extends Component
                                         {{ $gallery->name }}
                                     </flux:heading>
 
-                                    @if($gallery->share_description)
-                                        <flux:text variant="subtle" class="line-clamp-2 mb-3">
-                                            {{ $gallery->share_description }}
-                                        </flux:text>
-                                    @endif
-
                                     <div class="flex items-center justify-between">
                                         <flux:text variant="subtle" size="sm">
-                                            {{ $gallery->photos->count() }} photos
+                                            {{ $gallery->photos->count() }} {{ __('photos') }}
                                         </flux:text>
+
                                         @if($gallery->created_at)
                                             <flux:text variant="subtle" size="sm">
                                                 {{ $gallery->created_at->format('M j, Y') }}

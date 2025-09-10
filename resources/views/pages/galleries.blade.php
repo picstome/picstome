@@ -66,29 +66,52 @@ new class extends Component
                 <div class="mt-12">
                     <div
                         id="grid"
-                        class="grid grid-flow-dense auto-rows-[263px] grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-4 gap-y-6"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                     >
                         @foreach ($this->galleries as $gallery)
-                            <div
-                                class="relative flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10"
-                            >
-                                <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
-                                    <img
-                                        src="{{ $gallery->coverPhoto?->thumbnail_url ?? $gallery->photos()->first()?->thumbnail_url }}"
-                                        alt=""
-                                        class="mx-auto object-contain"
-                                    />
-                                </a>
-                                <div
-                                    class="absolute inset-x-0 bottom-0 flex gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
+                            <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
+                                <a
+                                    href="{{ route('galleries.show', ['gallery' => $gallery]) }}"
+                                    class="block"
+                                    wire:navigate
                                 >
-                                    <flux:heading>{{ $gallery->name }}</flux:heading>
-                                    <flux:text>
-                                        {{ $gallery->photos()->count() }} photos ·
-                                        {{ $gallery->created_at->format('M j, Y') }}
-                                    </flux:text>
-                                </div>
-                            </div>
+                                    @if($gallery->coverPhoto)
+                                        <img
+                                            src="{{ $gallery->coverPhoto->thumbnail_url }}"
+                                            alt="{{ $gallery->name }}"
+                                            class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                        />
+                                    @elseif($gallery->photos()->count())
+                                        <img
+                                            src="{{ optional($gallery->photos()->first())->thumbnail_url }}"
+                                            alt="{{ $gallery->name }}"
+                                            class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                        />
+                                    @else
+                                        <div class="w-full h-48 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
+                                            <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                        </div>
+                                    @endif
+
+                                    <div class="p-4">
+                                        <flux:heading size="lg" class="mb-2">
+                                            {{ $gallery->name }}
+                                        </flux:heading>
+
+                                        <div class="flex items-center justify-between">
+                                            <flux:text variant="subtle" size="sm">
+                                                {{ $gallery->photos()->count() }} {{ __('photos') }}
+                                            </flux:text>
+
+                                            @if($gallery->created_at)
+                                                <flux:text variant="subtle" size="sm">
+                                                    {{ $gallery->created_at->format('M j, Y') }}
+                                                </flux:text>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </a>
+                            </flux:card>
                         @endforeach
                     </div>
 
