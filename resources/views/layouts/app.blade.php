@@ -78,12 +78,16 @@
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
-                        <flux:navlist.item :href="route('branding.public-profile', ['handle' => auth()->user()->currentTeam->handle])" icon="at-symbol" wire:navigate>
-                            {{ __('Profile') }}
+                        <flux:navlist.item :href="route('branding.public-profile')" icon="at-symbol" wire:navigate>
+                            {{ __('Configure') }}
                         </flux:navlist.item>
 
                         <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate>
                             {{ __('Portfolio') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="arrow-top-right-on-square" target="_blank">
+                            {{ __('View Profile') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
@@ -110,18 +114,6 @@
                     <flux:navlist.group :heading="__('Studio')" class="mt-4">
                         <flux:navlist.item :href="route('branding')" icon="paint-brush">
                             {{ __('Branding') }}
-                        </flux:navlist.item>
-
-                        <flux:navlist.item :href="route('branding.public-profile', ['handle' => auth()->user()->currentTeam->handle])" icon="at-symbol" wire:navigate>
-                            {{ __('Public Profile') }}
-                        </flux:navlist.item>
-
-                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate>
-                            {{ __('Portfolio') }}
-                        </flux:navlist.item>
-
-                        <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="arrow-top-right-on-square" target="_blank">
-                            {{ __('View Profile') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
