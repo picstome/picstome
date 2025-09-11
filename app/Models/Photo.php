@@ -122,6 +122,20 @@ class Photo extends Model
         });
     }
 
+    /**
+     * Get the large thumbnail URL
+     */
+    protected function largeThumbnailUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $encodedUrl = urlencode($originalUrl);
+            $size = config('picstome.photo_resize', 2048);
+
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&output=webp";
+        });
+    }
+
     protected function diskOrDefault(): string
     {
         return $this->disk ?? 'public';
