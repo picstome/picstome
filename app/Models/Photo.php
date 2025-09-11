@@ -105,21 +105,20 @@ class Photo extends Model
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $encodedUrl = urlencode($originalUrl);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&q=90&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&output=webp";
         });
     }
 
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
-            $originalUrl = $this->thumb_path
-                ? Storage::disk($this->diskOrDefault())->url($this->thumb_path)
-                : Storage::disk($this->diskOrDefault())->url($this->path);
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
 
             $encodedUrl = urlencode($originalUrl);
             $height = config('picstome.photo_thumb_resize', 1000);
+            $width = config('picstome.photo_thumb_resize', 1000);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&q=90&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&output=webp";
         });
     }
 
