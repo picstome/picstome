@@ -134,7 +134,7 @@
     "General": "General",
     "General Settings": "Configuraciones generales",
     "Get share link": "Obtener enlace para compartir",
-    "Grant this user lifetime access to their team. Overrides subscription status.": "Grant this user lifetime access to their team. Overrides subscription status.",
+    "Grant this user lifetime access to their team. Overrides subscription status.": "Otorga a este usuario acceso Lifetime a su equipo. Sobrescribe el estado de la suscripción.",
     "Green": "Verde",
     "Guest": "Invitado",
     "Guest studio": "Estudio invitado",
@@ -148,7 +148,7 @@
     "Label": "Etiqueta",
     "Legal name": "Nombre legal",
     "Lifetime": "Lifetime",
-    "Lifetime access": "Lifetime access",
+    "Lifetime access": "Acceso Lifetime",
     "Light": "Claro",
     "Lime": "Lima",
     "Limit photo selection": "Limitar la selección de fotos",
@@ -377,5 +377,5 @@
     "signatures": "firmas",
     "to": "al",
     "total storage": "almacenamiento total",
-    "Purchase Lifetime Subscription": "Comprar suscripción de por vida"
+    "Purchase Lifetime Subscription": "Comprar suscripción Lifetime"
 }
