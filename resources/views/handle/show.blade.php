@@ -45,7 +45,7 @@
                             <flux:button
                                 variant="primary"
                                 :color="$team->brand_color ?? null"
-                                href="{{ $link->url }}"
+                                href="{{ $link->url . (str_contains($link->url, '?') ? '&utm_source=picstome' : '?utm_source=picstome') }}"
                                 target="_blank"
                                 rel="noopener noreferrer nofollow"
                                 class="w-full text-base!"
