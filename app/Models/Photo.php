@@ -105,7 +105,7 @@ class Photo extends Model
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $encodedUrl = urlencode($originalUrl);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
         });
     }
 
@@ -118,7 +118,7 @@ class Photo extends Model
             $height = config('picstome.photo_thumb_resize', 1000);
             $width = config('picstome.photo_thumb_resize', 1000);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
         });
     }
 
@@ -132,7 +132,7 @@ class Photo extends Model
             $encodedUrl = urlencode($originalUrl);
             $size = config('picstome.photo_resize', 2048);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=90&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
         });
     }
 
