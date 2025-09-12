@@ -50,6 +50,17 @@ new class extends Component
             $this->pricingTableId = config('services.stripe.en_pricing_table_id');
         }
     }
+
+    public function purchaseLifetime()
+    {
+        $user = Auth::user();
+        $priceId = config('services.stripe.lifetime_price_id');
+
+        return $user->currentTeam->checkout($priceId, [
+            'success_url' => route('product-checkout-success').'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('subscribe'),
+        ]);
+    }
 }; ?>
 
 <x-app-layout>
@@ -66,6 +77,7 @@ new class extends Component
 
             <!-- Flux Lifetime Subscription Button -->
             <flux:button
+                wire:click="purchaseLifetime"
                 variant="primary"
                 color="emerald"
             >
