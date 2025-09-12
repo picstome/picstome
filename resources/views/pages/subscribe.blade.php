@@ -77,11 +77,7 @@ new class extends Component
 
             <flux:separator variant="subtle" text="or" />
 
-            <flux:button
-                wire:click="purchaseLifetime"
-                variant="filled"
-                color="emerald"
-            >
+            <flux:button wire:click="purchaseLifetime" variant="filled">
                 {{ __('Purchase Lifetime Subscription') }}
             </flux:button>
         </div>
