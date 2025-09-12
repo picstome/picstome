@@ -132,7 +132,7 @@ class Photo extends Model
             $encodedUrl = urlencode($originalUrl);
             $size = config('picstome.photo_resize', 2048);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&output=webp";
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=90&output=webp";
         });
     }
 
