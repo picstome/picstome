@@ -34,6 +34,7 @@ class Team extends Model
     {
         return [
             'personal_team' => 'boolean',
+            'lifetime' => 'boolean',
             'bio' => PurifyHtmlOnGet::class,
             'other_social_links' => 'array',
         ];
