@@ -86,7 +86,9 @@ new class extends Component {
                                     <div class="flex flex-col">
                                         <flux:heading>
                                             {{ $user->name }}
-                                            @if ($user->personalTeam()->subscribed())
+                                            @if ($user->personalTeam()->lifetime)
+                                                <flux:badge color="lime" size="sm">{{ __('Lifetime') }}</flux:badge>
+                                            @elseif ($user->personalTeam()->subscribed())
                                                 <flux:badge color="lime" size="sm">{{ __('Subscribed') }}</flux:badge>
                                             @endif
                                         </flux:heading>
