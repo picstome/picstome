@@ -88,14 +88,13 @@ new class extends Component
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
-                    src="{{ $photo->thumbnail_url }}"
-                    srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
-                    sizes="(max-width: 640px) 100vw, 80vw"
+                    :src="zoom ? photoUrl : thumbnailUrl"
+                    :srcset="!zoom ? `${thumbnailUrl} 1000w, {{ $photo->large_thumbnail_url }} 2040w` : false"
+                    :sizes="!zoom ? '(max-width: 640px) 100vw, 80vw' : false"
                     @contextmenu.prevent
                     @click="zoom = !zoom"
                     class="mx-auto object-contain"
                     :class="zoom ? 'max-w-none hover:cursor-zoom-out' : 'max-w-full hover:cursor-zoom-in'"
-                    :src = "zoom ? photoUrl : thumbnailUrl"
                     alt=""
                 />
                 @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
