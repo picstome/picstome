@@ -92,13 +92,23 @@ new class extends Component
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
-                    :src="zoom ? photoUrl : thumbnailUrl"
-                    :srcset="!zoom ? `${thumbnailUrl} 1000w, {{ $photo->large_thumbnail_url }} 2040w` : false"
-                    :sizes="!zoom ? '(max-width: 640px) 100vw, 80vw' : false"
-                    @click="zoom = !zoom"
-                    class="mx-auto object-contain"
-                    :class="zoom ? 'max-w-none hover:cursor-zoom-out' : 'max-w-full hover:cursor-zoom-in'"
-                    alt=""
+                    x-show="!zoom"
+                    src="{{ $photo->thumbnail_url }}"
+                    srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                    sizes="(max-width: 640px) 100vw, 80vw"
+                    @click="zoom = true"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    alt="{{ $photo->name }}"
+                />
+
+                <img
+                    x-show="zoom"
+                    src="{{ $photo->url }}"
+                    @click="zoom = false"
+                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out"
+                    loading="lazy"
+                    alt="{{ $photo->name }}"
+                    x-cloak
                 />
 
                 <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
