@@ -54,7 +54,8 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.subscribe')
-        <div class="h-full flex flex-row items-center justify-center">
+        <div class="h-full flex flex-col items-center justify-center space-y-8">
+            <!-- Stripe Pricing Table -->
             <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
             <stripe-pricing-table
                 pricing-table-id="{{ $this->pricingTableId }}"
@@ -62,6 +63,14 @@ new class extends Component
                 customer-session-client-secret="{{ $this->customerSession->client_secret }}"
             >
             </stripe-pricing-table>
+
+            <!-- Flux Lifetime Subscription Button -->
+            <flux:button
+                variant="primary"
+                color="emerald"
+            >
+                Purchase Lifetime Subscription
+            </flux:button>
         </div>
     @endvolt
 </x-app-layout>
