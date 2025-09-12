@@ -15,7 +15,7 @@ render(function (View $view, Request $request) {
     $sessionId = $request->get('session_id');
 
     if (!$sessionId) {
-        return redirect()->route('subscribe')->with('error', 'No session ID provided.');
+        return redirect()->route('subscribe');
     }
 
     $team = $request->user()->currentTeam;
@@ -26,15 +26,11 @@ render(function (View $view, Request $request) {
             'lifetime' => true,
             'custom_storage_limit' => config('picstome.subscription_storage_limit'),
         ]);
+
+        return redirect()->route('galleries')->with('success', 'Payment successful!');
     }
 
-    $view->with('paymentSuccess', $checkoutSession->payment_status === 'paid');
+    if (!$sessionId) {
+        return redirect()->route('subscribe');
+    }
 }); ?>
-
-<div>
-    @if(isset($paymentSuccess) && $paymentSuccess)
-        <h1>Thank you for your purchase! Your team now has a lifetime subscription.</h1>
-    @else
-        <h1>There was a problem with your payment.</h1>
-    @endif
-</div>
