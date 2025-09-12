@@ -75,11 +75,13 @@ new class extends Component
             >
             </stripe-pricing-table>
 
-            <flux:separator variant="subtle" text="or" />
+            @if (config('services.stripe.lifetime_price_id'))
+                <flux:separator variant="subtle" text="or" />
 
-            <flux:button wire:click="purchaseLifetime" variant="filled">
-                {{ __('Purchase Lifetime Subscription') }}
-            </flux:button>
+                <flux:button wire:click="purchaseLifetime" variant="filled">
+                    {{ __('Purchase Lifetime Subscription') }}
+                </flux:button>
+            @endif
         </div>
     @endvolt
 </x-app-layout>
