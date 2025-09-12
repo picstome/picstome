@@ -22,7 +22,10 @@ render(function (View $view, Request $request) {
     $checkoutSession = $team->stripe()->checkout->sessions->retrieve($sessionId);
 
     if ($checkoutSession->payment_status === 'paid') {
-        $team->update(['lifetime' => true]);
+        $team->update([
+            'lifetime' => true,
+            'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+        ]);
     }
 
     $view->with('paymentSuccess', $checkoutSession->payment_status === 'paid');
