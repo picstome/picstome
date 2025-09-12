@@ -277,4 +277,26 @@ class Team extends Model
             ->where('galleries.team_id', $this->id)
             ->sum('photos.size');
     }
+
+    /**
+     * Determine if the Stripe model has a given subscription.
+     *
+     * @param  string  $type
+     * @param  string|null  $price
+     * @return bool
+     */
+    public function subscribed($type = 'default', $price = null)
+    {
+        if ($this->lifetime) {
+            return true;
+        }
+
+        $subscription = $this->subscription($type);
+
+        if (! $subscription || ! $subscription->valid()) {
+            return false;
+        }
+
+        return ! $price || $subscription->hasPrice($price);
+    }
 }
