@@ -34,7 +34,7 @@ class GalleryForm extends Form
             'before_or_equal:' . $maxExpirationDate,
         ];
 
-        if (!$team?->subscribed()) {
+        if (($team && $team->lifetime) || !$team?->subscribed()) {
             array_unshift($expirationRules, 'required');
         } else {
             array_unshift($expirationRules, 'nullable');

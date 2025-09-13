@@ -126,3 +126,26 @@ test('cannot create a gallery with an invalid expiration date', function () {
     $component->assertHasErrors(['form.expirationDate' => 'before_or_equal']);
     expect($this->team->galleries()->count())->toBe(0);
 });
+
+test('lifetime teams require an expiration date for galleries', function () {
+    $this->team->update(['lifetime' => true]);
+
+    $component = Volt::actingAs($this->user)->test('pages.galleries')
+        ->set('form.name', 'Lifetime No Expiration')
+        ->set('form.expirationDate', '')
+        ->call('save');
+
+    $component->assertHasErrors(['form.expirationDate' => 'required']);
+    expect($this->team->galleries()->count())->toBe(0);
+
+    $expiration = now()->addDays(10)->toDateString();
+    $component = Volt::actingAs($this->user)->test('pages.galleries')
+        ->set('form.name', 'Lifetime With Expiration')
+        ->set('form.expirationDate', $expiration)
+        ->call('save');
+
+    $gallery = $this->team->galleries()->first();
+    expect($gallery)->not->toBeNull();
+    expect($gallery->name)->toBe('Lifetime With Expiration');
+    expect($gallery->expiration_date->toDateString())->toBe($expiration);
+});
