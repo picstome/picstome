@@ -64,11 +64,19 @@ new class extends Component
 <x-app-layout>
     @volt('pages.portfolio')
         <div class="max-w-lg mx-auto">
-            <div class="relative mb-4 w-full">
-                <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
-                <flux:subheading size="lg">
-                    {{ __('Manage your public portfolio galleries.') }}
-                </flux:subheading>
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-4 w-full">
+                <div class="max-sm:w-full sm:flex-1">
+                    <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
+                    <flux:subheading size="lg">
+                        {{ __('Manage your public portfolio galleries.') }}
+                    </flux:subheading>
+                </div>
+                <div>
+                    <!-- Button to disable public portfolio (implementation pending) -->
+                    <flux:button icon="lock-closed" :tooltip="__('Disable Public Portfolio')">
+                        {{ __('Disable') }}
+                    </flux:button>
+                </div>
                 <flux:separator variant="subtle" class="mt-6" />
             </div>
 
