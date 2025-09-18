@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
 use App\Traits\FormatsFileSize;
@@ -250,6 +251,7 @@ class Gallery extends Model
         ];
 
         $shouldProcessPhotos = false;
+
         if ($this->keep_original_size) {
             $updateData['keep_original_size'] = false;
             $shouldProcessPhotos = true;
@@ -258,8 +260,8 @@ class Gallery extends Model
         $this->update($updateData);
 
         if ($shouldProcessPhotos) {
-            foreach ($this->photos as $photo) {
-                \App\Jobs\ProcessPhoto::dispatch($photo);
+            foreach ($this->photos()->cursor() as $photo) {
+                ProcessPhoto::dispatch($photo);
             }
         }
     }
