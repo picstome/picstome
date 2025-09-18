@@ -737,6 +737,19 @@ describe('Cover Photo', function () {
 });
 
 describe('Gallery Public Access', function () {
+    it('disables expiration when toggling gallery to public', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+        expect($gallery->is_public)->toBeFalse();
+        expect($gallery->expiration_date)->not->toBeNull();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        $gallery->refresh();
+        expect($gallery->is_public)->toBeTrue();
+        expect($gallery->expiration_date)->toBeNull();
+    });
+
     it('allows marking a gallery as public', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->is_public)->toBeFalse();
