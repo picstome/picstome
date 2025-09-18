@@ -243,11 +243,25 @@ class Gallery extends Model
     {
         $maxOrder = $this->team->galleries()->public()->whereNotNull('portfolio_order')->max('portfolio_order') ?? 0;
 
-        $this->update([
+        $updateData = [
             'is_public' => true,
             'portfolio_order' => $maxOrder + 1,
             'expiration_date' => null,
-        ]);
+        ];
+
+        $shouldProcessPhotos = false;
+        if ($this->keep_original_size) {
+            $updateData['keep_original_size'] = false;
+            $shouldProcessPhotos = true;
+        }
+
+        $this->update($updateData);
+
+        if ($shouldProcessPhotos) {
+            foreach ($this->photos as $photo) {
+                \App\Jobs\ProcessPhoto::dispatch($photo);
+            }
+        }
     }
 
     public function makePrivate()
