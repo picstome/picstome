@@ -518,6 +518,20 @@ describe('Gallery Editing', function () {
         $gallery->refresh();
         expect($gallery->expiration_date)->not->toBeNull();
     });
+
+    it('does not require expiration date when gallery is public, even if not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['expiration_date' => now()->addDays(5)]);
+        expect($gallery->is_public)->toBeTrue();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update')
+            ->assertHasNoErrors('form.expirationDate');
+
+        $gallery->refresh();
+
+        expect($gallery->expiration_date)->toBeNull();
+    });
 });
 
 describe('Storage Limits', function () {

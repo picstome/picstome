@@ -360,6 +360,7 @@
     "Your password": "Tu contraseña",
     "Your subscription expires in :days days.": "Tu suscripción expira en :days días.",
     "Your subscription has expired.": "Tu suscripción ha expirado.",
+    "Public galleries do not expire. You cannot set an expiration date while the gallery is public.": "Las galerías públicas no expiran. No puedes establecer una fecha de expiración mientras la galería sea pública.",
     "Zinc": "Zinc",
     "e.g. mystudio": "ej. miestudio",
     "log in": "iniciar sesión",

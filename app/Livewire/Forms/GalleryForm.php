@@ -84,7 +84,7 @@ class GalleryForm extends Form
         return $this->gallery->update([
             'photoshoot_id' => $this->photoshoot_id ?: null,
             'name' => $this->name ?? __('Untitled'),
-            'expiration_date' => $this->expirationDate ?: null,
+            'expiration_date' => $this->gallery->is_public ? null : ($this->expirationDate ?: null),
         ]);
     }
 }

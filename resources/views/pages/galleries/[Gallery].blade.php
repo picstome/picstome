@@ -532,7 +532,14 @@ new class extends Component
                         </flux:select>
                     @endif
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable />
+                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable :disabled="$gallery->is_public" />
+@if ($gallery->is_public)
+    <flux:callout variant="secondary" icon="information-circle" class="mt-2">
+        <flux:callout.text>
+            {{ __('Public galleries do not expire. You cannot set an expiration date while the gallery is public.') }}
+        </flux:callout.text>
+    </flux:callout>
+@endif
 
                     <div class="flex">
                         <flux:spacer />
