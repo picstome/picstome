@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\PhotoAdded;
+use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Team;
@@ -9,6 +10,7 @@ use App\Models\Photoshoot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
@@ -752,17 +754,21 @@ describe('Cover Photo', function () {
 
 describe('Gallery Public Access', function () {
     it('dispatches photo processing and disables keep_original_size when toggling gallery to public', function () {
-        \Illuminate\Support\Facades\Bus::fake();
+        Queue::fake();
+
         $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
         $photos = Photo::factory()->for($gallery)->count(3)->create();
-        expect($gallery->keep_original_size)->toBeTrue();
+
         Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
+
         $gallery->refresh();
+
         expect($gallery->is_public)->toBeTrue();
         expect($gallery->keep_original_size)->toBeFalse();
+
         foreach ($photos as $photo) {
-            \Illuminate\Support\Facades\Bus::assertDispatched(\App\Jobs\ProcessPhoto::class, function ($job) use ($photo) {
+            Queue::assertPushed(ProcessPhoto::class, function ($job) use ($photo) {
                 return $job->photo->is($photo);
             });
         }
