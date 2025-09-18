@@ -250,13 +250,18 @@ $this->update([
 
         $this->update([
             'is_public' => true,
-            'portfolio_order' => $maxOrder + 1
+            'portfolio_order' => $maxOrder + 1,
+            'expiration_date' => null,
         ]);
     }
 
     public function makePrivate()
     {
-        $this->update(['is_public' => false, 'portfolio_order' => null]);
+        $this->update([
+            'is_public' => false,
+            'portfolio_order' => null,
+            'expiration_date' => now()->addMonth(),
+        ]);
     }
 
     public function reorder(int $newOrder): void

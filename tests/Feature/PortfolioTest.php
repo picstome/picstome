@@ -68,6 +68,7 @@ it('allows users to add a gallery to portfolio', function () {
 
     $gallery->refresh();
     expect($gallery->is_public)->toBeTrue();
+    expect($gallery->expiration_date)->toBeNull();
 });
 
 it('allows users to remove a gallery from portfolio', function () {
@@ -83,6 +84,8 @@ it('allows users to remove a gallery from portfolio', function () {
 
     $gallery->refresh();
     expect($gallery->is_public)->toBeFalse();
+    expect($gallery->expiration_date)->not->toBeNull();
+    expect($gallery->expiration_date->format('Y-m-d'))->toBe(now()->addMonth()->format('Y-m-d'));
 });
 
 it('prevents users from managing portfolio galleries for other teams', function () {
