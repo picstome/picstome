@@ -24,7 +24,7 @@
                         {!! $team->bio !!}
                     </div>
                 @endif
-                @if($team->galleries()->public()->exists())
+                @if($team->galleries()->public()->exists() && !$team->portfolio_public_disabled)
                     <div class="flex justify-center">
                         <flux:button
                             variant="primary"

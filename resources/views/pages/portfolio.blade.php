@@ -82,10 +82,23 @@ new class extends Component
                     </flux:subheading>
                 </div>
                 <div>
-                    <!-- Button to disable public portfolio (implementation pending) -->
-                    <flux:button icon="lock-closed" :tooltip="__('Disable Public Portfolio')">
-                        {{ __('Disable') }}
-                    </flux:button>
+                    @if ($this->team->portfolio_public_disabled)
+                        <flux:button
+                            icon="lock-open"
+                            :tooltip="__('Enable Public Portfolio')"
+                            wire:click="enablePortfolioPage"
+                        >
+                            {{ __('Enable') }}
+                        </flux:button>
+                    @else
+                        <flux:button
+                            icon="lock-closed"
+                            :tooltip="__('Disable Public Portfolio')"
+                            wire:click="disablePortfolioPage"
+                        >
+                            {{ __('Disable') }}
+                        </flux:button>
+                    @endif
                 </div>
                 <flux:separator variant="subtle" class="mt-6" />
             </div>
