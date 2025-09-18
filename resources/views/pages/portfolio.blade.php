@@ -76,15 +76,15 @@ new class extends Component
         <div class="max-w-lg mx-auto">
             <div class="flex flex-wrap items-end justify-between gap-4 mb-4 w-full">
                 <div class="max-sm:w-full sm:flex-1">
-<div class="flex items-center gap-2">
-    <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
-    @if ($this->team->portfolio_public_disabled)
-        <flux:badge color="red" size="md">{{ __('Public portfolio is disabled') }}</flux:badge>
-    @endif
-</div>
-<flux:subheading size="lg">
-    {{ __('Manage your public portfolio galleries.') }}
-</flux:subheading>
+                <div class="flex items-center gap-2">
+                    <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
+                    @if ($this->team->portfolio_public_disabled)
+                        <flux:badge size="sm">{{ __('Public portfolio is disabled') }}</flux:badge>
+                    @endif
+                </div>
+                <flux:subheading size="lg">
+                    {{ __('Manage your public portfolio galleries.') }}
+                </flux:subheading>
                 </div>
                 <div>
                     @if ($this->team->portfolio_public_disabled)
