@@ -197,26 +197,23 @@ new class extends Component
             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
                 <div class="max-sm:w-full sm:flex-1">
                     <div class="flex items-center gap-4">
-<x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-<div class="flex items-center gap-2">
-    @if (auth()->user()?->currentTeam?->portfolio_public_disabled)
-        <flux:badge color="red" size="md">{{ __('Public portfolio is disabled') }}</flux:badge>
-    @endif
-    @if ($gallery->is_shared)
-        <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
-    @endif
-    @if ($gallery->is_public)
-        <div class="flex items-center gap-1">
-            <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
-            <flux:tooltip toggleable>
-                <flux:button icon="information-circle" size="xs" variant="subtle" />
-                <flux:tooltip.content class="max-w-[20rem]">
-                    <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
-                </flux:tooltip.content>
-            </flux:tooltip>
-        </div>
-    @endif
-</div>
+                        <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                        <div class="flex items-center gap-2">
+                            @if ($gallery->is_shared)
+                                <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
+                            @endif
+                            @if ($gallery->is_public)
+                                <div class="flex items-center gap-1">
+                                    <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
+                                    <flux:tooltip toggleable>
+                                        <flux:button icon="information-circle" size="xs" variant="subtle" />
+                                        <flux:tooltip.content class="max-w-[20rem]">
+                                            <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
