@@ -233,7 +233,7 @@ class Gallery extends Model
         if (!$this->is_public) {
             $this->update([
                 'is_public' => true,
-                'expiration_date' => null,
+                'expiration_date' => now()->addMonth(),
             ]);
 
             return;
