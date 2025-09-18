@@ -751,6 +751,23 @@ describe('Cover Photo', function () {
 });
 
 describe('Gallery Public Access', function () {
+    it('dispatches photo processing and disables keep_original_size when toggling gallery to public', function () {
+        \Illuminate\Support\Facades\Bus::fake();
+        $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
+        $photos = Photo::factory()->for($gallery)->count(3)->create();
+        expect($gallery->keep_original_size)->toBeTrue();
+        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+        $gallery->refresh();
+        expect($gallery->is_public)->toBeTrue();
+        expect($gallery->keep_original_size)->toBeFalse();
+        foreach ($photos as $photo) {
+            \Illuminate\Support\Facades\Bus::assertDispatched(\App\Jobs\ProcessPhoto::class, function ($job) use ($photo) {
+                return $job->photo->is($photo);
+            });
+        }
+    });
+
     it('disables expiration when toggling gallery to public', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
         expect($gallery->is_public)->toBeFalse();
