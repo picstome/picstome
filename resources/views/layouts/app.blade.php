@@ -15,7 +15,7 @@
         <link rel="preconnect" href="https://fonts.bunny.net" />
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite('resources/css/app.css')
         @fluxAppearance
         @stack('head')
     </head>
@@ -149,8 +149,5 @@
         @persist('toast')
             <flux:toast />
         @endpersist
-        <button id="pwa-install-btn" style="display:none; position:fixed; bottom:1rem; right:1rem; z-index:9999;">
-            Install Picstome App
-        </button>
     </body>
 </html>
