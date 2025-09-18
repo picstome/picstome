@@ -11,6 +11,46 @@ use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
 
+it('allows users to disable the public portfolio page for their team', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    $response = Volt::actingAs($user)->test('pages.portfolio')
+        ->call('disablePortfolioPage');
+
+    $response->assertHasNoErrors();
+
+    $team->refresh();
+    expect($team->portfolio_public_disabled)->toBeTrue();
+});
+
+it('returns 404 for public portfolio page when disabled', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    $team->update(['portfolio_public_disabled' => true]);
+
+    get(route('pages.portfolio.index', ['team' => $team]))
+        ->assertNotFound();
+});
+
+it('allows users to re-enable the public portfolio page for their team', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    $team->update(['portfolio_public_disabled' => true]);
+    $team->portfolio_public_disabled = true;
+    $team->save();
+
+    $response = Volt::actingAs($user)->test('pages.portfolio')
+        ->call('enablePortfolioPage');
+
+    $response->assertHasNoErrors();
+
+    $team->refresh();
+    expect($team->portfolio_public_disabled)->toBeFalse();
+});
+
 it('requires authentication for manage portfolio page', function () {
     get(route('portfolio'))->assertRedirect('/login');
 });
