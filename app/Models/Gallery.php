@@ -230,18 +230,18 @@ class Gallery extends Model
 
     public function togglePublic()
     {
-        if (!$this->is_public) {
-            $this->update([
-                'is_public' => true,
-                'expiration_date' => now()->addMonth(),
-            ]);
+if (!$this->is_public) {
+    $this->update([
+        'is_public' => true,
+        'expiration_date' => null,
+    ]);
+    return;
+}
 
-            return;
-        }
-
-        $this->update([
-            'is_public' => false,
-        ]);
+$this->update([
+    'is_public' => false,
+    'expiration_date' => now()->addMonth(),
+]);
     }
 
     public function makePublic()

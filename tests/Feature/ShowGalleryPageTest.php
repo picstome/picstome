@@ -750,23 +750,6 @@ describe('Gallery Public Access', function () {
         expect($gallery->expiration_date)->toBeNull();
     });
 
-    it('sets expiration date to one month when toggling gallery from private to public', function () {
-        $gallery = Gallery::factory()->for($this->team)->create([
-            'is_public' => false,
-            'expiration_date' => null,
-        ]);
-
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
-            ->call('togglePublic');
-
-        $gallery->refresh();
-        expect($gallery->is_public)->toBeTrue();
-
-        expect($gallery->expiration_date->toDateString())->toBe(
-            now()->addMonth()->toDateString()
-        );
-    });
-
     it('allows marking a gallery as public', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->is_public)->toBeFalse();
@@ -785,6 +768,19 @@ describe('Gallery Public Access', function () {
             ->call('togglePublic');
 
         expect($gallery->fresh()->is_public)->toBeFalse();
+    });
+
+    it('sets expiration date to one month when toggling gallery from public to private', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create([
+            'expiration_date' => null,
+        ]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        $gallery->refresh();
+        expect($gallery->is_public)->toBeFalse();
+        expect($gallery->expiration_date->toDateString())->toBe(now()->addMonth()->toDateString());
     });
 
     it('allows guests to view public galleries via public route', function () {
