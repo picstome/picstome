@@ -30,7 +30,7 @@ it('returns 404 for public portfolio page when disabled', function () {
 
     $team->update(['portfolio_public_disabled' => true]);
 
-    get(route('pages.portfolio.index', ['team' => $team]))
+    get(route('portfolio.index', ['handle' => $team->handle]))
         ->assertNotFound();
 });
 

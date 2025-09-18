@@ -16,6 +16,9 @@ class extends Component
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
+
+        abort_if($this->team->portfolio_public_disabled, 404);
+
         $this->galleries = $this->team->galleries()->public()->with('photos')->get();
     }
 

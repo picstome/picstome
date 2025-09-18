@@ -23,6 +23,16 @@ new class extends Component
         $gallery->makePublic();
     }
 
+    public function disablePortfolioPage()
+    {
+        $this->team->update(['portfolio_public_disabled' => true]);
+    }
+
+    public function enablePortfolioPage()
+    {
+        $this->team->update(['portfolio_public_disabled' => false]);
+    }
+
     public function removeFromPortfolio(Gallery $gallery)
     {
         $this->authorize('update', $gallery);

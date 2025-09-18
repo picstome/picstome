@@ -37,6 +37,7 @@ class Team extends Model
             'lifetime' => 'boolean',
             'bio' => PurifyHtmlOnGet::class,
             'other_social_links' => 'array',
+            'portfolio_public_disabled' => 'boolean',
         ];
     }
 
