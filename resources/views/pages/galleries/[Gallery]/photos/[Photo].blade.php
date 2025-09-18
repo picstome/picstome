@@ -217,10 +217,12 @@ new class extends Component
             @if ($next)
                 <link rel="preload" as="image" href="{{ $next->url }}">
                 <link rel="preload" as="image" href="{{ $next->thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}">
             @endif
             @if ($previous)
                 <link rel="preload" as="image" href="{{ $previous->url }}">
                 <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}">
             @endif
         @endpush
     @endvolt
