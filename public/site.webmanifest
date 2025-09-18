@@ -1,6 +1,7 @@
 {
   "name": "Picstome",
   "short_name": "Picstome",
+  "start_url": "/galleries",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
