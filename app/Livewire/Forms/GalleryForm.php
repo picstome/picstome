@@ -79,7 +79,7 @@ class GalleryForm extends Form
     {
         $maxExpirationDate = now()->addYear()->format('Y-m-d');
 
-        if ($this->gallery && $this->gallery->is_public) {
+        if (isset($this->gallery) && $this->gallery->is_public) {
             return [
                 'nullable',
                 'date',
