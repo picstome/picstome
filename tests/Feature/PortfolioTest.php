@@ -1,9 +1,12 @@
 <?php
 
+use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -139,4 +142,27 @@ it('prevents users from managing portfolio for other teams', function () {
         ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
+});
+
+it('disables keep_original_size and dispatches photo processing when adding gallery to portfolio', function () {
+    Queue::fake();
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+    $gallery = Gallery::factory()->for($team)->create(['is_public' => false, 'keep_original_size' => true]);
+    $photos = Photo::factory()->for($gallery)->count(3)->create();
+
+    Volt::actingAs($user)->test('pages.portfolio')
+        ->call('addToPortfolio', $gallery);
+
+    $gallery->refresh();
+
+    expect($gallery->is_public)->toBeTrue();
+    expect($gallery->keep_original_size)->toBeFalse();
+
+    foreach ($photos as $photo) {
+        Queue::assertPushed(ProcessPhoto::class, function ($job) use ($photo) {
+            return $job->photo->is($photo);
+        });
+    }
 });
