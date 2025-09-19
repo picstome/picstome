@@ -10,7 +10,7 @@
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="Picstome" />
-        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="manifest" href="/site-a.webmanifest" />
 
         @if (! empty($font))
             <link
