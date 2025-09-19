@@ -10,7 +10,7 @@
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="Picstome" />
-        <link rel="manifest" href="/site-a.webmanifest" />
+        <link rel="manifest" href="/site-b.webmanifest" />
 
         <link rel="preconnect" href="https://fonts.bunny.net" />
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
@@ -41,8 +41,6 @@
                             <img src="/app-logo-dark.png" class="h-16 -mx-2 rounded hidden dark:block" alt="Picstome">
                         @endif
                     </div>
-                @else
-                    <flux:brand href="/" logo="/logo.png" class="px-2" />
                 @endauth
 
 
