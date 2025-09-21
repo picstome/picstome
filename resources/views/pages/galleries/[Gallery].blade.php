@@ -386,15 +386,15 @@ new class extends Component
                     @endif
 
                     @if ($gallery->keep_original_size)
-    <flux:callout icon="information-circle" variant="secondary" class="mb-4">
-        <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
-        <flux:callout.text>
-            {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
-        </flux:callout.text>
-    </flux:callout>
-@endif
+                        <flux:callout icon="information-circle" variant="secondary" class="mb-4">
+                            <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
+                            </flux:callout.text>
+                        </flux:callout>
+                    @endif
 
-<div x-data="multiFileUploader">
+                    <div x-data="multiFileUploader">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
