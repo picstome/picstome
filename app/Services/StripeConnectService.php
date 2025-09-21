@@ -12,7 +12,7 @@ class StripeConnectService
 
     public function __construct()
     {
-        $this->apiKey = config('services.stripe.secret');
+        $this->apiKey = config('cashier.secret');
     }
 
     /**
@@ -25,18 +25,48 @@ class StripeConnectService
             return $team->stripe_account_id;
         }
 
-        $response = Http::withBasicAuth($this->apiKey, '')
-            ->asForm()
-            ->post('https://api.stripe.com/v1/accounts', [
-                'type' => 'express',
-                'country' => 'US', // You may want to use $team->country or config
-                'email' => $team->stripeEmail(),
-                'business_profile[name]' => $team->name,
-                'business_profile[url]' => config('app.url'),
-                'controller[fees][payer]' => 'application',
-                'controller[losses][payments]' => 'application',
-                'controller[stripe_dashboard][type]' => 'express',
+        $response = Http::withToken($this->apiKey)
+            ->withHeaders([
+                'Stripe-Version' => '2025-04-30.preview',
+                'Accept' => 'application/json',
+            ])
+            ->post('https://api.stripe.com/v2/core/accounts', [
+                'contact_email' => $team->stripeEmail(),
+                'display_name' => $team->name,
+                'dashboard' => 'full',
+                'identity' => [
+                    'business_details' => [
+                        'registered_name' => $team->name,
+                    ],
+                    'country' => 'us',
+                    'entity_type' => 'company',
+                ],
+                'configuration' => [
+                    'customer' => new \stdClass(),
+                    'merchant' => [
+                        'capabilities' => [
+                            'card_payments' => [
+                                'requested' => true,
+                            ],
+                        ],
+                    ],
+                ],
+                'defaults' => [
+                    'currency' => 'usd',
+                    'responsibilities' => [
+                        'fees_collector' => 'stripe',
+                        'losses_collector' => 'stripe',
+                    ],
+                    'locales' => ['en-US'],
+                ],
+                'include' => [
+                    'configuration.customer',
+                    'configuration.merchant',
+                    'identity',
+                    'requirements',
+                ],
             ]);
+
 
         if (!$response->successful()) {
             Log::error('Stripe account creation failed', ['response' => $response->body()]);
@@ -58,14 +88,24 @@ class StripeConnectService
     {
         $accountId = $this->ensureConnectedAccount($team);
 
-        $response = Http::withBasicAuth($this->apiKey, '')
-            ->asForm()
-            ->post('https://api.stripe.com/v1/account_links', [
+        $response = Http::withToken($this->apiKey)
+            ->withHeaders([
+                'Stripe-Version' => '2025-07-30.preview',
+                'Accept' => 'application/json',
+            ])
+            ->post('https://api.stripe.com/v2/core/account_links', [
                 'account' => $accountId,
-                'type' => 'account_onboarding',
-                'refresh_url' => route('stripe.connect.refresh'),
-                'return_url' => route('stripe.connect.return'),
-                'collection_options[fields]' => 'eventually_due',
+                'use_case' => [
+                    'type' => 'account_onboarding',
+                    'account_onboarding' => [
+                        'collection_options' => [
+                            'fields' => 'eventually_due',
+                        ],
+                        'configurations' => ['merchant', 'customer'],
+                        'return_url' => route('stripe.connect.return'),
+                        'refresh_url' => route('stripe.connect.refresh'),
+                    ],
+                ],
             ]);
 
         if (!$response->successful()) {
