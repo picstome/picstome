@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
@@ -103,22 +104,30 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $encodedUrl = urlencode($originalUrl);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
+            if ($this->canUseWsrvProxy()) {
+                $encodedUrl = urlencode($originalUrl);
+
+                return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
+            }
+
+            return $originalUrl;
         });
     }
 
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
-            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            if ($this->canUseWsrvProxy()) {
+                $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+                $encodedUrl = urlencode($originalUrl);
+                $height = config('picstome.photo_thumb_resize', 1000);
+                $width = config('picstome.photo_thumb_resize', 1000);
 
-            $encodedUrl = urlencode($originalUrl);
-            $height = config('picstome.photo_thumb_resize', 1000);
-            $width = config('picstome.photo_thumb_resize', 1000);
+                return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
+            }
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
+            return Storage::disk($this->diskOrDefault())->url($this->thumb_path);
         });
     }
 
@@ -129,16 +138,32 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $encodedUrl = urlencode($originalUrl);
-            $size = config('picstome.photo_resize', 2048);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
+            if ($this->canUseWsrvProxy()) {
+                $encodedUrl = urlencode($originalUrl);
+                $size = config('picstome.photo_resize', 2048);
+
+                return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
+            }
+
+            return $originalUrl;
         });
     }
 
     protected function diskOrDefault(): string
     {
         return $this->disk ?? 'public';
+    }
+
+    /**
+     * Determine if the wsrv.nl proxy can be used for this photo.
+     */
+    public function canUseWsrvProxy(): bool
+    {
+        $twelveMb = 12 * 1024 * 1024;
+        $keepOriginal = $this->gallery?->keep_original_size;
+
+        return !($this->size > $twelveMb && $keepOriginal);
     }
 
     public function isOnPublicDisk()
