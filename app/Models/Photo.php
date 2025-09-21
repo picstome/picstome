@@ -103,30 +103,22 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $encodedUrl = urlencode($originalUrl);
 
-            if ($this->canUseWsrvProxy()) {
-                $encodedUrl = urlencode($originalUrl);
-
-                return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
-            }
-
-            return $originalUrl;
+            return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
         });
     }
 
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
-            if ($this->canUseWsrvProxy()) {
-                $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-                $encodedUrl = urlencode($originalUrl);
-                $height = config('picstome.photo_thumb_resize', 1000);
-                $width = config('picstome.photo_thumb_resize', 1000);
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
 
-                return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
-            }
+            $encodedUrl = urlencode($originalUrl);
+            $height = config('picstome.photo_thumb_resize', 1000);
+            $width = config('picstome.photo_thumb_resize', 1000);
 
-            return Storage::disk($this->diskOrDefault())->url($this->thumb_path ?? $this->path);
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
         });
     }
 
@@ -137,32 +129,16 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $encodedUrl = urlencode($originalUrl);
+            $size = config('picstome.photo_resize', 2048);
 
-            if ($this->canUseWsrvProxy()) {
-                $encodedUrl = urlencode($originalUrl);
-                $size = config('picstome.photo_resize', 2048);
-
-                return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
-            }
-
-            return $originalUrl;
+            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
         });
     }
 
     protected function diskOrDefault(): string
     {
         return $this->disk ?? 'public';
-    }
-
-    /**
-     * Determine if the wsrv.nl proxy can be used for this photo.
-     */
-    public function canUseWsrvProxy(): bool
-    {
-        $twelveMb = 12 * 1024 * 1024;
-        $keepOriginal = $this->gallery?->keep_original_size;
-
-        return !($this->size > $twelveMb && $keepOriginal);
     }
 
     public function isOnPublicDisk()
