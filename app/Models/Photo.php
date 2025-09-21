@@ -126,7 +126,7 @@ class Photo extends Model
                 return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
             }
 
-            return Storage::disk($this->diskOrDefault())->url($this->thumb_path);
+            return Storage::disk($this->diskOrDefault())->url($this->thumb_path ?? $this->path);
         });
     }
 
