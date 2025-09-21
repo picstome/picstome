@@ -311,5 +311,6 @@
     "photos": "photos",
     "remaining files.": "remaining files.",
     "signatures": "signatures",
-    "total storage": "total storage"
+    "total storage": "total storage",
+    "There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.": "There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery."
 }

@@ -12,6 +12,12 @@ return [
 
     'personal_team_monthly_contract_limit' => 5,
 
+    /**
+     * Maximum allowed pixels for original size images (width * height).
+     * This limit is set because wsrv.nl cannot process images larger than this.
+     */
+    'max_photo_pixels' => env('PICSTOME_MAX_PHOTO_PIXELS', 71000000),
+
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
     'disk' => 's3',

@@ -63,6 +63,54 @@ describe('Gallery Viewing', function () {
 });
 
 describe('Photo Upload', function () {
+    it('blocks photo upload when image exceeds max_photo_pixels with keep_original_size enabled (oversized)', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $oversizedPhoto = UploadedFile::fake()->image('oversized.jpg', 101, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $oversizedPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        $component->assertHasErrors(['photos.0']);
+    });
+
+    it('blocks photo upload when image is exactly at max_photo_pixels with keep_original_size enabled', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $exactPhoto = UploadedFile::fake()->image('exact.jpg', 100, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $exactPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        $component->assertHasErrors(['photos.0']);
+    });
+
+    it('allows photo upload when image is under max_photo_pixels with keep_original_size enabled', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $validPhoto = UploadedFile::fake()->image('valid.jpg', 99, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $validPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(1);
+        $component->assertHasNoErrors();
+    });
+
     it('allows photos to be added to a gallery', function () {
         Storage::fake('public');
         Storage::fake('s3');

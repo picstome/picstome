@@ -373,5 +373,10 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Image :name exceeds :max pixels.": "La imagen :name excede :max píxeles.",
+    "Hay un límite máximo de píxeles de :max porque el tamaño original está habilitado para esta galería.": "Hay un límite máximo de píxeles de :max porque el tamaño original está habilitado para esta galería.",
+    "Original size enabled": "Tamaño original habilitado",
+    "App": "App",
+    "Install the app": "Instalar la app"
 }

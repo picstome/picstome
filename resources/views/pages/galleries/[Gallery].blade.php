@@ -3,7 +3,6 @@
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
-use App\Livewire\Forms\PublicGalleryForm;
 use App\Models\Gallery;
 use App\Models\Photo;
 use Flux\Flux;
@@ -77,6 +76,19 @@ new class extends Component
 
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
+                    }
+
+                    if ($this->gallery->keep_original_size) {
+                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
+
+                        $maxPixels = config('picstome.max_photo_pixels');
+
+                        if ($width * $height >= $maxPixels) {
+                            $fail(__('Image :name exceeds :max pixels.', [
+                                'name' => $uploadedPhoto->getClientOriginalName(),
+                                'max' => number_format($maxPixels/1000000, 0) . 'M'
+                            ]));
+                        }
                     }
                 },
             ],
@@ -373,6 +385,15 @@ new class extends Component
                         </flux:callout>
                     @endif
 
+                    @if ($gallery->keep_original_size)
+                        <flux:callout icon="information-circle" variant="secondary" class="mb-4">
+                            <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
+                            </flux:callout.text>
+                        </flux:callout>
+                    @endif
+
                     <div x-data="multiFileUploader">
                         <!-- File Input -->
                         <flux:input
@@ -384,8 +405,6 @@ new class extends Component
                         />
 
                         <flux:error name="photos" />
-
-                        <flux:error name="photos.*" />
 
                         <div
                             x-show="
