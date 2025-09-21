@@ -78,6 +78,16 @@ new class extends Component
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
+
+                    if ($this->gallery->keep_original_size) {
+                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
+
+                        $maxPixels = config('picstome.max_photo_pixels');
+
+                        if ($width * $height >= $maxPixels) {
+                            $fail(__('Image exceeds ' . number_format($maxPixels/1000000, 0) . 'M pixels.'));
+                        }
+                    }
                 },
             ],
         ]);
