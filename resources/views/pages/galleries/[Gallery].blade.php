@@ -3,7 +3,6 @@
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
-use App\Livewire\Forms\PublicGalleryForm;
 use App\Models\Gallery;
 use App\Models\Photo;
 use Flux\Flux;
@@ -85,7 +84,10 @@ new class extends Component
                         $maxPixels = config('picstome.max_photo_pixels');
 
                         if ($width * $height >= $maxPixels) {
-                            $fail(__('Image exceeds ' . number_format($maxPixels/1000000, 0) . 'M pixels.'));
+                            $fail(__('Image :name exceeds :max pixels.', [
+                                'name' => $uploadedPhoto->getClientOriginalName(),
+                                'max' => number_format($maxPixels/1000000, 0) . 'M'
+                            ]));
                         }
                     }
                 },
@@ -394,8 +396,6 @@ new class extends Component
                         />
 
                         <flux:error name="photos" />
-
-                        <flux:error name="photos.*" />
 
                         <div
                             x-show="

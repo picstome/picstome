@@ -373,5 +373,6 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Image :name exceeds :max pixels.": "La imagen :name excede :max píxeles."
 }
