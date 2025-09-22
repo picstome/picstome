@@ -35,15 +35,16 @@ new class extends Component {
                 </flux:subheading>
                 <flux:separator variant="subtle" class="mt-6" />
             </div>
+
             @if ($onboardingComplete)
-                <flux:callout variant="success" icon="check-circle">
+                <flux:callout variant="secondary" icon="check-circle">
                     <flux:callout.heading>Stripe onboarding complete!</flux:callout.heading>
                     <flux:callout.text>
                         Your Stripe account is now connected. You can start accepting payments.
                     </flux:callout.text>
                 </flux:callout>
             @else
-                <flux:callout variant="warning" icon="exclamation-circle">
+                <flux:callout variant="secondary" icon="exclamation-circle">
                     <flux:callout.heading>Stripe onboarding not complete</flux:callout.heading>
                     <flux:callout.text>
                         You have not finished connecting your Stripe account. Please complete onboarding to accept payments.
