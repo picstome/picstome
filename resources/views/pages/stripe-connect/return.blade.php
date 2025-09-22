@@ -9,8 +9,9 @@ use function Laravel\Folio\name;
 name('stripe.connect.return');
 
 new class extends Component {
-    public $onboardingUrl;
-    public $onboardingComplete;
+    public $onboardingUrl = null;
+
+    public $onboardingComplete = false;
 
     public function mount()
     {
@@ -26,8 +27,6 @@ new class extends Component {
 
         if (!$this->onboardingComplete) {
             $this->onboardingUrl = StripeConnectService::createOnboardingLink($team);
-        } else {
-            $this->onboardingUrl = null;
         }
     }
 } ?>

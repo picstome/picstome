@@ -38,6 +38,7 @@ class Team extends Model
             'bio' => PurifyHtmlOnGet::class,
             'other_social_links' => 'array',
             'portfolio_public_disabled' => 'boolean',
+            'stripe_onboarded' => 'boolean',
         ];
     }
 
@@ -299,7 +300,9 @@ class Team extends Model
         }
 
         return ! $price || $subscription->hasPrice($price);
-        /**
+    }
+
+    /**
      * Check if Stripe onboarding is complete for this team.
      */
     public function hasCompletedOnboarding(): bool
@@ -312,7 +315,6 @@ class Team extends Model
      */
     public function markOnboarded(): void
     {
-        $this->stripe_onboarded = true;
-        $this->save();
+        $this->update(['stripe_onboarded' => true]);
     }
 }
