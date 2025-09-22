@@ -37,6 +37,41 @@ class StripeConnectController extends Controller
         return Redirect::to($onboardingUrl);
     }
 
+    // Pay handler
+    public function pay(Request $request)
+    {
+        $user = Auth::user();
+        $team = $user->currentTeam;
+
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:100|max:1000000',
+            'description' => 'required|string|max:255',
+        ]);
+
+        try {
+            $successUrl = route('stripe.connect.pay.success');
+            $cancelUrl = route('stripe.connect.pay.cancel');
+            $amount = (int) $validated['amount'];
+            $description = $validated['description'];
+            $checkoutUrl = $this->stripeConnectService->createCheckoutSession($team, $successUrl, $cancelUrl, $amount, $description);
+            return Redirect::to($checkoutUrl);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    // Success handler
+    public function paySuccess(Request $request)
+    {
+        return view('pages.stripe-connect.pay-success');
+    }
+
+    // Cancel handler
+    public function payCancel(Request $request)
+    {
+        return view('pages.stripe-connect.pay-cancel');
+    }
+
     // Return URL handler
     public function return(Request $request)
     {

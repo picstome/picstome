@@ -120,6 +120,48 @@ class StripeConnectService
     }
 
     /**
+     * Create a Stripe Checkout Session for $15 using the connected account.
+     * Returns the session URL.
+     */
+    public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description): string
+    {
+        if (!$team->stripe_account_id) {
+            throw new \Exception('Team does not have a Stripe connected account.');
+        }
+
+        $commissionPercent = config('picstome.stripe_commission_percent');
+        $applicationFee = round($amount * $commissionPercent / 100);
+
+        $response = Http::withToken($this->apiKey)
+            ->asForm()
+            ->withHeaders([
+                'Stripe-Version' => '2025-04-30.preview',
+                'Accept' => 'application/json',
+                'Stripe-Account' => $team->stripe_account_id,
+            ])
+            ->post('https://api.stripe.com/v1/checkout/sessions', [
+                'mode' => 'payment',
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'line_items[0][price_data][currency]' => 'usd',
+                'line_items[0][price_data][product_data][name]' => $description,
+                'line_items[0][price_data][unit_amount]' => $amount,
+                'line_items[0][quantity]' => 1,
+                'application_fee_amount' => $applicationFee,
+            ]);
+
+        if (!$response->successful()) {
+            Log::error('Stripe Checkout Session creation failed', ['response' => $response->body()]);
+
+            throw new \Exception('Unable to create Stripe Checkout Session');
+        }
+
+        $session = $response->json();
+
+        return $session['url'];
+    }
+
+    /**
      * Check if Stripe onboarding is complete for the team.
      * Returns true if no requirements are currently due.
      */

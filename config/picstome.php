@@ -34,4 +34,5 @@ return [
     // Grace period in days after expiration before deleting data
     'subscription_grace_period_days' => 7,
 
+    'stripe_commission_percent' => env('STRIPE_COMMISSION_PERCENT', 1),
 ];
