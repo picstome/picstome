@@ -4,9 +4,12 @@ use Facades\App\Services\StripeConnectService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('stripe.connect');
+
+middleware(['auth', 'verified']);
 
 new class extends Component {
     public $onboardingUrl;

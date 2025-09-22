@@ -171,12 +171,20 @@ class StripeConnectService
             return false;
         }
 
+        $includes = [
+            'identity',
+            'configuration.merchant',
+            'requirements',
+        ];
+
+        $query = implode('&', array_map(fn($v) => 'include=' . urlencode($v), $includes));
+
         $response = Http::withToken($this->apiKey)
             ->withHeaders([
-                'Stripe-Version' => '2025-04-30.preview',
+                'Stripe-Version' => '2025-08-27.preview',
                 'Accept' => 'application/json',
             ])
-            ->get('https://api.stripe.com/v2/core/accounts/' . $team->stripe_account_id);
+            ->get('https://api.stripe.com/v2/core/accounts/' . $team->stripe_account_id . '?' . $query);
 
         if (!$response->successful()) {
             Log::error('Stripe account fetch failed', ['response' => $response->body()]);
@@ -185,9 +193,9 @@ class StripeConnectService
         }
 
         $account = $response->json();
-        $requirements = $account['requirements'] ?? [];
-        $currentlyDue = $requirements['currently_due'] ?? [];
 
-        return empty($currentlyDue);
+        $entries = $account['requirements']['entries'] ?? [];
+
+        return empty($entries);
     }
 }
