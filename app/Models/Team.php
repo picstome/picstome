@@ -299,5 +299,20 @@ class Team extends Model
         }
 
         return ! $price || $subscription->hasPrice($price);
+        /**
+     * Check if Stripe onboarding is complete for this team.
+     */
+    public function hasCompletedOnboarding(): bool
+    {
+        return (bool) $this->stripe_onboarded;
+    }
+
+    /**
+     * Mark this team as Stripe onboarded.
+     */
+    public function markOnboarded(): void
+    {
+        $this->stripe_onboarded = true;
+        $this->save();
     }
 }
