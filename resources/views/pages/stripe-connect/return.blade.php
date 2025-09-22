@@ -18,13 +18,17 @@ new class extends Component {
 
         $this->onboardingComplete = $team->hasCompletedOnboarding();
 
-        // Optionally, mark as onboarded if external check is true
-        if (StripeConnectService::isOnboardingComplete($team) && !$team->hasCompletedOnboarding()) {
+        if (!$team->hasCompletedOnboarding() && StripeConnectService::isOnboardingComplete($team)) {
             $team->markOnboarded();
+
             $this->onboardingComplete = true;
         }
 
-        $this->onboardingUrl = StripeConnectService::createOnboardingLink($team);
+        if (!$this->onboardingComplete) {
+            $this->onboardingUrl = StripeConnectService::createOnboardingLink($team);
+        } else {
+            $this->onboardingUrl = null;
+        }
     }
 } ?>
 
