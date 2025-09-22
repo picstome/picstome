@@ -28,6 +28,13 @@ new class extends Component {
 <x-app-layout>
     @volt('pages.stripe-connect.return')
         <section class="mx-auto max-w-lg mt-10">
+            <div class="relative mb-6 w-full">
+                <flux:heading size="xl" level="1">Stripe Connect</flux:heading>
+                <flux:subheading size="lg">
+                    Check your Stripe onboarding status and start accepting payments.
+                </flux:subheading>
+                <flux:separator variant="subtle" class="mt-6" />
+            </div>
             @if ($onboardingComplete)
                 <flux:callout variant="success" icon="check-circle">
                     <flux:callout.heading>Stripe onboarding complete!</flux:callout.heading>
