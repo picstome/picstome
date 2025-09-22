@@ -1,0 +1,23 @@
+<?php
+
+use App\Models\User;
+use Facades\App\Services\StripeConnectService;
+use Livewire\Volt\Volt;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+it('sets the onboardingUrl when StripeConnectService returns a URL', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+    $mockedUrl = 'https://stripe.test/onboarding';
+
+    StripeConnectService::shouldReceive('createOnboardingLink')
+        ->once()
+        ->with($team)
+        ->andReturn($mockedUrl);
+
+    $component = Volt::actingAs($user)->test('pages.stripe-connect.index');
+
+    expect($component->onboardingUrl)->toBe($mockedUrl);
+});
