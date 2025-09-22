@@ -21,3 +21,18 @@ it('sets the onboardingUrl when StripeConnectService returns a URL', function ()
 
     expect($component->onboardingUrl)->toBe($mockedUrl);
 });
+
+it('redirects to onboarding url on refresh page', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+    $mockedUrl = 'https://stripe.test/onboarding-refresh';
+
+    StripeConnectService::shouldReceive('createOnboardingLink')
+        ->once()
+        ->with($team)
+        ->andReturn($mockedUrl);
+
+    $response = $this->actingAs($user)->get('/stripe-connect/refresh');
+
+    $response->assertRedirect($mockedUrl);
+});
