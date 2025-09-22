@@ -94,6 +94,12 @@
                         </flux:navlist.item>
                     </flux:navlist.group>
 
+                    <flux:navlist.group :heading="__('POS')" class="mt-4">
+                        <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
+                            {{ __('Connect with Stripe') }}
+                        </flux:navlist.item>
+                    </flux:navlist.group>
+
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
                             <flux:navlist.item :href="route('users')" icon="user">

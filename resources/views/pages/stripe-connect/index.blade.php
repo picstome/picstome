@@ -1,24 +1,43 @@
 <?php
 
 use Facades\App\Services\StripeConnectService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Volt\Component;
 
 use function Laravel\Folio\name;
-use function Laravel\Folio\render;
 
 name('stripe.connect');
 
-render(function (Request $request) {
-    $team = Auth::user()->currentTeam;
+new class extends Component {
+    public $onboardingUrl;
 
-    $onboardingUrl = StripeConnectService::createOnboardingLink($team);
+    public function mount()
+    {
+        $team = Auth::user()->currentTeam;
 
-    return redirect($onboardingUrl);
-});
+        $this->onboardingUrl = StripeConnectService::createOnboardingLink($team);
+    }
+} ?>
 
-?>
-
-<div>
-    //
-</div>
+<x-app-layout>
+    @volt('pages.stripe-connect.index')
+        <section class="mx-auto max-w-lg">
+            <div class="relative mb-6 w-full">
+                <flux:heading size="xl" level="1">Stripe Connect</flux:heading>
+                <flux:subheading size="lg">
+                    Connect your account to Stripe to start accepting payments.
+                </flux:subheading>
+                <flux:separator variant="subtle" class="mt-6" />
+            </div>
+            <flux:callout icon="banknotes" variant="secondary">
+                <flux:callout.heading>Start accepting payments</flux:callout.heading>
+                <flux:callout.text>
+                    To begin accepting payments, you need to complete your Stripe onboarding. Click the button below to get started or continue the process.
+                </flux:callout.text>
+                <x-slot name="actions">
+                    <flux:button href="{{ $onboardingUrl }}" variant="primary" target="_blank">Begin/Continue Stripe Onboarding</flux:button>
+                </x-slot>
+            </flux:callout>
+        </section>
+    @endvolt
+</x-app-layout>
