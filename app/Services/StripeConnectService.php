@@ -110,10 +110,42 @@ class StripeConnectService
 
         if (!$response->successful()) {
             Log::error('Stripe account link creation failed', ['response' => $response->body()]);
+
             throw new \Exception('Unable to create Stripe onboarding link');
         }
 
         $accountLink = $response->json();
+
         return $accountLink['url'];
+    }
+
+    /**
+     * Check if Stripe onboarding is complete for the team.
+     * Returns true if no requirements are currently due.
+     */
+    public function isOnboardingComplete(Team $team): bool
+    {
+        if (!$team->stripe_account_id) {
+            return false;
+        }
+
+        $response = Http::withToken($this->apiKey)
+            ->withHeaders([
+                'Stripe-Version' => '2025-04-30.preview',
+                'Accept' => 'application/json',
+            ])
+            ->get('https://api.stripe.com/v2/core/accounts/' . $team->stripe_account_id);
+
+        if (!$response->successful()) {
+            Log::error('Stripe account fetch failed', ['response' => $response->body()]);
+
+            return false;
+        }
+
+        $account = $response->json();
+        $requirements = $account['requirements'] ?? [];
+        $currentlyDue = $requirements['currently_due'] ?? [];
+
+        return empty($currentlyDue);
     }
 }

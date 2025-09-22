@@ -40,7 +40,13 @@ class StripeConnectController extends Controller
     // Return URL handler
     public function return(Request $request)
     {
-        // Optionally, check onboarding status and show a message
-        return redirect()->route('stripe.connect')->with('status', 'Onboarding complete or saved for later.');
+        $user = Auth::user();
+        $team = $user->currentTeam;
+        $onboardingComplete = $this->stripeConnectService->isOnboardingComplete($team);
+        $statusMessage = $onboardingComplete
+            ? 'Stripe onboarding complete! You can now receive payouts.'
+            : 'Stripe onboarding incomplete. Please finish setup to receive payouts.';
+
+        return redirect()->route('stripe.connect')->with('status', $statusMessage);
     }
 }
