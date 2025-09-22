@@ -17,7 +17,7 @@ it('sets the onboardingUrl when StripeConnectService returns a URL', function ()
         ->with($team)
         ->andReturn($mockedUrl);
 
-    $component = Volt::actingAs($user)->test('pages.stripe-connect.index');
+    $component = Volt::actingAs($user)->test('pages.stripe-connect.index')->assertOk();
 
     expect($component->onboardingUrl)->toBe($mockedUrl);
 });
