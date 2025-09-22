@@ -16,7 +16,13 @@ new class extends Component {
     {
         $team = Auth::user()->currentTeam;
 
-        $this->onboardingComplete = StripeConnectService::isOnboardingComplete($team);
+        $this->onboardingComplete = $team->hasCompletedOnboarding();
+
+        // Optionally, mark as onboarded if external check is true
+        if (StripeConnectService::isOnboardingComplete($team) && !$team->hasCompletedOnboarding()) {
+            $team->markOnboarded();
+            $this->onboardingComplete = true;
+        }
 
         $this->onboardingUrl = StripeConnectService::createOnboardingLink($team);
     }
