@@ -1,13 +1,10 @@
 <?php
 
 use Facades\App\Services\StripeConnectService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\name;
-use function Laravel\Folio\render;
 
 name('stripe.connect.return');
 
