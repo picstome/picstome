@@ -3,6 +3,7 @@
 use App\Models\Team;
 use App\Models\User;
 use App\Models\Payment;
+use App\Models\Photoshoot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 
@@ -28,6 +29,63 @@ it('shows only payments belonging to the users team', function () {
     expect($component->payments->contains($paymentA))->toBeTrue();
     expect($component->payments->contains($paymentB))->toBeFalse();
     expect($component->payments->contains($paymentC))->toBeTrue();
+});
+
+it('can edit a payment to assign a photoshoot', function () {
+    $payment = Payment::factory()->for($this->team)->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.payments')
+        ->call('editPayment', $payment->id)
+        ->set('paymentForm.photoshoot_id', $photoshoot->id)
+        ->call('savePayment');
+
+    $payment->refresh();
+
+    expect($payment->photoshoot_id)->toBe($photoshoot->id);
+});
+
+it('can change or remove the assigned photoshoot', function () {
+    $payment = Payment::factory()->for($this->team)->create();
+    $photoshootA = Photoshoot::factory()->for($this->team)->create();
+    $photoshootB = Photoshoot::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.payments')
+        ->call('editPayment', $payment->id)
+        ->set('paymentForm.photoshoot_id', $photoshootA->id)
+        ->call('savePayment');
+
+    $payment->refresh();
+
+    expect($payment->photoshoot_id)->toBe($photoshootA->id);
+
+    $component->call('editPayment', $payment->id)
+        ->set('paymentForm.photoshoot_id', $photoshootB->id)
+        ->call('savePayment');
+
+    $payment->refresh();
+
+    expect($payment->photoshoot_id)->toBe($photoshootB->id);
+
+    $component->call('editPayment', $payment->id)
+        ->set('paymentForm.photoshoot_id', null)
+        ->call('savePayment');
+
+    $payment->refresh();
+
+    expect($payment->photoshoot_id)->toBeNull();
+});
+
+it('cannot assign a photoshoot from another team', function () {
+    $payment = Payment::factory()->for($this->team)->create();
+    $otherTeam = Team::factory()->create();
+    $otherPhotoshoot = Photoshoot::factory()->for($otherTeam)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.payments')
+        ->call('editPayment', $payment->id)
+        ->set('paymentForm.photoshoot_id', $otherPhotoshoot->id)
+        ->call('savePayment')
+        ->assertHasErrors(['paymentForm.photoshoot_id' => 'exists']);
 });
 
 it('generates payment link with valid data', function () {
