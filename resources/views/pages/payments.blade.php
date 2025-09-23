@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
 use Facades\App\Services\StripeConnectService;
+use Flux\Flux;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
@@ -18,14 +19,22 @@ new class extends Component
 
     public PaymentForm $form;
 
+    public ?string $paymentLink = null;
+
     public function mount()
     {
         $this->currencies = StripeConnectService::supportedCurrencies();
     }
 
-    public function save()
+    public function generatePaymentLink()
     {
-        $this->form->store();
+        $this->paymentLink = $this->form->generatePaymentLink();
+
+        Flux::modal('generate-payment-link')->close();
+
+        Flux::modal('payment-link')->show();
+
+        $this->form->reset();
     }
 
     #[Computed]
@@ -46,8 +55,8 @@ new class extends Component
                     <x-subheading>{{ __('View, create, and manage your team payments.') }}</x-subheading>
                 </div>
                 <div>
-                    <flux:modal.trigger :name="auth()->check() ? 'create-payment' : 'login'">
-                        <flux:button variant="primary">{{ __('Create payment') }}</flux:button>
+                    <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
+                        <flux:button variant="primary">{{ __('Generate payment link') }}</flux:button>
                     </flux:modal.trigger>
                 </div>
             </div>
@@ -88,7 +97,7 @@ new class extends Component
                     <flux:subheading class="mb-6 max-w-72 text-center">
                         {{ __('We couldn’t find any payments. Create one to get started.') }}
                     </flux:subheading>
-                    <flux:modal.trigger :name="auth()->check() ? 'create-payment' : 'login'">
+                    <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
                         <flux:button variant="primary">
                             {{ __('Create payment') }}
                         </flux:button>
@@ -96,25 +105,38 @@ new class extends Component
                 </div>
             @endif
 
-            <flux:modal name="create-payment" class="w-full sm:max-w-lg">
-                <form wire:submit="save" class="space-y-6">
+            <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+                <form wire:submit="generatePaymentLink" class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Create a new payment') }}</flux:heading>
+                        <flux:heading size="lg">{{ __('Generate a new payment link') }}</flux:heading>
                         <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
                     </div>
-                    <flux:input wire:model="form.amount" :label="__('Amount')" mask:dynamic="$money($input)" required />
+                    <flux:input wire:model="form.amount" :label="__('Amount')" required />
                     <flux:select wire:model="form.currency" :label="__('Currency')" required>
                         @foreach ($this->currencies as $currency)
                             <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
                         @endforeach
                     </flux:select>
                     <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
-                    <flux:input wire:model="form.customer_email" :label="__('Customer Email (optional)')" type="email" />
                     <div class="flex">
                         <flux:spacer />
                         <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                     </div>
                 </form>
+            </flux:modal>
+
+            <flux:modal name="payment-link" class="w-full sm:max-w-lg">
+                <div class="space-y-6">
+                    <flux:heading size="lg">{{ __('Payment link') }}</flux:heading>
+
+                    <flux:input
+                        icon="link"
+                        :value="$this->paymentLink"
+                        :label="__('Payment link')"
+                        readonly
+                        copyable
+                    />
+                </div>
             </flux:modal>
         </div>
     @endvolt

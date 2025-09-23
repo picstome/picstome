@@ -18,13 +18,13 @@ class PaymentForm extends Form
     #[Validate('required|string|max:255')]
     public $description;
 
-    public function store()
+    public function generatePaymentLink()
     {
         $this->validate();
 
-        return Auth::user()->currentTeam->payments()->create([
-            'amount' => (int) round($this->amount * 100), // store as cents
-            'currency' => $this->currency,
+        return route('handle.pay', [
+            'handle' => Auth::user()->currentTeam->handle,
+            'amount' => $this->amount,
             'description' => $this->description,
         ]);
     }
