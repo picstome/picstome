@@ -71,9 +71,9 @@ new class extends Component
                                 <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                                 <x-table.cell>
                                     @if ($payment->completed_at)
-                                        <span class="text-green-600">Paid</span>
+                                        <flux:badge variant="solid" color="green" size="sm">{{ __('Paid') }}</flux:badge>
                                     @else
-                                        <span class="text-yellow-600">Unpaid</span>
+                                        <flux:badge variant="solid" color="yellow" size="sm">{{ __('Unpaid') }}</flux:badge>
                                     @endif
                                 </x-table.cell>
                                 <x-table.cell>{{ $payment->created_at->format('F j, Y H:i') }}</x-table.cell>
