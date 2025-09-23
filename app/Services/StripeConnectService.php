@@ -26,50 +26,18 @@ class StripeConnectService
         }
 
         $response = Http::withToken($this->apiKey)
+            ->asForm()
             ->withHeaders([
-                'Stripe-Version' => '2025-04-30.preview',
                 'Accept' => 'application/json',
             ])
-            ->post('https://api.stripe.com/v2/core/accounts', [
-                'contact_email' => $team->stripeEmail(),
-                'display_name' => $team->name,
-                'dashboard' => 'full',
-                'identity' => [
-                    'business_details' => [
-                        'registered_name' => $team->name,
-                    ],
-                    'country' => 'us',
-                    'entity_type' => 'company',
-                ],
-                'configuration' => [
-                    'customer' => new \stdClass(),
-                    'merchant' => [
-                        'capabilities' => [
-                            'card_payments' => [
-                                'requested' => true,
-                            ],
-                        ],
-                    ],
-                ],
-                'defaults' => [
-                    'currency' => 'usd',
-                    'responsibilities' => [
-                        'fees_collector' => 'stripe',
-                        'losses_collector' => 'stripe',
-                    ],
-                    'locales' => ['en-US'],
-                ],
-                'include' => [
-                    'configuration.customer',
-                    'configuration.merchant',
-                    'identity',
-                    'requirements',
-                ],
+            ->post('https://api.stripe.com/v1/accounts', [
+                'email' => $team->stripeEmail(),
             ]);
 
 
         if (!$response->successful()) {
             Log::error('Stripe account creation failed', ['response' => $response->body()]);
+
             throw new \Exception('Unable to create Stripe connected account');
         }
 
@@ -89,23 +57,15 @@ class StripeConnectService
         $accountId = $this->ensureConnectedAccount($team);
 
         $response = Http::withToken($this->apiKey)
+            ->asForm()
             ->withHeaders([
-                'Stripe-Version' => '2025-07-30.preview',
                 'Accept' => 'application/json',
             ])
-            ->post('https://api.stripe.com/v2/core/account_links', [
+            ->post('https://api.stripe.com/v1/account_links', [
                 'account' => $accountId,
-                'use_case' => [
-                    'type' => 'account_onboarding',
-                    'account_onboarding' => [
-                        'collection_options' => [
-                            'fields' => 'eventually_due',
-                        ],
-                        'configurations' => ['merchant', 'customer'],
-                        'return_url' => route('stripe.connect.return'),
-                        'refresh_url' => route('stripe.connect.refresh'),
-                    ],
-                ],
+                'refresh_url' => route('stripe.connect.refresh'),
+                'return_url' => route('stripe.connect.return'),
+                'type' => 'account_onboarding',
             ]);
 
         if (!$response->successful()) {
@@ -135,7 +95,6 @@ class StripeConnectService
         $response = Http::withToken($this->apiKey)
             ->asForm()
             ->withHeaders([
-                'Stripe-Version' => '2025-04-30.preview',
                 'Accept' => 'application/json',
                 'Stripe-Account' => $team->stripe_account_id,
             ])
@@ -147,7 +106,7 @@ class StripeConnectService
                 'line_items[0][price_data][product_data][name]' => $description,
                 'line_items[0][price_data][unit_amount]' => $amount,
                 'line_items[0][quantity]' => 1,
-                'application_fee_amount' => $applicationFee,
+                'payment_intent_data[application_fee_amount]' => $applicationFee,
             ]);
 
         if (!$response->successful()) {
@@ -171,31 +130,19 @@ class StripeConnectService
             return false;
         }
 
-        $includes = [
-            'identity',
-            'configuration.merchant',
-            'requirements',
-        ];
-
-        $query = implode('&', array_map(fn($v) => 'include=' . urlencode($v), $includes));
-
         $response = Http::withToken($this->apiKey)
             ->withHeaders([
-                'Stripe-Version' => '2025-08-27.preview',
                 'Accept' => 'application/json',
             ])
-            ->get('https://api.stripe.com/v2/core/accounts/' . $team->stripe_account_id . '?' . $query);
+            ->get('https://api.stripe.com/v1/accounts/' . $team->stripe_account_id);
 
         if (!$response->successful()) {
             Log::error('Stripe account fetch failed', ['response' => $response->body()]);
-
             return false;
         }
 
         $account = $response->json();
 
-        $entries = $account['requirements']['entries'] ?? [];
-
-        return empty($entries);
+        return !empty($account['charges_enabled']);
     }
 }
