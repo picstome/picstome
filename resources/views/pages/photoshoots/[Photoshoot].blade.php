@@ -8,6 +8,7 @@ use App\Models\ContractTemplate;
 use App\Models\Photoshoot;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -202,17 +203,11 @@ new class extends Component
                 </x-description.list>
             </div>
 
-            <div class="mt-12">
-                <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
-                <flux:separator class="mt-4" />
-            </div>
-
             @if ($this->payments?->isNotEmpty())
                 <x-table class="mt-12">
                     <x-table.columns>
-                        <x-table.column>{{ __('Description') }}</x-table.column>
+                        <x-table.column>{{ __('Payments') }}</x-table.column>
                         <x-table.column>{{ __('Amount') }}</x-table.column>
-                        <x-table.column>{{ __('Currency') }}</x-table.column>
                         <x-table.column>{{ __('Payment Date') }}</x-table.column>
                         <x-table.column>{{ __('Customer Email') }}</x-table.column>
                     </x-table.columns>
@@ -221,7 +216,6 @@ new class extends Component
                             <x-table.row>
                                 <x-table.cell>{{ $payment->description }}</x-table.cell>
                                 <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                                <x-table.cell>{{ $payment->currency }}</x-table.cell>
                                 <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
                                 <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                             </x-table.row>
@@ -229,6 +223,11 @@ new class extends Component
                     </x-table.rows>
                 </x-table>
             @endif
+
+            <div class="mt-12">
+                <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
+                <flux:separator class="mt-4" />
+            </div>
 
             @if ($photoshoot->galleries?->isNotEmpty())
                 <div class="mt-12">
