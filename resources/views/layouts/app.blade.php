@@ -94,21 +94,23 @@
                         </flux:navlist.item>
                     </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('POS')" class="mt-4">
-                        <flux:navlist.item :href="route('payments')" icon="banknotes">
-                            {{ __('Payments') }}
-                        </flux:navlist.item>
+                    @if (auth()->user()?->is_admin)
+                        <flux:navlist.group :heading="__('POS')" class="mt-4">
+                            <flux:navlist.item :href="route('payments')" icon="banknotes">
+                                {{ __('Payments') }}
+                            </flux:navlist.item>
 
-                        @if(auth()->user()->currentTeam->hasCompletedOnboarding())
-                            <flux:navlist.item :href="route('pos.settings')" icon="cog-6-tooth">
-                                {{ __('Configure') }}
-                            </flux:navlist.item>
-                        @else
-                            <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
-                                {{ __('Connect with Stripe') }}
-                            </flux:navlist.item>
-                        @endif
-                    </flux:navlist.group>
+                            @if(auth()->user()->currentTeam->hasCompletedOnboarding())
+                                <flux:navlist.item :href="route('pos.settings')" icon="cog-6-tooth">
+                                    {{ __('Configure') }}
+                                </flux:navlist.item>
+                            @else
+                                <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
+                                    {{ __('Connect with Stripe') }}
+                                </flux:navlist.item>
+                            @endif
+                        </flux:navlist.group>
+                    @endif
 
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
