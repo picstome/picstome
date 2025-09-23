@@ -189,12 +189,12 @@ new class extends Component
 
                 <flux:modal name="payment-link" class="w-full sm:max-w-lg">
                     <div class="space-y-6">
-                        <flux:heading size="lg">{{ __('Payment link') }}</flux:heading>
+                        <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
+                        <flux:subheading>{{ __('Share this link with your client to request payment.') }}</flux:subheading>
 
                         <flux:input
                             icon="link"
                             :value="$this->paymentLink"
-                            :label="__('Payment link')"
                             readonly
                             copyable
                         />
