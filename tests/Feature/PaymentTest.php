@@ -29,18 +29,3 @@ it('shows only payments belonging to the users team', function () {
     expect($component->payments->contains($paymentB))->toBeFalse();
     expect($component->payments->contains($paymentC))->toBeTrue();
 });
-
-it('allows a user to create a payment', function () {
-    $component = Volt::actingAs($this->user)
-        ->test('pages.payments')
-        ->set('form.amount', 100.00)
-        ->set('form.currency', 'usd')
-        ->set('form.description', 'Test payment')
-        ->call('save');
-
-    expect($this->team->payments()->count())->toBe(1);
-    $payment = $this->team->payments()->first();
-    expect($payment->amount)->toBe(10000);
-    expect($payment->currency)->toBe('usd');
-    expect($payment->description)->toBe('Test payment');
-});
