@@ -99,9 +99,15 @@
                             {{ __('Payments') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
-                            {{ __('Connect with Stripe') }}
-                        </flux:navlist.item>
+                        @if(auth()->user()->currentTeam->hasCompletedOnboarding())
+                            <flux:navlist.item href="#" icon="cog-6-tooth">
+                                {{ __('Configure') }}
+                            </flux:navlist.item>
+                        @else
+                            <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
+                                {{ __('Connect with Stripe') }}
+                            </flux:navlist.item>
+                        @endif
                     </flux:navlist.group>
 
                     @if (auth()->user()?->is_admin)

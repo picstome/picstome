@@ -6,6 +6,7 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
 use Facades\App\Services\StripeConnectService;
 use Flux\Flux;
+use Livewire\WithPagination;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
@@ -15,6 +16,11 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
+    use WithPagination;
+
+    public $sortBy = 'completed_at';
+    public $sortDirection = 'desc';
+
     public array $currencies = [];
 
     public PaymentForm $form;
@@ -42,9 +48,20 @@ new class extends Component
     {
         return Auth::user()?->currentTeam
             ->payments()
-            ->get();
+            ->orderBy($this->sortBy, $this->sortDirection)
+            ->paginate(25);
     }
-}; ?>
+
+    public function sort($column)
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+    }
+} ?>
 
 <x-app-layout>
     @volt('pages.payments')
@@ -61,15 +78,14 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($this->payments?->isNotEmpty())
+            @if ($this->payments?->count())
                 <x-table id="table" class="mt-8">
                     <x-table.columns>
                         <x-table.column>Description</x-table.column>
                         <x-table.column>Amount</x-table.column>
                         <x-table.column>Currency</x-table.column>
                         <x-table.column>Customer Email</x-table.column>
-                        <x-table.column>Status</x-table.column>
-                        <x-table.column>Created At</x-table.column>
+                        <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Completed At</x-table.column>
                     </x-table.columns>
                     <x-table.rows>
                         @foreach ($this->payments as $payment)
@@ -78,17 +94,11 @@ new class extends Component
                                 <x-table.cell>${{ number_format($payment->amount / 100, 2) }}</x-table.cell>
                                 <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
                                 <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                                <x-table.cell>
-                                    @if ($payment->completed_at)
-                                        <flux:badge variant="solid" color="green" size="sm">{{ __('Paid') }}</flux:badge>
-                                    @else
-                                        <flux:badge variant="solid" color="yellow" size="sm">{{ __('Unpaid') }}</flux:badge>
-                                    @endif
-                                </x-table.cell>
-                                <x-table.cell>{{ $payment->created_at->format('F j, Y H:i') }}</x-table.cell>
+                                <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
                             </x-table.row>
                         @endforeach
                     </x-table.rows>
+                    {{ $this->payments->links() }}
                 </x-table>
             @else
                 <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
@@ -97,9 +107,9 @@ new class extends Component
                     <flux:subheading class="mb-6 max-w-72 text-center">
                         {{ __('We couldn’t find any payments. Create one to get started.') }}
                     </flux:subheading>
-                    <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
+                    <flux:modal.trigger name="generate-payment-link">
                         <flux:button variant="primary">
-                            {{ __('Create payment') }}
+                            {{ __('Generate payment link') }}
                         </flux:button>
                     </flux:modal.trigger>
                 </div>
