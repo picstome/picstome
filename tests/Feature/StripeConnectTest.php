@@ -5,6 +5,8 @@ use Facades\App\Services\StripeConnectService;
 use Livewire\Volt\Volt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use function Pest\Laravel\actingAs;
+
 uses(RefreshDatabase::class);
 
 it('sets the onboarding url', function () {
@@ -79,7 +81,7 @@ it('redirects to onboarding url on refresh page', function () {
         ->with($team)
         ->andReturn($mockedUrl);
 
-    $response = $this->actingAs($user)->get('/stripe-connect/refresh');
+    $response = actingAs($user)->get('/stripe-connect/refresh');
 
     $response->assertRedirect($mockedUrl);
 });
