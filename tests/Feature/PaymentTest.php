@@ -2,6 +2,7 @@
 
 use App\Models\Team;
 use App\Models\User;
+use App\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 
@@ -40,7 +41,7 @@ it('allows a user to create a payment', function () {
 
     expect($this->team->payments()->count())->toBe(1);
     $payment = $this->team->payments()->first();
-    expect($payment->amount)->toBe(100.00);
+    expect($payment->amount)->toBe(10000); // 100 dollars = 10000 cents
     expect($payment->currency)->toBe('usd');
     expect($payment->description)->toBe('Test payment');
 });
