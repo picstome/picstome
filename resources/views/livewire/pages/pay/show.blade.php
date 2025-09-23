@@ -26,6 +26,8 @@ class extends Component
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
+        abort_unless($this->team->isStripeOnboarded(), 404);
+
         $this->formattedAmount = Cashier::formatAmount($this->amount * 100, 'usd');
     }
 
