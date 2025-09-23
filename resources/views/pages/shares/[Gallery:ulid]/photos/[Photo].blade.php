@@ -93,6 +93,7 @@ new class extends Component
                     srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                     sizes="(max-width: 640px) 100vw, 80vw"
                     @click="zoom = true"
+                    @contextmenu.prevent
                     class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
                     alt="{{ $photo->name }}"
                 />
@@ -101,6 +102,7 @@ new class extends Component
                     x-show="zoom"
                     src="{{ $photo->url }}"
                     @click="zoom = false"
+                    @contextmenu.prevent
                     class="mx-auto object-contain max-w-none hover:cursor-zoom-out"
                     loading="lazy"
                     alt="{{ $photo->name }}"
