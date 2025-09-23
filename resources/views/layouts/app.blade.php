@@ -95,6 +95,10 @@
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('POS')" class="mt-4">
+                        <flux:navlist.item :href="route('payments')" icon="banknotes">
+                            {{ __('Payments') }}
+                        </flux:navlist.item>
+
                         <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
                             {{ __('Connect with Stripe') }}
                         </flux:navlist.item>
