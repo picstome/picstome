@@ -11,6 +11,11 @@ class Payment extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'amount' => 'integer',
+        'completed_at' => 'datetime',
+    ];
+
     public function team()
     {
         return $this->belongsTo(Team::class);

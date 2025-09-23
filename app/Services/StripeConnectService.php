@@ -145,4 +145,39 @@ class StripeConnectService
 
         return !empty($account['charges_enabled']);
     }
+
+    /**
+     * Returns supported Stripe currencies for enabled countries.
+     */
+    public function supportedCurrencies(): array
+    {
+        return [
+            'AUD', // Australia
+            'EUR', // Austria, Belgium, Croatia, Cyprus, Estonia, Finland, France, Germany, Greece, Ireland, Italy, Latvia, Lithuania, Luxembourg, Malta, Netherlands, Portugal, Slovakia, Slovenia, Spain
+            'BRL', // Brazil
+            'BGN', // Bulgaria
+            'CAD', // Canada
+            'CZK', // Czech Republic
+            'DKK', // Denmark
+            'GBP', // Gibraltar, United Kingdom
+            'HKD', // Hong Kong
+            'HUF', // Hungary
+            'INR', // India
+            'JPY', // Japan
+            'CHF', // Liechtenstein, Switzerland
+            'MYR', // Malaysia
+            'MXN', // Mexico
+            'NZD', // New Zealand
+            'NGN', // Nigeria
+            'NOK', // Norway
+            'PLN', // Poland
+            'RON', // Romania
+            'SGD', // Singapore
+            'SEK', // Sweden
+            'THB', // Thailand
+            'AED', // United Arab Emirates
+            'USD', // United States
+            'ZAR', // South Africa
+        ];
+    }
 }

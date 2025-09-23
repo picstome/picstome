@@ -35,11 +35,12 @@ return [
         ],
     ],
 
-    'stripe' => [
-        'en_pricing_table_id' => env('STRIPE_EN_PRICING_TABLE_ID'),
-        'es_pricing_table_id' => env('STRIPE_ES_PRICING_TABLE_ID'),
-        'lifetime_price_id' => env('STRIPE_LIFETIME_PRICE_ID'),
-    ],
+        'stripe' => [
+            'en_pricing_table_id' => env('STRIPE_EN_PRICING_TABLE_ID'),
+            'es_pricing_table_id' => env('STRIPE_ES_PRICING_TABLE_ID'),
+            'lifetime_price_id' => env('STRIPE_LIFETIME_PRICE_ID'),
+
+        ],
 
     'acumbamail' => [
         'auth_token' => env('ACUMBAMAIL_AUTH_TOKEN'),

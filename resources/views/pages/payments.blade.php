@@ -4,6 +4,7 @@ use App\Livewire\Forms\PaymentForm;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
+use Facades\App\Services\StripeConnectService;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
@@ -13,7 +14,14 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
+    public array $currencies = [];
+
     public PaymentForm $form;
+
+    public function mount()
+    {
+        $this->currencies = StripeConnectService::supportedCurrencies();
+    }
 
     public function save()
     {
@@ -94,8 +102,12 @@ new class extends Component
                         <flux:heading size="lg">{{ __('Create a new payment') }}</flux:heading>
                         <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
                     </div>
-                    <flux:input wire:model="form.amount" :label="__('Amount')" type="number" step="0.01" required />
-                    <flux:input wire:model="form.currency" :label="__('Currency')" type="text" required />
+                    <flux:input wire:model="form.amount" :label="__('Amount')" mask:dynamic="$money($input)" required />
+                    <flux:select wire:model="form.currency" :label="__('Currency')" required>
+                        @foreach ($this->currencies as $currency)
+                            <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
                     <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
                     <flux:input wire:model="form.customer_email" :label="__('Customer Email (optional)')" type="email" />
                     <div class="flex">

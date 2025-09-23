@@ -11,7 +11,6 @@ use function Pest\Laravel\actingAs;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    // Create a user with a personal team
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
 });
@@ -41,7 +40,7 @@ it('allows a user to create a payment', function () {
 
     expect($this->team->payments()->count())->toBe(1);
     $payment = $this->team->payments()->first();
-    expect($payment->amount)->toBe(10000); // 100 dollars = 10000 cents
+    expect($payment->amount)->toBe(10000);
     expect($payment->currency)->toBe('usd');
     expect($payment->description)->toBe('Test payment');
 });
