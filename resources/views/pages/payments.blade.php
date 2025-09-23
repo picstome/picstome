@@ -32,13 +32,78 @@ new class extends Component
 <x-app-layout>
     @volt('pages.payments')
         <div>
-            <form wire:submit="save">
-    <input wire:model="form.amount" type="number" step="0.01" placeholder="Amount" required />
-    <input wire:model="form.currency" type="text" placeholder="Currency" required />
-    <input wire:model="form.description" type="text" placeholder="Description" required />
-    <input wire:model="form.customer_email" type="email" placeholder="Customer Email (optional)" />
-    <button type="submit">Save</button>
-</form>
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div class="max-sm:w-full sm:flex-1">
+                    <x-heading level="1" size="xl">{{ __('Payments') }}</x-heading>
+                    <x-subheading>{{ __('View, create, and manage your team payments.') }}</x-subheading>
+                </div>
+                <div>
+                    <flux:modal.trigger :name="auth()->check() ? 'create-payment' : 'login'">
+                        <flux:button variant="primary">{{ __('Create payment') }}</flux:button>
+                    </flux:modal.trigger>
+                </div>
+            </div>
+
+            @if ($this->payments?->isNotEmpty())
+                <x-table id="table" class="mt-8">
+                    <x-table.columns>
+                        <x-table.column>Description</x-table.column>
+                        <x-table.column>Amount</x-table.column>
+                        <x-table.column>Currency</x-table.column>
+                        <x-table.column>Customer Email</x-table.column>
+                        <x-table.column>Status</x-table.column>
+                        <x-table.column>Created At</x-table.column>
+                    </x-table.columns>
+                    <x-table.rows>
+                        @foreach ($this->payments as $payment)
+                            <x-table.row>
+                                <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
+                                <x-table.cell>${{ number_format($payment->amount / 100, 2) }}</x-table.cell>
+                                <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
+                                <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
+                                <x-table.cell>
+                                    @if ($payment->completed_at)
+                                        <span class="text-green-600">Paid</span>
+                                    @else
+                                        <span class="text-yellow-600">Unpaid</span>
+                                    @endif
+                                </x-table.cell>
+                                <x-table.cell>{{ $payment->created_at->format('F j, Y H:i') }}</x-table.cell>
+                            </x-table.row>
+                        @endforeach
+                    </x-table.rows>
+                </x-table>
+            @else
+                <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+                    <flux:icon.credit-card class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                    <flux:heading size="lg" level="2">{{ __('No payments') }}</flux:heading>
+                    <flux:subheading class="mb-6 max-w-72 text-center">
+                        {{ __('We couldn’t find any payments. Create one to get started.') }}
+                    </flux:subheading>
+                    <flux:modal.trigger :name="auth()->check() ? 'create-payment' : 'login'">
+                        <flux:button variant="primary">
+                            {{ __('Create payment') }}
+                        </flux:button>
+                    </flux:modal.trigger>
+                </div>
+            @endif
+
+            <flux:modal name="create-payment" class="w-full sm:max-w-lg">
+                <form wire:submit="save" class="space-y-6">
+                    <div>
+                        <flux:heading size="lg">{{ __('Create a new payment') }}</flux:heading>
+                        <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
+                    </div>
+                    <flux:input wire:model="form.amount" :label="__('Amount')" type="number" step="0.01" required />
+                    <flux:input wire:model="form.currency" :label="__('Currency')" type="text" required />
+                    <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
+                    <flux:input wire:model="form.customer_email" :label="__('Customer Email (optional)')" type="email" />
+                    <div class="flex">
+                        <flux:spacer />
+                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
         </div>
     @endvolt
 </x-app-layout>
