@@ -75,12 +75,12 @@ new class extends Component
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div class="max-sm:w-full sm:flex-1">
                     <x-heading level="1" size="xl">{{ __('Payments') }}</x-heading>
-                    <x-subheading>{{ __('View, create, and manage your team payments.') }}</x-subheading>
+                    <x-subheading>{{ __('Generate payment links and manage payments.') }}</x-subheading>
                 </div>
                 <div>
                     @if ($this->onboardingComplete)
                         <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
-                            <flux:button variant="primary">{{ __('Generate payment link') }}</flux:button>
+                            <flux:button variant="primary">{{ __('Generate Payment Link') }}</flux:button>
                         </flux:modal.trigger>
                     @endif
                 </div>
@@ -92,7 +92,6 @@ new class extends Component
                         <x-table.columns>
                             <x-table.column>Description</x-table.column>
                             <x-table.column>Amount</x-table.column>
-                            <x-table.column>Currency</x-table.column>
                             <x-table.column>Customer Email</x-table.column>
                             <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Completed At</x-table.column>
                         </x-table.columns>
@@ -101,7 +100,6 @@ new class extends Component
                                 <x-table.row>
                                     <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
                                     <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                                    <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
                                     <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                                     <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
                                 </x-table.row>
@@ -114,11 +112,11 @@ new class extends Component
                         <flux:icon.credit-card class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
                         <flux:heading size="lg" level="2">{{ __('No payments') }}</flux:heading>
                         <flux:subheading class="mb-6 max-w-72 text-center">
-                            {{ __('We couldn’t find any payments. Create one to get started.') }}
+                            {{ __('We couldn’t find any payments. Generate a payment link to request payment from a client.') }}
                         </flux:subheading>
                         <flux:modal.trigger name="generate-payment-link">
                             <flux:button variant="primary">
-                                {{ __('Generate payment link') }}
+                                {{ __('Generate Link') }}
                             </flux:button>
                         </flux:modal.trigger>
                     </div>
@@ -127,8 +125,8 @@ new class extends Component
                 <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
                     <form wire:submit="generatePaymentLink" class="space-y-6">
                         <div>
-                            <flux:heading size="lg">{{ __('Generate a new payment link') }}</flux:heading>
-                            <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
+                            <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
+                            <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
                         </div>
                         <flux:input wire:model="form.amount" :label="__('Amount')" required />
                         <flux:select wire:model="form.currency" :label="__('Currency')" required>
