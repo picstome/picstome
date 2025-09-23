@@ -120,10 +120,11 @@ new class extends Component
                 @if ($this->payments?->count())
                     <x-table id="table" class="mt-8">
                         <x-table.columns>
-                            <x-table.column>Description</x-table.column>
-                            <x-table.column>Amount</x-table.column>
-                            <x-table.column>Customer Email</x-table.column>
-                            <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Payment Date</x-table.column>
+                            <x-table.column>{{ __('Description') }}</x-table.column>
+                            <x-table.column>{{ __('Amount') }}</x-table.column>
+                            <x-table.column>{{ __('Customer Email') }}</x-table.column>
+                            <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">{{ __('Payment Date') }}</x-table.column>
+                            <x-table.column>{{ __('Photoshoot') }}</x-table.column>
                         </x-table.columns>
                         <x-table.rows>
                             @foreach ($this->payments as $payment)
@@ -133,12 +134,18 @@ new class extends Component
                                     <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                                     <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
                                     <x-table.cell>
+                                        @if ($payment->photoshoot)
+                                            <flux:link href="/photoshoots/{{ $payment->photoshoot->id }}">
+                                                {{ $payment->photoshoot->name }}
+                                            </flux:link>
+                                        @else
+                                            -
+                                        @endif
+                                    </x-table.cell>
+                                    <x-table.cell align="end">
                                         <form wire:submit="editPayment({{ $payment->id }})">
                                             <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
                                         </form>
-                                        @if ($payment->photoshoot_id)
-                                            <span class="text-xs text-zinc-500">Photoshoot: {{ optional($payment->photoshoot)->name }}</span>
-                                        @endif
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
