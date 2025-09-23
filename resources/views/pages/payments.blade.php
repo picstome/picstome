@@ -28,14 +28,25 @@ new class extends Component
     public ?string $paymentLink = null;
 
     public bool $onboardingComplete = false;
-    public ?string $onboardingUrl = null;
+
+    #[Computed]
+    public function team()
+    {
+        return Auth::user()?->currentTeam;
+    }
+
+    #[Computed]
+    public function payments()
+    {
+        return $this->team->payments()
+            ->orderBy($this->sortBy, $this->sortDirection)
+            ->paginate(25);
+    }
 
     public function mount()
     {
-        $team = Auth::user()?->currentTeam;
         $this->currencies = StripeConnectService::supportedCurrencies();
-        $this->onboardingComplete = $team ? $team->hasCompletedOnboarding() : false;
-        $this->onboardingUrl = route('stripe.connect');
+        $this->onboardingComplete = $this->team ? $this->team->hasCompletedOnboarding() : false;
     }
 
     public function generatePaymentLink()
@@ -47,15 +58,6 @@ new class extends Component
         Flux::modal('payment-link')->show();
 
         $this->form->reset();
-    }
-
-    #[Computed]
-    public function payments()
-    {
-        return Auth::user()?->currentTeam
-            ->payments()
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(25);
     }
 
     public function sort($column)
