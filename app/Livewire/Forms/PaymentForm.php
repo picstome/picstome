@@ -3,7 +3,6 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Payment;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -18,13 +17,23 @@ class PaymentForm extends Form
     #[Validate('required|string|max:255')]
     public $description;
 
-    public function generatePaymentLink()
+    public ?Payment $payment = null;
+
+    public function setPayment(Payment $payment)
+    {
+        $this->payment = $payment;
+        $this->amount = $payment->amount;
+        $this->currency = $payment->currency;
+        $this->description = $payment->description;
+    }
+
+    public function update()
     {
         $this->validate();
 
-        return route('handle.pay', [
-            'handle' => Auth::user()->currentTeam->handle,
+        $this->payment->update([
             'amount' => $this->amount,
+            'currency' => $this->currency,
             'description' => $this->description,
         ]);
     }

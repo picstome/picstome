@@ -37,7 +37,7 @@ class PaymentPolicy
      */
     public function update(User $user, Payment $payment): bool
     {
-        return false;
+        return $payment->team_id === $user->currentTeam->id;
     }
 
     /**

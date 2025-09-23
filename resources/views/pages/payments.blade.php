@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Forms\PaymentLinkForm;
+use App\Livewire\Forms\PaymentForm;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
@@ -20,11 +21,13 @@ new class extends Component
     use WithPagination;
 
     public $sortBy = 'completed_at';
+
     public $sortDirection = 'desc';
 
     public array $currencies = [];
 
     public PaymentLinkForm $linkForm;
+    public PaymentForm $paymentForm;
 
     public ?string $paymentLink = null;
 
@@ -36,6 +39,8 @@ new class extends Component
     {
         $this->authorize('view', $payment);
 
+        $this->paymentForm->setPayment($payment);
+
         $this->selectedPayment = $payment;
 
         Flux::modal('edit-payment')->show();
@@ -43,12 +48,9 @@ new class extends Component
 
     public function savePayment()
     {
-        if ($this->selectedPayment) {
-            $this->selectedPayment->description = $this->linkForm->description;
-            $this->selectedPayment->amount = $this->linkForm->amount;
-            $this->selectedPayment->currency = $this->linkForm->currency;
-            $this->selectedPayment->save();
-        }
+        $this->authorize('update', $this->selectedPayment);
+
+        $this->paymentForm->update();
 
         Flux::modal('edit-payment')->close();
 
@@ -196,9 +198,9 @@ new class extends Component
                                 <flux:heading size="lg">{{ __('Update payment') }}</flux:heading>
                                 <flux:text class="mt-2">{{ __('Make changes to the payment details.') }}</flux:text>
                             </div>
-                            <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
-                            <flux:input wire:model="linkForm.amount" :label="__('Amount')" type="number" step="0.01" required />
-                            <flux:select wire:model="linkForm.currency" :label="__('Currency')" required>
+                            <flux:input wire:model="paymentForm.description" :label="__('Description')" type="text" required />
+                            <flux:input wire:model="paymentForm.amount" :label="__('Amount')" type="number" step="0.01" required />
+                            <flux:select wire:model="paymentForm.currency" :label="__('Currency')" required>
                                 @foreach ($this->currencies as $currency)
                                     <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
                                 @endforeach
