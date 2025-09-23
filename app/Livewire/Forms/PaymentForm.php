@@ -35,7 +35,7 @@ class PaymentForm extends Form
         $this->validate();
 
         $this->payment->update([
-            'photoshoot_id' => $this->photoshoot_id,
+            'photoshoot_id' => empty($this->photoshoot_id) ? null : $this->photoshoot_id,
         ]);
     }
 }
