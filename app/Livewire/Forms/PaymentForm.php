@@ -9,7 +9,7 @@ use Livewire\Form;
 
 class PaymentForm extends Form
 {
-    #[Validate('required|numeric|min:0.01')]
+    #[Validate('required|integer|min:1')]
     public $amount;
 
     #[Validate('required|string|max:10')]
