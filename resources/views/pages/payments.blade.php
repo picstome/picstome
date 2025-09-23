@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Payment;
-use App\Models\Team;
+use App\Livewire\Forms\PaymentForm;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
@@ -14,20 +13,11 @@ middleware(['auth', 'verified']);
 
 new class extends Component
 {
-    public $form = [
-        'amount' => null,
-        'currency' => 'usd',
-        'description' => '',
-    ];
+    public PaymentForm $form;
 
     public function save()
     {
-        $team = Auth::user()->currentTeam;
-        $team->payments()->create([
-            'amount' => (int) round($this->form['amount'] * 100), // store as cents
-            'currency' => $this->form['currency'],
-            'description' => $this->form['description'],
-        ]);
+        $this->form->store();
     }
 
     #[Computed]
@@ -43,11 +33,11 @@ new class extends Component
     @volt('pages.payments')
         <div>
             <form wire:submit="save">
-                <input wire:model="form.amount" type="number" step="0.01" placeholder="Amount" />
-                <input wire:model="form.currency" type="text" placeholder="Currency" />
-                <input wire:model="form.description" type="text" placeholder="Description" />
-                <button type="submit">Save</button>
-            </form>
+    <input wire:model="form.amount" type="number" step="0.01" placeholder="Amount" required />
+    <input wire:model="form.currency" type="text" placeholder="Currency" required />
+    <input wire:model="form.description" type="text" placeholder="Description" required />
+    <button type="submit">Save</button>
+</form>
         </div>
     @endvolt
 </x-app-layout>
