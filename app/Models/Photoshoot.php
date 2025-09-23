@@ -36,6 +36,11 @@ class Photoshoot extends Model
         return $this->hasMany(Contract::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function deleteGalleries()
     {
         $this->galleries()->cursor()->each(
