@@ -100,7 +100,7 @@
                         </flux:navlist.item>
 
                         @if(auth()->user()->currentTeam->hasCompletedOnboarding())
-                            <flux:navlist.item href="#" icon="cog-6-tooth">
+                            <flux:navlist.item :href="route('pos.settings')" icon="cog-6-tooth">
                                 {{ __('Configure') }}
                             </flux:navlist.item>
                         @else
