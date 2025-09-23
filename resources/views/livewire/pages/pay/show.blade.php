@@ -38,13 +38,10 @@ class extends Component
     {
         $this->validate();
 
-        $successUrl = route('stripe.connect.pay.success');
-        $cancelUrl = route('stripe.connect.pay.cancel');
-
         $checkoutUrl = StripeConnectService::createCheckoutSession(
             $this->team,
-            $successUrl,
-            $cancelUrl,
+            route('handle.pay.success', ['handle' => $this->team->handle]),
+            route('handle.pay.cancel', ['handle' => $this->team->handle]),
             $this->amount * 100,
             $this->description
         );
