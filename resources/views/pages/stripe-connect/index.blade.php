@@ -38,7 +38,7 @@ new class extends Component {
                     To begin accepting payments, you need to complete your Stripe onboarding. Click the button below to get started or continue the process.
                 </flux:callout.text>
                 <x-slot name="actions">
-                    <flux:button href="{{ $onboardingUrl }}" variant="primary" target="_blank">Begin/Continue Stripe Onboarding</flux:button>
+                    <flux:button href="{{ $onboardingUrl }}" variant="primary" target="_blank">Begin Stripe Onboarding</flux:button>
                 </x-slot>
             </flux:callout>
         </section>

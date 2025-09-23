@@ -27,9 +27,15 @@ new class extends Component
 
     public ?string $paymentLink = null;
 
+    public bool $onboardingComplete = false;
+    public ?string $onboardingUrl = null;
+
     public function mount()
     {
+        $team = Auth::user()?->currentTeam;
         $this->currencies = StripeConnectService::supportedCurrencies();
+        $this->onboardingComplete = $team ? $team->hasCompletedOnboarding() : false;
+        $this->onboardingUrl = route('stripe.connect');
     }
 
     public function generatePaymentLink()
@@ -72,82 +78,98 @@ new class extends Component
                     <x-subheading>{{ __('View, create, and manage your team payments.') }}</x-subheading>
                 </div>
                 <div>
-                    <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
-                        <flux:button variant="primary">{{ __('Generate payment link') }}</flux:button>
-                    </flux:modal.trigger>
+                    @if ($this->onboardingComplete)
+                        <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
+                            <flux:button variant="primary">{{ __('Generate payment link') }}</flux:button>
+                        </flux:modal.trigger>
+                    @endif
                 </div>
             </div>
 
-            @if ($this->payments?->count())
-                <x-table id="table" class="mt-8">
-                    <x-table.columns>
-                        <x-table.column>Description</x-table.column>
-                        <x-table.column>Amount</x-table.column>
-                        <x-table.column>Currency</x-table.column>
-                        <x-table.column>Customer Email</x-table.column>
-                        <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Completed At</x-table.column>
-                    </x-table.columns>
-                    <x-table.rows>
-                        @foreach ($this->payments as $payment)
-                            <x-table.row>
-                                <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
-                                <x-table.cell>${{ number_format($payment->amount / 100, 2) }}</x-table.cell>
-                                <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
-                                <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                                <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
-                            </x-table.row>
-                        @endforeach
-                    </x-table.rows>
-                    {{ $this->payments->links() }}
-                </x-table>
+            @if ($this->onboardingComplete)
+                @if ($this->payments?->count())
+                    <x-table id="table" class="mt-8">
+                        <x-table.columns>
+                            <x-table.column>Description</x-table.column>
+                            <x-table.column>Amount</x-table.column>
+                            <x-table.column>Currency</x-table.column>
+                            <x-table.column>Customer Email</x-table.column>
+                            <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Completed At</x-table.column>
+                        </x-table.columns>
+                        <x-table.rows>
+                            @foreach ($this->payments as $payment)
+                                <x-table.row>
+                                    <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
+                                    <x-table.cell>${{ number_format($payment->amount / 100, 2) }}</x-table.cell>
+                                    <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
+                                    <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
+                                    <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                        {{ $this->payments->links() }}
+                    </x-table>
+                @else
+                    <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+                        <flux:icon.credit-card class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                        <flux:heading size="lg" level="2">{{ __('No payments') }}</flux:heading>
+                        <flux:subheading class="mb-6 max-w-72 text-center">
+                            {{ __('We couldn’t find any payments. Create one to get started.') }}
+                        </flux:subheading>
+                        <flux:modal.trigger name="generate-payment-link">
+                            <flux:button variant="primary">
+                                {{ __('Generate payment link') }}
+                            </flux:button>
+                        </flux:modal.trigger>
+                    </div>
+                @endif
+
+                <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+                    <form wire:submit="generatePaymentLink" class="space-y-6">
+                        <div>
+                            <flux:heading size="lg">{{ __('Generate a new payment link') }}</flux:heading>
+                            <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
+                        </div>
+                        <flux:input wire:model="form.amount" :label="__('Amount')" required />
+                        <flux:select wire:model="form.currency" :label="__('Currency')" required>
+                            @foreach ($this->currencies as $currency)
+                                <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        </div>
+                    </form>
+                </flux:modal>
+
+                <flux:modal name="payment-link" class="w-full sm:max-w-lg">
+                    <div class="space-y-6">
+                        <flux:heading size="lg">{{ __('Payment link') }}</flux:heading>
+
+                        <flux:input
+                            icon="link"
+                            :value="$this->paymentLink"
+                            :label="__('Payment link')"
+                            readonly
+                            copyable
+                        />
+                    </div>
+                </flux:modal>
             @else
-                <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-                    <flux:icon.credit-card class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-                    <flux:heading size="lg" level="2">{{ __('No payments') }}</flux:heading>
-                    <flux:subheading class="mb-6 max-w-72 text-center">
-                        {{ __('We couldn’t find any payments. Create one to get started.') }}
-                    </flux:subheading>
-                    <flux:modal.trigger name="generate-payment-link">
-                        <flux:button variant="primary">
-                            {{ __('Generate payment link') }}
+                <flux:callout icon="banknotes" variant="secondary" class="mt-8">
+                    <flux:callout.heading>{{ __('Complete Stripe onboarding to accept payments') }}</flux:callout.heading>
+                    <flux:callout.text>
+                        {{ __('Before you can accept payments, you must complete your Stripe Connect onboarding process.') }}
+                    </flux:callout.text>
+                    <x-slot name="actions">
+                        <flux:button :href="route('stripe.connect')" variant="primary">
+                            {{ __('Begin Stripe Onboarding') }}
                         </flux:button>
-                    </flux:modal.trigger>
-                </div>
+                    </x-slot>
+                </flux:callout>
             @endif
-
-            <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
-                <form wire:submit="generatePaymentLink" class="space-y-6">
-                    <div>
-                        <flux:heading size="lg">{{ __('Generate a new payment link') }}</flux:heading>
-                        <flux:subheading>{{ __('Please enter your payment details.') }}</flux:subheading>
-                    </div>
-                    <flux:input wire:model="form.amount" :label="__('Amount')" required />
-                    <flux:select wire:model="form.currency" :label="__('Currency')" required>
-                        @foreach ($this->currencies as $currency)
-                            <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
-                    <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                    </div>
-                </form>
-            </flux:modal>
-
-            <flux:modal name="payment-link" class="w-full sm:max-w-lg">
-                <div class="space-y-6">
-                    <flux:heading size="lg">{{ __('Payment link') }}</flux:heading>
-
-                    <flux:input
-                        icon="link"
-                        :value="$this->paymentLink"
-                        :label="__('Payment link')"
-                        readonly
-                        copyable
-                    />
-                </div>
-            </flux:modal>
         </div>
     @endvolt
 </x-app-layout>
