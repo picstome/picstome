@@ -36,6 +36,7 @@ new class extends Component
     <input wire:model="form.amount" type="number" step="0.01" placeholder="Amount" required />
     <input wire:model="form.currency" type="text" placeholder="Currency" required />
     <input wire:model="form.description" type="text" placeholder="Description" required />
+    <input wire:model="form.customer_email" type="email" placeholder="Customer Email (optional)" />
     <button type="submit">Save</button>
 </form>
         </div>
