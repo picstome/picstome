@@ -100,7 +100,7 @@ new class extends Component
                             @foreach ($this->payments as $payment)
                                 <x-table.row>
                                     <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
-                                    <x-table.cell>${{ number_format($payment->amount / 100, 2) }}</x-table.cell>
+                                    <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
                                     <x-table.cell>{{ strtoupper($payment->currency) }}</x-table.cell>
                                     <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                                     <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
