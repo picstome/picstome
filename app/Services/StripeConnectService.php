@@ -106,7 +106,7 @@ class StripeConnectService
                 'line_items[0][price_data][product_data][name]' => $description,
                 'line_items[0][price_data][unit_amount]' => $amount,
                 'line_items[0][quantity]' => 1,
-                'payment_intent_data[application_fee_amount]' => $applicationFee,
+                // 'payment_intent_data[application_fee_amount]' => $applicationFee,
             ]);
 
         if (!$response->successful()) {
@@ -144,6 +144,27 @@ class StripeConnectService
         $account = $response->json();
 
         return !empty($account['charges_enabled']);
+    }
+
+    /**
+     * Retrieve a Stripe Checkout Session by ID for a connected account.
+     * Returns the session details as an array.
+     */
+    public function getCheckoutSession(string $sessionId, string $stripeAccountId): array
+    {
+        $response = Http::withToken($this->apiKey)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Stripe-Account' => $stripeAccountId,
+            ])
+            ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}", ['expand' => ['line_items']]);
+
+        if (!$response->successful()) {
+            \Log::error('Stripe Checkout Session fetch failed', ['response' => $response->body()]);
+            throw new \Exception('Unable to fetch Stripe Checkout Session');
+        }
+
+        return $response->json();
     }
 
     /**

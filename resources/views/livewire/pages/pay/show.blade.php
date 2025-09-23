@@ -40,7 +40,7 @@ class extends Component
 
         $checkoutUrl = StripeConnectService::createCheckoutSession(
             $this->team,
-            route('handle.pay.success', ['handle' => $this->team->handle]),
+            route('handle.pay.success', ['handle' => $this->team->handle]).'?session_id={CHECKOUT_SESSION_ID}',
             route('handle.pay.cancel', ['handle' => $this->team->handle]),
             $this->amount * 100,
             $this->description

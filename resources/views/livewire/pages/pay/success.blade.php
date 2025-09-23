@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Payment;
 use App\Models\Team;
+use Facades\App\Services\StripeConnectService;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
 new
@@ -11,9 +14,37 @@ class extends Component
 {
     public Team $team;
 
+    public array $checkoutSession = [];
+
+    #[Url]
+    public ?string $session_id = null;
+
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
+
+        if ($this->session_id) {
+            $this->checkoutSession = StripeConnectService::getCheckoutSession($this->session_id, $this->team->stripe_account_id);
+
+            if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
+                $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
+
+                if ($paymentIntentId) {
+                    $existing = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
+
+                    if (!$existing) {
+                        $this->team->payments()->create([
+                            'amount' => $this->checkoutSession['amount_total'] ?? 0,
+                            'currency' => $this->checkoutSession['currency'] ?? 'usd',
+                            'stripe_payment_intent_id' => $paymentIntentId,
+                            'description' => $this->checkoutSession['line_items']['data'][0]['description'] ?? null,
+                            'customer_email' => $this->checkoutSession['customer_details']['email'] ?? null,
+                            'completed_at' => now(),
+                        ]);
+                    }
+                }
+            }
+        }
     }
 
     public function rendering(View $view): void
