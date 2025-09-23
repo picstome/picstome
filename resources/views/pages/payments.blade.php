@@ -136,6 +136,9 @@ new class extends Component
                                         <form wire:submit="editPayment({{ $payment->id }})">
                                             <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
                                         </form>
+                                        @if ($payment->photoshoot_id)
+                                            <span class="text-xs text-zinc-500">Photoshoot: {{ optional($payment->photoshoot)->name }}</span>
+                                        @endif
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
@@ -198,13 +201,17 @@ new class extends Component
                                 <flux:heading size="lg">{{ __('Update payment') }}</flux:heading>
                                 <flux:text class="mt-2">{{ __('Make changes to the payment details.') }}</flux:text>
                             </div>
-                            <flux:input wire:model="paymentForm.description" :label="__('Description')" type="text" required />
-                            <flux:input wire:model="paymentForm.amount" :label="__('Amount')" type="number" step="0.01" required />
-                            <flux:select wire:model="paymentForm.currency" :label="__('Currency')" required>
-                                @foreach ($this->currencies as $currency)
-                                    <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
+                            <flux:select wire:model="paymentForm.photoshoot_id" :label="__('Photoshoot')">
+                                <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                                @foreach ($this->team->photoshoots as $photoshoot)
+                                    <flux:select.option value="{{ $photoshoot->id }}">{{ $photoshoot->name }}</flux:select.option>
                                 @endforeach
                             </flux:select>
+                            <flux:input :value="$this->selectedPayment->description" :label="__('Description')" type="text" variant="filled" readonly />
+                            <flux:input :value="$this->selectedPayment->formattedAmount" :label="__('Amount')" variant="filled" readonly />
+                            <flux:input :value="strtoupper($this->selectedPayment->currency)" :label="__('Currency')" variant="filled" readonly />
+                            <flux:input :value="$this->selectedPayment->completed_at->format('Y-m-d H:i:s')" :label="__('Payment Date')" variant="filled" readonly />
+                            <flux:input :value="$this->selectedPayment->stripe_payment_intent_id" :label="__('Payment Intent ID')" variant="filled" readonly />
                             <div class="flex">
                                 <flux:spacer />
                                 <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>

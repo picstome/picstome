@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
-                $table->integer('amount'); // amount in cents
-                $table->string('currency', 10);
-                $table->string('description');
-                $table->timestamps();
+            $table->foreignId('photoshoot_id')->nullable()->constrained()->nullOnDelete();
+            $table->integer('amount'); // amount in cents
+            $table->string('currency', 10);
+            $table->string('description');
+            $table->timestamps();
         });
     }
 

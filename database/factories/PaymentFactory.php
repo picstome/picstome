@@ -17,6 +17,7 @@ class PaymentFactory extends Factory
             'amount' => $this->faker->numberBetween(1000, 100000), // cents
             'currency' => 'usd',
             'description' => $this->faker->sentence,
+            'photoshoot_id' => null,
         ];
     }
 }
