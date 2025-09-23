@@ -24,8 +24,6 @@ new class extends Component
 
     public $sortDirection = 'desc';
 
-    public array $currencies = [];
-
     public PaymentLinkForm $linkForm;
     public PaymentForm $paymentForm;
 
@@ -73,7 +71,6 @@ new class extends Component
 
     public function mount()
     {
-        $this->currencies = StripeConnectService::supportedCurrencies();
         $this->onboardingComplete = $this->team ? $this->team->hasCompletedOnboarding() : false;
     }
 
@@ -174,11 +171,6 @@ new class extends Component
                             <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
                         </div>
                         <flux:input wire:model="linkForm.amount" :label="__('Amount')" required />
-                        <flux:select wire:model="linkForm.currency" :label="__('Currency')" required>
-                            @foreach ($this->currencies as $currency)
-                                <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
                         <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
                         <div class="flex">
                             <flux:spacer />

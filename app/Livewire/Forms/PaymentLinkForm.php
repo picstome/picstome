@@ -11,9 +11,6 @@ class PaymentLinkForm extends Form
     #[Validate('required|integer|min:1')]
     public $amount;
 
-    #[Validate('required|string|max:10')]
-    public $currency = 'usd';
-
     #[Validate('required|string|max:255')]
     public $description;
 

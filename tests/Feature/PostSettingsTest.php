@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\User;
-use App\Models\Team;
-use App\Services\StripeConnectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 

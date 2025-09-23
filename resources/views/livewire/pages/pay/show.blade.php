@@ -28,7 +28,7 @@ class extends Component
 
         abort_unless($this->team->hasCompletedOnboarding(), 404);
 
-        $this->formattedAmount = Cashier::formatAmount($this->amount * 100, 'usd');
+        $this->formattedAmount = Cashier::formatAmount($this->amount * 100, $this->team->stripe_currency);
     }
 
     public function rendering(View $view): void

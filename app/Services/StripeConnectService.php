@@ -102,7 +102,7 @@ class StripeConnectService
                 'mode' => 'payment',
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
-                'line_items[0][price_data][currency]' => 'usd',
+                'line_items[0][price_data][currency]' => $team->stripe_currency,
                 'line_items[0][price_data][product_data][name]' => $description,
                 'line_items[0][price_data][unit_amount]' => $amount,
                 'line_items[0][quantity]' => 1,
