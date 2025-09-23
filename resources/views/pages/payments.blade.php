@@ -1,6 +1,7 @@
 <?php
 
-use App\Livewire\Forms\PaymentForm;
+use App\Livewire\Forms\PaymentLinkForm;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Computed;
@@ -23,11 +24,36 @@ new class extends Component
 
     public array $currencies = [];
 
-    public PaymentForm $form;
+    public PaymentLinkForm $linkForm;
 
     public ?string $paymentLink = null;
 
+    public ?Payment $selectedPayment = null;
+
     public bool $onboardingComplete = false;
+
+    public function editPayment(Payment $payment)
+    {
+        $this->authorize('view', $payment);
+
+        $this->selectedPayment = $payment;
+
+        Flux::modal('edit-payment')->show();
+    }
+
+    public function savePayment()
+    {
+        if ($this->selectedPayment) {
+            $this->selectedPayment->description = $this->linkForm->description;
+            $this->selectedPayment->amount = $this->linkForm->amount;
+            $this->selectedPayment->currency = $this->linkForm->currency;
+            $this->selectedPayment->save();
+        }
+
+        Flux::modal('edit-payment')->close();
+
+        $this->selectedPayment = null;
+    }
 
     #[Computed]
     public function team()
@@ -51,13 +77,13 @@ new class extends Component
 
     public function generatePaymentLink()
     {
-        $this->paymentLink = $this->form->generatePaymentLink();
+        $this->paymentLink = $this->linkForm->generatePaymentLink();
 
         Flux::modal('generate-payment-link')->close();
 
         Flux::modal('payment-link')->show();
 
-        $this->form->reset();
+        $this->linkForm->reset();
     }
 
     public function sort($column)
@@ -104,6 +130,11 @@ new class extends Component
                                     <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
                                     <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                                     <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
+                                    <x-table.cell>
+                                        <form wire:submit="editPayment({{ $payment->id }})">
+                                            <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
+                                        </form>
+                                    </x-table.cell>
                                 </x-table.row>
                             @endforeach
                         </x-table.rows>
@@ -130,13 +161,13 @@ new class extends Component
                             <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
                             <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
                         </div>
-                        <flux:input wire:model="form.amount" :label="__('Amount')" required />
-                        <flux:select wire:model="form.currency" :label="__('Currency')" required>
+                        <flux:input wire:model="linkForm.amount" :label="__('Amount')" required />
+                        <flux:select wire:model="linkForm.currency" :label="__('Currency')" required>
                             @foreach ($this->currencies as $currency)
                                 <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
                             @endforeach
                         </flux:select>
-                        <flux:input wire:model="form.description" :label="__('Description')" type="text" required />
+                        <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
                         <div class="flex">
                             <flux:spacer />
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
@@ -156,6 +187,28 @@ new class extends Component
                             copyable
                         />
                     </div>
+                </flux:modal>
+
+                <flux:modal name="edit-payment" variant="flyout">
+                    @if ($selectedPayment)
+                        <form wire:submit="savePayment" class="space-y-6">
+                            <div>
+                                <flux:heading size="lg">{{ __('Update payment') }}</flux:heading>
+                                <flux:text class="mt-2">{{ __('Make changes to the payment details.') }}</flux:text>
+                            </div>
+                            <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
+                            <flux:input wire:model="linkForm.amount" :label="__('Amount')" type="number" step="0.01" required />
+                            <flux:select wire:model="linkForm.currency" :label="__('Currency')" required>
+                                @foreach ($this->currencies as $currency)
+                                    <flux:select.option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            <div class="flex">
+                                <flux:spacer />
+                                <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
+                            </div>
+                        </form>
+                    @endif
                 </flux:modal>
             @else
                 <flux:callout icon="banknotes" variant="secondary" class="mt-8">
