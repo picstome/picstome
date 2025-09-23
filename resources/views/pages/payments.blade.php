@@ -93,7 +93,7 @@ new class extends Component
                             <x-table.column>Description</x-table.column>
                             <x-table.column>Amount</x-table.column>
                             <x-table.column>Customer Email</x-table.column>
-                            <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Completed At</x-table.column>
+                            <x-table.column sortable :sorted="$sortBy === 'completed_at'" :direction="$sortDirection" wire:click="sort('completed_at')">Payment Date</x-table.column>
                         </x-table.columns>
                         <x-table.rows>
                             @foreach ($this->payments as $payment)
