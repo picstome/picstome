@@ -1,0 +1,75 @@
+<?php
+
+use App\Models\Team;
+use Facades\App\Services\StripeConnectService;
+use Illuminate\View\View;
+use Laravel\Cashier\Cashier;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Validate;
+use Livewire\Volt\Component;
+
+new
+#[Layout('layouts.guest')]
+class extends Component
+{
+    public Team $team;
+
+    public ?string $formattedAmount  = null;
+
+    #[Validate('required', 'integer', 'min:1')]
+    public int $amount;
+
+    #[Validate('required', 'string', 'max:255')]
+    public string $description;
+
+    public function mount(string $handle)
+    {
+        $this->team = Team::where('handle', $handle)->firstOrFail();
+
+        $this->formattedAmount = Cashier::formatAmount($this->amount * 100, 'usd');
+    }
+
+    public function rendering(View $view): void
+    {
+        $view->title($this->team->name . ' - Pay');
+    }
+
+    public function checkout()
+    {
+        $this->validate();
+
+        $successUrl = route('stripe.connect.pay.success');
+        $cancelUrl = route('stripe.connect.pay.cancel');
+
+        $checkoutUrl = StripeConnectService::createCheckoutSession(
+            $this->team,
+            $successUrl,
+            $cancelUrl,
+            $this->amount * 100,
+            $this->description
+        );
+
+        return redirect()->away($checkoutUrl);
+    }
+}; ?>
+
+<div class="flex min-h-screen items-center justify-center px-4">
+    <div class="mx-auto w-full max-w-md text-center">
+        <div class="space-y-4">
+            <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block space-y-4" wire:navigate>
+                @if($team->brand_logo_icon_url)
+                    <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
+                @else
+                    <flux:heading size="xl">{{ $team->name }}</flux:heading>
+                @endif
+            </a>
+
+            <div>
+                <flux:text class="font-medium mb-2">{{ $description }}</flux:text>
+                <flux:heading size="xl" class="font-semibold">{{ $formattedAmount }}</flux:heading>
+            </div>
+
+            <flux:button wire:click="checkout" variant="primary" icon:trailing="arrow-right">{{ __('Proceed to checkout') }}</flux:button>
+        </div>
+    </div>
+</div>
