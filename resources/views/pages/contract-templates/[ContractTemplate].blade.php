@@ -68,7 +68,7 @@ new class extends Component
 
             <flux:separator class="mt-6 mb-10" />
 
-            <div class="prose prose-sm">
+            <div class="prose prose-sm dark:prose-invert">
                 {!! $contractTemplate->formatted_markdown_body !!}
             </div>
 
@@ -82,7 +82,7 @@ new class extends Component
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
                     <flux:field class="
-                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
+                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!
                         **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
                     >
                         <flux:label>{{ __('Terms') }}</flux:label>
@@ -91,7 +91,7 @@ new class extends Component
                             input="trix"
                             x-init="$nextTick(() => $el.editor.loadHTML($wire.form.body))"
                             x-on:trix-change="$wire.form.body = $event.target.value"
-                            class="prose prose-sm mt-2"
+                            class="prose prose-sm mt-2 dark:prose-invert"
                         ></trix-editor>
 
                         <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />
@@ -99,7 +99,7 @@ new class extends Component
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="sticky right-0 -bottom-6 left-0 bg-white">
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
                         <flux:separator />
                         <div class="flex py-6">
                             <flux:spacer />

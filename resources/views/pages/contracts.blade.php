@@ -185,7 +185,8 @@ new class extends Component
 
                     <flux:field class="
                         **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
-                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden
+                        dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!"
                     >
                         <div data-flux-label class="flex items-center justify-between">
                             <flux:label>{{ __('Terms') }}</flux:label>
@@ -196,7 +197,7 @@ new class extends Component
                         </div>
 
                         <trix-editor
-                            class="prose prose-sm mt-2"
+                            class="prose prose-sm mt-2 dark:prose-invert"
                             x-on:trix-change="$wire.form.body = $event.target.value"
                             input="trix"
                         ></trix-editor>
@@ -206,7 +207,7 @@ new class extends Component
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="sticky right-0 -bottom-6 left-0 bg-white">
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
                         <flux:separator />
                         <div class="flex py-6">
                             <flux:spacer />

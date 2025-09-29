@@ -160,7 +160,7 @@ new class extends Component
 
                     <x-description.term>{{ __('Terms') }}</x-description.term>
                     <x-description.details>
-                        <div class="prose prose-sm">{!! $contract->formatted_markdown_body !!}</div>
+                        <div class="prose prose-sm dark:prose-invert">{!! $contract->formatted_markdown_body !!}</div>
                     </x-description.details>
                 </x-description.list>
             </div>

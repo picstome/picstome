@@ -136,7 +136,8 @@ new class extends Component
 
                     <flux:field class="
                         **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
-                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden
+                        dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!"
                     >
                         <flux:label>{{ __('Bio') }}</flux:label>
 
@@ -144,7 +145,7 @@ new class extends Component
                             input="trix"
                             x-init="$nextTick(() => $el.editor.loadHTML($wire.form.bio))"
                             x-on:trix-change="$wire.form.bio = $event.target.value"
-                            class="prose prose-sm mt-2"
+                            class="prose prose-sm mt-2 dark:prose-invert"
                         ></trix-editor>
 
                         <input wire:model="form.bio" id="trix" type="text" class="hidden" />
