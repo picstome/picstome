@@ -79,26 +79,41 @@ new class extends Component
             x-data="{
                 swipe: '',
                 zoom: false,
+                pinchZooming: false,
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
             }"
-            x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
+            x-init="(() => {
+                const hammer = new Hammer($el, { touchAction: 'auto' });
+                hammer.get('pinch').set({ enable: true });
+                hammer.on('swipeleft swiperight pinchstart', ev => $dispatch(ev.type));
+            })()"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
             @keyup.window.f="$wire.favorite()"
             @swipeleft="$refs.next && Livewire.navigate($refs.next.href)"
             @swiperight="$refs.previous && Livewire.navigate($refs.previous.href)"
+            @pinchstart="pinchZooming = true;"
             class="flex h-screen flex-col"
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
-                    x-show="!zoom"
+                    x-show="!zoom && !pinchZooming"
                     src="{{ $photo->thumbnail_url }}"
                     srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                     sizes="(max-width: 640px) 100vw, 80vw"
                     @click="zoom = true"
                     class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
                     alt="{{ $photo->name }}"
+                />
+
+                <img
+                    x-show="!zoom && pinchZooming"
+                    src="{{ $photo->url }}"
+                    @click="zoom = true"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    alt="{{ $photo->name }}"
+                    x-cloak
                 />
 
                 <img
