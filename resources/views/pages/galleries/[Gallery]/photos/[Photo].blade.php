@@ -82,13 +82,7 @@ new class extends Component
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
             }"
-            x-init="
-                const hammer = new Hammer($el);
-                hammer.get('pinch').set({ enable: true });
-                hammer.on('swipeleft swiperight', function(ev) { $dispatch(ev.type) });
-                hammer.on('pinchin', function() { zoom = true });
-                hammer.on('pinchout', function() { zoom = false });
-            "
+            x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
             @keyup.window.f="$wire.favorite()"
