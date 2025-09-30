@@ -70,22 +70,25 @@ new class extends Component
     @volt('pages.shares.photos.show')
         <div
             x-data="{
-                swipe: '',
-                zoom: false,
-                pinchZooming: false,
-                thumbnailUrl: '{{ $photo->thumbnail_url }}',
-                photoUrl: '{{ $photo->url }}',
-            }"
+swipe: '',
+                 zoom: false,
+                 pinchZooming: false,
+                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
+                 photoUrl: '{{ $photo->url }}',
+                 navigating: false,
+             }"
             x-init="(() => {
                 const hammer = new Hammer($el, { touchAction: 'auto' });
                 hammer.get('pinch').set({ enable: true });
-                hammer.on('swipeleft swiperight pinchstart', ev => $dispatch(ev.type));
+                hammer.on('pinch panleft panright', function(ev) {
+                    $dispatch(ev.type, ev);
+                });
             })()"
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
-            @swipeleft="$refs.next && Livewire.navigate($refs.next.href)"
-            @swiperight="$refs.previous && Livewire.navigate($refs.previous.href)"
+@panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
+             @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
             @pinchstart="pinchZooming = true;"
             @if ($this->photo->gallery->is_share_selectable)
                 @keyup.window.f="$wire.favorite()"
