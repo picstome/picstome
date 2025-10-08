@@ -150,11 +150,21 @@ class Photo extends Model
         $cdn = config('picstome.photo_cdn_domain', 'wsrv.nl');
 
         if ($cdn === 'i0.wp.com') {
-            $cdn = 'https://' . config('picstome.photo_cdn_domain');
+            // Rotate between i0.wp.com, i1.wp.com, i2.wp.com, i3.wp.com based on photo id
+            $subdomainIndex = 0;
+
+            if (isset($this->id) && is_numeric($this->id)) {
+                $subdomainIndex = $this->id % 4;
+            }
+
+            $cdn = 'https://i' . $subdomainIndex . '.wp.com';
+
             // i0.wp.com expects the image URL as a path, not a query param
             // Example: https://i0.wp.com/example.com/image.jpg?w=1000&q=90
-            $strippedUrl = preg_replace('/^https?:\\/\\//', '', $originalUrl);
+            $strippedUrl = preg_replace('/^https?:\/\//', '', $originalUrl);
+
             $query = http_build_query($params);
+
             return "$cdn/$strippedUrl" . ($query ? "?$query" : '');
         }
 
