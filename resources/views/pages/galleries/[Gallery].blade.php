@@ -734,13 +734,5 @@ new class extends Component
                 }));
             </script>
         @endscript
-
-        @push('head')
-            @foreach ($allPhotos as $photo)
-                <link rel="preload" as="image" href="{{ $photo->url }}">
-                <link rel="preload" as="image" href="{{ $photo->thumbnail_url }}">
-                <link rel="preload" as="image" href="{{ $photo->large_thumbnail_url }}">
-            @endforeach
-        @endpush
     @endvolt
 </x-app-layout>

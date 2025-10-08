@@ -90,7 +90,7 @@ class extends Component
                                     href="{{ route('portfolio.photos.show', ['handle' => $team->handle, 'gallery' => $gallery, 'photo' => $photo]) }}"
                                     class="mx-auto flex"
                                 >
-                                    <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
+                                    <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
                                 </a>
                             </div>
                         @endforeach
@@ -116,13 +116,3 @@ class extends Component
         @endsubscribed
     </div>
 </div>
-
-@push('head')
-    @if($photos && $photos->isNotEmpty())
-        @foreach ($photos as $photo)
-            <link rel="preload" as="image" href="{{ $photo->url }}">
-            <link rel="preload" as="image" href="{{ $photo->thumbnail_url }}">
-            <link rel="preload" as="image" href="{{ $photo->large_thumbnail_url }}">
-        @endforeach
-    @endif
-@endpush
