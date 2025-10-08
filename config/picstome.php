@@ -35,4 +35,10 @@ return [
     'subscription_grace_period_days' => 7,
 
     'stripe_commission_percent' => env('STRIPE_COMMISSION_PERCENT', 1),
+
+    /**
+     * The base URL for the photo CDN. Example: 'https://wsrv.nl/' or 'https://i0.wp.com/'.
+     * Switch this to change the CDN provider for image delivery and resizing.
+     */
+    'photo_cdn_domain' => env('PICSTOME_PHOTO_CDN_DOMAIN', 'wsrv.nl'),
 ];

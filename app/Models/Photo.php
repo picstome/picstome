@@ -103,9 +103,10 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $encodedUrl = urlencode($originalUrl);
-
-            return "https://wsrv.nl/?url={$encodedUrl}&q=95&output=webp";
+            return $this->generateCdnUrl($originalUrl, [
+                'q' => 95,
+                'output' => 'webp',
+            ]);
         });
     }
 
@@ -113,12 +114,14 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-
-            $encodedUrl = urlencode($originalUrl);
             $height = config('picstome.photo_thumb_resize', 1000);
             $width = config('picstome.photo_thumb_resize', 1000);
-
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&w={$width}&q=93&output=webp";
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $height,
+                'w' => $width,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
         });
     }
 
@@ -129,11 +132,36 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $encodedUrl = urlencode($originalUrl);
             $size = config('picstome.photo_resize', 2048);
-
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$size}&w={$size}&q=93&output=webp";
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $size,
+                'w' => $size,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
         });
+    }
+
+    /**
+     * Generate a CDN URL for the image, supporting wsrv.nl and i0.wp.com.
+     */
+    private function generateCdnUrl(string $originalUrl, array $params = [])
+    {
+        $cdn = config('picstome.photo_cdn_domain', 'wsrv.nl');
+
+        if ($cdn === 'i0.wp.com') {
+            $cdn = 'https://' . config('picstome.photo_cdn_domain');
+            // i0.wp.com expects the image URL as a path, not a query param
+            // Example: https://i0.wp.com/example.com/image.jpg?w=1000&q=90
+            $strippedUrl = preg_replace('/^https?:\\/\\//', '', $originalUrl);
+            $query = http_build_query($params);
+            return "$cdn/$strippedUrl" . ($query ? "?$query" : '');
+        }
+
+        // wsrv.nl expects ?url=...&params
+        $query = http_build_query(array_merge(['url' => $originalUrl], $params));
+
+        return "https://$cdn/?$query";
     }
 
     protected function diskOrDefault(): string
