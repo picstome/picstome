@@ -149,31 +149,6 @@ class Photo extends Model
     {
         $cdn = config('picstome.photo_cdn_domain', 'wsrv.nl');
 
-        // Bunny.net Dynamic Image API
-        if ($cdn === 'bunny' || $cdn === 'bunny.net') {
-            $bunnyParams = [];
-
-            if (isset($params['w']) || isset($params['width'])) {
-                $bunnyParams['width'] = $params['w'] ?? $params['width'];
-            }
-
-            if (isset($params['h']) || isset($params['height'])) {
-                $bunnyParams['height'] = $params['h'] ?? $params['height'];
-            }
-
-            if (isset($params['q']) || isset($params['quality'])) {
-                $bunnyParams['quality'] = $params['q'] ?? $params['quality'];
-            }
-
-            if (isset($params['output']) || isset($params['format'])) {
-                $bunnyParams['format'] = $params['output'] ?? $params['format'];
-            }
-
-            $query = http_build_query($bunnyParams);
-
-            return "$originalUrl?$query";
-        }
-
         if ($cdn === 'i0.wp.com') {
             // Rotate between i0.wp.com, i1.wp.com, i2.wp.com, i3.wp.com based on photo id
             $subdomainIndex = 0;
