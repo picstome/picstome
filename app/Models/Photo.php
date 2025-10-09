@@ -103,7 +103,17 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $height = config('picstome.photo_resize', 2048);
+            $width = config('picstome.photo_resize', 2048);
+
+            if ($this->gallery->keep_original_size) {
+                $height = $height * 2;
+                $width = $width * 2;
+            }
+
             return $this->generateCdnUrl($originalUrl, [
+                'h' => $height,
+                'w' => $width,
                 'q' => 95,
                 'output' => 'webp',
             ]);
