@@ -103,7 +103,9 @@ swipe: '',
                     sizes="(max-width: 640px) 100vw, 80vw"
                     @click="zoom = true"
                     @contextmenu.prevent
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse"
+                    onload="this.classList.remove('animate-pulse')"
+                    onerror="this.classList.remove('animate-pulse')"
                     alt="{{ $photo->name }}"
                 />
 
@@ -111,7 +113,9 @@ swipe: '',
                     x-show="!zoom && pinchZooming"
                     src="{{ $photo->url }}"
                     @click="zoom = true"
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse"
+                    onload="this.classList.remove('animate-pulse')"
+                    onerror="this.classList.remove('animate-pulse')"
                     alt="{{ $photo->name }}"
                     x-cloak
                 />
@@ -121,7 +125,9 @@ swipe: '',
                     src="{{ $photo->url }}"
                     @click="zoom = false"
                     @contextmenu.prevent
-                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out"
+                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse"
+                    onload="this.classList.remove('animate-pulse')"
+                    onerror="this.classList.remove('animate-pulse')"
                     loading="lazy"
                     alt="{{ $photo->name }}"
                     x-cloak
