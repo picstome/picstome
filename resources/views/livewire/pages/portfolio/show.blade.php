@@ -116,3 +116,13 @@ class extends Component
         @endsubscribed
     </div>
 </div>
+
+@push('head')
+    @if($photos && $photos->isNotEmpty())
+        @foreach ($photos->take(50) as $photo)
+            <link rel="preload" as="image" href="{{ $photo->url }}">
+            <link rel="preload" as="image" href="{{ $photo->thumbnail_url }}">
+            <link rel="preload" as="image" href="{{ $photo->large_thumbnail_url }}">
+        @endforeach
+    @endif
+@endpush
