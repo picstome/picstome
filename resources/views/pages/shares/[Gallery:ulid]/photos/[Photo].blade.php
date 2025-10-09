@@ -70,12 +70,12 @@ new class extends Component
     @volt('pages.shares.photos.show')
         <div
             x-data="{
-swipe: '',
-                 zoom: false,
-                 pinchZooming: false,
-                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
-                 photoUrl: '{{ $photo->url }}',
-                 navigating: false,
+                swipe: '',
+                zoom: false,
+                pinchZooming: false,
+                thumbnailUrl: '{{ $photo->thumbnail_url }}',
+                photoUrl: '{{ $photo->url }}',
+                navigating: false,
              }"
             x-init="(() => {
                 const hammer = new Hammer($el, { touchAction: 'auto' });
@@ -87,8 +87,8 @@ swipe: '',
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
-@panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
-             @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
+            @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
+            @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
             @pinchstart="pinchZooming = true;"
             @if ($this->photo->gallery->is_share_selectable)
                 @keyup.window.f="$wire.favorite()"
@@ -103,9 +103,9 @@ swipe: '',
                     sizes="(max-width: 640px) 100vw, 80vw"
                     @click="zoom = true"
                     @contextmenu.prevent
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black"
-                    onload="this.classList.remove('animate-pulse')"
-                    onerror="this.classList.remove('animate-pulse')"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black min-h-full"
+                    onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+                    onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
                     alt="{{ $photo->name }}"
                 />
 
@@ -113,9 +113,9 @@ swipe: '',
                     x-show="!zoom && pinchZooming"
                     src="{{ $photo->url }}"
                     @click="zoom = true"
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black"
-                    onload="this.classList.remove('animate-pulse')"
-                    onerror="this.classList.remove('animate-pulse')"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black min-h-full"
+                    onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+                    onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
                     alt="{{ $photo->name }}"
                     x-cloak
                 />
@@ -125,9 +125,9 @@ swipe: '',
                     src="{{ $photo->url }}"
                     @click="zoom = false"
                     @contextmenu.prevent
-                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black"
-                    onload="this.classList.remove('animate-pulse')"
-                    onerror="this.classList.remove('animate-pulse')"
+                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black min-h-full"
+                    onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+                    onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
                     loading="lazy"
                     alt="{{ $photo->name }}"
                     x-cloak
