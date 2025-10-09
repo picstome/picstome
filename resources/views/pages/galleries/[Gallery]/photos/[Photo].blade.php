@@ -83,6 +83,9 @@ new class extends Component
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
                 navigating: false,
+                isMobile() {
+                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                }
             }"
             x-init="(() => {
                 const hammer = new Hammer($el, { touchAction: 'auto' });
@@ -105,7 +108,7 @@ new class extends Component
                     src="{{ $photo->thumbnail_url }}"
                     srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                     sizes="(max-width: 640px) 100vw, 80vw"
-                    @click="zoom = true"
+                    @click="if (!isMobile()) zoom = true"
                     class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
                     onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
                     onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
@@ -115,7 +118,7 @@ new class extends Component
                 <img
                     x-show="!zoom && pinchZooming"
                     src="{{ $photo->url }}"
-                    @click="zoom = true"
+                    @click="if (!isMobile()) zoom = true"
                     class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
                     onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
                     onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
