@@ -41,4 +41,9 @@ return [
      * Switch this to change the CDN provider for image delivery and resizing.
      */
     'photo_cdn_domain' => env('PICSTOME_PHOTO_CDN_DOMAIN', 'wsrv.nl'),
+
+    /**
+     * Bunny.net pull zone domain for Dynamic Image API (e.g., myzone.b-cdn.net)
+     */
+    'bunny_pullzone_domain' => env('PICSTOME_BUNNY_PULLZONE_DOMAIN', 'myzone.b-cdn.net'),
 ];
