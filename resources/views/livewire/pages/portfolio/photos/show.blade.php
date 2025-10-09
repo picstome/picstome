@@ -68,7 +68,7 @@ class extends Component
             sizes="(max-width: 640px) 100vw, 80vw"
             @click="zoom = true"
             @contextmenu.prevent
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse"
+            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black"
             onload="this.classList.remove('animate-pulse')"
             onerror="this.classList.remove('animate-pulse')"
             alt="{{ $photo->name }}"
@@ -78,7 +78,7 @@ class extends Component
             x-show="!zoom && pinchZooming"
             src="{{ $photo->url }}"
             @click="zoom = true"
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse"
+            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black"
             onload="this.classList.remove('animate-pulse')"
             onerror="this.classList.remove('animate-pulse')"
             alt="{{ $photo->name }}"
@@ -90,7 +90,7 @@ class extends Component
             src="{{ $photo->url }}"
             @click="zoom = false"
             @contextmenu.prevent
-            class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse"
+            class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black"
             onload="this.classList.remove('animate-pulse')"
             onerror="this.classList.remove('animate-pulse')"
             loading="lazy"
