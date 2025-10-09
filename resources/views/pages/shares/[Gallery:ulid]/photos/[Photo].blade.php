@@ -70,13 +70,14 @@ new class extends Component
     @volt('pages.shares.photos.show')
         <div
             x-data="{
-swipe: '',
-                 zoom: false,
-                 pinchZooming: false,
-                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
-                 photoUrl: '{{ $photo->url }}',
-                 navigating: false,
-             }"
+                swipe: '',
+                zoom: false,
+                pinchZooming: false,
+                thumbnailUrl: '{{ $photo->thumbnail_url }}',
+                photoUrl: '{{ $photo->url }}',
+                navigating: false,
+                imgLoaded: false,
+            }"
             x-init="(() => {
                 const hammer = new Hammer($el, { touchAction: 'auto' });
                 hammer.get('pinch').set({ enable: true });
@@ -102,8 +103,11 @@ swipe: '',
                     srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                     sizes="(max-width: 640px) 100vw, 80vw"
                     @click="zoom = true"
+                    @load="imgLoaded = true"
+                    x-on:error="imgLoaded = false;"
+                    x-init="if ($el.complete) imgLoaded = true;"
                     @contextmenu.prevent
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    :class="`mx-auto object-contain max-w-full hover:cursor-zoom-in ${imgLoaded ? '' : 'bg-black animate-pulse'}`"
                     alt="{{ $photo->name }}"
                 />
 
