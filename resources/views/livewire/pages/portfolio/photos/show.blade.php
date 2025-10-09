@@ -68,9 +68,9 @@ class extends Component
             sizes="(max-width: 640px) 100vw, 80vw"
             @click="zoom = true"
             @contextmenu.prevent
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black min-h-full"
-            onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black h-full w-full"
+onload="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
+onerror="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
             alt="{{ $photo->name }}"
         />
 
@@ -78,9 +78,9 @@ class extends Component
             x-show="!zoom && pinchZooming"
             src="{{ $photo->url }}"
             @click="zoom = true"
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black min-h-full"
-            onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black h-full w-full"
+onload="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
+onerror="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
             alt="{{ $photo->name }}"
             x-cloak
         />
@@ -90,9 +90,9 @@ class extends Component
             src="{{ $photo->url }}"
             @click="zoom = false"
             @contextmenu.prevent
-            class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black min-h-full"
-            onload="this.classList.remove('animate-pulse','bg-black','min-h-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black','min-h-full')"
+            class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black h-full w-full"
+onload="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
+onerror="this.classList.remove('animate-pulse','bg-black','h-full','w-full')"
             loading="lazy"
             alt="{{ $photo->name }}"
             x-cloak
