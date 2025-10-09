@@ -171,7 +171,7 @@ class Photo extends Model
 
             $query = http_build_query($bunnyParams);
 
-            return "$originalUrl/?$query";
+            return "$originalUrl?$query";
         }
 
         if ($cdn === 'i0.wp.com') {
