@@ -409,5 +409,6 @@
     "to": "al",
     "total storage": "almacenamiento total",
     "Payment Successful!": "¡Pago exitoso!",
-    "Thank you for your payment. Your transaction was completed successfully.": "Gracias por tu pago. Tu transacción se completó exitosamente."
+    "Thank you for your payment. Your transaction was completed successfully.": "Gracias por tu pago. Tu transacción se completó exitosamente.",
+    "Payment Successful for :team": "¡Pago exitoso para :team!"
 }

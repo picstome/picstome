@@ -49,7 +49,7 @@ class extends Component
 
     public function rendering(View $view): void
     {
-        $view->title($this->team->name . ' - Payment Successful');
+        $view->title(__('Payment Successful for :team', ['team' => $this->team->name]));
     }
 } ?>
 
