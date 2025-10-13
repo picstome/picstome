@@ -12,7 +12,7 @@ class StripeConnectService
 
     public function __construct()
     {
-        $this->apiKey = config('services.stripe.test_secret');
+        $this->apiKey = config('cashier.secret');
     }
 
     /**
