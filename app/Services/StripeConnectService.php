@@ -34,8 +34,7 @@ class StripeConnectService
                 'email' => $team->stripeEmail(),
             ]);
 
-
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Stripe account creation failed', ['response' => $response->body()]);
 
             throw new \Exception('Unable to create Stripe connected account');
@@ -68,7 +67,7 @@ class StripeConnectService
                 'type' => 'account_onboarding',
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Stripe account link creation failed', ['response' => $response->body()]);
 
             throw new \Exception('Unable to create Stripe onboarding link');
@@ -83,9 +82,9 @@ class StripeConnectService
      * Create a Stripe Checkout Session for $15 using the connected account.
      * Returns the session URL.
      */
-    public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description): string
+    public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description, array $metadata = []): string
     {
-        if (!$team->stripe_account_id) {
+        if (! $team->stripe_account_id) {
             throw new \Exception('Team does not have a Stripe connected account.');
         }
 
@@ -99,6 +98,7 @@ class StripeConnectService
                 'Stripe-Account' => $team->stripe_account_id,
             ])
             ->post('https://api.stripe.com/v1/checkout/sessions', [
+                'metadata[photoshoot_id]' => $metadata['photoshoot_id'] ?? null,
                 'mode' => 'payment',
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
@@ -109,7 +109,7 @@ class StripeConnectService
                 // 'payment_intent_data[application_fee_amount]' => $applicationFee,
             ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Stripe Checkout Session creation failed', ['response' => $response->body()]);
 
             throw new \Exception('Unable to create Stripe Checkout Session');
@@ -126,7 +126,7 @@ class StripeConnectService
      */
     public function isOnboardingComplete(Team $team): bool
     {
-        if (!$team->stripe_account_id) {
+        if (! $team->stripe_account_id) {
             return false;
         }
 
@@ -134,16 +134,17 @@ class StripeConnectService
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
-            ->get('https://api.stripe.com/v1/accounts/' . $team->stripe_account_id);
+            ->get('https://api.stripe.com/v1/accounts/'.$team->stripe_account_id);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Stripe account fetch failed', ['response' => $response->body()]);
+
             return false;
         }
 
         $account = $response->json();
 
-        return !empty($account['charges_enabled']);
+        return ! empty($account['charges_enabled']);
     }
 
     /**
@@ -160,7 +161,7 @@ class StripeConnectService
             ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}", ['expand' => ['line_items']]);
 
         if (!$response->successful()) {
-            \Log::error('Stripe Checkout Session fetch failed', ['response' => $response->body()]);
+            Log::error('Stripe Checkout Session fetch failed', ['response' => $response->body()]);
             throw new \Exception('Unable to fetch Stripe Checkout Session');
         }
 

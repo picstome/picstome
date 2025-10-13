@@ -14,7 +14,9 @@ class extends Component
 {
     public Team $team;
 
-    public ?string $formattedAmount  = null;
+    public ?int $photoshoot = null;
+
+    public ?string $formattedAmount = null;
 
     #[Validate('required', 'integer', 'min:1')]
     public int $amount;
@@ -33,7 +35,7 @@ class extends Component
 
     public function rendering(View $view): void
     {
-        $view->title($this->team->name . ' - Pay');
+        $view->title($this->team->name.' - Pay');
     }
 
     public function checkout()
@@ -45,7 +47,10 @@ class extends Component
             route('handle.pay.success', ['handle' => $this->team->handle]).'?session_id={CHECKOUT_SESSION_ID}',
             route('handle.pay.cancel', ['handle' => $this->team->handle]),
             $this->amount * 100,
-            $this->description
+            $this->description,
+            [
+                'photoshoot_id' => $this->photoshoot,
+            ]
         );
 
         return redirect()->away($checkoutUrl);
