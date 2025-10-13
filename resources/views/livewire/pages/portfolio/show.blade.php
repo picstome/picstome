@@ -90,7 +90,7 @@ class extends Component
                                     href="{{ route('portfolio.photos.show', ['handle' => $team->handle, 'gallery' => $gallery, 'photo' => $photo]) }}"
                                     class="mx-auto flex"
                                 >
-                                    <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
+                                    <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
                                 </a>
                             </div>
                         @endforeach

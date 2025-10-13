@@ -52,13 +52,13 @@ class extends Component
                             >
                                 @if($gallery->coverPhoto)
                                     <img
-                                        src="{{ $gallery->coverPhoto->thumbnail_url }}"
+                                        src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
                                         alt="{{ $gallery->name }}"
                                         class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
                                     />
                                 @elseif($gallery->photos->isNotEmpty())
                                     <img
-                                        src="{{ $gallery->photos->first()->thumbnail_url }}"
+                                        src="{{ $gallery->photos->first()->small_thumbnail_url }}"
                                         alt="{{ $gallery->name }}"
                                         class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
                                     />
