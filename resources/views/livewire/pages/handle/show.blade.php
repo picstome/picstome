@@ -12,6 +12,7 @@ new
 class extends Component
 {
     public Team $team;
+
     public ?Collection $galleries;
 
     public $amount;
@@ -115,33 +116,10 @@ class extends Component
 
         @include('partials.social-links')
 
-        <div class="flex justify-center mt-6">
-            <flux:modal.trigger name="generate-payment-link">
-                <flux:avatar size="lg" circle class="cursor-pointer bg-green-100 hover:bg-green-200 transition">
-                    <flux:icon.credit-card class="text-green-600" />
-                </flux:avatar>
-            </flux:modal.trigger>
-        </div>
-
         @unlesssubscribed($team)
             <div class="py-3">
                 @include('partials.powered-by')
             </div>
         @endsubscribed
     </div>
-
-    <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
-        <form wire:submit="generatePaymentLink" class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
-                <flux:subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</flux:subheading>
-                            </div>
-                <flux:input wire:model="amount" :label="__('Amount')" required />
-                <flux:input wire:model="description" :label="__('Note or Description')" type="text" required />
-                <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Continue to Payment') }}</flux:button>
-                </div>
-        </form>
-    </flux:modal>
 </div>
