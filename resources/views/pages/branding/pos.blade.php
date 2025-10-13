@@ -12,21 +12,34 @@ name('branding.pos');
 
 middleware(['auth', 'verified']);
 
-new class extends Component {
+new class extends Component
+{
     public PosSettingsForm $form;
 
     public $stripeCurrencies = [];
 
-    public function mount() {
+    public function mount()
+    {
         $this->form->setTeam(Auth::user()->currentTeam);
 
         $this->stripeCurrencies = StripeConnectService::supportedCurrencies();
     }
 
-    public function save() {
+    public function save()
+    {
         $this->form->update();
 
         Flux::toast(__('Your changes have been saved.'), variant: 'success');
+    }
+
+    public function disconnectStripe()
+    {
+        Auth::user()->currentTeam->update([
+            'stripe_account_id' => null,
+            'stripe_onboarded' => false,
+        ]);
+
+        $this->redirect(route('branding.general'), navigate: true);
     }
 }; ?>
 
@@ -65,6 +78,18 @@ new class extends Component {
                             </flux:field>
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </form>
+
+                        <flux:separator class="my-8" />
+
+                        <div>
+                            <flux:button wire:click="disconnectStripe" wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}">
+                                {{ __('Disconnect Stripe') }}
+                            </flux:button>
+
+                            <flux:description class="mt-2">
+                                {{ __('Disconnecting will remove your Stripe account. You can reconnect at any time.') }}
+                            </flux:description>
+                        </div>
                     </div>
                 </div>
             </div>

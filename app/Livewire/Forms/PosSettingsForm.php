@@ -4,14 +4,15 @@ namespace App\Livewire\Forms;
 
 use App\Models\Team;
 use Facades\App\Services\StripeConnectService;
-use Livewire\Form;
 use Illuminate\Validation\Rule;
+use Livewire\Form;
 
 class PosSettingsForm extends Form
 {
     public Team $team;
 
     public $stripe_currency = 'eur';
+
     public $show_pay_button = true;
 
     public function rules()

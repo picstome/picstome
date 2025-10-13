@@ -60,3 +60,23 @@ it('can update the show_pay_button setting', function () {
     $team->refresh();
     expect($team->show_pay_button)->toBeTrue();
 });
+
+it('can disconnect the Stripe account', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+    $team->update([
+        'stripe_account_id' => 'acct_123456789',
+        'stripe_onboarded' => true,
+    ]);
+    expect($team->stripe_account_id)->not->toBeNull();
+    expect($team->stripe_onboarded)->toBeTrue();
+
+    $component = Volt::actingAs($user)->test('pages.branding.pos')
+        ->call('disconnectStripe');
+
+    $component->assertHasNoErrors();
+
+    $team->refresh();
+    expect($team->stripe_account_id)->toBeNull();
+    expect($team->stripe_onboarded)->toBeFalse();
+});
