@@ -65,8 +65,8 @@ class extends Component
             </a>
 
             <div>
-                <flux:heading size="xl">Payment Successful!</flux:heading>
-                <flux:text class="mt-2">Thank you for your payment. Your transaction was completed successfully.</flux:text>
+                <flux:heading size="xl">{{ __('Payment Successful!') }}</flux:heading>
+                <flux:text class="mt-2">{{ __('Thank you for your payment. Your transaction was completed successfully.') }}</flux:text>
             </div>
         </div>
     </div>

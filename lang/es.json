@@ -407,5 +407,7 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Payment Successful!": "¡Pago exitoso!",
+    "Thank you for your payment. Your transaction was completed successfully.": "Gracias por tu pago. Tu transacción se completó exitosamente."
 }
