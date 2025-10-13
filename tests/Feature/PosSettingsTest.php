@@ -11,7 +11,7 @@ it('updates stripe currency with valid value', function () {
     $team = $user->currentTeam;
     expect($team->stripe_currency)->not->toBe('mxn');
 
-    $component = Volt::actingAs($user)->test('pages.pos.settings')
+    $component = Volt::actingAs($user)->test('pages.branding.pos')
         ->set('form.stripe_currency', 'mxn')
         ->call('save');
 
@@ -27,7 +27,7 @@ it('shows error for invalid stripe currency', function () {
     $team = $user->currentTeam;
     $invalidCurrency = 'xxx';
 
-    $component = Volt::actingAs($user)->test('pages.pos.settings')
+    $component = Volt::actingAs($user)->test('pages.branding.pos')
         ->set('form.stripe_currency', $invalidCurrency)
         ->call('save')
         ->assertHasErrors(['form.stripe_currency' => 'in']);

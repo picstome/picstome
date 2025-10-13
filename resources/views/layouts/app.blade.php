@@ -100,15 +100,11 @@
                                 {{ __('Payments') }}
                             </flux:navlist.item>
 
-                            @if(auth()->user()->currentTeam->hasCompletedOnboarding())
-                                <flux:navlist.item :href="route('pos.settings')" icon="cog-6-tooth">
-                                    {{ __('Configure') }}
-                                </flux:navlist.item>
-                            @else
+                            @unless(auth()->user()->currentTeam->hasCompletedOnboarding())
                                 <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
                                     {{ __('Connect with Stripe') }}
                                 </flux:navlist.item>
-                            @endif
+                            @endunless
                         </flux:navlist.group>
                     @endif
 
