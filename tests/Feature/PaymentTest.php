@@ -140,9 +140,7 @@ it('can delete a payment', function () {
     $payment = Payment::factory()->for($this->team)->create();
 
     $component = Volt::actingAs($this->user)->test('pages.payments')
-        ->call('editPayment', $payment->id)
-        ->set('selectedPayment', $payment)
-        ->call('deletePayment');
+        ->call('deletePayment', $payment->id);
 
     expect($payment->fresh())->toBeNull();
 });
