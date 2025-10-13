@@ -5,6 +5,7 @@ use Facades\App\Services\StripeConnectService;
 use Illuminate\View\View;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 
@@ -14,7 +15,8 @@ class extends Component
 {
     public Team $team;
 
-    public ?int $photoshoot = null;
+    #[Url]
+    public ?int $photoshoot_id = null;
 
     public ?string $formattedAmount = null;
 
@@ -42,6 +44,10 @@ class extends Component
     {
         $this->validate();
 
+        if ($this->photoshoot_id) {
+            abort_if(!$this->team->photoshoots()->where('id', $this->photoshoot_id)->exists(), 403);
+        }
+
         $checkoutUrl = StripeConnectService::createCheckoutSession(
             $this->team,
             route('handle.pay.success', ['handle' => $this->team->handle]).'?session_id={CHECKOUT_SESSION_ID}',
@@ -49,7 +55,7 @@ class extends Component
             $this->amount * 100,
             $this->description,
             [
-                'photoshoot_id' => $this->photoshoot,
+                'photoshoot_id' => $this->photoshoot_id,
             ]
         );
 

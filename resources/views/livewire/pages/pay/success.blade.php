@@ -43,7 +43,8 @@ class extends Component
                             'description' => $this->checkoutSession['line_items']['data'][0]['description'] ?? null,
                             'customer_email' => $this->checkoutSession['customer_details']['email'] ?? null,
                             'completed_at' => now(),
-                            'photoshoot_id' => $this->photoshoot_id,                        ]);
+                            'photoshoot_id' => $this->photoshoot_id,
+                        ]);
                     }
                 }
             }
