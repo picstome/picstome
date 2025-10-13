@@ -34,8 +34,11 @@ class ProcessPhoto implements ShouldQueue
         $readStream = Storage::disk('public')->readStream($this->photo->path);
         $writeStream = fopen($this->temporaryPhotoPath, 'w');
 
-        if ($readStream === false || $writeStream === false) {
-            throw new Exception('Failed to open streams for copying file.');
+        if (! $readStream) {
+            throw new Exception("Failed to open read stream for: {$this->photo->path}");
+        }
+        if ($writeStream === false) {
+            throw new Exception("Failed to open write stream for: {$this->temporaryPhotoPath}");
         }
 
         stream_copy_to_stream($readStream, $writeStream);
