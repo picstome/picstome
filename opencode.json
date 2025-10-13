@@ -6,5 +6,22 @@
       "command": ["php", "./artisan", "boost:mcp"],
       "enabled": true
     }
+  },
+  "lsp": {
+    "intelephense": {
+      "command": [
+        "intelephense",
+        "--stdio"
+      ],
+      "extensions": [
+        ".php"
+      ]
+    }
+  },
+  "formatter": {
+    "pint": {
+      "command": ["./vendor/bin/pint", "$FILE"],
+      "extensions": [".php"]
+    }
   }
 }
