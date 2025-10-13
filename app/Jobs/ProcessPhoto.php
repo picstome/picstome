@@ -15,7 +15,7 @@ class ProcessPhoto implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 120;
+    public $timeout = 60 * 4; // 4 minutes
 
     public $temporaryDirectory;
 
