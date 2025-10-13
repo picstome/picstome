@@ -401,10 +401,10 @@
     "YouTube": "YouTube",
     "Your changes have been saved.": "Tus cambios han sido guardados.",
     "Your current plan does not support creating more contracts. Upgrade your plan to create additional contracts.": "Tu plan actual no permite crear más contratos. Actualiza tu plan para crear contratos adicionales.",
-    "Your customer has reached the selection limit of :limit photos for the gallery \":name\".": "Tu cliente ha alcanzado el límite de selección de :limit fotos para la galería \":name\".",
+    "Your customer has reached the selection limit of :limit photos for the gallery ":name".": "Tu cliente ha alcanzado el límite de selección de :limit fotos para la galería ":name".",
     "Your data will be deleted in :days days if not renewed.": "Tus datos serán eliminados en :days días si no renuevas.",
     "Your email address is unverified.": "Tu dirección de correo electrónico no está verificada.",
-    "Your gallery \":name\" will expire on :date.": "Tu galería \":name\" expirará el :date.",
+    "Your gallery ":name" will expire on :date.": "Tu galería ":name" expirará el :date.",
     "Your logo at 1:1 aspect ratio.": "Tu logotipo en formato 1:1.",
     "Your password": "Tu contraseña",
     "Your payment link is ready!": "¡Tu enlace de pago está listo!",
@@ -427,5 +427,9 @@
     "Configure your point-of-sale settings, including currency for payments.": "Configura los ajustes de tu punto de venta, incluyendo la moneda para los pagos.",
     "Select the currency used for payments in your POS.": "Selecciona la moneda utilizada para los pagos en tu POS.",
     "Show Accept Payments Button": "Mostrar botón de aceptar pagos",
-    "Enable or disable the accept payments button on your public profile.": "Activa o desactiva el botón de aceptar pagos en tu perfil público."
+    "Enable or disable the accept payments button on your public profile.": "Activa o desactiva el botón de aceptar pagos en tu perfil público.",
+    "Stripe Connect": "Conectar con Stripe",
+    "Connect your account to Stripe to start accepting payments.": "Conecta tu cuenta a Stripe para empezar a aceptar pagos.",
+    "Start accepting payments": "Comienza a aceptar pagos",
+    "To begin accepting payments, you need to complete your Stripe onboarding. Click the button below to get started or continue the process.": "Para comenzar a aceptar pagos, necesitas completar tu onboarding de Stripe. Haz clic en el botón de abajo para empezar o continuar el proceso."
 }
