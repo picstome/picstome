@@ -55,7 +55,7 @@
 
             @if($team->hasCompletedOnboarding() && $team->show_pay_button)
                 <flux:modal.trigger name="generate-payment-link">
-                    <flux:avatar icon="credit-card" color="sky" size="lg" class="cursor-pointer" circle />
+                    <flux:avatar icon="credit-card" color="lime" size="lg" class="cursor-pointer" circle />
                 </flux:modal.trigger>
             @endif
         </div>
@@ -64,7 +64,7 @@
     <div class="my-14">
         <div class="flex flex-wrap justify-center gap-4">
             <flux:modal.trigger name="generate-payment-link">
-                <flux:avatar icon="credit-card" color="sky" size="lg" class="cursor-pointer" circle />
+                <flux:avatar icon="credit-card" color="lime" size="lg" class="cursor-pointer" circle />
             </flux:modal.trigger>
         </div>
     </div>
