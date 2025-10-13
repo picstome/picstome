@@ -55,6 +55,15 @@ new class extends Component
         $this->selectedPayment = null;
     }
 
+    public function deletePayment(Payment $payment)
+    {
+        $this->authorize('delete', $payment);
+
+        $payment->delete();
+
+        Flux::modal('edit-payment')->close();
+    }
+
     #[Computed]
     public function team()
     {
@@ -146,9 +155,17 @@ new class extends Component
                                         @endif
                                     </x-table.cell>
                                     <x-table.cell align="end">
-                                        <form wire:submit="editPayment({{ $payment->id }})">
-                                            <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
-                                        </form>
+                                        <flux:dropdown position="bottom" align="end">
+                                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                            <flux:menu>
+                                                <flux:menu.item wire:click="editPayment({{ $payment->id }})" icon="pencil-square">
+                                                    {{ __('Edit') }}
+                                                </flux:menu.item>
+                                                <flux:menu.item wire:click="deletePayment({{ $payment->id }})" wire:confirm="{{ __('Are you sure you want to delete this payment?') }}" icon="trash" variant="danger">
+                                                    {{ __('Delete') }}
+                                                </flux:menu.item>
+                                            </flux:menu>
+                                        </flux:dropdown>
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
@@ -215,14 +232,14 @@ new class extends Component
                             <flux:input :value="$this->selectedPayment->description" :label="__('Description')" type="text" variant="filled" readonly />
                             <flux:input :value="$this->selectedPayment->formattedAmount" :label="__('Amount')" variant="filled" readonly />
                             <flux:input :value="strtoupper($this->selectedPayment->currency)" :label="__('Currency')" variant="filled" readonly />
-                            <flux:input :value="$this->selectedPayment->completed_at->format('Y-m-d H:i:s')" :label="__('Payment Date')" variant="filled" readonly />
+                            <flux:input :value="$this->selectedPayment->completed_at?->format('Y-m-d H:i:s')" :label="__('Payment Date')" variant="filled" readonly />
                             <flux:input :value="$this->selectedPayment->stripe_payment_intent_id" :label="__('Payment Intent ID')" variant="filled" readonly />
-                            <div class="flex">
-                                <flux:spacer />
-                                <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
-                            </div>
-                        </form>
-                    @endif
+                                <div class="flex items-center gap-4">
+                                    <flux:spacer />
+                                    <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
+                                </div>
+                            </form>
+                        @endif
                 </flux:modal>
             @else
                 <flux:callout icon="banknotes" variant="secondary" class="mt-8">

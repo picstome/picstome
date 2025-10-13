@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Payment;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class PaymentPolicy
 {
@@ -45,7 +44,7 @@ class PaymentPolicy
      */
     public function delete(User $user, Payment $payment): bool
     {
-        return false;
+        return $payment->team_id === $user->currentTeam->id;
     }
 
     /**

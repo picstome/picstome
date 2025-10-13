@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Team;
-use App\Models\User;
 use App\Models\Payment;
 use App\Models\Photoshoot;
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 
@@ -98,8 +98,8 @@ it('generates payment link with valid data', function () {
     expect($link)->not->toBeNull();
     expect($link)->toContain($this->team->handle);
     expect($link)->toContain("/@{$this->team->handle}/pay");
-    expect($link)->toContain("/1000/");
-    expect($link)->toContain("/Test%20payment");
+    expect($link)->toContain('/1000/');
+    expect($link)->toContain('/Test%20payment');
 });
 
 it('fails validation if amount is missing', function () {
@@ -134,4 +134,15 @@ it('fails validation if description is too long', function () {
         ->set('linkForm.description', str_repeat('a', 256))
         ->call('generatePaymentLink')
         ->assertHasErrors(['linkForm.description' => 'max']);
+});
+
+it('can delete a payment', function () {
+    $payment = Payment::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)->test('pages.payments')
+        ->call('editPayment', $payment->id)
+        ->set('selectedPayment', $payment)
+        ->call('deletePayment');
+
+    expect($payment->fresh())->toBeNull();
 });
