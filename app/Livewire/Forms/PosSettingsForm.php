@@ -12,6 +12,7 @@ class PosSettingsForm extends Form
     public Team $team;
 
     public $stripe_currency = 'eur';
+    public $show_pay_button = true;
 
     public function rules()
     {
@@ -19,6 +20,7 @@ class PosSettingsForm extends Form
 
         return [
             'stripe_currency' => ['required', 'string', 'size:3', Rule::in($currencies)],
+            'show_pay_button' => ['boolean'],
         ];
     }
 
@@ -27,6 +29,7 @@ class PosSettingsForm extends Form
         $this->team = $team;
 
         $this->stripe_currency = $team->stripe_currency ?? 'eur';
+        $this->show_pay_button = $team->show_pay_button ?? true;
     }
 
     public function update()
@@ -35,6 +38,7 @@ class PosSettingsForm extends Form
 
         $this->team->update([
             'stripe_currency' => $this->stripe_currency,
+            'show_pay_button' => $this->show_pay_button,
         ]);
     }
 }
