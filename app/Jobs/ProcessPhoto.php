@@ -77,6 +77,8 @@ class ProcessPhoto implements ShouldQueue
                 ->save();
         }
 
+        $fileSize = filesize($this->temporaryPhotoPath);
+
         $newPath = Storage::disk('s3')->putFile(
             path: $this->photo->gallery->storage_path,
             file: new File($this->temporaryPhotoPath),
@@ -84,7 +86,7 @@ class ProcessPhoto implements ShouldQueue
 
         $this->photo->update([
             'path' => $newPath,
-            'size' => filesize($this->temporaryPhotoPath),
+            'size' => $fileSize,
             'disk' => 's3',
         ]);
 
