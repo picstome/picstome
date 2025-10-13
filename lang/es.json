@@ -193,7 +193,7 @@
     "Logos": "Logotipos",
     "Logout": "Cerrar sesión",
     "Low storage space": "Espacio de almacenamiento bajo",
-    "Make Up Artist": "Maquillador\/a",
+    "Make Up Artist": "Maquillador/a",
     "Make changes to the payment details.": "Realiza cambios en los detalles del pago.",
     "Make changes to the user details.": "Realiza cambios en los detalles del usuario.",
     "Make private": "Hacer privado",
@@ -226,7 +226,7 @@
     "Other": "Otro",
     "Others": "Otros",
     "POS": "POS",
-    "Parent": "Padre\/Madre",
+    "Parent": "Padre/Madre",
     "Password": "Contraseña",
     "Payment Cancelled": "Pago cancelado",
     "Payment Date": "Fecha de pago",
@@ -234,7 +234,7 @@
     "Payment Successful for :team": "¡Pago exitoso para :team!",
     "Payment Successful!": "¡Pago exitoso!",
     "Payments": "Pagos",
-    "Photographer": "Fotógrafo\/a",
+    "Photographer": "Fotógrafo/a",
     "Photos": "Fotos",
     "Photoshoot": "Sesión de fotos",
     "Photoshoot Name": "Nombre de la sesión de fotos",
@@ -422,5 +422,10 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "POS Settings": "Configuración de POS",
+    "Configure your point-of-sale settings, including currency for payments.": "Configura los ajustes de tu punto de venta, incluyendo la moneda para los pagos.",
+    "Select the currency used for payments in your POS.": "Selecciona la moneda utilizada para los pagos en tu POS.",
+    "Show Accept Payments Button": "Mostrar botón de aceptar pagos",
+    "Enable or disable the accept payments button on your public profile.": "Activa o desactiva el botón de aceptar pagos en tu perfil público."
 }
