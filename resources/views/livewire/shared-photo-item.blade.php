@@ -52,7 +52,7 @@ new class extends Component
         @if ($photo->gallery->is_share_selectable)
             <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
                 @if ($photo->isFavorited())
-                    <flux:icon.heart class="size-5" variant="solid" />
+                    <flux:icon.heart class="size-5 text-red-500" variant="solid" />
                 @else
                     <flux:icon.heart class="size-5" />
                 @endif

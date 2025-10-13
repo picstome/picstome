@@ -203,10 +203,9 @@ new class extends Component
                                 name="favorite"
                                 wire:click="favorite"
                                 icon="heart"
-                                :variant="$photo->isFavorited() ? 'primary' : null"
                                 :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
-                                :color="$photo->isFavorited() ? 'rose' : 'lime'"
                                 size="sm"
+                                @class(['text-red-500!' => $photo->isFavorited()])
                                 square
                             />
                         @endif
