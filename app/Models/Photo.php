@@ -196,6 +196,8 @@ class Photo extends Model
                 $bunnyParams['format'] = $params['output'] ?? $params['format'];
             }
 
+            $bunnyParams['face_crop'] = 'true';
+
             $query = http_build_query($bunnyParams);
 
             return "$originalUrl?$query";
