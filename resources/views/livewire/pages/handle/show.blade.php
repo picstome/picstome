@@ -23,7 +23,7 @@ class extends Component
     {
         $this->team = Team::where('handle', strtolower($handle))->firstOrFail();
 
-        abort_if($this->team->portfolio_public_disabled, 404);
+        abort_if(!$this->team, 404);
 
         $this->galleries = $this->team->galleries()->public()->with('photos')->get();
     }
