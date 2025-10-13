@@ -14,6 +14,8 @@ class extends Component
 {
     public Team $team;
 
+    public ?string $photoshoot_id = null;
+
     public array $checkoutSession = [];
 
     #[Url]
@@ -25,6 +27,7 @@ class extends Component
 
         if ($this->session_id) {
             $this->checkoutSession = StripeConnectService::getCheckoutSession($this->session_id, $this->team->stripe_account_id);
+            $this->photoshoot_id = $this->checkoutSession['metadata']['photoshoot_id'] ?? null;
 
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
                 $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
@@ -32,7 +35,7 @@ class extends Component
                 if ($paymentIntentId) {
                     $existing = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
 
-                    if (!$existing) {
+                    if (! $existing) {
                         $this->team->payments()->create([
                             'amount' => $this->checkoutSession['amount_total'] ?? 0,
                             'currency' => $this->checkoutSession['currency'] ?? 'usd',
