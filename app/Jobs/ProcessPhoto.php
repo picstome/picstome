@@ -3,14 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\Photo;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Image\Image;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
+use Illuminate\Support\Facades\Http;
 
 class ProcessPhoto implements ShouldQueue
 {
@@ -29,19 +28,12 @@ class ProcessPhoto implements ShouldQueue
     {
         $this->temporaryDirectory = TemporaryDirectory::make();
 
-        $this->temporaryPhotoPath = $this->temporaryDirectory->path($this->photo->name);
-
-        $readStream = Storage::disk('public')->readStream($this->photo->path);
-        $writeStream = fopen($this->temporaryPhotoPath, 'w');
-
-        if ($readStream === false || $writeStream === false) {
-            throw new Exception('Failed to open streams for copying file.');
-        }
-
-        stream_copy_to_stream($readStream, $writeStream);
-
-        fclose($readStream);
-        fclose($writeStream);
+        $this->temporaryPhotoPath = tap($this->temporaryDirectory->path($this->photo->name), function ($temporaryPhotoPath) {
+            file_put_contents(
+                $temporaryPhotoPath,
+                Storage::disk('public')->get($this->photo->path)
+            );
+        });
     }
 
     /**
