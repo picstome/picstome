@@ -70,6 +70,7 @@ class ProcessPhoto implements ShouldQueue
             Http::async()->get($photo->url);
             Http::async()->get($photo->thumbnail_url);
             Http::async()->get($photo->large_thumbnail_url);
+            Http::async()->get($photo->small_thumbnail_url);
         }
     }
 
