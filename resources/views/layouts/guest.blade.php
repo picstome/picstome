@@ -12,7 +12,7 @@
         <meta name="apple-mobile-web-app-title" content="Picstome" />
         <link rel="manifest" href="/site-b.webmanifest" />
 
-        @if (! empty((string) $font))
+        @if (! empty((string) ($font ?? '')))
             <link
                 rel="stylesheet"
                 href="https://fonts.googleapis.com/css2?family={{ str()->of($font)->replace(' ', '+') }}:ital,wght@0,400..900;1,400..900&display=swap"

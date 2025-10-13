@@ -53,12 +53,12 @@
                 </a>
             @endif
 
-            @if(auth()->user()->currentTeam->hasCompletedOnboarding() && $team->show_pay_button)
+            @if($team->hasCompletedOnboarding() && $team->show_pay_button)
                 <flux:avatar icon="credit-card" color="sky" size="lg" circle />
             @endif
         </div>
     </div>
-@elseif(auth()->user()->currentTeam->hasCompletedOnboarding() && $team->show_pay_button)
+@elseif($team->hasCompletedOnboarding() && $team->show_pay_button)
     <div class="my-14">
         <div class="flex flex-wrap justify-center gap-4">
             <flux:avatar icon="credit-card" color="sky" size="lg" circle />
