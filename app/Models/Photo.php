@@ -153,6 +153,23 @@ class Photo extends Model
     }
 
     /**
+     * Get the large thumbnail URL
+     */
+    protected function smallThumbnailUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $size = config('picstome.photo_small_thumb_resize', 500);
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $size,
+                'w' => $size,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
+        });
+    }
+
+    /**
      * Generate a CDN URL for the image, supporting wsrv.nl, i0.wp.com, and Bunny.net.
      */
     private function generateCdnUrl(string $originalUrl, array $params = [])

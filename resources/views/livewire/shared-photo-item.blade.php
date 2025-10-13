@@ -34,7 +34,7 @@ new class extends Component
         href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $photo, 'navigateFavorites' => $asFavorite ? true : null]) }}"
         class="mx-auto flex"
     >
-        <img src="{{ $photo->thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
+        <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
         @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
             <div
                 @class([

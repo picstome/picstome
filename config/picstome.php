@@ -6,6 +6,8 @@ return [
 
     'photo_thumb_resize' => 1000,
 
+    'photo_small_thumb_resize' => 500,
+
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
     'subscription_storage_limit' => 1073741824000, // 1TB in bytes

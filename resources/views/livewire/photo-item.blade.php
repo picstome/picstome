@@ -62,7 +62,7 @@ new class extends Component
         wire:navigate
         class="mx-auto flex"
     >
-        <img src="{{ $photo->thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
+        <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
     </a>
     <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
