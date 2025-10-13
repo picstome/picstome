@@ -52,12 +52,16 @@
                     <flux:avatar size="lg" circle src="https://unavatar.io/{{ parse_url($team->other_social_links['url'], PHP_URL_HOST) }}" />
                 </a>
             @endif
-            @if($team->show_pay_button)
-                <a href="{{ route('payments.create', ['team' => $team->id]) }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded shadow hover:bg-green-700 transition">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    {{ __('Accept Payments') }}
-                </a>
+
+            @if(auth()->user()->currentTeam->hasCompletedOnboarding() && $team->show_pay_button)
+                <flux:avatar icon="credit-card" color="sky" size="lg" circle />
             @endif
+        </div>
+    </div>
+@elseif(auth()->user()->currentTeam->hasCompletedOnboarding() && $team->show_pay_button)
+    <div class="my-14">
+        <div class="flex flex-wrap justify-center gap-4">
+            <flux:avatar icon="credit-card" color="sky" size="lg" circle />
         </div>
     </div>
 @endif
