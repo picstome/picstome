@@ -133,7 +133,7 @@ class extends Component
     <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
         <form wire:submit="generatePaymentLink" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Send a Payment to ') . $team->name }}</flux:heading>
+                <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
                 <flux:subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</flux:subheading>
                             </div>
                 <flux:input wire:model="amount" :label="__('Amount')" required />
