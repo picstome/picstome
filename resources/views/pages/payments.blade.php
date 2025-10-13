@@ -1,13 +1,12 @@
 <?php
 
-use App\Livewire\Forms\PaymentLinkForm;
 use App\Livewire\Forms\PaymentForm;
+use App\Livewire\Forms\PaymentLinkForm;
 use App\Models\Payment;
-use Illuminate\Support\Facades\Auth;
-use Livewire\Volt\Component;
-use Livewire\Attributes\Computed;
-use Facades\App\Services\StripeConnectService;
 use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
+use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
 use function Laravel\Folio\middleware;
@@ -25,6 +24,7 @@ new class extends Component
     public $sortDirection = 'desc';
 
     public PaymentLinkForm $linkForm;
+
     public PaymentForm $paymentForm;
 
     public ?string $paymentLink = null;
@@ -72,6 +72,12 @@ new class extends Component
     public function mount()
     {
         $this->onboardingComplete = $this->team ? $this->team->hasCompletedOnboarding() : false;
+    }
+
+    #[Computed]
+    public function photoshoots()
+    {
+        return $this->team?->photoshoots()->orderBy('created_at', 'desc')->get();
     }
 
     public function generatePaymentLink()
@@ -202,7 +208,7 @@ new class extends Component
                             </div>
                             <flux:select wire:model="paymentForm.photoshoot_id" :label="__('Photoshoot')">
                                 <flux:select.option value="">{{ __('None') }}</flux:select.option>
-                                @foreach ($this->team->photoshoots as $photoshoot)
+                                @foreach ($this->photoshoots as $photoshoot)
                                     <flux:select.option value="{{ $photoshoot->id }}">{{ $photoshoot->name }}</flux:select.option>
                                 @endforeach
                             </flux:select>
