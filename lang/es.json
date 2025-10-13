@@ -401,7 +401,7 @@
     "YouTube": "YouTube",
     "Your changes have been saved.": "Tus cambios han sido guardados.",
     "Your current plan does not support creating more contracts. Upgrade your plan to create additional contracts.": "Tu plan actual no permite crear más contratos. Actualiza tu plan para crear contratos adicionales.",
-    "Your customer has reached the selection limit of :limit photos for the gallery ":name".": "Tu cliente ha alcanzado el límite de selección de :limit fotos para la galería ":name".",
+    "Your customer has reached the selection limit of :limit photos for the gallery \":name\".": "Tu cliente ha alcanzado el límite de selección de :limit fotos para la galería \":name\".",
     "Your data will be deleted in :days days if not renewed.": "Tus datos serán eliminados en :days días si no renuevas.",
     "Your email address is unverified.": "Tu dirección de correo electrónico no está verificada.",
     "Your gallery \":name\" will expire on :date.": "Tu galería \":name\" expirará el :date.",
