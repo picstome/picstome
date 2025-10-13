@@ -60,6 +60,9 @@ new class extends Component {
                                 </flux:description>
                                 <flux:error name="form.stripe_currency" />
                             </flux:field>
+                            <flux:field>
+                                <flux:checkbox wire:model="form.show_pay_button" :label="__('Show Accept Payments Button')" :description="__('Enable or disable the accept payments button on your public profile.')" />
+                            </flux:field>
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </form>
                     </div>

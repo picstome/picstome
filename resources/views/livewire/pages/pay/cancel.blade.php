@@ -37,8 +37,8 @@ class extends Component
             </a>
 
             <div>
-                <flux:heading size="xl">Payment Cancelled</flux:heading>
-                <flux:text class="mt-2">Your payment was cancelled. No charges were made.</flux:text>
+                <flux:heading size="xl">{{ __('Payment Cancelled') }}</flux:heading>
+                <flux:text class="mt-2">{{ __('Your payment was cancelled. No charges were made.') }}</flux:text>
             </div>
         </div>
     </div>

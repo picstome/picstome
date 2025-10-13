@@ -39,6 +39,7 @@ class Team extends Model
             'other_social_links' => 'array',
             'portfolio_public_disabled' => 'boolean',
             'stripe_onboarded' => 'boolean',
+            'show_pay_button' => 'boolean',
         ];
     }
 
