@@ -67,7 +67,7 @@ new class extends Component
                 </div>
 
                 <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
-                    <img src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->url }}" class="w-full h-full object-cover" />
+                    <img src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->large_thumbnail_url }}" class="w-full h-full object-cover" />
                 </div>
             @else
                 <div>
