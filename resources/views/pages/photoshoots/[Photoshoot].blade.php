@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\ContractForm;
 use App\Livewire\Forms\GalleryForm;
+use App\Livewire\Forms\PaymentLinkForm;
 use App\Livewire\Forms\PhotoshootForm;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
@@ -17,6 +18,8 @@ middleware(['auth', 'verified', 'can:view,photoshoot']);
 
 new class extends Component
 {
+    public PaymentLinkForm $paymentLinkForm;
+
     public Photoshoot $photoshoot;
 
     public PhotoshootForm $form;
@@ -26,6 +29,8 @@ new class extends Component
     public ContractForm $contractForm;
 
     public ?Collection $templates;
+
+    public ?string $generatedPaymentLink = null;
 
     #[Computed]
     public function payments()
@@ -84,6 +89,22 @@ new class extends Component
         });
     }
 
+    public function openGeneratePaymentLinkModal()
+    {
+        $this->paymentLinkForm->setPhotoshoot($this->photoshoot);
+
+        $this->modal('generate-payment-link')->show();
+    }
+
+    public function generatePaymentLink()
+    {
+        $this->generatedPaymentLink = $this->paymentLinkForm->generatePaymentLink();
+
+        $this->modal('generate-payment-link')->close();
+
+        $this->modal('show-payment-link')->show();
+    }
+
     public function useTemplate(ContractTemplate $template)
     {
         $this->authorize('view', $template);
@@ -137,14 +158,17 @@ new class extends Component
                         <flux:modal.trigger name="create-gallery">
                             <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
                         </flux:modal.trigger>
-                        <flux:dropdown>
+                        <flux:dropdown align="end">
                             <flux:button variant="primary" icon="chevron-down"></flux:button>
 
                             <flux:menu>
                                 <flux:modal.trigger name="create-contract">
                                     <flux:menu.item>{{ __('Create contract') }}</flux:menu.item>
                                 </flux:modal.trigger>
-                            </flux:menu>
+                                <flux:menu.item wire:click="openGeneratePaymentLinkModal">
+                                    {{ __('Generate Payment Link') }}
+                                </flux:menu.item>
+                        </flux:menu>
                         </flux:dropdown>
                     </flux:button.group>
                 </div>
@@ -471,6 +495,33 @@ new class extends Component
                     </div>
                 </form>
             </flux:modal>
+        <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+            <form wire:submit="generatePaymentLink" class="space-y-6">
+                <div>
+                    <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
+                    <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
+                </div>
+                <flux:input wire:model="paymentLinkForm.amount" :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])" required />
+                <flux:input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+
+        <flux:modal name="show-payment-link" class="w-full sm:max-w-lg">
+            <div class="space-y-6">
+                <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
+                <flux:subheading>{{ __('Share this link with your client to request payment.') }}</flux:subheading>
+                <flux:input
+                    icon="link"
+                    :value="$generatedPaymentLink"
+                    readonly
+                    copyable
+                />
+            </div>
+        </flux:modal>
         </div>
         @assets
             <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />

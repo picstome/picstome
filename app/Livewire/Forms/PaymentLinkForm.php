@@ -2,17 +2,28 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Photo;
+use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class PaymentLinkForm extends Form
 {
+    public ?Photoshoot $photoshoot = null;
+
     #[Validate('required|integer|min:1')]
     public $amount;
 
     #[Validate('required|string|max:255')]
     public $description;
+
+    public function setPhotoshoot(Photoshoot $photoshoot)
+    {
+        $this->photoshoot = $photoshoot;
+
+        $this->description = $this->photoshoot->name;
+    }
 
     public function generatePaymentLink()
     {
@@ -22,6 +33,7 @@ class PaymentLinkForm extends Form
             'handle' => Auth::user()->currentTeam->handle,
             'amount' => $this->amount,
             'description' => $this->description,
+            'photoshoot_id' => $this->photoshoot?->id ?? null,
         ]);
     }
 }
