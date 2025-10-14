@@ -13,7 +13,7 @@ class WatermarkForm extends Form
     #[Validate(['nullable', 'image'])]
     public $watermark;
 
-    #[Validate(['in:top,bottom,middle'])]
+    #[Validate(['in:top,bottom,middle,repeated'])]
     public $watermarkPosition;
 
     #[Validate(['nullable', 'integer', 'min:0', 'max:100'])]
