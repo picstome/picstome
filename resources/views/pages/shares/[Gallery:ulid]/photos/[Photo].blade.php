@@ -87,6 +87,8 @@ new class extends Component
                 watermarkStyle: '',
                 repeatedWatermarkStyle: '',
                 showWatermark: false,
+                watermarkWidth: 0,
+                watermarkHeight: 0,
                 updateDimensions() {
                     const img = this.$refs.photoImg
                     const container = img ? img.parentElement : null
@@ -112,11 +114,11 @@ new class extends Component
                         const pos = '{{ $photo->gallery->team->brand_watermark_position }}';
                         let style = '';
                         if (pos === 'top') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + 8}px; opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; top: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'bottom') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight - 40}px; opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; bottom: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'middle') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight/2 - 16}px; opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'repeated') {
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}';
@@ -212,6 +214,8 @@ new class extends Component
                                 x-show="showWatermark"
                                 :style="watermarkStyle"
                                 class="pointer-events-none absolute h-8"
+                                x-ref="watermarkImg"
+                                @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight; updateDimensions()"
                                 src="{{ $photo->gallery->team->brand_watermark_url }}"
                                 alt=""
                             />
