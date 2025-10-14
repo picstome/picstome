@@ -59,7 +59,7 @@ new class extends Component
 
     public function save($index)
     {
-        if(! isset($this->photos[$index])) {
+        if (! isset($this->photos[$index])) {
             return;
         }
 
@@ -86,7 +86,7 @@ new class extends Component
                         if ($width * $height >= $maxPixels) {
                             $fail(__('Image :name exceeds :max pixels.', [
                                 'name' => $uploadedPhoto->getClientOriginalName(),
-                                'max' => number_format($maxPixels/1000000, 0) . 'M'
+                                'max' => number_format($maxPixels / 1000000, 0).'M',
                             ]));
                         }
                     }
@@ -193,8 +193,6 @@ new class extends Component
 
         $this->allPhotos = $photos->naturalSortBy('name');
     }
-
-
 }; ?>
 
 <x-app-layout>
@@ -394,15 +392,21 @@ new class extends Component
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader">
+                    <div x-data="multiFileUploader"
+                        x-on:dragover.prevent="dragActive = true"
+                        x-on:dragleave.prevent="dragActive = false"
+                        x-on:drop.prevent="handleDrop($event)"
+                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
                             accept=".jpg, .jpeg, .png, .tiff"
                             multiple
-                            class="mb-4"
                         />
+                        <flux:description class="max-sm:hidden mt-2">
+                            {{ __('Drag and drop files here, or click on choose files.') }}
+                        </flux:description>
 
                         <flux:error name="photos" />
 
@@ -411,7 +415,7 @@ new class extends Component
                                 files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
                                     .length > 0
                             "
-                            class="text-sm font-medium text-zinc-800 dark:text-white"
+                            class="text-sm font-medium text-zinc-800 dark:text-white mt-4"
                         >
                             <span
                                 x-text="
@@ -605,6 +609,7 @@ new class extends Component
 
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
+                    dragActive: false,
                     maxParallelUploads: 5,
                     activeUploads: 0,
                     maxUploadsPerMinute: 60,
@@ -631,6 +636,21 @@ new class extends Component
                             });
                         });
                         this.processUploadQueue();
+                    },
+
+                    handleDrop(event) {
+                        this.dragActive = false;
+                        const dt = event.dataTransfer;
+                        if (dt && dt.files && dt.files.length > 0) {
+                            Array.from(dt.files).forEach((file) => {
+                                this.files.push({
+                                    file: file,
+                                    progress: 0,
+                                    status: 'pending',
+                                });
+                            });
+                            this.processUploadQueue();
+                        }
                     },
 
                     canUpload() {
