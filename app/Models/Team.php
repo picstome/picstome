@@ -315,9 +315,11 @@ class Team extends Model
      */
     public function hasCompletedOnboarding(): bool
     {
-        return $this->stripe_test_mode
-            ? (bool) $this->stripe_test_onboarded
-            : (bool) $this->stripe_onboarded;
+        if ($this->stripe_test_mode) {
+            return (bool) $this->stripe_test_onboarded;
+        }
+
+        return (bool) $this->stripe_onboarded;
     }
 
     /**
@@ -327,8 +329,10 @@ class Team extends Model
     {
         if ($this->stripe_test_mode) {
             $this->update(['stripe_test_onboarded' => true]);
-        } else {
-            $this->update(['stripe_onboarded' => true]);
+
+            return;
         }
+
+        $this->update(['stripe_onboarded' => true]);
     }
 }
