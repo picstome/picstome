@@ -35,18 +35,24 @@ new class extends Component
         class="mx-auto flex"
     >
         <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
-        @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-            <div
-                @class([
-                    'absolute flex justify-center',
-                    'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
-                    'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
-                    'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-                ])
-            >
-                <img class="h-5" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" loading="lazy" />
-            </div>
-        @endif
+@if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+    @if ($photo->gallery->team->brand_watermark_position === 'repeated')
+        <div class="absolute inset-0 pointer-events-none"
+            style="background-image: url('{{ $photo->gallery->team->brand_watermark_url }}'); background-repeat: repeat; background-size: 32px 32px; opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};"
+        ></div>
+    @else
+        <div
+            @class([
+                'absolute flex justify-center',
+                'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
+                'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
+                'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
+            ])
+        >
+            <img class="h-5" src="{{ $photo->gallery->team->brand_watermark_url }}" alt="" style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }}" loading="lazy" />
+        </div>
+    @endif
+@endif
     </a>
     <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
         @if ($photo->gallery->is_share_selectable)
