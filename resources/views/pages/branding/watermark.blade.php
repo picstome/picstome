@@ -68,10 +68,10 @@ new class extends Component
 
                             <flux:radio.group wire:model="form.watermarkPosition" :label="__('Watermark position')">
                                 <div class="flex gap-4 *:gap-x-2">
-<flux:radio value="top" :label="__('Top')" />
-<flux:radio value="bottom" :label="__('Bottom')" />
-<flux:radio value="middle" :label="__('Middle')" />
-<flux:radio value="repeated" :label="__('Repeated')" />
+                                    <flux:radio value="top" :label="__('Top')" />
+                                    <flux:radio value="bottom" :label="__('Bottom')" />
+                                    <flux:radio value="middle" :label="__('Middle')" />
+                                    <flux:radio value="repeated" :label="__('Repeated')" />
                                 </div>
                             </flux:radio.group>
 
