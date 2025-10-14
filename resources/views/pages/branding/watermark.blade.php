@@ -4,13 +4,11 @@ use App\Livewire\Forms\WatermarkForm;
 use App\Models\Team;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
-use function Laravel\Folio\render;
 
 name('branding.watermark');
 
@@ -70,9 +68,10 @@ new class extends Component
 
                             <flux:radio.group wire:model="form.watermarkPosition" :label="__('Watermark position')">
                                 <div class="flex gap-4 *:gap-x-2">
-                                    <flux:radio value="top" :label="__('Top')" />
-                                    <flux:radio value="bottom" :label="__('Bottom')" />
-                                    <flux:radio value="middle" :label="__('Middle')" />
+<flux:radio value="top" :label="__('Top')" />
+<flux:radio value="bottom" :label="__('Bottom')" />
+<flux:radio value="middle" :label="__('Middle')" />
+<flux:radio value="repeated" :label="__('Repeated')" />
                                 </div>
                             </flux:radio.group>
 
