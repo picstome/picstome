@@ -26,8 +26,14 @@ class StripeConnectService
      */
     public function ensureConnectedAccount(Team $team): string
     {
-        if ($team->stripe_account_id) {
-            return $team->stripe_account_id;
+        if ($team->stripe_test_mode) {
+            if ($team->stripe_test_account_id) {
+                return $team->stripe_test_account_id;
+            }
+        } else {
+            if ($team->stripe_account_id) {
+                return $team->stripe_account_id;
+            }
         }
 
         $response = Http::withToken($this->getApiKeyForTeam($team))
@@ -46,7 +52,11 @@ class StripeConnectService
         }
 
         $account = $response->json();
-        $team->stripe_account_id = $account['id'];
+        if ($team->stripe_test_mode) {
+            $team->stripe_test_account_id = $account['id'];
+        } else {
+            $team->stripe_account_id = $account['id'];
+        }
         $team->save();
 
         return $account['id'];
