@@ -119,7 +119,10 @@ new class extends Component
                     <x-heading level="1" size="xl">{{ __('Payments') }}</x-heading>
                     <x-subheading>{{ __('Generate payment links and manage payments.') }}</x-subheading>
                 </div>
-                <div>
+                <div class="flex gap-2">
+                    <flux:button :href="route('branding.payments')">
+                        {{ __('Settings') }}
+                    </flux:button>
                     @if ($this->onboardingComplete)
                         <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
                             <flux:button variant="primary">{{ __('Generate Payment Link') }}</flux:button>

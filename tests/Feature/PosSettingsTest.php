@@ -11,7 +11,7 @@ it('updates stripe currency with valid value', function () {
     $team = $user->currentTeam;
     expect($team->stripe_currency)->not->toBe('mxn');
 
-    $component = Volt::actingAs($user)->test('pages.branding.pos')
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
         ->set('form.stripe_currency', 'mxn')
         ->call('save');
 
@@ -27,7 +27,7 @@ it('shows error for invalid stripe currency', function () {
     $team = $user->currentTeam;
     $invalidCurrency = 'xxx';
 
-    $component = Volt::actingAs($user)->test('pages.branding.pos')
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
         ->set('form.stripe_currency', $invalidCurrency)
         ->call('save')
         ->assertHasErrors(['form.stripe_currency' => 'in']);
@@ -42,7 +42,7 @@ it('can update the show_pay_button setting', function () {
     $team = $user->currentTeam;
     expect($team->show_pay_button)->toBeTrue();
 
-    $component = Volt::actingAs($user)->test('pages.branding.pos')
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
         ->set('form.show_pay_button', false)
         ->call('save');
 
@@ -51,7 +51,7 @@ it('can update the show_pay_button setting', function () {
     $team->refresh();
     expect($team->show_pay_button)->toBeFalse();
 
-    $component = Volt::actingAs($user)->test('pages.branding.pos')
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
         ->set('form.show_pay_button', true)
         ->call('save');
 
@@ -71,7 +71,7 @@ it('can disconnect the Stripe account', function () {
     expect($team->stripe_account_id)->not->toBeNull();
     expect($team->stripe_onboarded)->toBeTrue();
 
-    $component = Volt::actingAs($user)->test('pages.branding.pos')
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
         ->call('disconnectStripe');
 
     $component->assertHasNoErrors();
