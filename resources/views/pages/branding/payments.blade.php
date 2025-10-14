@@ -108,17 +108,19 @@ new class extends Component
                                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                             </form>
 
-                            <flux:separator class="my-8" />
+                            @if(Auth::user()->currentTeam->hasCompletedOnboarding())
+                                <flux:separator class="my-8" />
 
-                            <div>
-                                <flux:button wire:click="disconnectStripe" wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}">
-                                    {{ __('Disconnect Stripe') }}
-                                </flux:button>
+                                <div>
+                                    <flux:button wire:click="disconnectStripe" wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}">
+                                        {{ __('Disconnect Stripe') }}
+                                    </flux:button>
 
-                                <flux:description class="mt-2">
-                                    {{ __('Disconnecting will remove your Stripe account. You can reconnect at any time.') }}
-                                </flux:description>
-                            </div>
+                                    <flux:description class="mt-2">
+                                        {{ __('Disconnecting will remove your Stripe account. You can reconnect at any time.') }}
+                                    </flux:description>
+                                </div>
+                            @endif
                         </div>
                     @endif
                 </div>

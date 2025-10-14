@@ -13,11 +13,9 @@ class StripeConnectService
      */
     private function getApiKeyForTeam(Team $team): string
     {
-        if ($team->stripe_test_mode) {
-            return config('services.stripe.test_secret');
-        }
-
-        return config('services.stripe.live_secret');
+        return $team->stripe_test_mode ?
+            config('services.stripe.test_secret') :
+            config('services.stripe.live_secret');
     }
 
     /**
@@ -37,6 +35,7 @@ class StripeConnectService
     public function ensureConnectedAccount(Team $team): string
     {
         $accountId = $this->getStripeAccountIdForTeam($team);
+
         if ($accountId) {
             return $accountId;
         }
@@ -107,11 +106,13 @@ class StripeConnectService
     public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description, array $metadata = []): string
     {
         $accountId = $this->getStripeAccountIdForTeam($team);
+
         if (! $accountId) {
             throw new \Exception('Team does not have a Stripe connected account.');
         }
 
         $commissionPercent = config('picstome.stripe_commission_percent');
+
         $applicationFee = round($amount * $commissionPercent / 100);
 
         $response = Http::withToken($this->getApiKeyForTeam($team))
@@ -151,6 +152,7 @@ class StripeConnectService
     public function isOnboardingComplete(Team $team): bool
     {
         $accountId = $this->getStripeAccountIdForTeam($team);
+
         if (! $accountId) {
             return false;
         }
@@ -179,6 +181,7 @@ class StripeConnectService
     public function getCheckoutSession(Team $team, string $sessionId, ?string $stripeAccountId = null): array
     {
         $accountId = $stripeAccountId ?: $this->getStripeAccountIdForTeam($team);
+
         $response = Http::withToken($this->getApiKeyForTeam($team))
             ->withHeaders([
                 'Accept' => 'application/json',

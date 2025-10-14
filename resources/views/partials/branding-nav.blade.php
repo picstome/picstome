@@ -11,9 +11,7 @@
     <flux:navlist.item href="{{ route('branding.styling') }}" wire:navigate :active="request()->routeIs('branding.styling')">
         {{ __('Styling') }}
     </flux:navlist.item>
-    @if(auth()->user()->currentTeam->hasCompletedOnboarding())
-        <flux:navlist.item href="{{ route('branding.payments') }}" wire:navigate :active="request()->routeIs('branding.payments')">
-            {{ __('Payments') }}
-        </flux:navlist.item>
-    @endif
+    <flux:navlist.item href="{{ route('branding.payments') }}" wire:navigate :active="request()->routeIs('branding.payments')">
+        {{ __('Payments') }}
+    </flux:navlist.item>
 </flux:navlist>
