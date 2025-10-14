@@ -66,7 +66,9 @@ new class extends Component
 
                 <div class="flex-1 self-stretch max-md:pt-6">
                     <flux:heading>{{ __('Payment Settings') }}</flux:heading>
-                    <flux:subheading>{{ __('Configure your payment settings, including the default currency for payments.') }}</flux:subheading>
+                    <flux:subheading>
+                        {{ __('Configure your payment settings, including the default currency for payments.') }}
+                    </flux:subheading>
 
                     @if (! (Auth::user()->currentTeam?->subscribed() ?? false))
                         <flux:callout icon="credit-card" variant="secondary" class="mt-5 max-w-prose">
@@ -84,10 +86,20 @@ new class extends Component
                         <div class="mt-5 w-full max-w-lg">
                             <form wire:submit="save" class="space-y-6">
                                 <flux:field>
+                                    <flux:checkbox
+                                        wire:model="form.stripe_test_mode"
+                                        :label="__('Enable Stripe Test Mode')"
+                                        :description="__('When enabled, all payments and your connected account will be in Stripe test mode. No real money is transferred.')"
+                                    />
+                                </flux:field>
+                                <flux:separator class="my-8" />
+                                <flux:field>
                                     <flux:label>{{ __('Currency') }}</flux:label>
                                     <flux:select wire:model="form.stripe_currency">
-                                        @foreach($stripeCurrencies as $currency)
-                                            <option value="{{ strtolower($currency) }}">{{ strtoupper($currency) }}</option>
+                                        @foreach ($stripeCurrencies as $currency)
+                                            <option value="{{ strtolower($currency) }}">
+                                                {{ strtoupper($currency) }}
+                                            </option>
                                         @endforeach
                                     </flux:select>
                                     <flux:description>
@@ -96,28 +108,28 @@ new class extends Component
                                     <flux:error name="form.stripe_currency" />
                                 </flux:field>
                                 <flux:field>
-                                    <flux:checkbox wire:model="form.show_pay_button" :label="__('Show Accept Payments Button')" :description="__('Enable or disable the accept payments button on your public profile.')" />
+                                    <flux:checkbox
+                                        wire:model="form.show_pay_button"
+                                        :label="__('Show Accept Payments Button')"
+                                        :description="__('Enable or disable the accept payments button on your public profile.')"
+                                    />
                                 </flux:field>
-                                 <flux:field>
-                                     <flux:checkbox
-                                         wire:model="form.stripe_test_mode"
-                                         :label="__('Enable Stripe Test Mode')"
-                                         :description="__('When enabled, all payments will use your Stripe test API key. Use this for testing only!')"
-                                     />
-                                 </flux:field>
                                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                             </form>
 
-                            @if(Auth::user()->currentTeam->hasCompletedOnboarding())
+                            @if (Auth::user()->currentTeam->hasCompletedOnboarding())
                                 <flux:separator class="my-8" />
 
                                 <div>
-                                    <flux:button wire:click="disconnectStripe" wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}">
+                                    <flux:button
+                                        wire:click="disconnectStripe"
+                                        wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}"
+                                    >
                                         {{ __('Disconnect Stripe') }}
                                     </flux:button>
 
                                     <flux:description class="mt-2">
-                                        {{ __('Disconnecting will remove your Stripe account. You can reconnect at any time.') }}
+                                        {{ __('Disconnecting will remove your Stripe account for the current mode (test or live). You can reconnect at any time.') }}
                                     </flux:description>
                                 </div>
                             @endif
