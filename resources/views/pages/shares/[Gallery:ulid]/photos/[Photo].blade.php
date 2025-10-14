@@ -112,11 +112,11 @@ new class extends Component
                         const pos = '{{ $photo->gallery->team->brand_watermark_position }}';
                         let style = '';
                         if (pos === 'top') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + 8}px;`;
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + 8}px; opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'bottom') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight - 40}px;`;
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight - 40}px; opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'middle') {
-                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight/2 - 16}px;`;
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight/2 - 16}px; opacity: ${this.watermarkTransparency};`;
                         } else if (pos === 'repeated') {
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}';
@@ -210,7 +210,7 @@ new class extends Component
                         @else
                             <img
                                 x-show="showWatermark"
-                                :style="watermarkStyle + ';opacity:' + watermarkTransparency + ';'"
+                                :style="watermarkStyle"
                                 class="pointer-events-none absolute h-8"
                                 src="{{ $photo->gallery->team->brand_watermark_url }}"
                                 alt=""
