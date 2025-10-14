@@ -501,7 +501,7 @@ new class extends Component
                     <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
                     <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
                 </div>
-                <flux:input wire:model="paymentLinkForm.amount" :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])" required />
+                <flux:input wire:model="paymentLinkForm.amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])" required />
                 <flux:input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
                 <div class="flex">
                     <flux:spacer />
