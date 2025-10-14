@@ -8,11 +8,16 @@ use Illuminate\Support\Facades\Log;
 
 class StripeConnectService
 {
-    protected $apiKey;
-
-    public function __construct()
+    /**
+     * Get the correct Stripe API key for the team (test or live).
+     */
+    private function getApiKeyForTeam(Team $team): string
     {
-        $this->apiKey = config('cashier.secret');
+        if ($team->stripe_test_mode) {
+            return config('services.stripe.test_secret');
+        }
+
+        return config('services.stripe.live_secret');
     }
 
     /**
@@ -25,7 +30,7 @@ class StripeConnectService
             return $team->stripe_account_id;
         }
 
-        $response = Http::withToken($this->apiKey)
+        $response = Http::withToken($this->getApiKeyForTeam($team))
             ->asForm()
             ->withHeaders([
                 'Accept' => 'application/json',
@@ -55,7 +60,7 @@ class StripeConnectService
     {
         $accountId = $this->ensureConnectedAccount($team);
 
-        $response = Http::withToken($this->apiKey)
+        $response = Http::withToken($this->getApiKeyForTeam($team))
             ->asForm()
             ->withHeaders([
                 'Accept' => 'application/json',
@@ -91,7 +96,7 @@ class StripeConnectService
         $commissionPercent = config('picstome.stripe_commission_percent');
         $applicationFee = round($amount * $commissionPercent / 100);
 
-        $response = Http::withToken($this->apiKey)
+        $response = Http::withToken($this->getApiKeyForTeam($team))
             ->asForm()
             ->withHeaders([
                 'Accept' => 'application/json',
@@ -131,7 +136,7 @@ class StripeConnectService
             return false;
         }
 
-        $response = Http::withToken($this->apiKey)
+        $response = Http::withToken($this->getApiKeyForTeam($team))
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
@@ -152,9 +157,9 @@ class StripeConnectService
      * Retrieve a Stripe Checkout Session by ID for a connected account.
      * Returns the session details as an array.
      */
-    public function getCheckoutSession(string $sessionId, string $stripeAccountId): array
+    public function getCheckoutSession(Team $team, string $sessionId, string $stripeAccountId): array
     {
-        $response = Http::withToken($this->apiKey)
+        $response = Http::withToken($this->getApiKeyForTeam($team))
             ->withHeaders([
                 'Accept' => 'application/json',
                 'Stripe-Account' => $stripeAccountId,

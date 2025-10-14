@@ -26,7 +26,7 @@ class extends Component
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
         if ($this->session_id) {
-            $this->checkoutSession = StripeConnectService::getCheckoutSession($this->session_id, $this->team->stripe_account_id);
+            $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id, $this->team->stripe_account_id);
             $this->photoshoot_id = $this->checkoutSession['metadata']['photoshoot_id'] ?? null;
 
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {

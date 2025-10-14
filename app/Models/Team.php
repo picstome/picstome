@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Stevebauman\Purify\Casts\PurifyHtmlOnGet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -11,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Cashier\Billable;
+use Stevebauman\Purify\Casts\PurifyHtmlOnGet;
 
 class Team extends Model
 {
@@ -40,6 +40,7 @@ class Team extends Model
             'portfolio_public_disabled' => 'boolean',
             'stripe_onboarded' => 'boolean',
             'show_pay_button' => 'boolean',
+            'stripe_test_mode' => 'boolean',
         ];
     }
 
@@ -131,7 +132,7 @@ class Team extends Model
     protected function brandLogoUrl(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->brand_logo_path) {
+            if (! $this->brand_logo_path) {
                 return null;
             }
 
@@ -161,7 +162,7 @@ class Team extends Model
     protected function brandWatermarkUrl(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->brand_watermark_path) {
+            if (! $this->brand_watermark_path) {
                 return null;
             }
 
@@ -191,7 +192,7 @@ class Team extends Model
     protected function brandLogoIconUrl(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->brand_logo_icon_path) {
+            if (! $this->brand_logo_icon_path) {
                 return null;
             }
 
