@@ -69,24 +69,3 @@
         </div>
     </div>
 @endif
-
-@if($team->hasCompletedOnboarding() && $team->show_pay_button)
-    <flux:modal
-        name="generate-payment-link"
-        x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $flux.modal('generate-payment-link').show()) }"
-        class="w-full sm:max-w-lg text-left"
-    >
-        <form wire:submit="generatePaymentLink" class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
-                <flux:subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</flux:subheading>
-                            </div>
-                <flux:input wire:model="amount" :label="__('Amount (in :currency)', ['currency' => strtoupper($team->stripe_currency ?? 'EUR')])" required />
-                <flux:input wire:model="description" :label="__('Note or Description')" type="text" required />
-                <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Continue to Payment') }}</flux:button>
-                </div>
-        </form>
-    </flux:modal>
-@endif

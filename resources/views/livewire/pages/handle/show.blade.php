@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Team;
-use Flux\Flux;
+use Facades\App\Services\StripeConnectService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -23,7 +23,7 @@ class extends Component
     {
         $this->team = Team::where('handle', strtolower($handle))->firstOrFail();
 
-        abort_if(!$this->team, 404);
+        abort_if(! $this->team, 404);
 
         $this->galleries = $this->team->galleries()->public()->with('photos')->get();
     }
@@ -33,22 +33,22 @@ class extends Component
         $view->title($this->team->name);
     }
 
-    public function generatePaymentLink()
+    public function checkout()
     {
         $this->validate([
             'amount' => 'required|integer|min:1',
             'description' => 'required|string|max:255',
         ]);
 
-        $paymentLink = route('handle.pay', [
-            'handle' => $this->team->handle,
-            'amount' => $this->amount,
-            'description' => $this->description,
-        ]);
+        $checkoutUrl = StripeConnectService::createCheckoutSession(
+            $this->team,
+            route('handle.pay.success', ['handle' => $this->team->handle]).'?session_id={CHECKOUT_SESSION_ID}',
+            route('handle.pay.cancel', ['handle' => $this->team->handle]),
+            $this->amount * 100,
+            $this->description,
+        );
 
-        Flux::modal('generate-payment-link')->close();
-
-        return redirect()->away($paymentLink);
+        return redirect()->away($checkoutUrl);
     }
 }; ?>
 
@@ -122,4 +122,25 @@ class extends Component
             </div>
         @endsubscribed
     </div>
+
+    @if($team->hasCompletedOnboarding() && $team->show_pay_button)
+        <flux:modal
+            name="generate-payment-link"
+            x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $flux.modal('generate-payment-link').show()) }"
+            class="w-full sm:max-w-lg text-left"
+        >
+            <form wire:submit="checkout" class="space-y-6">
+                <div>
+                    <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
+                    <flux:subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</flux:subheading>
+                </div>
+                <flux:input wire:model="amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper($team->stripe_currency ?? 'EUR')])" required />
+                <flux:input wire:model="description" :label="__('Note or Description')" type="text" required />
+                <div class="flex">
+                    <flux:spacer />
+                    <flux:button type="submit" variant="primary">{{ __('Continue to Payment') }}</flux:button>
+                </div>
+            </form>
+        </flux:modal>
+    @endif
 </div>
