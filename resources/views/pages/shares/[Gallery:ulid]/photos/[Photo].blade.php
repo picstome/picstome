@@ -67,7 +67,7 @@ new class extends Component
 <x-guest-layout :full-screen="true">
     @volt('pages.shares.photos.show')
         <div
-            x-data="{
+x-data="{
                 swipe: '',
                 zoom: false,
                 pinchZooming: false,
@@ -84,6 +84,7 @@ new class extends Component
                 containerWidth: 0,
                 containerHeight: 0,
                 watermarkStyle: '',
+                repeatedWatermarkStyle: '',
                 showWatermark: false,
                 updateDimensions() {
                     const img = this.$refs.photoImg
@@ -106,11 +107,36 @@ new class extends Component
                             renderedHeight = containerHeight
                             renderedWidth = containerHeight * imgAspect
                         }
-                        // Center watermark over rendered image, offset by 8px
-                        this.watermarkStyle = `left: ${(containerWidth - renderedWidth) / 2 + 8}px; top: ${(containerHeight - renderedHeight) / 2 + 8}px;`
-                        this.showWatermark = true
+                        // Watermark position logic
+                        const pos = '{{ $photo->gallery->team->brand_watermark_position }}';
+                        let style = '';
+                        if (pos === 'top') {
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + 8}px;`;
+                        } else if (pos === 'bottom') {
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight - 40}px;`;
+                        } else if (pos === 'middle') {
+                            style = `left: ${(containerWidth - renderedWidth) / 2 + renderedWidth/2 - 16}px; top: ${(containerHeight - renderedHeight) / 2 + renderedHeight/2 - 16}px;`;
+                        } else if (pos === 'repeated') {
+                            // Tile watermark as background
+                            const url = '{{ $photo->gallery->team->brand_watermark_url }}';
+                            const opacity = {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
+                            this.repeatedWatermarkStyle = `
+                                left: ${(containerWidth - renderedWidth) / 2}px;
+                                top: ${(containerHeight - renderedHeight) / 2}px;
+                                width: ${renderedWidth}px;
+                                height: ${renderedHeight}px;
+                                background-image: url('${url}');
+                                background-repeat: repeat;
+                                background-size: 64px 64px;
+                                opacity: ${opacity};
+                                pointer-events: none;
+                                position: absolute;
+                            `;
+                        }
+                        this.watermarkStyle = style;
+                        this.showWatermark = true;
                     } else {
-                        this.showWatermark = false
+                        this.showWatermark = false;
                     }
                 },
             }"
@@ -175,17 +201,24 @@ new class extends Component
                         x-cloak
                     />
                     @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                        <img
-                            x-show="showWatermark"
-                            :style="watermarkStyle"
-                            class="pointer-events-none absolute h-8"
-                            src="{{ $photo->gallery->team->brand_watermark_url }}"
-                            alt=""
-                            style="
-                                opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
-                            "
-                        />
-                    @endif
+    @php $wmPos = $photo->gallery->team->brand_watermark_position; @endphp
+    @if ($wmPos === 'repeated')
+        <div
+            x-show="showWatermark"
+            :style="repeatedWatermarkStyle"
+            class="pointer-events-none absolute"
+        ></div>
+    @else
+        <img
+            x-show="showWatermark"
+            :style="watermarkStyle"
+            class="pointer-events-none absolute h-8"
+            src="{{ $photo->gallery->team->brand_watermark_url }}"
+            alt=""
+            style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};"
+        />
+    @endif
+@endif
                 </div>
                 <div
                     class="absolute top-0 bottom-0 left-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
