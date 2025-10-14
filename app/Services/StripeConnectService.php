@@ -21,19 +21,24 @@ class StripeConnectService
     }
 
     /**
+     * Get the correct Stripe account ID for the team (test or live).
+     */
+    private function getStripeAccountIdForTeam(Team $team): ?string
+    {
+        return $team->stripe_test_mode
+            ? $team->stripe_test_account_id
+            : $team->stripe_account_id;
+    }
+
+    /**
      * Ensure the team has a Stripe connected account, create if missing.
      * Returns the Stripe account ID.
      */
     public function ensureConnectedAccount(Team $team): string
     {
-        if ($team->stripe_test_mode) {
-            if ($team->stripe_test_account_id) {
-                return $team->stripe_test_account_id;
-            }
-        } else {
-            if ($team->stripe_account_id) {
-                return $team->stripe_account_id;
-            }
+        $accountId = $this->getStripeAccountIdForTeam($team);
+        if ($accountId) {
+            return $accountId;
         }
 
         $response = Http::withToken($this->getApiKeyForTeam($team))
@@ -52,11 +57,13 @@ class StripeConnectService
         }
 
         $account = $response->json();
+
         if ($team->stripe_test_mode) {
             $team->stripe_test_account_id = $account['id'];
         } else {
             $team->stripe_account_id = $account['id'];
         }
+
         $team->save();
 
         return $account['id'];
@@ -99,7 +106,8 @@ class StripeConnectService
      */
     public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description, array $metadata = []): string
     {
-        if (! $team->stripe_account_id) {
+        $accountId = $this->getStripeAccountIdForTeam($team);
+        if (! $accountId) {
             throw new \Exception('Team does not have a Stripe connected account.');
         }
 
@@ -110,7 +118,7 @@ class StripeConnectService
             ->asForm()
             ->withHeaders([
                 'Accept' => 'application/json',
-                'Stripe-Account' => $team->stripe_account_id,
+                'Stripe-Account' => $accountId,
             ])
             ->post('https://api.stripe.com/v1/checkout/sessions', [
                 'payment_method_types[]' => 'card',
@@ -142,7 +150,8 @@ class StripeConnectService
      */
     public function isOnboardingComplete(Team $team): bool
     {
-        if (! $team->stripe_account_id) {
+        $accountId = $this->getStripeAccountIdForTeam($team);
+        if (! $accountId) {
             return false;
         }
 
@@ -150,7 +159,7 @@ class StripeConnectService
             ->withHeaders([
                 'Accept' => 'application/json',
             ])
-            ->get('https://api.stripe.com/v1/accounts/'.$team->stripe_account_id);
+            ->get('https://api.stripe.com/v1/accounts/'.$accountId);
 
         if (! $response->successful()) {
             Log::error('Stripe account fetch failed', ['response' => $response->body()]);
@@ -167,12 +176,13 @@ class StripeConnectService
      * Retrieve a Stripe Checkout Session by ID for a connected account.
      * Returns the session details as an array.
      */
-    public function getCheckoutSession(Team $team, string $sessionId, string $stripeAccountId): array
+    public function getCheckoutSession(Team $team, string $sessionId, ?string $stripeAccountId = null): array
     {
+        $accountId = $stripeAccountId ?: $this->getStripeAccountIdForTeam($team);
         $response = Http::withToken($this->getApiKeyForTeam($team))
             ->withHeaders([
                 'Accept' => 'application/json',
-                'Stripe-Account' => $stripeAccountId,
+                'Stripe-Account' => $accountId,
             ])
             ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}", ['expand' => ['line_items']]);
 
