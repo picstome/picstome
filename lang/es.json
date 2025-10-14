@@ -440,5 +440,8 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Drag and drop files here, or click on choose files.": "Arrastra y suelta archivos aquí, o haz clic en elegir archivos.",
+    "Choose files": "Elegir archivos",
+    "No file chosen": "Ningún archivo elegido"
 }
