@@ -35,6 +35,7 @@ new class extends Component
     public function disconnectStripe()
     {
         $team = Auth::user()->currentTeam;
+
         if ($team->stripe_test_mode) {
             $team->update([
                 'stripe_test_account_id' => null,

@@ -41,6 +41,7 @@ class Team extends Model
             'stripe_onboarded' => 'boolean',
             'show_pay_button' => 'boolean',
             'stripe_test_mode' => 'boolean',
+            'stripe_test_onboarded' => 'boolean',
         ];
     }
 
