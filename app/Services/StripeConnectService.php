@@ -98,6 +98,7 @@ class StripeConnectService
                 'Stripe-Account' => $team->stripe_account_id,
             ])
             ->post('https://api.stripe.com/v1/checkout/sessions', [
+                'payment_method_types[]' => 'card',
                 'metadata[photoshoot_id]' => $metadata['photoshoot_id'] ?? null,
                 'mode' => 'payment',
                 'success_url' => $successUrl,
@@ -160,7 +161,7 @@ class StripeConnectService
             ])
             ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}", ['expand' => ['line_items']]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Stripe Checkout Session fetch failed', ['response' => $response->body()]);
             throw new \Exception('Unable to fetch Stripe Checkout Session');
         }
