@@ -59,7 +59,7 @@ new class extends Component
 
     public function save($index)
     {
-        if(! isset($this->photos[$index])) {
+        if (! isset($this->photos[$index])) {
             return;
         }
 
@@ -86,7 +86,7 @@ new class extends Component
                         if ($width * $height >= $maxPixels) {
                             $fail(__('Image :name exceeds :max pixels.', [
                                 'name' => $uploadedPhoto->getClientOriginalName(),
-                                'max' => number_format($maxPixels/1000000, 0) . 'M'
+                                'max' => number_format($maxPixels / 1000000, 0).'M',
                             ]));
                         }
                     }
@@ -193,8 +193,6 @@ new class extends Component
 
         $this->allPhotos = $photos->naturalSortBy('name');
     }
-
-
 }; ?>
 
 <x-app-layout>
@@ -394,7 +392,11 @@ new class extends Component
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader">
+                    <div x-data="multiFileUploader" 
+     x-on:dragover.prevent="dragActive = true" 
+     x-on:dragleave.prevent="dragActive = false" 
+     x-on:drop.prevent="handleDrop($event)" 
+     :class="{'ring-2 ring-blue-400': dragActive}">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
@@ -603,9 +605,10 @@ new class extends Component
                     }
                 });
 
-                Alpine.data('multiFileUploader', () => ({
-                    files: [],
-                    maxParallelUploads: 5,
+Alpine.data('multiFileUploader', () => ({
+    files: [],
+    dragActive: false,
+    maxParallelUploads: 5,
                     activeUploads: 0,
                     maxUploadsPerMinute: 60,
                     uploadTimestamps: [], // Tracks when uploads started
@@ -633,7 +636,22 @@ new class extends Component
                         this.processUploadQueue();
                     },
 
-                    canUpload() {
+                    handleDrop(event) {
+        this.dragActive = false;
+        const dt = event.dataTransfer;
+        if (dt && dt.files && dt.files.length > 0) {
+            Array.from(dt.files).forEach((file) => {
+                this.files.push({
+                    file: file,
+                    progress: 0,
+                    status: 'pending',
+                });
+            });
+            this.processUploadQueue();
+        }
+    },
+
+    canUpload() {
                         // Check if we're below the rate limit
                         const oneMinuteAgo = Date.now() - 60000;
                         this.uploadTimestamps = this.uploadTimestamps.filter((timestamp) => timestamp > oneMinuteAgo);
