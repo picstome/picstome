@@ -15,6 +15,8 @@ class PosSettingsForm extends Form
 
     public $show_pay_button = true;
 
+    public $stripe_test_mode = false;
+
     public function rules()
     {
         $currencies = array_map('strtolower', StripeConnectService::supportedCurrencies());
@@ -22,6 +24,7 @@ class PosSettingsForm extends Form
         return [
             'stripe_currency' => ['required', 'string', 'size:3', Rule::in($currencies)],
             'show_pay_button' => ['boolean'],
+            'stripe_test_mode' => ['boolean'],
         ];
     }
 
@@ -31,6 +34,7 @@ class PosSettingsForm extends Form
 
         $this->stripe_currency = $team->stripe_currency ?? 'eur';
         $this->show_pay_button = $team->show_pay_button ?? true;
+        $this->stripe_test_mode = $team->stripe_test_mode ?? false;
     }
 
     public function update()
@@ -40,6 +44,7 @@ class PosSettingsForm extends Form
         $this->team->update([
             'stripe_currency' => $this->stripe_currency,
             'show_pay_button' => $this->show_pay_button,
+            'stripe_test_mode' => $this->stripe_test_mode,
         ]);
     }
 }
