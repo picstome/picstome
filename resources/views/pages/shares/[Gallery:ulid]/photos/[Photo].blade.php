@@ -183,8 +183,8 @@ new class extends Component
                         src="{{ $photo->url }}"
                         @click="if (!isMobile()) zoom = true"
                         class="mx-auto h-full w-full max-w-full animate-pulse bg-black/60 object-contain hover:cursor-zoom-in dark:bg-white/60"
-                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
+                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
                         alt="{{ $photo->name }}"
                         x-cloak
                     />
@@ -194,8 +194,8 @@ new class extends Component
                         @click="zoom = false"
                         @contextmenu.prevent
                         class="mx-auto h-full w-full max-w-none animate-pulse bg-black/60 object-contain hover:cursor-zoom-out dark:bg-white/60"
-                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
+                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
                         loading="lazy"
                         alt="{{ $photo->name }}"
                         x-cloak
