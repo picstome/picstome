@@ -34,10 +34,18 @@ new class extends Component
 
     public function disconnectStripe()
     {
-        Auth::user()->currentTeam->update([
-            'stripe_account_id' => null,
-            'stripe_onboarded' => false,
-        ]);
+        $team = Auth::user()->currentTeam;
+        if ($team->stripe_test_mode) {
+            $team->update([
+                'stripe_test_account_id' => null,
+                'stripe_test_onboarded' => false,
+            ]);
+        } else {
+            $team->update([
+                'stripe_account_id' => null,
+                'stripe_onboarded' => false,
+            ]);
+        }
 
         $this->redirect(route('branding.general'), navigate: true);
     }
@@ -86,9 +94,9 @@ new class extends Component
                                     </flux:description>
                                     <flux:error name="form.stripe_currency" />
                                 </flux:field>
-<flux:field>
-                                     <flux:checkbox wire:model="form.show_pay_button" :label="__('Show Accept Payments Button')" :description="__('Enable or disable the accept payments button on your public profile.')" />
-                                 </flux:field>
+                                <flux:field>
+                                    <flux:checkbox wire:model="form.show_pay_button" :label="__('Show Accept Payments Button')" :description="__('Enable or disable the accept payments button on your public profile.')" />
+                                </flux:field>
                                  <flux:field>
                                      <flux:checkbox
                                          wire:model="form.stripe_test_mode"

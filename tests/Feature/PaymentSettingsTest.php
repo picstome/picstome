@@ -81,6 +81,28 @@ it('can disconnect the Stripe account', function () {
     expect($team->stripe_onboarded)->toBeFalse();
 });
 
+it('can disconnect the Stripe test account when test mode is enabled', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+    $team->update([
+        'stripe_test_mode' => true,
+        'stripe_test_account_id' => 'acct_test_987654321',
+        'stripe_test_onboarded' => true,
+    ]);
+    expect($team->stripe_test_mode)->toBeTrue();
+    expect($team->stripe_test_account_id)->not->toBeNull();
+    expect($team->stripe_test_onboarded)->toBeTrue();
+
+    $component = Volt::actingAs($user)->test('pages.branding.payments')
+        ->call('disconnectStripe');
+
+    $component->assertHasNoErrors();
+
+    $team->refresh();
+    expect($team->stripe_test_account_id)->toBeNull();
+    expect($team->stripe_test_onboarded)->toBeFalse();
+});
+
 it('can toggle stripe_test_mode', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
