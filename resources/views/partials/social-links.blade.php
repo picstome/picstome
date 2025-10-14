@@ -71,7 +71,11 @@
 @endif
 
 @if($team->hasCompletedOnboarding() && $team->show_pay_button)
-    <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg text-left">
+    <flux:modal
+        name="generate-payment-link"
+        x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $flux.modal('generate-payment-link').show()) }"
+        class="w-full sm:max-w-lg text-left"
+    >
         <form wire:submit="generatePaymentLink" class="space-y-6">
             <div>
                 <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
