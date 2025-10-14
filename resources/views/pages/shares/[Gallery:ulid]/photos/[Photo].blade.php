@@ -74,6 +74,7 @@ new class extends Component
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
                 navigating: false,
+                watermarkTransparency: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }},
                 isMobile() {
                     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
                         navigator.userAgent,
@@ -119,7 +120,6 @@ new class extends Component
                         } else if (pos === 'repeated') {
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}';
-                            const opacity = {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
                             this.repeatedWatermarkStyle = `
                                 left: ${(containerWidth - renderedWidth) / 2}px;
                                 top: ${(containerHeight - renderedHeight) / 2}px;
@@ -128,7 +128,7 @@ new class extends Component
                                 background-image: url('${url}');
                                 background-repeat: repeat;
                                 background-size: 64px 64px;
-                                opacity: ${opacity};
+                                opacity: ${this.watermarkTransparency};
                                 pointer-events: none;
                                 position: absolute;
                             `;
@@ -210,11 +210,10 @@ new class extends Component
                         @else
                             <img
                                 x-show="showWatermark"
-                                :style="watermarkStyle"
+                                :style="watermarkStyle + ';opacity:' + watermarkTransparency + ';'"
                                 class="pointer-events-none absolute h-8"
                                 src="{{ $photo->gallery->team->brand_watermark_url }}"
                                 alt=""
-                                style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};"
                             />
                         @endif
                     @endif
