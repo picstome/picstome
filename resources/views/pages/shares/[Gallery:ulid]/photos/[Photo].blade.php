@@ -67,7 +67,7 @@ new class extends Component
 <x-guest-layout :full-screen="true">
     @volt('pages.shares.photos.show')
         <div
-x-data="{
+            x-data="{
                 swipe: '',
                 zoom: false,
                 pinchZooming: false,
@@ -201,24 +201,23 @@ x-data="{
                         x-cloak
                     />
                     @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-    @php $wmPos = $photo->gallery->team->brand_watermark_position; @endphp
-    @if ($wmPos === 'repeated')
-        <div
-            x-show="showWatermark"
-            :style="repeatedWatermarkStyle"
-            class="pointer-events-none absolute"
-        ></div>
-    @else
-        <img
-            x-show="showWatermark"
-            :style="watermarkStyle"
-            class="pointer-events-none absolute h-8"
-            src="{{ $photo->gallery->team->brand_watermark_url }}"
-            alt=""
-            style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};"
-        />
-    @endif
-@endif
+                        @if ($photo->gallery->team->brand_watermark_position === 'repeated')
+                            <div
+                                x-show="showWatermark"
+                                :style="repeatedWatermarkStyle"
+                                class="pointer-events-none absolute"
+                            ></div>
+                        @else
+                            <img
+                                x-show="showWatermark"
+                                :style="watermarkStyle"
+                                class="pointer-events-none absolute h-8"
+                                src="{{ $photo->gallery->team->brand_watermark_url }}"
+                                alt=""
+                                style="opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};"
+                            />
+                        @endif
+                    @endif
                 </div>
                 <div
                     class="absolute top-0 bottom-0 left-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
