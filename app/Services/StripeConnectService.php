@@ -178,9 +178,9 @@ class StripeConnectService
      * Retrieve a Stripe Checkout Session by ID for a connected account.
      * Returns the session details as an array.
      */
-    public function getCheckoutSession(Team $team, string $sessionId, ?string $stripeAccountId = null): array
+    public function getCheckoutSession(Team $team, string $sessionId): array
     {
-        $accountId = $stripeAccountId ?: $this->getStripeAccountIdForTeam($team);
+        $accountId = $this->getStripeAccountIdForTeam($team);
 
         $response = Http::withToken($this->getApiKeyForTeam($team))
             ->withHeaders([
