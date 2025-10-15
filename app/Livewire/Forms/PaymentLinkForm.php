@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Forms;
 
-use App\Models\Photo;
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
@@ -29,11 +28,15 @@ class PaymentLinkForm extends Form
     {
         $this->validate();
 
-        return route('handle.pay', [
+        $relativePath = route('handle.pay', [
             'handle' => Auth::user()->currentTeam->handle,
             'amount' => $this->amount,
             'description' => $this->description,
             'photoshoot_id' => $this->photoshoot?->id ?? null,
-        ]);
+        ], false);
+
+        $shortDomain = config('picstome.short_url_domain');
+
+        return rtrim($shortDomain, '/').$relativePath;
     }
 }

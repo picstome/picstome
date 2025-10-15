@@ -38,6 +38,9 @@ return [
 
     'stripe_commission_percent' => env('STRIPE_COMMISSION_PERCENT', 1),
 
+    // The base URL for short links (e.g., payment links)
+    'short_url_domain' => env('SHORT_URL_DOMAIN'),
+
     /**
      * The base URL for the photo CDN. Example: 'https://wsrv.nl/' or 'https://i0.wp.com/'.
      * Switch this to change the CDN provider for image delivery and resizing.
