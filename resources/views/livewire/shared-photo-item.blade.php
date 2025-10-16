@@ -40,6 +40,7 @@ new class extends Component
         @if ($photo->small_thumbnail_url)
             <img
                 x-data="{ loaded: false, errored: false }"
+                x-init="if ($el.complete) loaded = true"
                 src="{{ $photo->small_thumbnail_url }}"
                 alt=""
                 @contextmenu.prevent
