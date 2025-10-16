@@ -70,9 +70,10 @@ new class extends Component
             <img
                 src="{{ $photo->small_thumbnail_url }}"
                 alt=""
-                class="object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full"
-                onload="this.classList.remove('animate-pulse','bg-zinc-300','dark:bg-white/10','h-full','w-full')"
-                onerror="this.classList.remove('animate-pulse','bg-zinc-300','dark:bg-white/10','h-full','w-full')"
+                x-data="{ loaded: false, errored: false }"
+                x-on:load="loaded = true"
+                x-on:error="errored = true"
+                :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
                 loading="lazy" />
         @else
             <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
