@@ -27,14 +27,30 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
+<div
+    class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10"
+    @if (!$photo->small_thumbnail_url) wire:poll.visible.5s @endif
+>
     <a
         id="{{ $htmlId }}"
         wire:navigate
         href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $photo, 'navigateFavorites' => $asFavorite ? true : null]) }}"
-        class="mx-auto flex"
+        class="mx-auto flex w-full"
     >
-        <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
+        @if ($photo->small_thumbnail_url)
+            <img
+                x-data="{ loaded: false, errored: false }"
+                src="{{ $photo->small_thumbnail_url }}"
+                alt=""
+                @contextmenu.prevent
+                x-on:load="loaded = true"
+                x-on:error="errored = true"
+                class="object-cover"
+                :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
+                loading="lazy" />
+        @else
+            <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
+        @endif
         @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
             @if ($photo->gallery->team->brand_watermark_position === 'repeated')
                 <div class="absolute inset-0 pointer-events-none"

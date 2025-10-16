@@ -88,9 +88,18 @@ class extends Component
                                     id="photo-{{ $photo->id }}"
                                     wire:navigate
                                     href="{{ route('portfolio.photos.show', ['handle' => $team->handle, 'gallery' => $gallery, 'photo' => $photo]) }}"
-                                    class="mx-auto flex"
+                                    class="mx-auto flex w-full"
                                 >
-                                    <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
+                                    <img
+                                        x-data="{ loaded: false, errored: false }"
+                                        src="{{ $photo->small_thumbnail_url }}"
+                                        alt=""
+                                        @contextmenu.prevent
+                                        x-on:load="loaded = true"
+                                        x-on:error="errored = true"
+                                        class="object-cover"
+                                        :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
+                                        loading="lazy" />
                                 </a>
                             </div>
                         @endforeach
@@ -116,13 +125,3 @@ class extends Component
         @endsubscribed
     </div>
 </div>
-
-@push('head')
-    @if($photos && $photos->isNotEmpty())
-        @foreach ($photos->take(50) as $photo)
-            <link rel="prefetch" as="image" href="{{ $photo->url }}">
-            <link rel="prefetch" as="image" href="{{ $photo->thumbnail_url }}">
-            <link rel="prefetch" as="image" href="{{ $photo->large_thumbnail_url }}">
-        @endforeach
-    @endif
-@endpush
