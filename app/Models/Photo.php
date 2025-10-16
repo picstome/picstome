@@ -52,7 +52,7 @@ class Photo extends Model
     public function next()
     {
         $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex + 1);
     }
@@ -60,7 +60,7 @@ class Photo extends Model
     public function previous()
     {
         $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex - 1);
     }
@@ -68,7 +68,7 @@ class Photo extends Model
     public function nextFavorite()
     {
         $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex + 1);
     }
@@ -76,7 +76,7 @@ class Photo extends Model
     public function previousFavorite()
     {
         $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex - 1);
     }
@@ -126,6 +126,7 @@ class Photo extends Model
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $height = config('picstome.photo_thumb_resize', 1000);
             $width = config('picstome.photo_thumb_resize', 1000);
+
             return $this->generateCdnUrl($originalUrl, [
                 'h' => $height,
                 'w' => $width,
@@ -143,6 +144,7 @@ class Photo extends Model
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $size = config('picstome.photo_resize', 2048);
+
             return $this->generateCdnUrl($originalUrl, [
                 'h' => $size,
                 'w' => $size,
@@ -158,8 +160,13 @@ class Photo extends Model
     protected function smallThumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
+            if ($this->diskOrDefault() !== 's3') {
+                return null;
+            }
+
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $size = config('picstome.photo_small_thumb_resize', 500);
+
             return $this->generateCdnUrl($originalUrl, [
                 'h' => $size,
                 'w' => $size,
@@ -209,7 +216,7 @@ class Photo extends Model
                 $subdomainIndex = $this->id % 4;
             }
 
-            $cdn = 'https://i' . $subdomainIndex . '.wp.com';
+            $cdn = 'https://i'.$subdomainIndex.'.wp.com';
 
             // i0.wp.com expects the image URL as a path, not a query param
             // Example: https://i0.wp.com/example.com/image.jpg?w=1000&q=90
@@ -217,7 +224,7 @@ class Photo extends Model
 
             $query = http_build_query($params);
 
-            return "$cdn/$strippedUrl" . ($query ? "?$query" : '');
+            return "$cdn/$strippedUrl".($query ? "?$query" : '');
         }
 
         // wsrv.nl expects ?url=...&params

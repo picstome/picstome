@@ -55,14 +55,22 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10" x-data="{ showActions: false, moreActionsOpen: false }" @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false">
+<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10"
+    x-data="{ showActions: false, moreActionsOpen: false }"
+    @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false"
+    @if (!$photo->small_thumbnail_url) wire:poll.visible.5s @endif
+>
     <a
         id="{{ $htmlId }}"
         href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate
-        class="mx-auto flex"
+        class="mx-auto flex w-full"
     >
-        <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
+        @if ($photo->small_thumbnail_url)
+            <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
+        @else
+            <div class="w-full h-full bg-zinc-3 00 dark:bg-white/10 animate-pulse"></div>
+        @endif
     </a>
     <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
