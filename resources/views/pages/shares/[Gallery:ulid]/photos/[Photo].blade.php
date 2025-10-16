@@ -104,6 +104,11 @@ new class extends Component
                             img.src = this.nextLargeThumbnailUrl;
                         }
                     }
+                    // Preload the full photo URL
+                    if (this.photoUrl) {
+                        const img = new Image();
+                        img.src = this.photoUrl;
+                    }
                 },
                 imgWidth: 0,
                 imgHeight: 0,
