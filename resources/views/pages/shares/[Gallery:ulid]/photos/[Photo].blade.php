@@ -310,15 +310,15 @@ new class extends Component
             <link rel="preload" as="image" href="{{ $photo->url }}" />
 
             @if ($next)
-                <link rel="prefetch" as="image" href="{{ $next->url }}" />
-                <link rel="prefetch" as="image" href="{{ $next->thumbnail_url }}" />
-                <link rel="prefetch" as="image" href="{{ $next->large_thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $next->url }}" />
+                <link rel="preload" as="image" href="{{ $next->thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}" />
             @endif
 
             @if ($previous)
-                <link rel="prefetch" as="image" href="{{ $previous->url }}" />
-                <link rel="prefetch" as="image" href="{{ $previous->thumbnail_url }}" />
-                <link rel="prefetch" as="image" href="{{ $previous->large_thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $previous->url }}" />
+                <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}" />
             @endif
         @endpush
     @endvolt
