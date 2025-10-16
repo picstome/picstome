@@ -64,21 +64,12 @@ new class extends Component
         id="{{ $htmlId }}"
         href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
         wire:navigate
-        class="mx-auto flex w-full relative"
-        x-data="{ imageLoaded: false }"
+        class="mx-auto flex w-full"
     >
         @if ($photo->small_thumbnail_url)
-            <div x-show="!imageLoaded" class="absolute inset-0 w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
-            <img
-                src="{{ $photo->small_thumbnail_url }}"
-                alt=""
-                class="object-cover w-full h-full"
-                loading="lazy"
-                x-show="imageLoaded"
-                @load="imageLoaded = true"
-            />
+            <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
         @else
-            <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
+            <div class="w-full h-full bg-zinc-3 00 dark:bg-white/10 animate-pulse"></div>
         @endif
     </a>
     <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
