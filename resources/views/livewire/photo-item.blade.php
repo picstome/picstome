@@ -67,7 +67,13 @@ new class extends Component
         class="mx-auto flex w-full"
     >
         @if ($photo->small_thumbnail_url)
-            <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
+            <img
+                src="{{ $photo->small_thumbnail_url }}"
+                alt=""
+                class="object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full"
+                onload="this.classList.remove('animate-pulse','bg-zinc-300','dark:bg-white/10','h-full','w-full')"
+                onerror="this.classList.remove('animate-pulse','bg-zinc-300','dark:bg-white/10','h-full','w-full')"
+                loading="lazy" />
         @else
             <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
         @endif
