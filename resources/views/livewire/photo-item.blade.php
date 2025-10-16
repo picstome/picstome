@@ -68,9 +68,10 @@ new class extends Component
     >
         @if ($photo->small_thumbnail_url)
             <img
+                x-data="{ loaded: false, errored: false }"
+                x-init="if ($el.complete) loaded = true"
                 src="{{ $photo->small_thumbnail_url }}"
                 alt=""
-                x-data="{ loaded: false, errored: false }"
                 x-on:load="loaded = true"
                 x-on:error="errored = true"
                 :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
