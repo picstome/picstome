@@ -69,7 +69,7 @@ new class extends Component
         @if ($photo->small_thumbnail_url)
             <img src="{{ $photo->small_thumbnail_url }}" alt="" class="object-cover" loading="lazy" />
         @else
-            <div class="w-full h-full bg-zinc-3 00 dark:bg-white/10 animate-pulse"></div>
+            <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
         @endif
     </a>
     <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
