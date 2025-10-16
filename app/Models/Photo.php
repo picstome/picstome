@@ -114,7 +114,7 @@ class Photo extends Model
             return $this->generateCdnUrl($originalUrl, [
                 'h' => $height,
                 'w' => $width,
-                'q' => 95,
+                'q' => 93,
                 'output' => 'webp',
             ]);
         });

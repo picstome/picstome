@@ -68,6 +68,10 @@ new class extends Component
     @volt('pages.shares.photos.show')
         <div
             x-data="{
+                previousThumbnailUrl: '{{ $previous?->thumbnail_url }}',
+                nextThumbnailUrl: '{{ $next?->thumbnail_url }}',
+                previousLargeThumbnailUrl: '{{ $previous?->large_thumbnail_url }}',
+                nextLargeThumbnailUrl: '{{ $next?->large_thumbnail_url }}',
                 swipe: '',
                 zoom: false,
                 pinchZooming: false,
@@ -79,6 +83,32 @@ new class extends Component
                     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
                         navigator.userAgent,
                     )
+                },
+                preloadAdjacentImages() {
+                    if (this.isMobile()) {
+                        if (this.previousThumbnailUrl) {
+                            const img = new Image();
+                            img.src = this.previousThumbnailUrl;
+                        }
+                        if (this.nextThumbnailUrl) {
+                            const img = new Image();
+                            img.src = this.nextThumbnailUrl;
+                        }
+                    } else {
+                        if (this.previousLargeThumbnailUrl) {
+                            const img = new Image();
+                            img.src = this.previousLargeThumbnailUrl;
+                        }
+                        if (this.nextLargeThumbnailUrl) {
+                            const img = new Image();
+                            img.src = this.nextLargeThumbnailUrl;
+                        }
+                    }
+                    // Preload the full photo URL
+                    if (this.photoUrl) {
+                        const img = new Image();
+                        img.src = this.photoUrl;
+                    }
                 },
                 imgWidth: 0,
                 imgHeight: 0,
@@ -165,11 +195,11 @@ new class extends Component
             x-on:resize.window="updateDimensions()"
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
-                <div class="relative flex h-full w-full items-center justify-center">
+                <div class="relative flex w-full items-center justify-center" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                     <img
                         x-show="!zoom && !pinchZooming"
                         x-ref="photoImg"
-                        @load="updateDimensions"
+                        @load="updateDimensions(); preloadAdjacentImages()"
                         src="{{ $photo->thumbnail_url }}"
                         srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                         sizes="(max-width: 640px) 100vw, 80vw"
@@ -188,6 +218,7 @@ new class extends Component
                         onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
                         onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
                         alt="{{ $photo->name }}"
+                        loading="lazy"
                         x-cloak
                     />
                     <img
@@ -305,21 +336,5 @@ new class extends Component
         @assets
             <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
         @endassets
-
-        @push('head')
-            <link rel="preload" as="image" href="{{ $photo->url }}" />
-
-            @if ($next)
-                <link rel="preload" as="image" href="{{ $next->url }}" />
-                <link rel="preload" as="image" href="{{ $next->thumbnail_url }}" />
-                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}" />
-            @endif
-
-            @if ($previous)
-                <link rel="preload" as="image" href="{{ $previous->url }}" />
-                <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}" />
-                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}" />
-            @endif
-        @endpush
     @endvolt
 </x-guest-layout>
