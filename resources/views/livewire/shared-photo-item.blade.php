@@ -34,7 +34,7 @@ new class extends Component
         href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $photo, 'navigateFavorites' => $asFavorite ? true : null]) }}"
         class="mx-auto flex"
     >
-        <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" />
+        <img src="{{ $photo->small_thumbnail_url }}" alt="" @contextmenu.prevent class="object-cover" loading="lazy" />
         @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
             @if ($photo->gallery->team->brand_watermark_position === 'repeated')
                 <div class="absolute inset-0 pointer-events-none"
