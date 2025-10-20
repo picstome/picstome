@@ -32,7 +32,6 @@ class extends Component
             $metadata = $this->checkoutSession['metadata'] ?? [];
             $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
 
-            // Only create Photoshoot, Payment, and send notifications if payment is paid
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
                 $photoshoot = null;
                 if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
@@ -55,6 +54,7 @@ class extends Component
 
                 $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
                 $payment = null;
+                $paymentWasCreated = false;
                 if ($paymentIntentId) {
                     $existing = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
                     if (! $existing) {
@@ -67,13 +67,14 @@ class extends Component
                             'completed_at' => now(),
                             'photoshoot_id' => $this->photoshoot_id,
                         ]);
+                        $paymentWasCreated = true;
                     } else {
                         $payment = $existing;
                     }
                 }
 
-                // Send booking notification to team owner and payer (only if photoshoot was just created)
-                if (($metadata['booking'] ?? false) && $photoshoot) {
+                // Send booking notification to team owner and payer (only if photoshoot was just created AND payment was just created)
+                if (($metadata['booking'] ?? false) && $photoshoot && $paymentWasCreated) {
                     if ($photoshoot->team && $photoshoot->team->owner) {
                         $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $payment));
                     }
