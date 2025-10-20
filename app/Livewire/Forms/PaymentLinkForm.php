@@ -45,6 +45,12 @@ class PaymentLinkForm extends Form
             'amount' => $this->amount,
             'description' => $this->description,
             'photoshoot_id' => $this->photoshoot?->id ?? null,
+            ...($this->booking ? [
+                'booking' => true,
+                'booking_date' => $this->booking_date,
+                'booking_start_time' => $this->booking_start_time,
+                'booking_end_time' => $this->booking_end_time,
+            ] : []),
         ], false);
 
         $shortDomain = config('picstome.short_url_domain');
