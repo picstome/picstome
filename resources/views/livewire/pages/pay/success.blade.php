@@ -4,6 +4,7 @@ use App\Models\Payment;
 use App\Models\Team;
 use App\Notifications\BookingCreated;
 use Facades\App\Services\StripeConnectService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -27,11 +28,11 @@ class extends Component
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
-        abort_if(! $this->session_id, 400);
+        abort_if(! $this->session_id, 404);
 
         $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
 
-        abort_if(($this->checkoutSession['payment_status'] ?? null) !== 'paid', 400);
+        abort_if(($this->checkoutSession['payment_status'] ?? null) !== 'paid', 404);
 
         $metadata = $this->checkoutSession['metadata'] ?? [];
 
@@ -39,11 +40,11 @@ class extends Component
 
         $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
 
-        abort_if(! $paymentIntentId, 400);
+        abort_if(! $paymentIntentId, 404);
 
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
 
-        abort_if($payment, 409);
+        abort_if($payment, 404);
 
         if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
             $timeRange = match (true) {

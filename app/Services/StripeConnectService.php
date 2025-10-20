@@ -123,7 +123,7 @@ class StripeConnectService
             ])
             ->post('https://api.stripe.com/v1/checkout/sessions', [
                 'payment_method_types[]' => 'card',
-                'metadata[photoshoot_id]' => $metadata['photoshoot_id'] ?? null,
+                ...collect($metadata)->mapWithKeys(fn ($v, $k) => ["metadata[$k]" => $v])->all(),
                 'mode' => 'payment',
                 'success_url' => $successUrl,
                 'cancel_url' => $cancelUrl,
