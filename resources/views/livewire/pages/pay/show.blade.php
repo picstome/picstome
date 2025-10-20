@@ -61,9 +61,9 @@ class extends Component
                 'exists:photoshoots,id,team_id,'.$this->team->id,
             ],
             'booking' => ['nullable', 'boolean'],
-            'booking_date' => ['required_if:booking,true', 'date'],
-            'booking_start_time' => ['required_if:booking,true', 'date_format:H:i'],
-            'booking_end_time' => ['required_if:booking,true', 'date_format:H:i'],
+            'booking_date' => ['nullable', 'required_if:booking,true', 'date'],
+            'booking_start_time' => ['nullable', 'required_if:booking,true', 'date_format:H:i'],
+            'booking_end_time' => ['nullable', 'required_if:booking,true', 'date_format:H:i'],
         ];
 
         $this->validate($rules);
