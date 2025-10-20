@@ -27,25 +27,23 @@ class extends Component
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
-        if (! $this->session_id) {
-            return;
-        }
+        abort_if(! $this->session_id, 400);
 
         $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
+
         $metadata = $this->checkoutSession['metadata'] ?? [];
+
         $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
 
-        if (($this->checkoutSession['payment_status'] ?? null) !== 'paid') {
-            return;
-        }
+        abort_if(($this->checkoutSession['payment_status'] ?? null) !== 'paid', 400);
 
         $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
 
+        abort_if(! $paymentIntentId, 400);
+
         $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
 
-        if ($payment) {
-            return;
-        }
+        abort_if($payment, 409);
 
         if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
             $timeRange = match (true) {
