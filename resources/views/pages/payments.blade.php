@@ -212,15 +212,17 @@ new class extends Component
                             <flux:input wire:model="linkForm.amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper($this->team?->stripe_currency ?? 'EUR')])" required />
                             <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
 
-                            <flux:switch wire:model="linkForm.booking" label="Booking" />
+                            <flux:switch wire:model.live="linkForm.booking" label="Booking" />
 
-                            <div x-show="$wire.linkForm.booking">
-                                <flux:date-picker wire:model="linkForm.booking_date" label="Date" />
-                                <div class="grid grid-cols-2 gap-4 mt-4">
-                                    <flux:time-picker wire:model="linkForm.booking_start_time" label="Start Time" />
-                                    <flux:time-picker wire:model="linkForm.booking_end_time" label="End Time" />
+                            @if($linkForm->booking)
+                                <div>
+                                    <flux:date-picker wire:model="linkForm.booking_date" label="Date" />
+                                    <div class="grid grid-cols-2 gap-4 mt-4">
+                                        <flux:time-picker wire:model="linkForm.booking_start_time" label="Start Time" />
+                                        <flux:time-picker wire:model="linkForm.booking_end_time" label="End Time" />
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
 
                             <div class="flex">
                                 <flux:spacer />
