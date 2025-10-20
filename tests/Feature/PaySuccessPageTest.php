@@ -2,8 +2,10 @@
 
 use App\Models\Photoshoot;
 use App\Models\User;
+use App\Notifications\BookingCreated;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
@@ -15,6 +17,7 @@ beforeEach(function () {
 });
 
 it('creates a photoshoot if booking is enabled and no photoshoot_id is present', function () {
+    Notification::fake();
     $mockSession = [
         'metadata' => [
             'booking' => true,
@@ -53,6 +56,23 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
     $payment = $this->team->payments()->first();
     expect($payment)->not->toBeNull();
     expect($payment->photoshoot_id)->toBe($photoshoot->id);
+
+    // Assert notification sent to team owner
+    Notification::assertSentTo(
+        $this->user,
+        BookingCreated::class,
+        function (BookingCreated $notification, $notifiable) use ($photoshoot) {
+            return $notification->photoshoot->is($photoshoot);
+        }
+    );
+    // Assert notification sent to payer email (on-demand)
+    Notification::assertSentOnDemand(
+        BookingCreated::class,
+        function (BookingCreated $notification, $channels, $notifiable) use ($photoshoot) {
+            return $notifiable->routes['mail'] === 'client@example.com'
+                && $notification->photoshoot->is($photoshoot);
+        }
+    );
 });
 
 it('does not create a photoshoot if booking is not enabled', function () {

@@ -47,6 +47,22 @@ class extends Component
                     'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
                 ]);
                 $this->photoshoot_id = $photoshoot->id;
+
+                // Send booking notification to team owner and payer
+                $payment = null;
+                $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
+                if ($paymentIntentId) {
+                    $payment = \App\Models\Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
+                }
+                // Notify team owner
+                if ($photoshoot->team && $photoshoot->team->owner) {
+                    $photoshoot->team->owner->notify(new \App\Notifications\BookingCreated($photoshoot, $payment));
+                }
+                // Notify payer (even if not a user)
+                $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
+                if ($payerEmail) {
+                    \Illuminate\Support\Facades\Notification::route('mail', $payerEmail)->notify(new \App\Notifications\BookingCreated($photoshoot, $payment));
+                }
             }
 
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
