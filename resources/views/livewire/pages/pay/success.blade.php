@@ -27,61 +27,64 @@ class extends Component
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
-        if ($this->session_id) {
-            $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
-            $metadata = $this->checkoutSession['metadata'] ?? [];
-            $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
-
-            if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
-                $photoshoot = null;
-                $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
-                $paymentExists = $paymentIntentId ? Payment::where('stripe_payment_intent_id', $paymentIntentId)->exists() : false;
-                if (($metadata['booking'] ?? false) && ! $this->photoshoot_id && ! $paymentExists) {
-                    $timeRange = match (true) {
-                        ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
-                        ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
-                        ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
-                        default => null,
-                    };
-
-                    $baseName = $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session');
-                    $name = $timeRange ? ($baseName.' ('.$timeRange.')') : $baseName;
-                    $photoshoot = $this->team->photoshoots()->create([
-                        'name' => $name,
-                        'date' => $metadata['booking_date'] ?? null,
-                        'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
-                    ]);
-                    $this->photoshoot_id = $photoshoot->id;
-                }
-
-                $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
-                if ($paymentIntentId) {
-                    $photoshootForNotification = $photoshoot ?? null;
-                    $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
-                    if (! $payment) {
-                        $payment = $this->team->payments()->create([
-                            'amount' => $this->checkoutSession['amount_total'] ?? 0,
-                            'currency' => $this->checkoutSession['currency'] ?? 'usd',
-                            'stripe_payment_intent_id' => $paymentIntentId,
-                            'description' => $this->checkoutSession['line_items']['data'][0]['description'] ?? null,
-                            'customer_email' => $this->checkoutSession['customer_details']['email'] ?? null,
-                            'completed_at' => now(),
-                            'photoshoot_id' => $this->photoshoot_id,
-                        ]);
-                        // Only send notification if a photoshoot was just created
-                        if (($metadata['booking'] ?? false) && $photoshootForNotification) {
-                            if ($photoshootForNotification->team && $photoshootForNotification->team->owner) {
-                                $photoshootForNotification->team->owner->notify(new BookingCreated($photoshootForNotification, $payment));
-                            }
-                            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
-                            if ($payerEmail) {
-                                Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshootForNotification, $payment));
-                            }
-                        }
-                    }
-                }
-            }
+        if (! $this->session_id) {
+            return;
         }
+
+        $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
+        $metadata = $this->checkoutSession['metadata'] ?? [];
+        $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
+
+        if (($this->checkoutSession['payment_status'] ?? null) !== 'paid') {
+            return;
+        }
+
+        $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
+
+        $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
+
+        if ($payment) {
+            return;
+        }
+
+        if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
+            $timeRange = match (true) {
+                ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
+                ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
+                ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
+                default => null,
+            };
+
+            $baseName = $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session');
+            $name = $timeRange ? ($baseName.' ('.$timeRange.')') : $baseName;
+            $photoshoot = $this->team->photoshoots()->create([
+                'name' => $name,
+                'date' => $metadata['booking_date'] ?? null,
+                'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
+            ]);
+
+            if ($photoshoot->team && $photoshoot->team->owner) {
+                $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $payment));
+            }
+
+            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
+
+            if ($payerEmail) {
+                Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $payment));
+            }
+
+            $this->photoshoot_id = $photoshoot->id;
+        }
+
+        $payment = $this->team->payments()->create([
+            'amount' => $this->checkoutSession['amount_total'] ?? 0,
+            'currency' => $this->checkoutSession['currency'] ?? 'usd',
+            'stripe_payment_intent_id' => $paymentIntentId,
+            'description' => $this->checkoutSession['line_items']['data'][0]['description'] ?? null,
+            'customer_email' => $this->checkoutSession['customer_details']['email'] ?? null,
+            'completed_at' => now(),
+            'photoshoot_id' => $this->photoshoot_id,
+        ]);
     }
 
     public function rendering(View $view): void
