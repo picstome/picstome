@@ -53,11 +53,10 @@ class extends Component
                 }
 
                 $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
-                $payment = null;
-                $paymentWasCreated = false;
                 if ($paymentIntentId) {
-                    $existing = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
-                    if (! $existing) {
+                    $photoshootForNotification = $photoshoot ?? null;
+                    $payment = Payment::where('stripe_payment_intent_id', $paymentIntentId)->first();
+                    if (! $payment) {
                         $payment = $this->team->payments()->create([
                             'amount' => $this->checkoutSession['amount_total'] ?? 0,
                             'currency' => $this->checkoutSession['currency'] ?? 'usd',
@@ -67,22 +66,19 @@ class extends Component
                             'completed_at' => now(),
                             'photoshoot_id' => $this->photoshoot_id,
                         ]);
-                        $paymentWasCreated = true;
-                    } else {
-                        $payment = $existing;
+                        // Only send notification if a photoshoot was just created
+                        if (($metadata['booking'] ?? false) && $photoshootForNotification) {
+                            if ($photoshootForNotification->team && $photoshootForNotification->team->owner) {
+                                $photoshootForNotification->team->owner->notify(new BookingCreated($photoshootForNotification, $payment));
+                            }
+                            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
+                            if ($payerEmail) {
+                                Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshootForNotification, $payment));
+                            }
+                        }
                     }
                 }
 
-                // Send booking notification to team owner and payer (only if photoshoot was just created AND payment was just created)
-                if (($metadata['booking'] ?? false) && $photoshoot && $paymentWasCreated) {
-                    if ($photoshoot->team && $photoshoot->team->owner) {
-                        $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $payment));
-                    }
-                    $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
-                    if ($payerEmail) {
-                        Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $payment));
-                    }
-                }
             }
         }
     }
