@@ -34,7 +34,9 @@ class extends Component
 
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
                 $photoshoot = null;
-                if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
+                $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
+                $paymentExists = $paymentIntentId ? Payment::where('stripe_payment_intent_id', $paymentIntentId)->exists() : false;
+                if (($metadata['booking'] ?? false) && ! $this->photoshoot_id && ! $paymentExists) {
                     $timeRange = match (true) {
                         ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
                         ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
@@ -78,7 +80,6 @@ class extends Component
                         }
                     }
                 }
-
             }
         }
     }
