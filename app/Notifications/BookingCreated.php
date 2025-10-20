@@ -38,11 +38,9 @@ class BookingCreated extends Notification
             ->line(__('Customer: :customer', ['customer' => $customer]))
             ->line(__('Amount: :amount', ['amount' => $amount]));
 
-        if ($this->photoshoot->team) {
-            $mail->line(__('Team: :team', ['team' => $this->photoshoot->team->name]));
+        if ($this->photoshoot->team->subscribed()) {
+            $mail->salutation($this->photoshoot->team->name);
         }
-
-        $mail->salutation(__('Best regards, Picstome Team'));
 
         return $mail;
     }

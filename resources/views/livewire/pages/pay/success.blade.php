@@ -54,12 +54,11 @@ class extends Component
                 default => null,
             };
 
-            $baseName = $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session');
-            $name = $timeRange ? ($baseName.' ('.$timeRange.')') : $baseName;
             $photoshoot = $this->team->photoshoots()->create([
-                'name' => $name,
+                'name' => $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session'),
                 'date' => $metadata['booking_date'] ?? null,
                 'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
+                'comment' => $timeRange ?? null,
             ]);
 
             if ($photoshoot->team && $photoshoot->team->owner) {

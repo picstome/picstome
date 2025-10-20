@@ -49,8 +49,6 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
     $photoshoot = $this->team->photoshoots()->first();
     expect($photoshoot)->not->toBeNull();
     expect($photoshoot->name)->toContain('Test Session');
-    expect($photoshoot->name)->toContain('14:00');
-    expect($photoshoot->name)->toContain('16:00');
     expect($photoshoot->date->toDateString())->toBe('2025-10-21');
 
     $payment = $this->team->payments()->first();
