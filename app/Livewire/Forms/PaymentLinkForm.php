@@ -20,13 +20,13 @@ class PaymentLinkForm extends Form
     #[Validate('boolean')]
     public bool $booking = false;
 
-    #[Validate('required_if:booking,true|date')]
+    #[Validate('nullable|required_if:booking,true|date')]
     public ?string $booking_date = null;
 
-    #[Validate('required_if:booking,true|date_format:H:i')]
+    #[Validate('nullable|required_if:booking,true|date_format:H:i')]
     public ?string $booking_start_time = null;
 
-    #[Validate('required_if:booking,true|date_format:H:i')]
+    #[Validate('nullable|required_if:booking,true|date_format:H:i')]
     public ?string $booking_end_time = null;
 
     public function setPhotoshoot(Photoshoot $photoshoot)

@@ -92,6 +92,7 @@ it('generates payment link with valid data', function () {
     $component = Volt::actingAs($this->user)->test('pages.payments')
         ->set('linkForm.amount', 1000)
         ->set('linkForm.description', 'Test payment')
+        ->set('linkForm.booking', false)
         ->call('generatePaymentLink');
 
     $link = $component->paymentLink;
