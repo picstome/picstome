@@ -31,11 +31,11 @@ class extends Component
 
         $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
 
+        abort_if(($this->checkoutSession['payment_status'] ?? null) !== 'paid', 400);
+
         $metadata = $this->checkoutSession['metadata'] ?? [];
 
         $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
-
-        abort_if(($this->checkoutSession['payment_status'] ?? null) !== 'paid', 400);
 
         $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
 
