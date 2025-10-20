@@ -27,7 +27,25 @@ class extends Component
 
         if ($this->session_id) {
             $this->checkoutSession = StripeConnectService::getCheckoutSession($this->team, $this->session_id);
-            $this->photoshoot_id = $this->checkoutSession['metadata']['photoshoot_id'] ?? null;
+            $metadata = $this->checkoutSession['metadata'] ?? [];
+            $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
+
+            // If booking is enabled and no photoshoot_id, create a new Photoshoot
+            if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
+                $timeRange = match (true) {
+                    ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
+                    ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
+                    ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
+                    default => null,
+                };
+
+                $photoshoot = $this->team->photoshoots()->create([
+                    'name' => $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session'),
+                    'date' => $metadata['booking_date'] ?? null,
+                    'description' => $timeRange,
+                ]);
+                $this->photoshoot_id = $photoshoot->id;
+            }
 
             if (($this->checkoutSession['payment_status'] ?? null) === 'paid') {
                 $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
