@@ -4,6 +4,7 @@ use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Notifications\BookingCreated;
+use Carbon\Carbon;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
@@ -69,10 +70,10 @@ class extends Component
 
     private function sendBookingNotifications(array $metadata, $payment): void
     {
-        $tz = new \DateTimeZone($metadata['timezone']);
-        $date = new \DateTimeImmutable($metadata['booking_date'], $tz);
-        $startTime = new \DateTimeImmutable($metadata['booking_start_time'], $tz);
-        $endTime = new \DateTimeImmutable($metadata['booking_end_time'], $tz);
+        $tz = $metadata['timezone'];
+        $date = Carbon::parse($metadata['booking_date'], $tz);
+        $startTime = Carbon::parse($metadata['booking_start_time'], $tz);
+        $endTime = Carbon::parse($metadata['booking_end_time'], $tz);
         $this->photoshoot->team->owner->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
 
         $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
@@ -82,8 +83,8 @@ class extends Component
 
     private function createPhotoshootFromBooking(array $metadata)
     {
-        $tz = new \DateTimeZone($metadata['timezone']);
-        $date = (new \DateTimeImmutable($metadata['booking_date'], $tz))->format('Y-m-d');
+        $tz = $metadata['timezone'];
+        $date = Carbon::parse($metadata['booking_date'], $tz)->format('Y-m-d');
         $timeRange = __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]);
 
         return $this->team->photoshoots()->create([

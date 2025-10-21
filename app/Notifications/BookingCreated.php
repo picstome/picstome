@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Payment;
 use App\Models\Photoshoot;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -14,9 +15,9 @@ class BookingCreated extends Notification
 
     public function __construct(
         public Photoshoot $photoshoot,
-        public \DateTimeImmutable $date,
-        public \DateTimeImmutable $startTime,
-        public \DateTimeImmutable $endTime,
+        public Carbon $date,
+        public Carbon $startTime,
+        public Carbon $endTime,
         public Payment $payment
     ) {}
 
