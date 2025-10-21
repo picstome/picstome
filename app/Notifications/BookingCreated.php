@@ -64,9 +64,9 @@ class BookingCreated extends Notification
         return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
             .'&dates='.$start.'%2F'.$end
             .'&ctz='.urlencode($this->timezone)
-            .'&details='.urlencode('Photoshoot with '.$customer)
+            .'&details='.urlencode(__('Photoshoot with :customer', ['customer' => $customer]))
             .'&location='.urlencode($this->photoshoot->location ?? '')
-            .'&text='.urlencode($name);
+            .'&text='.urlencode(__($name));
     }
 
     public function toArray(object $notifiable): array
