@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Payment;
+use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Notifications\BookingCreated;
 use Facades\App\Services\StripeConnectService;
@@ -16,7 +17,7 @@ class extends Component
 {
     public Team $team;
 
-    public ?string $photoshoot_id = null;
+    public ?Photoshoot $photoshoot = null;
 
     public array $checkoutSession = [];
 
@@ -35,7 +36,9 @@ class extends Component
 
         $metadata = $this->checkoutSession['metadata'] ?? [];
 
-        $this->photoshoot_id = $metadata['photoshoot_id'] ?? null;
+        $this->photoshoot = isset($metadata['photoshoot_id'])
+            ? $this->team->photoshoots()->find($metadata['photoshoot_id'])
+            : null;
 
         $paymentIntentId = $this->checkoutSession['payment_intent'] ?? null;
 
@@ -45,22 +48,8 @@ class extends Component
 
         abort_if($payment, 404);
 
-        if (($metadata['booking'] ?? false) && ! $this->photoshoot_id) {
-            $timeRange = match (true) {
-                ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
-                ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
-                ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
-                default => null,
-            };
-
-            $photoshoot = $this->team->photoshoots()->create([
-                'name' => $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session'),
-                'date' => $metadata['booking_date'] ?? null,
-                'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
-                'comment' => $timeRange ?? null,
-            ]);
-
-            $this->photoshoot_id = $photoshoot->id;
+        if ($this->isBookingWithoutPhotoshootId($metadata)) {
+            $this->photoshoot = $this->createPhotoshootFromBooking($metadata);
         }
 
         $payment = $this->team->payments()->create([
@@ -70,24 +59,46 @@ class extends Component
             'description' => $this->checkoutSession['line_items']['data'][0]['description'] ?? null,
             'customer_email' => $this->checkoutSession['customer_details']['email'] ?? null,
             'completed_at' => now(),
-            'photoshoot_id' => $this->photoshoot_id,
+            'photoshoot_id' => $this->photoshoot?->id,
         ]);
 
-        if (($metadata['booking'] ?? false) && ! ($metadata['photoshoot_id'] ?? false)) {
-            $this->sendBookingNotifications($metadata, $photoshoot, $payment);
+        if ($this->isBookingWithoutPhotoshootId($metadata)) {
+            $this->sendBookingNotifications($metadata, $payment);
         }
     }
 
-    private function sendBookingNotifications(array $metadata, $photoshoot, $payment): void
+    private function sendBookingNotifications(array $metadata, $payment): void
     {
         $date = new \DateTimeImmutable($metadata['booking_date']);
         $startTime = new \DateTimeImmutable($metadata['booking_start_time']);
         $endTime = new \DateTimeImmutable($metadata['booking_end_time']);
-        $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+        $this->photoshoot->team->owner->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
 
         $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
 
-        Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+        Notification::route('mail', $payerEmail)->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
+    }
+
+    private function createPhotoshootFromBooking(array $metadata)
+    {
+        $timeRange = match (true) {
+            ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
+            ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
+            ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
+            default => null,
+        };
+
+        return $this->team->photoshoots()->create([
+            'name' => $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session'),
+            'date' => $metadata['booking_date'] ?? null,
+            'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
+            'comment' => $timeRange ?? null,
+        ]);
+    }
+
+    private function isBookingWithoutPhotoshootId(array $metadata): bool
+    {
+        return ($metadata['booking'] ?? false) && ! ($metadata['photoshoot_id'] ?? false);
     }
 
     public function rendering(View $view): void
