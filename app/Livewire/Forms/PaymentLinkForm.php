@@ -29,6 +29,9 @@ class PaymentLinkForm extends Form
     #[Validate('nullable|required_if:booking,true|date_format:H:i')]
     public ?string $booking_end_time = null;
 
+    #[Validate('nullable|required_if:booking,true|string|max:64')]
+    public ?string $timezone = null;
+
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
         $this->photoshoot = $photoshoot;
@@ -50,6 +53,7 @@ class PaymentLinkForm extends Form
                 'booking_date' => $this->booking_date,
                 'booking_start_time' => $this->booking_start_time,
                 'booking_end_time' => $this->booking_end_time,
+                'timezone' => $this->timezone,
             ] : []),
         ], false);
 

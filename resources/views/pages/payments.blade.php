@@ -204,7 +204,7 @@ new class extends Component
                     @endif
 
                     <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
-                        <form wire:submit="generatePaymentLink" class="space-y-6">
+                        <form wire:submit="generatePaymentLink" class="space-y-6" x-data x-init="$nextTick(() => { if ($wire.linkForm) { $wire.linkForm.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone } })">
                             <div>
                                 <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
                                 <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
