@@ -66,7 +66,7 @@ class BookingCreated extends Notification
             .'&ctz='.urlencode($this->timezone)
             .'&details='.urlencode(__('Photoshoot with :customer', ['customer' => $customer]))
             .'&location='.urlencode($this->photoshoot->location ?? '')
-            .'&text='.urlencode(__($name));
+            .'&text='.urlencode($name);
     }
 
     public function toArray(object $notifiable): array
