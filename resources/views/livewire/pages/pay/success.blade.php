@@ -69,9 +69,10 @@ class extends Component
 
     private function sendBookingNotifications(array $metadata, $payment): void
     {
-        $date = new \DateTimeImmutable($metadata['booking_date']);
-        $startTime = new \DateTimeImmutable($metadata['booking_start_time']);
-        $endTime = new \DateTimeImmutable($metadata['booking_end_time']);
+        $tz = new \DateTimeZone($metadata['timezone']);
+        $date = new \DateTimeImmutable($metadata['booking_date'], $tz);
+        $startTime = new \DateTimeImmutable($metadata['booking_start_time'], $tz);
+        $endTime = new \DateTimeImmutable($metadata['booking_end_time'], $tz);
         $this->photoshoot->team->owner->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
 
         $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
@@ -81,18 +82,15 @@ class extends Component
 
     private function createPhotoshootFromBooking(array $metadata)
     {
-        $timeRange = match (true) {
-            ! empty($metadata['booking_start_time']) && ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]),
-            ! empty($metadata['booking_start_time']) => __('Booked time: :range', ['range' => $metadata['booking_start_time']]),
-            ! empty($metadata['booking_end_time']) => __('Booked time: :range', ['range' => $metadata['booking_end_time']]),
-            default => null,
-        };
+        $tz = new \DateTimeZone($metadata['timezone']);
+        $date = (new \DateTimeImmutable($metadata['booking_date'], $tz))->format('Y-m-d');
+        $timeRange = __('Booked time: :range', ['range' => $metadata['booking_start_time'].' - '.$metadata['booking_end_time']]);
 
         return $this->team->photoshoots()->create([
             'name' => $this->checkoutSession['line_items']['data'][0]['description'] ?? __('Session'),
-            'date' => $metadata['booking_date'] ?? null,
+            'date' => $date,
             'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
-            'comment' => $timeRange ?? null,
+            'comment' => $timeRange,
         ]);
     }
 
