@@ -29,9 +29,9 @@ class BookingCreated extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $date = $this->date->format('F j, Y');
+        $date = $this->date->isoFormat('LL');
         $name = $this->photoshoot->name ?? __('Session');
-        $amount = $this->payment->formattedAmount ?? (($this->payment->amount / 100).' '.strtoupper($this->payment->currency));
+        $amount = $this->payment->formattedAmount;
         $customer = $this->photoshoot->customer_name ?? __('N/A');
 
         // Google Calendar link
