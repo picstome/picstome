@@ -50,6 +50,8 @@ class BookingCreated extends Notification
             ->line(__('A new booking has been made.'))
             ->line(__('Session: :name', ['name' => $name]))
             ->line(__('Date: :date', ['date' => $date]))
+            ->line(__('Start Time: :start', ['start' => $this->startTime->format('g:i A')]))
+            ->line(__('End Time: :end', ['end' => $this->endTime->format('g:i A')]))
             ->line(__('Customer: :customer', ['customer' => $customer]))
             ->line(__('Amount: :amount', ['amount' => $amount]))
             ->action(__('Add to Google Calendar'), $calendarUrl);
