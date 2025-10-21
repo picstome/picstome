@@ -74,15 +74,20 @@ class extends Component
         ]);
 
         if (($metadata['booking'] ?? false) && ! ($metadata['photoshoot_id'] ?? false)) {
-            $date = new \DateTimeImmutable($metadata['booking_date']);
-            $startTime = new \DateTimeImmutable($metadata['booking_start_time']);
-            $endTime = new \DateTimeImmutable($metadata['booking_end_time']);
-            $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
-
-            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
-
-            Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+            $this->sendBookingNotifications($metadata, $photoshoot, $payment);
         }
+    }
+
+    private function sendBookingNotifications(array $metadata, $photoshoot, $payment): void
+    {
+        $date = new \DateTimeImmutable($metadata['booking_date']);
+        $startTime = new \DateTimeImmutable($metadata['booking_start_time']);
+        $endTime = new \DateTimeImmutable($metadata['booking_end_time']);
+        $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+
+        $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
+
+        Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
     }
 
     public function rendering(View $view): void
