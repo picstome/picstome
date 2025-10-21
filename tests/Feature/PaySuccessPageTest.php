@@ -24,6 +24,7 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
             'booking_date' => '2025-10-21',
             'booking_start_time' => '14:00',
             'booking_end_time' => '16:00',
+            'timezone' => 'Europe/Berlin',
         ],
         'line_items' => [
             'data' => [
@@ -114,6 +115,7 @@ it('does not create a photoshoot if photoshoot_id is present', function () {
             'booking_date' => '2025-10-21',
             'booking_start_time' => '14:00',
             'booking_end_time' => '16:00',
+            'timezone' => 'Europe/Berlin',
         ],
         'line_items' => [
             'data' => [
