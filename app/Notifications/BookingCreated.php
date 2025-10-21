@@ -18,7 +18,8 @@ class BookingCreated extends Notification
         public Carbon $date,
         public Carbon $startTime,
         public Carbon $endTime,
-        public Payment $payment
+        public Payment $payment,
+        public string $timezone
     ) {}
 
     public function via(object $notifiable): array
@@ -34,10 +35,11 @@ class BookingCreated extends Notification
         $customer = $this->photoshoot->customer_name ?? __('N/A');
 
         // Google Calendar link
-        $start = $this->startTime->format('Ymd\THis\Z');
-        $end = $this->endTime->format('Ymd\THis\Z');
+        $start = $this->startTime->format('Ymd\THis');
+        $end = $this->endTime->format('Ymd\THis');
         $calendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
             .'&dates='.$start.'%2F'.$end
+            .'&ctz='.urlencode($this->timezone)
             .'&details='.urlencode('Photoshoot with '.$customer)
             .'&location='.urlencode($this->photoshoot->location ?? '')
             .'&text='.urlencode($name);

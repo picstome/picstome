@@ -74,11 +74,11 @@ class extends Component
         $date = Carbon::parse($metadata['booking_date'], $tz);
         $startTime = Carbon::parse($metadata['booking_start_time'], $tz);
         $endTime = Carbon::parse($metadata['booking_end_time'], $tz);
-        $this->photoshoot->team->owner->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
+        $this->photoshoot->team->owner->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment, $tz));
 
         $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
 
-        Notification::route('mail', $payerEmail)->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment));
+        Notification::route('mail', $payerEmail)->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment, $tz));
     }
 
     private function createPhotoshootFromBooking(array $metadata)
