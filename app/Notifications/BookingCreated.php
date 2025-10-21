@@ -35,14 +35,7 @@ class BookingCreated extends Notification
         $customer = $this->photoshoot->customer_name ?? __('N/A');
 
         // Google Calendar link
-        $start = $this->startTime->format('Ymd\THis');
-        $end = $this->endTime->format('Ymd\THis');
-        $calendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-            .'&dates='.$start.'%2F'.$end
-            .'&ctz='.urlencode($this->timezone)
-            .'&details='.urlencode('Photoshoot with '.$customer)
-            .'&location='.urlencode($this->photoshoot->location ?? '')
-            .'&text='.urlencode($name);
+        $calendarUrl = $this->googleCalendarUrl($customer, $name);
 
         $mail = (new MailMessage)
             ->subject(__('Booking Confirmed: :name', ['name' => $name]))
@@ -61,6 +54,19 @@ class BookingCreated extends Notification
         }
 
         return $mail;
+    }
+
+    private function googleCalendarUrl($customer, $name): string
+    {
+        $start = $this->startTime->format('Ymd\THis');
+        $end = $this->endTime->format('Ymd\THis');
+
+        return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+            .'&dates='.$start.'%2F'.$end
+            .'&ctz='.urlencode($this->timezone)
+            .'&details='.urlencode('Photoshoot with '.$customer)
+            .'&location='.urlencode($this->photoshoot->location ?? '')
+            .'&text='.urlencode($name);
     }
 
     public function toArray(object $notifiable): array
