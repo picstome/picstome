@@ -14,7 +14,10 @@ class BookingCreated extends Notification
 
     public function __construct(
         public Photoshoot $photoshoot,
-        public ?Payment $payment = null
+        public \DateTimeImmutable $date,
+        public \DateTimeImmutable $startTime,
+        public \DateTimeImmutable $endTime,
+        public Payment $payment
     ) {}
 
     public function via(object $notifiable): array
@@ -24,10 +27,19 @@ class BookingCreated extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $date = $this->photoshoot->date?->format('F j, Y') ?? __('N/A');
+        $date = $this->date->format('F j, Y');
         $name = $this->photoshoot->name ?? __('Session');
-        $amount = $this->payment?->formattedAmount ?? ($this->payment?->amount ? ($this->payment->amount / 100).' '.strtoupper($this->payment->currency) : __('N/A'));
+        $amount = $this->payment->formattedAmount ?? (($this->payment->amount / 100).' '.strtoupper($this->payment->currency));
         $customer = $this->photoshoot->customer_name ?? __('N/A');
+
+        // Google Calendar link
+        $start = $this->startTime->format('Ymd\THis\Z');
+        $end = $this->endTime->format('Ymd\THis\Z');
+        $calendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+            .'&dates='.$start.'%2F'.$end
+            .'&details='.urlencode('Photoshoot with '.$customer)
+            .'&location='.urlencode($this->photoshoot->location ?? '')
+            .'&text='.urlencode($name);
 
         $mail = (new MailMessage)
             ->subject(__('Booking Confirmed: :name', ['name' => $name]))
@@ -36,7 +48,8 @@ class BookingCreated extends Notification
             ->line(__('Session: :name', ['name' => $name]))
             ->line(__('Date: :date', ['date' => $date]))
             ->line(__('Customer: :customer', ['customer' => $customer]))
-            ->line(__('Amount: :amount', ['amount' => $amount]));
+            ->line(__('Amount: :amount', ['amount' => $amount]))
+            ->action(__('Add to Google Calendar'), $calendarUrl);
 
         if ($this->photoshoot->team->subscribed()) {
             $mail->salutation($this->photoshoot->team->name);
@@ -49,7 +62,7 @@ class BookingCreated extends Notification
     {
         return [
             'photoshoot_id' => $this->photoshoot->id,
-            'payment_id' => $this->payment?->id,
+            'payment_id' => $this->payment->id,
         ];
     }
 }

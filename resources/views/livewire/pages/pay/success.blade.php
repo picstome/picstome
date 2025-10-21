@@ -4,7 +4,6 @@ use App\Models\Payment;
 use App\Models\Team;
 use App\Notifications\BookingCreated;
 use Facades\App\Services\StripeConnectService;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -61,16 +60,6 @@ class extends Component
                 'comment' => $timeRange ?? null,
             ]);
 
-            if ($photoshoot->team && $photoshoot->team->owner) {
-                $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $payment));
-            }
-
-            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
-
-            if ($payerEmail) {
-                Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $payment));
-            }
-
             $this->photoshoot_id = $photoshoot->id;
         }
 
@@ -83,6 +72,17 @@ class extends Component
             'completed_at' => now(),
             'photoshoot_id' => $this->photoshoot_id,
         ]);
+
+        if (($metadata['booking'] ?? false) && ! ($metadata['photoshoot_id'] ?? false)) {
+            $date = new \DateTimeImmutable($metadata['booking_date']);
+            $startTime = new \DateTimeImmutable($metadata['booking_start_time']);
+            $endTime = new \DateTimeImmutable($metadata['booking_end_time']);
+            $photoshoot->team->owner->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+
+            $payerEmail = $this->checkoutSession['customer_details']['email'] ?? null;
+
+            Notification::route('mail', $payerEmail)->notify(new BookingCreated($photoshoot, $date, $startTime, $endTime, $payment));
+        }
     }
 
     public function rendering(View $view): void
