@@ -95,8 +95,12 @@ class extends Component
     <div class="mx-auto w-full max-w-md text-center">
         <div class="space-y-4">
             <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block space-y-4" wire:navigate>
-                @if($team->brand_logo_icon_url)
-                    <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
+                @if ($team->brand_logo_icon_url)
+                    <img
+                        src="{{ $team->brand_logo_icon_url.'&w=256&h=256' }}"
+                        class="mx-auto size-32"
+                        alt="{{ $team->name }}"
+                    />
                 @else
                     <flux:heading size="xl">{{ $team->name }}</flux:heading>
                 @endif
@@ -104,7 +108,9 @@ class extends Component
 
             <div>
                 <flux:heading size="xl">{{ __('Payment Successful!') }}</flux:heading>
-                <flux:text class="mt-2">{{ __('Thank you for your payment. Your transaction was completed successfully.') }}</flux:text>
+                <flux:text class="mt-2">
+                    {{ __('Thank you for your payment. Your transaction was completed successfully.') }}
+                </flux:text>
             </div>
         </div>
     </div>
