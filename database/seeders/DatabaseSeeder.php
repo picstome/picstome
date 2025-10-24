@@ -12,18 +12,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        $this->createUserWithHandle('Test User', 'test@example.com', 'testuser');
-        $this->createUserWithHandle('Oliver', 'oliver@example.com', 'oliver');
-        $this->createUserWithHandle('Chema', 'chema@example.com', 'chema');
+        $this->createUserWithHandle('Admin', 'admin@example.com', 'admin', 'admin');
     }
 
-    private function createUserWithHandle(string $name, string $email, string $handle): void
+    private function createUserWithHandle(string $name, string $email, string $handle, string $password): void
     {
         $user = User::factory()->withPersonalTeam()->create([
             'name' => $name,
             'email' => $email,
+            'password' => $password,
         ]);
 
         $user->currentTeam->update(['handle' => $handle]);

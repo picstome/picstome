@@ -20,7 +20,7 @@ class TeamFactory extends Factory
     public function definition(): array
     {
         $handleGenerator = new HandleGenerationService();
-        $name = $this->faker->words(2, true);
+        $name = 'Default Team';
         $handle = $handleGenerator->generateUniqueHandle($name);
 
         return [
