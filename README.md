@@ -26,13 +26,6 @@ Using [Composer](https://getcomposer.org) and [NPM](https://www.npmjs.com):
 composer install
 composer require livewire/flux-pro
 
-# Required: Flux Pro
-This project requires a valid Flux Pro license to use advanced Flux UI components. You must install the commercial package:
-
-    composer require livewire/flux-pro
-
-A valid license key is required. See the Flux Pro documentation for details on obtaining and configuring your license.
-
 npm install
 ```
 
