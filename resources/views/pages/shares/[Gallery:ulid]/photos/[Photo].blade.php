@@ -197,38 +197,45 @@ new class extends Component
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <div class="relative flex w-full items-center justify-center" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                     <img
-                        x-show="!zoom && !pinchZooming"
-                        x-ref="photoImg"
-                        @load="updateDimensions(); preloadAdjacentImages()"
                         src="{{ $photo->thumbnail_url }}"
                         srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                         sizes="(max-width: 640px) 100vw, 80vw"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="!zoom && !pinchZooming"
+                        x-ref="photoImg"
+                        x-on:load="loaded = true; updateDimensions(); preloadAdjacentImages()"
+                        x-on:error="errored = true"
                         @click="if (!isMobile()) zoom = true"
                         @contextmenu.prevent
-                        class="mx-auto h-full w-full max-w-full animate-pulse bg-black/60 object-contain hover:cursor-zoom-in dark:bg-white/60"
-                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
-                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
+                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                        class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
                         alt="{{ $photo->name }}"
                     />
                     <img
-                        x-show="!zoom && pinchZooming"
                         src="{{ $photo->url }}"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="!zoom && pinchZooming"
+                        x-on:load="loaded = true"
+                        x-on:error="errored = true"
                         @click="if (!isMobile()) zoom = true"
-                        class="mx-auto h-full w-full max-w-full animate-pulse bg-black/60 object-contain hover:cursor-zoom-in dark:bg-white/60"
-                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
-                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
+                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                        class="mx-auto h-full w-full max-w-full bg-black/60 object-contain"
                         alt="{{ $photo->name }}"
                         loading="lazy"
                         x-cloak
                     />
                     <img
-                        x-show="zoom"
                         src="{{ $photo->url }}"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="zoom"
+                        x-on:load="loaded = true"
+                        x-on:error="errored = true"
                         @click="zoom = false"
                         @contextmenu.prevent
-                        class="mx-auto max-w-none animate-pulse bg-black/60 object-contain hover:cursor-zoom-out dark:bg-white/60"
-                        onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
-                        onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60')"
+                        class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
                         loading="lazy"
                         alt="{{ $photo->name }}"
                         x-cloak
