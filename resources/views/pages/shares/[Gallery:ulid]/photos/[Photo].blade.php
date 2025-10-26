@@ -167,8 +167,6 @@ new class extends Component
                         }
                         this.watermarkStyle = style;
                         this.showWatermark = true;
-                    } else {
-                        this.showWatermark = false;
                     }
                 },
             }"
