@@ -185,7 +185,7 @@ new class extends Component
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
             @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
             @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
-            @pinchstart="pinchZooming = true;"
+            @pinch="pinchZooming = true;"
             @if ($this->photo->gallery->is_share_selectable)
                 @keyup.window.f="$wire.favorite()"
             @endif
@@ -219,7 +219,7 @@ new class extends Component
                         x-on:error="errored = true"
                         @click="if (!isMobile()) zoom = true"
                         :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                        class="mx-auto h-full w-full max-w-full bg-black/60 object-contain"
+                        class="mx-auto h-full w-full max-w-full object-contain"
                         alt="{{ $photo->name }}"
                         loading="lazy"
                         x-cloak
