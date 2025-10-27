@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use Laravel\Cashier\Billable;
 use Stevebauman\Purify\Casts\PurifyHtmlOnGet;
 
@@ -139,9 +140,15 @@ class Team extends Model
 
             $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_path);
 
-            return Str::of('https://wsrv.nl/')
-                ->append('?url=', urlencode($originalUrl))
-                ->append('&q=90&output=webp');
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
@@ -169,9 +176,15 @@ class Team extends Model
 
             $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path);
 
-            return Str::of('https://wsrv.nl/')
-                ->append('?url=', urlencode($originalUrl))
-                ->append('&q=90&output=webp');
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
@@ -199,9 +212,15 @@ class Team extends Model
 
             $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path);
 
-            return Str::of('https://wsrv.nl/')
-                ->append('?url=', urlencode($originalUrl))
-                ->append('&q=90&output=webp');
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
