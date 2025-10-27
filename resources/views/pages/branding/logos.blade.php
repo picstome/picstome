@@ -4,13 +4,11 @@ use App\Livewire\Forms\LogosForm;
 use App\Models\Team;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
-use function Laravel\Folio\render;
 
 name('branding.logos');
 
@@ -66,7 +64,18 @@ new class extends Component
                                 </div>
                             @endif
 
-                            <flux:input wire:model="form.logoIcon" :label="__('Logo Icon')" :description="__('Your logo at 1:1 aspect ratio.')" type="file" accept="image/*" />
+                            <div>
+                                <flux:input
+                                    wire:model="form.logoIcon"
+                                    :label="__('Logo Icon')"
+                                    :description="__('Your logo at 1:1 aspect ratio.')"
+                                    type="file"
+                                    accept="image/*"
+                                />
+                                <flux:text wire:loading wire:target="form.logoIcon" class="mt-2">
+                                    {{ __('Uploading...') }}
+                                </flux:text>
+                            </div>
 
                             @if ($team->brand_logo_url)
                                 <div class="space-y-2">
@@ -75,7 +84,18 @@ new class extends Component
                                 </div>
                             @endif
 
-                            <flux:input wire:model="form.logo" :label="__('Logo')" :description="__('Full version of your logo.')" type="file" accept="image/*" />
+                            <div>
+                                <flux:input
+                                    wire:model="form.logo"
+                                    :label="__('Logo')"
+                                    :description="__('Full version of your logo.')"
+                                    type="file"
+                                    accept="image/*"
+                                />
+                                <flux:text wire:loading wire:target="form.logo" class="mt-2">
+                                    {{ __('Uploading...') }}
+                                </flux:text>
+                            </div>
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </form>
