@@ -159,7 +159,6 @@ new class extends Component
                                 height: ${renderedHeight}px;
                                 background-image: url('${url}');
                                 background-repeat: repeat;
-                                background-size: 64px 64px;
                                 opacity: ${this.watermarkTransparency};
                                 pointer-events: none;
                                 position: absolute;
@@ -249,9 +248,9 @@ new class extends Component
                             <img
                                 x-show="showWatermark"
                                 :style="watermarkStyle"
-                                class="pointer-events-none absolute h-8"
+                                class="pointer-events-none absolute"
                                 x-ref="watermarkImg"
-                                @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight; updateDimensions()"
+                                @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
                                 src="{{ $photo->gallery->team->brand_watermark_url }}"
                                 alt=""
                             />

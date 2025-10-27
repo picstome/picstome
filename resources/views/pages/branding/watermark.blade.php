@@ -60,12 +60,14 @@ new class extends Component
                             @if ($team->brand_watermark_url)
                                 <div class="space-y-2">
                                     <flux:label>{{ __('Current Watermark') }}</flux:label>
-                                    <img src="{{ $team->brand_watermark_url }}" style="max-height: 35px" />
+                                    <div class="overflow-hidden overflow-x-scroll">
+                                        <img src="{{ $team->brand_watermark_url }}" class="max-w-none" />
+                                    </div>
                                 </div>
                             @endif
 
                             <div>
-                                <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" />
+                                <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" :description:trailing="__('The recommended watermark height is 32px.')" />
 
                                 <flux:text wire:loading wire:target="form.watermark" class="mt-2">{{ __('Uploading...') }}</flux:text>
                             </div>
