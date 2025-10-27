@@ -64,9 +64,11 @@ new class extends Component
                                 </div>
                             @endif
 
-                            <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" />
+                            <div>
+                                <flux:input wire:model="form.watermark" :label="__('Watermark')" type="file" accept="image/*" />
 
-                            <flux:text wire:loading wire:target="form.watermark">{{ __('Uploading...') }}</flux:text>
+                                <flux:text wire:loading wire:target="form.watermark" class="mt-2">{{ __('Uploading...') }}</flux:text>
+                            </div>
 
                             <flux:radio.group wire:model="form.watermarkPosition" :label="__('Watermark position')">
                                 <div class="flex gap-4 *:gap-x-2">
