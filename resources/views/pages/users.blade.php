@@ -26,6 +26,8 @@ new class extends Component
 
     public $search = '';
 
+    public $subscribedFilter = '';
+
     public UserForm $userForm;
 
     public function sort($column)
@@ -51,12 +53,34 @@ new class extends Component
             });
         }
 
+        $needsTeamJoin = $this->sortBy === 'storage_used' || in_array($this->subscribedFilter, ['yes', 'no']);
+        if ($needsTeamJoin) {
+            $query->leftJoin('teams', function ($join) {
+                $join->on('teams.user_id', '=', 'users.id')
+                    ->where('teams.personal_team', true);
+            });
+        }
+
+        // Always left join subscriptions for filtering
+        if ($needsTeamJoin) {
+            $query->leftJoin('subscriptions', function ($join) {
+                $join->on('subscriptions.team_id', '=', 'teams.id')
+                    ->where('subscriptions.stripe_status', 'active')
+                    ->where(function ($q) {
+                        $q->whereNull('subscriptions.ends_at')
+                            ->orWhere('subscriptions.ends_at', '>', now());
+                    });
+            });
+        }
+
+        if ($this->subscribedFilter === 'yes') {
+            $query->whereNotNull('subscriptions.id');
+        } elseif ($this->subscribedFilter === 'no') {
+            $query->whereNull('subscriptions.id');
+        }
+
         $query = match ($this->sortBy) {
             'storage_used' => $query
-                ->leftJoin('teams', function ($join) {
-                    $join->on('teams.user_id', '=', 'users.id')
-                        ->where('teams.personal_team', true);
-                })
                 ->leftJoin('galleries', 'galleries.team_id', '=', 'teams.id')
                 ->leftJoin('photos', 'photos.gallery_id', '=', 'galleries.id')
                 ->select('users.*', DB::raw('COALESCE(SUM(photos.size),0) as storage_used'))
@@ -88,13 +112,22 @@ new class extends Component
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <div class="mt-4 max-w-xs">
-                <flux:input
-                    wire:model.live="search"
-                    :label="__('Search users')"
-                    :placeholder="__('Search by name or email')"
-                    clearable
-                />
+            <div class="mt-4 flex gap-4 max-w-2xl">
+                <div class="flex-1">
+                    <flux:input
+                        wire:model.live="search"
+                        :label="__('Search users')"
+                        :placeholder="__('Search by name or email')"
+                        clearable
+                    />
+                </div>
+                <div class="w-48">
+                    <flux:select wire:model.live="subscribedFilter" label="{{ __('Subscription') }}" placeholder="{{ __('All') }}">
+                        <flux:select.option value="">{{ __('All') }}</flux:select.option>
+                        <flux:select.option value="yes">{{ __('Subscribed') }}</flux:select.option>
+                        <flux:select.option value="no">{{ __('Not Subscribed') }}</flux:select.option>
+                    </flux:select>
+                </div>
             </div>
 
             <div x-data
