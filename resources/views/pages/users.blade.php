@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -25,7 +26,7 @@ new class extends Component
 
     public $search = '';
 
-    public $subscribedFilter = '';
+    public array $filters = [];
 
     public UserForm $userForm;
 
@@ -52,34 +53,39 @@ new class extends Component
             });
         }
 
-        // Filter by subscription status and sorting using match
-        match ($this->subscribedFilter) {
-            'yes' => $query->whereHas('ownedTeams', function ($q) {
-                $q->where('personal_team', true)
-                    ->whereHas('subscriptions', function ($q2) {
-                        $q2->where('stripe_status', 'active')
-                            ->where(function ($q3) {
-                                $q3->whereNull('ends_at')
-                                    ->orWhere('ends_at', '>', now());
+        // Generic filter logic
+        foreach ($this->filters as $key => $value) {
+            match ($key) {
+                'subscription' => match ($value) {
+                    'yes' => $query->whereHas('ownedTeams', function ($q) {
+                        $q->where('personal_team', true)
+                            ->whereHas('subscriptions', function ($q2) {
+                                $q2->where('stripe_status', 'active')
+                                    ->where(function ($q3) {
+                                        $q3->whereNull('ends_at')
+                                            ->orWhere('ends_at', '>', now());
+                                    });
                             });
-                    });
-            }),
-            'no' => $query->whereHas('ownedTeams', function ($q) {
-                $q->where('personal_team', true)
-                    ->whereDoesntHave('subscriptions', function ($q2) {
-                        $q2->where('stripe_status', 'active')
-                            ->where(function ($q3) {
-                                $q3->whereNull('ends_at')
-                                    ->orWhere('ends_at', '>', now());
+                    }),
+                    'no' => $query->whereHas('ownedTeams', function ($q) {
+                        $q->where('personal_team', true)
+                            ->whereDoesntHave('subscriptions', function ($q2) {
+                                $q2->where('stripe_status', 'active')
+                                    ->where(function ($q3) {
+                                        $q3->whereNull('ends_at')
+                                            ->orWhere('ends_at', '>', now());
+                                    });
                             });
-                    });
-            }),
-            default => null,
-        };
+                    }),
+                    default => null,
+                },
+                default => null,
+            };
+        }
 
         match ($this->sortBy) {
             'storage_used' => $query->addSelect([
-                'storage_used' => \Illuminate\Support\Facades\DB::table('photos')
+                'storage_used' => DB::table('photos')
                     ->selectRaw('COALESCE(SUM(photos.size),0)')
                     ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
                     ->join('teams', 'galleries.team_id', '=', 'teams.id')
@@ -122,7 +128,7 @@ new class extends Component
                     />
                 </div>
                 <div class="w-48">
-                    <flux:select wire:model.live="subscribedFilter" label="{{ __('Subscription') }}" placeholder="{{ __('All') }}">
+                    <flux:select wire:model.live="filters.subscription" label="{{ __('Subscription') }}" placeholder="{{ __('All') }}">
                         <flux:select.option value="">{{ __('All') }}</flux:select.option>
                         <flux:select.option value="yes">{{ __('Subscribed') }}</flux:select.option>
                         <flux:select.option value="no">{{ __('Not Subscribed') }}</flux:select.option>
