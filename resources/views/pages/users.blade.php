@@ -117,7 +117,7 @@ new class extends Component
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <div class="mt-4 flex max-w-2xl gap-4">
+            <div class="mt-4 flex flex-wrap gap-4">
                 <div class="flex-1">
                     <flux:input
                         wire:model.live="search"
@@ -126,7 +126,7 @@ new class extends Component
                         clearable
                     />
                 </div>
-                <div class="w-48">
+                <div class="w-full md:w-48">
                     <flux:select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
                         <flux:select.option value="all">{{ __('All') }}</flux:select.option>
                         <flux:select.option value="subscribed">{{ __('Subscribed') }}</flux:select.option>
