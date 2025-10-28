@@ -52,9 +52,9 @@ new class extends Component
             });
         }
 
-        // Filter by subscription status
-        if ($this->subscribedFilter === 'yes') {
-            $query->whereHas('ownedTeams', function ($q) {
+        // Filter by subscription status and sorting using match
+        match ($this->subscribedFilter) {
+            'yes' => $query->whereHas('ownedTeams', function ($q) {
                 $q->where('personal_team', true)
                     ->whereHas('subscriptions', function ($q2) {
                         $q2->where('stripe_status', 'active')
@@ -63,9 +63,8 @@ new class extends Component
                                     ->orWhere('ends_at', '>', now());
                             });
                     });
-            });
-        } elseif ($this->subscribedFilter === 'no') {
-            $query->whereHas('ownedTeams', function ($q) {
+            }),
+            'no' => $query->whereHas('ownedTeams', function ($q) {
                 $q->where('personal_team', true)
                     ->whereDoesntHave('subscriptions', function ($q2) {
                         $q2->where('stripe_status', 'active')
@@ -74,22 +73,21 @@ new class extends Component
                                     ->orWhere('ends_at', '>', now());
                             });
                     });
-            });
-        }
+            }),
+            default => null,
+        };
 
-        // Sorting
-        if ($this->sortBy === 'storage_used') {
-            $query->addSelect([
+        match ($this->sortBy) {
+            'storage_used' => $query->addSelect([
                 'storage_used' => \Illuminate\Support\Facades\DB::table('photos')
                     ->selectRaw('COALESCE(SUM(photos.size),0)')
                     ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
                     ->join('teams', 'galleries.team_id', '=', 'teams.id')
                     ->whereColumn('teams.user_id', 'users.id')
                     ->where('teams.personal_team', true),
-            ])->orderBy('storage_used', $this->sortDirection);
-        } else {
-            $query->orderBy($this->sortBy, $this->sortDirection);
-        }
+            ])->orderBy('storage_used', $this->sortDirection),
+            default => $query->orderBy($this->sortBy, $this->sortDirection),
+        };
 
         return $query->paginate(25);
     }
