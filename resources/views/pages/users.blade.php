@@ -117,7 +117,7 @@ new class extends Component
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <div class="mt-4 flex gap-4 max-w-2xl">
+            <div class="mt-4 flex max-w-2xl gap-4">
                 <div class="flex-1">
                     <flux:input
                         wire:model.live="search"
@@ -127,86 +127,117 @@ new class extends Component
                     />
                 </div>
                 <div class="w-48">
-<flux:select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
-    <flux:select.option value="all">{{ __('All') }}</flux:select.option>
-    <flux:select.option value="subscribed">{{ __('Subscribed') }}</flux:select.option>
-    <flux:select.option value="not_subscribed">{{ __('Not Subscribed') }}</flux:select.option>
-    <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
-</flux:select>
+                    <flux:select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
+                        <flux:select.option value="all">{{ __('All') }}</flux:select.option>
+                        <flux:select.option value="subscribed">{{ __('Subscribed') }}</flux:select.option>
+                        <flux:select.option value="not_subscribed">{{ __('Not Subscribed') }}</flux:select.option>
+                        <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
+                    </flux:select>
                 </div>
             </div>
 
-            <div x-data
+            <div
+                x-data
                 x-on:click="
-                    let el = $event.target;
+                    let el = $event.target
                     while (el && el !== $el) {
                         if (el.hasAttribute('wire:click')) {
-                            document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
-                            break;
+                            document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
+                            break
                         }
-                        el = el.parentElement;
-                    }"
-                class="mt-6">
+                        el = el.parentElement
+                    }
+                "
+                class="mt-6"
+            >
                 <flux:table id="table" :paginate="$this->users" class="mt-6">
-                <flux:table.columns>
-                    <flux:table.column>{{ __('User') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Created At') }}</flux:table.column>
-                    <flux:table.column sortable :sorted="$sortBy === 'storage_used'" :direction="$sortDirection" wire:click="sort('storage_used')">{{ __('Storage') }}</flux:table.column>
-                </flux:table.columns>
-                <flux:table.rows>
-                    @foreach ($this->users as $user)
-                        <flux:table.row :key="$user->id">
-                            <flux:table.cell>
-                                <div class="flex items-center gap-2 sm:gap-4">
-                                    <flux:avatar :src="$user->avatar_url" circle size="lg" class="max-sm:size-8" />
-                                    <div class="flex flex-col">
-                                        <flux:heading>
-                                            {{ $user->name }}
-                                            @if ($user->personalTeam()->lifetime)
-                                                <flux:badge color="lime" size="sm">{{ __('Lifetime') }}</flux:badge>
-                                            @elseif ($user->personalTeam()->subscribed())
-                                                <flux:badge color="lime" size="sm">{{ __('Subscribed') }}</flux:badge>
-                                            @endif
-                                        </flux:heading>
-                                        <flux:text class="max-sm:hidden">{{ $user->email }}</flux:text>
-                                    </div>
-                                </div>
-                            </flux:table.cell>
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('User') }}</flux:table.column>
+                        <flux:table.column
+                            sortable
+                            :sorted="$sortBy === 'created_at'"
+                            :direction="$sortDirection"
+                            wire:click="sort('created_at')"
+                        >
+                            {{ __('Created At') }}
+                        </flux:table.column>
+                        <flux:table.column
+                            sortable
+                            :sorted="$sortBy === 'storage_used'"
+                            :direction="$sortDirection"
+                            wire:click="sort('storage_used')"
+                        >
+                            {{ __('Storage') }}
+                        </flux:table.column>
+                    </flux:table.columns>
+                    <flux:table.rows>
+                        @foreach ($this->users as $user)
+                            <flux:table.row :key="$user->id">
+                                <flux:table.cell>
+                                    <div class="flex items-center gap-2 sm:gap-4">
+                                        <flux:avatar :src="$user->avatar_url" circle size="lg" class="max-sm:size-8" />
+                                        <div class="flex flex-col">
+                                            <flux:heading>
+                                                {{ $user->name }}
 
-                            <flux:table.cell class="whitespace-nowrap">
-                                {{ $user->created_at?->format('M j, Y') }}
-                            </flux:table.cell>
-
-                            <flux:table.cell class="whitespace-nowrap">
-                                @if ($user->personalTeam()->has_unlimited_storage)
-                                    <div class="tabular-nums text-xs">
-                                        {{ $user->personalTeam()->storage_used_gb }} / {{ __('Unlimited') }}
-                                    </div>
-                                @else
-                                    <div>
-                                        <div class="tabular-nums text-xs">
-                                            {{ $user->personalTeam()->storage_used_gb }} / {{ $user->personalTeam()->storage_limit_gb }}
-                                        </div>
-                                        <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700 mt-1">
-                                            <div
-                                                class="h-1.5 rounded-full transition-all duration-300 {{ $user->personalTeam()->storage_used_percent > 90 ? 'bg-red-500' : ($user->personalTeam()->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
-                                                style="width: {{ min($user->personalTeam()->storage_used_percent, 100) }}%"
-                                            ></div>
+                                                @if ($user->personalTeam()->lifetime)
+                                                    <flux:badge color="lime" size="sm">
+                                                        {{ __('Lifetime') }}
+                                                    </flux:badge>
+                                                @elseif ($user->personalTeam()->subscribed())
+                                                    <flux:badge color="lime" size="sm">
+                                                        {{ __('Subscribed') }}
+                                                    </flux:badge>
+                                                @endif
+                                            </flux:heading>
+                                            <flux:text class="max-sm:hidden">{{ $user->email }}</flux:text>
                                         </div>
                                     </div>
-                                @endif
-                            </flux:table.cell>
+                                </flux:table.cell>
 
+                                <flux:table.cell class="whitespace-nowrap">
+                                    {{ $user->created_at?->format('M j, Y') }}
+                                </flux:table.cell>
 
-                            <flux:table.cell>
-                                <form wire:submit="editUser({{ $user->id }})">
-                                    <flux:button type="submit" variant="ghost" size="sm" icon="ellipsis-horizontal" inset="top bottom"></flux:button>
-                                </form>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforeach
-                </flux:table.rows>
-            </flux:table>
+                                <flux:table.cell class="whitespace-nowrap">
+                                    @if ($user->personalTeam()->has_unlimited_storage)
+                                        <div class="text-xs tabular-nums">
+                                            {{ $user->personalTeam()->storage_used_gb }} / {{ __('Unlimited') }}
+                                        </div>
+                                    @else
+                                        <div>
+                                            <div class="text-xs tabular-nums">
+                                                {{ $user->personalTeam()->storage_used_gb }} /
+                                                {{ $user->personalTeam()->storage_limit_gb }}
+                                            </div>
+                                            <div class="mt-1 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                                <div
+                                                    class="{{ $user->personalTeam()->storage_used_percent > 90 ? 'bg-red-500' : ($user->personalTeam()->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                                    style="
+                                                        width: {{ min($user->personalTeam()->storage_used_percent, 100) }}%;
+                                                    "
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </flux:table.cell>
+
+                                <flux:table.cell>
+                                    <form wire:submit="editUser({{ $user->id }})">
+                                        <flux:button
+                                            type="submit"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="ellipsis-horizontal"
+                                            inset="top bottom"
+                                        ></flux:button>
+                                    </form>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            </div>
 
             <flux:modal name="edit-user" variant="flyout">
                 @if ($userForm->user)
@@ -220,15 +251,25 @@ new class extends Component
 
                         <flux:input :value="$userForm->user->email" :label="__('Email')" readonly />
 
-                        <flux:switch wire:model="userForm.lifetime" :label="__('Lifetime access')" :description="__('Grant this user lifetime access. Overrides subscription status.')" />
+                        <flux:switch
+                            wire:model="userForm.lifetime"
+                            :label="__('Lifetime access')"
+                            :description="__('Grant this user lifetime access. Overrides subscription status.')"
+                        />
 
-                        <flux:input.group :label="__('Storage Limit')" :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')">
-                            <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01"  />
+                        <flux:input.group
+                            :label="__('Storage Limit')"
+                            :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')"
+                        >
+                            <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01" />
                             <flux:input.group.suffix>GB</flux:input.group.suffix>
                         </flux:input.group>
 
-                        <flux:input.group :label="__('Monthly contracts limit')" :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')">
-                            <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1"  />
+                        <flux:input.group
+                            :label="__('Monthly contracts limit')"
+                            :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')"
+                        >
+                            <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1" />
                             <flux:input.group.suffix>/{{ __('month') }}</flux:input.group.suffix>
                         </flux:input.group>
 
