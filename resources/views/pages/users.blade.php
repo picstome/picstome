@@ -4,7 +4,6 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
 use Flux\Flux;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -44,50 +43,53 @@ new class extends Component
     #[Computed]
     public function users()
     {
-        $query = User::query();
+        $query = User::query()->with('ownedTeams');
 
         if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('users.name', 'like', '%'.$this->search.'%')
-                    ->orWhere('users.email', 'like', '%'.$this->search.'%');
+                $q->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('email', 'like', '%'.$this->search.'%');
             });
         }
 
-        $needsTeamJoin = $this->sortBy === 'storage_used' || in_array($this->subscribedFilter, ['yes', 'no']);
-        if ($needsTeamJoin) {
-            $query->leftJoin('teams', function ($join) {
-                $join->on('teams.user_id', '=', 'users.id')
-                    ->where('teams.personal_team', true);
+        // Filter by subscription status
+        if ($this->subscribedFilter === 'yes') {
+            $query->whereHas('ownedTeams', function ($q) {
+                $q->where('personal_team', true)
+                    ->whereHas('subscriptions', function ($q2) {
+                        $q2->where('stripe_status', 'active')
+                            ->where(function ($q3) {
+                                $q3->whereNull('ends_at')
+                                    ->orWhere('ends_at', '>', now());
+                            });
+                    });
             });
-        }
-
-        // Always left join subscriptions for filtering
-        if ($needsTeamJoin) {
-            $query->leftJoin('subscriptions', function ($join) {
-                $join->on('subscriptions.team_id', '=', 'teams.id')
-                    ->where('subscriptions.stripe_status', 'active')
-                    ->where(function ($q) {
-                        $q->whereNull('subscriptions.ends_at')
-                            ->orWhere('subscriptions.ends_at', '>', now());
+        } elseif ($this->subscribedFilter === 'no') {
+            $query->whereHas('ownedTeams', function ($q) {
+                $q->where('personal_team', true)
+                    ->whereDoesntHave('subscriptions', function ($q2) {
+                        $q2->where('stripe_status', 'active')
+                            ->where(function ($q3) {
+                                $q3->whereNull('ends_at')
+                                    ->orWhere('ends_at', '>', now());
+                            });
                     });
             });
         }
 
-        if ($this->subscribedFilter === 'yes') {
-            $query->whereNotNull('subscriptions.id');
-        } elseif ($this->subscribedFilter === 'no') {
-            $query->whereNull('subscriptions.id');
+        // Sorting
+        if ($this->sortBy === 'storage_used') {
+            $query->addSelect([
+                'storage_used' => \Illuminate\Support\Facades\DB::table('photos')
+                    ->selectRaw('COALESCE(SUM(photos.size),0)')
+                    ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
+                    ->join('teams', 'galleries.team_id', '=', 'teams.id')
+                    ->whereColumn('teams.user_id', 'users.id')
+                    ->where('teams.personal_team', true),
+            ])->orderBy('storage_used', $this->sortDirection);
+        } else {
+            $query->orderBy($this->sortBy, $this->sortDirection);
         }
-
-        $query = match ($this->sortBy) {
-            'storage_used' => $query
-                ->leftJoin('galleries', 'galleries.team_id', '=', 'teams.id')
-                ->leftJoin('photos', 'photos.gallery_id', '=', 'galleries.id')
-                ->select('users.*', DB::raw('COALESCE(SUM(photos.size),0) as storage_used'))
-                ->groupBy('users.id')
-                ->orderBy('storage_used', $this->sortDirection),
-            default => $query->orderBy($this->sortBy, $this->sortDirection),
-        };
 
         return $query->paginate(25);
     }
