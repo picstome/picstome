@@ -41,8 +41,7 @@ new class extends Component
         $this->sortBy = $column;
     }
 
-    #[Computed]
-    public function users()
+    public function usersQuery()
     {
         $query = User::query()->with('ownedTeams');
 
@@ -53,7 +52,6 @@ new class extends Component
             });
         }
 
-        // Single filter logic
         match ($this->filter) {
             'subscribed' => $query->whereHas('ownedTeams', function ($q) {
                 $q->where('personal_team', true)
@@ -94,7 +92,13 @@ new class extends Component
             default => $query->orderBy($this->sortBy, $this->sortDirection),
         };
 
-        return $query->paginate(25);
+        return $query;
+    }
+
+    #[Computed]
+    public function users()
+    {
+        return $this->usersQuery()->paginate(25);
     }
 
     public function editUser(User $user)
@@ -110,6 +114,40 @@ new class extends Component
 
         Flux::modal('edit-user')->close();
     }
+
+    public function exportCsv()
+    {
+        $filename = 'users-'.now()->format('Y-m-d_H-i-s').'.csv';
+
+        $users = $this->usersQuery()->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        return response()->streamDownload(function () use ($users) {
+            $handle = fopen('php://output', 'w');
+            // CSV header
+            fputcsv($handle, [
+                'ID', 'Name', 'Email', 'Created At', 'Lifetime', 'Subscribed', 'Storage Used (GB)', 'Storage Limit (GB)',
+            ]);
+            foreach ($users as $user) {
+                $team = $user->personalTeam();
+                fputcsv($handle, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->created_at,
+                    $team?->lifetime ? 'Yes' : 'No',
+                    $team?->subscribed() ? 'Yes' : 'No',
+                    $team?->storage_used_gb,
+                    $team?->has_unlimited_storage ? 'Unlimited' : $team?->storage_limit_gb,
+                ]);
+            }
+            fclose($handle);
+        }, $filename, $headers);
+    }
 }; ?>
 
 <x-app-layout>
@@ -117,7 +155,7 @@ new class extends Component
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <div class="mt-4 flex flex-wrap gap-4">
+            <div class="mt-4 flex flex-wrap gap-4 items-end">
                 <div class="flex-1">
                     <flux:input
                         wire:model.live="search"
@@ -133,6 +171,14 @@ new class extends Component
                         <flux:select.option value="not_subscribed">{{ __('Not Subscribed') }}</flux:select.option>
                         <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
                     </flux:select>
+                </div>
+                <div>
+                    <flux:button
+                        wire:click="exportCsv"
+                        icon="arrow-down-tray"
+                    >
+                        {{ __('Export CSV') }}
+                    </flux:button>
                 </div>
             </div>
 
