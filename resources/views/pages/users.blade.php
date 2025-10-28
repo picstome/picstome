@@ -26,7 +26,7 @@ new class extends Component
 
     public $search = '';
 
-    public array $filters = [];
+    public string $filter = 'all';
 
     public UserForm $userForm;
 
@@ -53,35 +53,34 @@ new class extends Component
             });
         }
 
-        // Generic filter logic
-        foreach ($this->filters as $key => $value) {
-            match ($key) {
-                'subscription' => match ($value) {
-                    'yes' => $query->whereHas('ownedTeams', function ($q) {
-                        $q->where('personal_team', true)
-                            ->whereHas('subscriptions', function ($q2) {
-                                $q2->where('stripe_status', 'active')
-                                    ->where(function ($q3) {
-                                        $q3->whereNull('ends_at')
-                                            ->orWhere('ends_at', '>', now());
-                                    });
+        // Single filter logic
+        match ($this->filter) {
+            'subscribed' => $query->whereHas('ownedTeams', function ($q) {
+                $q->where('personal_team', true)
+                    ->whereHas('subscriptions', function ($q2) {
+                        $q2->where('stripe_status', 'active')
+                            ->where(function ($q3) {
+                                $q3->whereNull('ends_at')
+                                    ->orWhere('ends_at', '>', now());
                             });
-                    }),
-                    'no' => $query->whereHas('ownedTeams', function ($q) {
-                        $q->where('personal_team', true)
-                            ->whereDoesntHave('subscriptions', function ($q2) {
-                                $q2->where('stripe_status', 'active')
-                                    ->where(function ($q3) {
-                                        $q3->whereNull('ends_at')
-                                            ->orWhere('ends_at', '>', now());
-                                    });
+                    });
+            }),
+            'not_subscribed' => $query->whereHas('ownedTeams', function ($q) {
+                $q->where('personal_team', true)
+                    ->whereDoesntHave('subscriptions', function ($q2) {
+                        $q2->where('stripe_status', 'active')
+                            ->where(function ($q3) {
+                                $q3->whereNull('ends_at')
+                                    ->orWhere('ends_at', '>', now());
                             });
-                    }),
-                    default => null,
-                },
-                default => null,
-            };
-        }
+                    });
+            }),
+            'lifetime' => $query->whereHas('ownedTeams', function ($q) {
+                $q->where('personal_team', true)
+                    ->where('lifetime', true);
+            }),
+            default => null,
+        };
 
         match ($this->sortBy) {
             'storage_used' => $query->addSelect([
@@ -128,11 +127,12 @@ new class extends Component
                     />
                 </div>
                 <div class="w-48">
-                    <flux:select wire:model.live="filters.subscription" label="{{ __('Subscription') }}" placeholder="{{ __('All') }}">
-                        <flux:select.option value="">{{ __('All') }}</flux:select.option>
-                        <flux:select.option value="yes">{{ __('Subscribed') }}</flux:select.option>
-                        <flux:select.option value="no">{{ __('Not Subscribed') }}</flux:select.option>
-                    </flux:select>
+<flux:select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
+    <flux:select.option value="all">{{ __('All') }}</flux:select.option>
+    <flux:select.option value="subscribed">{{ __('Subscribed') }}</flux:select.option>
+    <flux:select.option value="not_subscribed">{{ __('Not Subscribed') }}</flux:select.option>
+    <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
+</flux:select>
                 </div>
             </div>
 
