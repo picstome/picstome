@@ -113,7 +113,6 @@ new class extends Component
                     <flux:table.column>{{ __('User') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Created At') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'storage_used'" :direction="$sortDirection" wire:click="sort('storage_used')">{{ __('Storage') }}</flux:table.column>
-                    <flux:table.column>{{ __('Contracts') }}</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
                     @foreach ($this->users as $user)
@@ -159,13 +158,6 @@ new class extends Component
                                 @endif
                             </flux:table.cell>
 
-                            <flux:table.cell class="whitespace-nowrap">
-                                @if ($user->personalTeam()->has_unlimited_contracts)
-                                    {{ __('Unlimited') }}
-                                @else
-                                    <div class="tabular-nums">{{ $user->personalTeam()->monthly_contract_limit }}/{{ __('month') }}</div>
-                                @endif
-                            </flux:table.cell>
 
                             <flux:table.cell>
                                 <form wire:submit="editUser({{ $user->id }})">
