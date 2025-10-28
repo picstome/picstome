@@ -24,6 +24,8 @@ new class extends Component
 
     public $sortDirection = 'desc';
 
+    public $search = '';
+
     public UserForm $userForm;
 
     public function sort($column)
@@ -41,6 +43,13 @@ new class extends Component
     public function users()
     {
         $query = User::query();
+
+        if (! empty($this->search)) {
+            $query->where(function ($q) {
+                $q->where('users.name', 'like', '%'.$this->search.'%')
+                    ->orWhere('users.email', 'like', '%'.$this->search.'%');
+            });
+        }
 
         $query = match ($this->sortBy) {
             'storage_used' => $query
@@ -78,6 +87,15 @@ new class extends Component
     @volt('pages.users')
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
+
+            <div class="mt-4 max-w-xs">
+                <flux:input
+                    wire:model.live="search"
+                    :label="__('Search users')"
+                    :placeholder="__('Search by name or email')"
+                    clearable
+                />
+            </div>
 
             <div x-data
                 x-on:click="
