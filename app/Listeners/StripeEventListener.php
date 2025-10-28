@@ -35,7 +35,10 @@ class StripeEventListener
         $team = $this->findTeamByStripeCustomer($event->payload['data']['object']['customer']);
 
         if ($team) {
-            $this->updateTeamStorageLimit($team, config('picstome.subscription_storage_limit'));
+            $team->update([
+                'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+                'monthly_contract_limit' => null, // Unlimited contracts
+            ]);
         }
     }
 
@@ -47,7 +50,10 @@ class StripeEventListener
         $team = $this->findTeamByStripeCustomer($event->payload['data']['object']['customer']);
 
         if ($team) {
-            $this->updateTeamStorageLimit($team, config('picstome.personal_team_storage_limit'));
+            $team->update([
+                'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+                'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
+            ]);
         }
     }
 
@@ -57,13 +63,5 @@ class StripeEventListener
     protected function findTeamByStripeCustomer(string $customerId): ?Team
     {
         return Team::where('stripe_id', $customerId)->first();
-    }
-
-    /**
-     * Update team's storage limit.
-     */
-    protected function updateTeamStorageLimit(Team $team, int $storageLimit): void
-    {
-        $team->update(['custom_storage_limit' => $storageLimit]);
     }
 }
