@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
@@ -15,28 +16,47 @@ name('users');
 
 middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 
-new class extends Component {
+new class extends Component
+{
     use WithPagination;
 
     public $sortBy = 'created_at';
+
     public $sortDirection = 'desc';
+
     public UserForm $userForm;
 
-    public function sort($column) {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortBy = $column;
-            $this->sortDirection = 'asc';
-        }
+    public function sort($column)
+    {
+        $this->sortDirection = match (true) {
+            $this->sortBy === $column && $this->sortDirection === 'asc' => 'desc',
+            $this->sortBy === $column && $this->sortDirection === 'desc' => 'asc',
+            default => 'asc',
+        };
+
+        $this->sortBy = $column;
     }
 
     #[Computed]
     public function users()
     {
-        return User::query()
-            ->tap(fn ($query) => $this->sortBy ? $query->orderBy($this->sortBy, $this->sortDirection) : $query)
-            ->paginate(25);
+        $query = User::query();
+
+        $query = match ($this->sortBy) {
+            'storage_used' => $query
+                ->leftJoin('teams', function ($join) {
+                    $join->on('teams.user_id', '=', 'users.id')
+                        ->where('teams.personal_team', true);
+                })
+                ->leftJoin('galleries', 'galleries.team_id', '=', 'teams.id')
+                ->leftJoin('photos', 'photos.gallery_id', '=', 'galleries.id')
+                ->select('users.*', DB::raw('COALESCE(SUM(photos.size),0) as storage_used'))
+                ->groupBy('users.id')
+                ->orderBy('storage_used', $this->sortDirection),
+            default => $query->orderBy($this->sortBy, $this->sortDirection),
+        };
+
+        return $query->paginate(25);
     }
 
     public function editUser(User $user)
@@ -74,7 +94,7 @@ new class extends Component {
                 <flux:table.columns>
                     <flux:table.column>{{ __('User') }}</flux:table.column>
                     <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection" wire:click="sort('created_at')">{{ __('Created At') }}</flux:table.column>
-                    <flux:table.column>{{ __('Storage') }}</flux:table.column>
+                    <flux:table.column sortable :sorted="$sortBy === 'storage_used'" :direction="$sortDirection" wire:click="sort('storage_used')">{{ __('Storage') }}</flux:table.column>
                     <flux:table.column>{{ __('Contracts') }}</flux:table.column>
                 </flux:table.columns>
                 <flux:table.rows>
