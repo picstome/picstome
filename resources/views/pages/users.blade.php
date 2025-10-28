@@ -30,18 +30,62 @@ new class extends Component
 
     public UserForm $userForm;
 
+    #[Computed]
+    public function users()
+    {
+        return $this->usersQuery()->paginate(25);
+    }
+
     public function sort($column)
     {
-        $this->sortDirection = match (true) {
-            $this->sortBy === $column && $this->sortDirection === 'asc' => 'desc',
-            $this->sortBy === $column && $this->sortDirection === 'desc' => 'asc',
-            default => 'asc',
-        };
-
+        $this->sortDirection = ($this->sortBy === $column && $this->sortDirection === 'asc') ? 'desc' : 'asc';
         $this->sortBy = $column;
     }
 
-    public function usersQuery()
+    public function editUser(User $user)
+    {
+        $this->userForm->setUser($user);
+        Flux::modal('edit-user')->show();
+    }
+
+    public function saveUser()
+    {
+        $this->userForm->update();
+        Flux::modal('edit-user')->close();
+    }
+
+    public function exportCsv()
+    {
+        $filename = 'users-'.now()->format('Y-m-d_H-i-s').'.csv';
+        $users = $this->usersQuery()->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        return response()->streamDownload(function () use ($users) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, [
+                'ID', 'Name', 'Email', 'Created At', 'Lifetime', 'Subscribed', 'Storage Used (GB)', 'Storage Limit (GB)',
+            ]);
+            foreach ($users as $user) {
+                $team = $user->personalTeam();
+                fputcsv($handle, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->created_at,
+                    $team?->lifetime ? 'Yes' : 'No',
+                    $team?->subscribed() ? 'Yes' : 'No',
+                    $team?->storage_used_gb,
+                    $team?->has_unlimited_storage ? 'Unlimited' : $team?->storage_limit_gb,
+                ]);
+            }
+            fclose($handle);
+        }, $filename, $headers);
+    }
+
+    private function usersQuery()
     {
         $query = User::query()->with('ownedTeams');
 
@@ -93,60 +137,6 @@ new class extends Component
         };
 
         return $query;
-    }
-
-    #[Computed]
-    public function users()
-    {
-        return $this->usersQuery()->paginate(25);
-    }
-
-    public function editUser(User $user)
-    {
-        $this->userForm->setUser($user);
-
-        Flux::modal('edit-user')->show();
-    }
-
-    public function saveUser()
-    {
-        $this->userForm->update();
-
-        Flux::modal('edit-user')->close();
-    }
-
-    public function exportCsv()
-    {
-        $filename = 'users-'.now()->format('Y-m-d_H-i-s').'.csv';
-
-        $users = $this->usersQuery()->get();
-
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ];
-
-        return response()->streamDownload(function () use ($users) {
-            $handle = fopen('php://output', 'w');
-            // CSV header
-            fputcsv($handle, [
-                'ID', 'Name', 'Email', 'Created At', 'Lifetime', 'Subscribed', 'Storage Used (GB)', 'Storage Limit (GB)',
-            ]);
-            foreach ($users as $user) {
-                $team = $user->personalTeam();
-                fputcsv($handle, [
-                    $user->id,
-                    $user->name,
-                    $user->email,
-                    $user->created_at,
-                    $team?->lifetime ? 'Yes' : 'No',
-                    $team?->subscribed() ? 'Yes' : 'No',
-                    $team?->storage_used_gb,
-                    $team?->has_unlimited_storage ? 'Unlimited' : $team?->storage_limit_gb,
-                ]);
-            }
-            fclose($handle);
-        }, $filename, $headers);
     }
 }; ?>
 
@@ -215,6 +205,7 @@ new class extends Component
                         >
                             {{ __('Storage') }}
                         </flux:table.column>
+                        <flux:table.column></flux:table.column>
                     </flux:table.columns>
                     <flux:table.rows>
                         @foreach ($this->users as $user)
@@ -268,7 +259,7 @@ new class extends Component
                                     @endif
                                 </flux:table.cell>
 
-                                <flux:table.cell>
+                                <flux:table.cell align="end">
                                     <form wire:submit="editUser({{ $user->id }})">
                                         <flux:button
                                             type="submit"
