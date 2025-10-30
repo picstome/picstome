@@ -68,18 +68,9 @@ new class extends Component
                     <x-heading level="1" size="xl">{{ $customer->name }}</x-heading>
                 </div>
                 <div class="flex gap-4">
-                    <flux:dropdown>
-                        <flux:button icon-trailing="chevron-down" variant="subtle">{{ __('Delete') }}</flux:button>
-                        <flux:menu>
-                            <flux:menu.item
-                                wire:click="delete"
-                                wire:confirm="{{ __('Are you sure?') }}"
-                                variant="danger"
-                            >
-                                {{ __('Delete') }}
-                            </flux:menu.item>
-                        </flux:menu>
-                    </flux:dropdown>
+                    <flux:button wire:click="delete" variant="subtle" wire:confirm="{{ __('Are you sure?') }}">
+    {{ __('Delete') }}
+</flux:button>
                     <flux:modal.trigger name="edit">
                         <flux:button>{{ __('Edit') }}</flux:button>
                     </flux:modal.trigger>
