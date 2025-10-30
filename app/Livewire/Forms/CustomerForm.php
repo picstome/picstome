@@ -23,13 +23,20 @@ class CustomerForm extends Form
 
     public function rules()
     {
+        $emailRule = Rule::unique('customers', 'email')
+            ->where(fn ($q) => $q->where('team_id', Auth::user()->currentTeam->id));
+
+        if (isset($this->customer) && $this->customer) {
+            $emailRule->ignore($this->customer->id);
+        }
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('customers', 'email')->where(fn ($q) => $q->where('team_id', Auth::user()->currentTeam->id)),
+                $emailRule,
             ],
             'phone' => ['nullable', 'string', 'max:255'],
             'birthdate' => ['nullable', 'date'],
@@ -39,6 +46,8 @@ class CustomerForm extends Form
 
     public function setCustomer(Customer $customer)
     {
+        $this->customer = $customer;
+
         $this->name = $customer->name;
 
         $this->email = $customer->email;

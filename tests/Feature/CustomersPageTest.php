@@ -52,7 +52,7 @@ it('allows a user to create a customer with optional fields', function () {
 
     $customer = $this->team->customers()->first();
     expect($customer->phone)->toBe('1234567890');
-    expect($customer->birthdate)->toBe('1990-01-01');
+    expect($customer->birthdate->toDateString())->toBe('1990-01-01');
     expect($customer->notes)->toBe('VIP customer');
 });
 
