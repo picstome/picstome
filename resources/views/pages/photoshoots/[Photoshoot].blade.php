@@ -192,7 +192,7 @@ new class extends Component
                         {{ __('Date') }}
                     </x-description.term>
                     <x-description.details>
-                        {{ $photoshoot->date }}
+                        {{ $photoshoot->formatted_date }}
                     </x-description.details>
 
                     <x-description.term>
@@ -338,7 +338,7 @@ new class extends Component
                                         href="/contracts/{{ $contract->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    {{ $contract->shooting_date }}
+                                    {{ $contract->formatted_shooting_date }}
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a

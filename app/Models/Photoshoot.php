@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\FormatsFileSize;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -76,5 +77,12 @@ class Photoshoot extends Model
             ->withCount('photos')
             ->get()
             ->sum('photos_count');
+    }
+
+    protected function formattedDate(): Attribute
+    {
+        return Attribute::get(function () {
+            return $this->date?->isoFormat('MMM D, YYYY');
+        });
     }
 }
