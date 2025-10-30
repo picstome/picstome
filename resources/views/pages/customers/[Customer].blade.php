@@ -186,7 +186,7 @@ new class extends Component
                             <x-table.row>
                                 <x-table.cell variant="strong" class="relative">
                                     <a
-                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
@@ -203,7 +203,7 @@ new class extends Component
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
@@ -211,7 +211,7 @@ new class extends Component
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
@@ -219,7 +219,7 @@ new class extends Component
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
