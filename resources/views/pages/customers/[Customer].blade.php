@@ -58,7 +58,7 @@ new class extends Component
     @volt('pages.customers.show')
         <div>
             <div class="max-lg:hidden">
-                <flux:button :href="route('customers')" icon="chevron-left" variant="subtle" inset>
+                <flux:button :href="route('customers')" icon="chevron-left" variant="subtle" inset wire:navigate>
                     {{ __('Customers') }}
                 </flux:button>
             </div>
@@ -149,7 +149,7 @@ new class extends Component
                             <div
                                 class="relative flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10"
                             >
-                                <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
+                                <a class="flex w-full" href="/galleries/{{ $gallery->id }}" wire:navigate>
                                     <img
                                         src="{{ $gallery->photos()->first()?->thumbnail_url }}"
                                         alt=""
@@ -186,7 +186,8 @@ new class extends Component
                             <x-table.row>
                                 <x-table.cell variant="strong" class="relative">
                                     <a
-                                        href="/contracts/{{ $contract->id }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     <div class="flex items-end gap-2">
@@ -202,21 +203,24 @@ new class extends Component
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="/contracts/{{ $contract->id }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $contract->location }}
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="/contracts/{{ $contract->id }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $contract->formatted_shooting_date }}
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
-                                        href="/contracts/{{ $contract->id }}"
+                                        href="{{ route('contracts.show', ['contract' => $contract->id]) }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}

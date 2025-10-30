@@ -69,6 +69,7 @@ new class extends Component
                                 <x-table.cell variant="strong" class="relative">
                                     <a
                                         href="/customers/{{ $customer->id }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     <p>{{ $customer->name }}</p>
@@ -76,6 +77,7 @@ new class extends Component
                                 <x-table.cell class="relative">
                                     <a
                                         href="/customers/{{ $customer->id }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $customer->email }}
@@ -83,6 +85,7 @@ new class extends Component
                                 <x-table.cell class="relative">
                                     <a
                                         href="/customers/{{ $customer->id }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $customer->phone }}
@@ -90,6 +93,7 @@ new class extends Component
                                 <x-table.cell class="relative">
                                     <a
                                         href="/customers/{{ $customer->id }}"
+                                        wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
                                     {{ $customer->formatted_birthdate }}
