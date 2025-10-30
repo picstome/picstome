@@ -90,7 +90,7 @@ new class extends Component
                     <x-description.term>{{ __('Phone') }}</x-description.term>
                     <x-description.details>{{ $customer->phone }}</x-description.details>
                     <x-description.term>{{ __('Birthdate') }}</x-description.term>
-                    <x-description.details>{{ $customer->birthdate }}</x-description.details>
+                    <x-description.details>{{ $customer->formatted_birthdate }}</x-description.details>
                     <x-description.term>{{ __('Notes') }}</x-description.term>
                     <x-description.details>{{ $customer->notes }}</x-description.details>
                 </x-description.list>
@@ -204,7 +204,7 @@ new class extends Component
                                         href="/contracts/{{ $contract->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    {{ $contract->shooting_date }}
+                                    {{ $contract->formatted_shooting_date }}
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,5 +27,12 @@ class Customer extends Model
     public function photoshoots()
     {
         return $this->hasMany(Photoshoot::class);
+    }
+
+    protected function formattedBirthdate(): Attribute
+    {
+        return Attribute::get(function () {
+            return $this->birthdate?->isoFormat('MMM D');
+        });
     }
 }
