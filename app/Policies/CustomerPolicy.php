@@ -12,8 +12,7 @@ class CustomerPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Any authenticated user can view their team's customers
-        return $user->currentTeam !== null;
+        return false;
     }
 
     /**
@@ -21,8 +20,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        // User can view if customer belongs to their current team
-        return $user->currentTeam && $customer->team_id === $user->currentTeam->id;
+        return $customer->team && $customer->team->is($user->currentTeam);
     }
 
     /**
@@ -30,8 +28,7 @@ class CustomerPolicy
      */
     public function create(User $user): bool
     {
-        // Any authenticated user with a current team can create a customer
-        return $user->currentTeam !== null;
+        return true;
     }
 
     /**
@@ -39,8 +36,7 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        // User can update if customer belongs to their current team
-        return $user->currentTeam && $customer->team_id === $user->currentTeam->id;
+        return false;
     }
 
     /**
@@ -48,8 +44,7 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        // User can delete if customer belongs to their current team
-        return $user->currentTeam && $customer->team_id === $user->currentTeam->id;
+        return false;
     }
 
     /**
@@ -57,8 +52,7 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer): bool
     {
-        // User can restore if customer belongs to their current team
-        return $user->currentTeam && $customer->team_id === $user->currentTeam->id;
+        return false;
     }
 
     /**
@@ -66,7 +60,6 @@ class CustomerPolicy
      */
     public function forceDelete(User $user, Customer $customer): bool
     {
-        // User can force delete if customer belongs to their current team
-        return $user->currentTeam && $customer->team_id === $user->currentTeam->id;
+        return false;
     }
 }
