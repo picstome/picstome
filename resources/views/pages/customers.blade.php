@@ -23,7 +23,9 @@ new class extends Component
     public function save()
     {
         $this->authorize('create', Customer::class);
+
         $this->form->store();
+
         $this->modal('create-customer')->close();
     }
 

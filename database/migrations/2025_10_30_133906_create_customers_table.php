@@ -19,7 +19,9 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->date('birthdate')->nullable();
             $table->text('notes')->nullable();
+
             $table->timestamps();
+
             $table->unique(['team_id', 'email']);
         });
     }

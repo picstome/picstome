@@ -31,7 +31,7 @@ it('shows only customers belonging to the users team', function () {
 });
 
 it('allows a user to create a customer', function () {
-    Volt::actingAs($this->user)
+    $component = Volt::actingAs($this->user)
         ->test('pages.customers')
         ->set('form.name', 'Jane Doe')
         ->set('form.email', 'jane@example.com')

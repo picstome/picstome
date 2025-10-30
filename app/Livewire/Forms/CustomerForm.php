@@ -38,10 +38,8 @@ class CustomerForm extends Form
     public function store()
     {
         $this->validate();
-        $user = Auth::user();
-        $team = $user->currentTeam;
-        $customer = Customer::create([
-            'team_id' => $team->id,
+
+        $customer = Auth::user()->currentTeam->customers()->create([
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
