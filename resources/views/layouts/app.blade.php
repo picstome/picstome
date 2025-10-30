@@ -71,6 +71,10 @@
                         </flux:navlist.item>
                     </flux:navlist.group>
 
+                    <flux:navlist.item :href="route('customers')" icon="user-group">
+                        {{ __('Customers') }}
+                    </flux:navlist.item>
+
                     <flux:navlist.group :heading="__('Contracts')" class="mt-4">
                         <flux:navlist.item :href="route('contracts')" icon="document-text">
                             {{ __('Contracts') }}

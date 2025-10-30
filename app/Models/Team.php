@@ -91,6 +91,11 @@ class Team extends Model
         return $this->hasMany(Photoshoot::class);
     }
 
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
