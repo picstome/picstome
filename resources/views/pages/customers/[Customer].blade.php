@@ -109,23 +109,21 @@ new class extends Component
                 <flux:heading level="2">{{ __('Photoshoots') }}</flux:heading>
                 <flux:separator class="mt-4" />
                 @if ($customer->photoshoots->isNotEmpty())
-                    <x-table class="mt-4">
+                    <x-table class="mt-4" id="table">
                         <x-table.columns>
                             <x-table.column>{{ __('Name') }}</x-table.column>
-                            <x-table.column>{{ __('Date') }}</x-table.column>
                             <x-table.column>{{ __('Location') }}</x-table.column>
-                            <x-table.column>{{ __('Price') }}</x-table.column>
-                            <x-table.column>{{ __('Actions') }}</x-table.column>
                         </x-table.columns>
                         <x-table.rows>
                             @foreach ($customer->photoshoots as $photoshoot)
                                 <x-table.row>
-                                    <x-table.cell>{{ $photoshoot->name }}</x-table.cell>
-                                    <x-table.cell>{{ $photoshoot->date }}</x-table.cell>
-                                    <x-table.cell>{{ $photoshoot->location }}</x-table.cell>
-                                    <x-table.cell>{{ $photoshoot->price }}</x-table.cell>
-                                    <x-table.cell>
-                                        <a href="/photoshoots/{{ $photoshoot->id }}" class="text-primary-600 hover:underline">{{ __('View') }}</a>
+                                    <x-table.cell variant="strong" class="relative">
+                                        <a href="/photoshoots/{{ $photoshoot->id }}" wire:navigate class="absolute inset-0 focus:outline-hidden"></a>
+                                        <p>{{ $photoshoot->name }}</p>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative">
+                                        <a href="/photoshoots/{{ $photoshoot->id }}" wire:navigate class="absolute inset-0 focus:outline-hidden"></a>
+                                        <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
