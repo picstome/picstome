@@ -61,35 +61,58 @@ new class extends Component
                         <x-table.column>Email</x-table.column>
                         <x-table.column>Phone</x-table.column>
                         <x-table.column>Birthdate</x-table.column>
-                        <x-table.column>Notes</x-table.column>
                     </x-table.columns>
 
                     <x-table.rows>
                         @foreach ($this->customers as $customer)
                             <x-table.row>
                                 <x-table.cell variant="strong" class="relative">
+                                    <a
+                                        href="/customers/{{ $customer->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
                                     <p>{{ $customer->name }}</p>
                                 </x-table.cell>
-                                <x-table.cell>{{ $customer->email }}</x-table.cell>
-                                <x-table.cell>{{ $customer->phone }}</x-table.cell>
-                                <x-table.cell>{{ $customer->birthdate }}</x-table.cell>
-                                <x-table.cell>{{ $customer->notes }}</x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/customers/{{ $customer->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $customer->email }}
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/customers/{{ $customer->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $customer->phone }}
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/customers/{{ $customer->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $customer->birthdate }}
+                                </x-table.cell>
                             </x-table.row>
                         @endforeach
                     </x-table.rows>
                 </x-table>
 
-                <div x-data
+                <div
+                    x-data
                     x-on:click="
-                        let el = $event.target;
+                        let el = $event.target
                         while (el && el !== $el) {
                             if (el.hasAttribute('wire:click')) {
-                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
-                                break;
+                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
+                                break
                             }
-                            el = el.parentElement;
-                        }"
-                    class="mt-6">
+                            el = el.parentElement
+                        }
+                    "
+                    class="mt-6"
+                >
                     <flux:pagination :paginator="$this->customers" />
                 </div>
             @else

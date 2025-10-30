@@ -9,6 +9,8 @@ use Livewire\Form;
 
 class CustomerForm extends Form
 {
+    public ?Customer $customer;
+
     public ?string $name = '';
 
     public ?string $email = '';
@@ -35,18 +37,42 @@ class CustomerForm extends Form
         ];
     }
 
+    public function setCustomer(Customer $customer)
+    {
+        $this->name = $customer->name;
+
+        $this->email = $customer->email;
+
+        $this->phone = $customer->phone;
+
+        $this->birthdate = $customer->birthdate?->format('Y-m-d');
+
+        $this->notes = $customer->notes;
+    }
+
     public function store()
     {
         $this->validate();
 
-        $customer = Auth::user()->currentTeam->customers()->create([
+        return Auth::user()->currentTeam->customers()->create([
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
             'birthdate' => $this->birthdate,
             'notes' => $this->notes,
         ]);
+    }
 
-        return $customer;
+    public function update()
+    {
+        $this->validate();
+
+        return $this->customer->update([
+            'name' => $this->name,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'birthdate' => $this->birthdate,
+            'notes' => $this->notes,
+        ]);
     }
 }

@@ -11,8 +11,20 @@ class Customer extends Model
 
     protected $guarded = [];
 
+    protected function casts()
+    {
+        return [
+            'birthdate' => 'datetime',
+        ];
+    }
+
     public function team()
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function photoshoots()
+    {
+        return $this->hasMany(Photoshoot::class);
     }
 }
