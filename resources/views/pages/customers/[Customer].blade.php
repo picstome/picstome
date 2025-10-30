@@ -69,8 +69,8 @@ new class extends Component
                 </div>
                 <div class="flex gap-4">
                     <flux:button wire:click="delete" variant="subtle" wire:confirm="{{ __('Are you sure?') }}">
-    {{ __('Delete') }}
-</flux:button>
+                        {{ __('Delete') }}
+                    </flux:button>
                     <flux:modal.trigger name="edit">
                         <flux:button>{{ __('Edit') }}</flux:button>
                     </flux:modal.trigger>
@@ -85,10 +85,18 @@ new class extends Component
                     <x-description.details>{{ $customer->name }}</x-description.details>
                     <x-description.term>{{ __('Email') }}</x-description.term>
                     <x-description.details>
-                        <a href="mailto:{{ $customer->email }}">{{ $customer->email }}</a>
+                        <flux:link href="mailto:{{ $customer->email }}">{{ $customer->email }}</flux:link>
                     </x-description.details>
                     <x-description.term>{{ __('Phone') }}</x-description.term>
-                    <x-description.details>{{ $customer->phone }}</x-description.details>
+                    <x-description.details>
+                        <flux:link
+                            href="https://wa.me/{{ $customer->formatted_whatsapp_phone }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {{ $customer->phone }}
+                        </flux:link>
+                    </x-description.details>
                     <x-description.term>{{ __('Birthdate') }}</x-description.term>
                     <x-description.details>{{ $customer->formatted_birthdate }}</x-description.details>
                     <x-description.term>{{ __('Notes') }}</x-description.term>

@@ -92,7 +92,7 @@ new class extends Component
                                         href="/customers/{{ $customer->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    {{ $customer->birthdate }}
+                                    {{ $customer->formatted_birthdate }}
                                 </x-table.cell>
                             </x-table.row>
                         @endforeach

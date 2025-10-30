@@ -35,4 +35,12 @@ class Customer extends Model
             return $this->birthdate?->isoFormat('MMM D');
         });
     }
+
+    protected function formattedWhatsappPhone(): Attribute
+    {
+        return Attribute::get(function () {
+            // Remove all non-digit characters
+            return preg_replace('/[^0-9]/', '', $this->phone);
+        });
+    }
 }
