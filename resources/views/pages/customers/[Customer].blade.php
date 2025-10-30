@@ -105,42 +105,36 @@ new class extends Component
                 </x-description.list>
             </div>
 
-            <div class="mt-12">
-                <flux:heading level="2">{{ __('Photoshoots') }}</flux:heading>
-                <flux:separator class="mt-4" />
-                @if ($customer->photoshoots->isNotEmpty())
-                    <x-table class="mt-4" id="table">
-                        <x-table.columns>
-                            <x-table.column>{{ __('Name') }}</x-table.column>
-                            <x-table.column>{{ __('Location') }}</x-table.column>
-                        </x-table.columns>
-                        <x-table.rows>
-                            @foreach ($customer->photoshoots as $photoshoot)
-                                <x-table.row>
-                                    <x-table.cell variant="strong" class="relative">
-                                        <a
-                                            href="/photoshoots/{{ $photoshoot->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        <p>{{ $photoshoot->name }}</p>
-                                    </x-table.cell>
-                                    <x-table.cell class="relative">
-                                        <a
-                                            href="/photoshoots/{{ $photoshoot->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
-                                    </x-table.cell>
-                                </x-table.row>
-                            @endforeach
-                        </x-table.rows>
-                    </x-table>
-                @else
-                    <div class="mt-4 text-zinc-500">{{ __('No photoshoots found for this customer.') }}</div>
-                @endif
-            </div>
+            @if ($customer->photoshoots->isNotEmpty())
+                <x-table class="mt-12">
+                    <x-table.columns>
+                        <x-table.column>{{ __('Photoshoot') }}</x-table.column>
+                        <x-table.column>{{ __('Location') }}</x-table.column>
+                    </x-table.columns>
+                    <x-table.rows>
+                        @foreach ($customer->photoshoots as $photoshoot)
+                            <x-table.row>
+                                <x-table.cell variant="strong" class="relative">
+                                    <a
+                                        href="/photoshoots/{{ $photoshoot->id }}"
+                                        wire:navigate
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    <p>{{ $photoshoot->name }}</p>
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/photoshoots/{{ $photoshoot->id }}"
+                                        wire:navigate
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
+                                </x-table.cell>
+                            </x-table.row>
+                        @endforeach
+                    </x-table.rows>
+                </x-table>
+            @endif
 
             @if ($this->galleries->isNotEmpty())
                 <div class="mt-12">
