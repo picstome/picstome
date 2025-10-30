@@ -118,11 +118,19 @@ new class extends Component
                             @foreach ($customer->photoshoots as $photoshoot)
                                 <x-table.row>
                                     <x-table.cell variant="strong" class="relative">
-                                        <a href="/photoshoots/{{ $photoshoot->id }}" wire:navigate class="absolute inset-0 focus:outline-hidden"></a>
+                                        <a
+                                            href="/photoshoots/{{ $photoshoot->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
                                         <p>{{ $photoshoot->name }}</p>
                                     </x-table.cell>
                                     <x-table.cell class="relative">
-                                        <a href="/photoshoots/{{ $photoshoot->id }}" wire:navigate class="absolute inset-0 focus:outline-hidden"></a>
+                                        <a
+                                            href="/photoshoots/{{ $photoshoot->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
                                         <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
                                     </x-table.cell>
                                 </x-table.row>
@@ -134,107 +142,120 @@ new class extends Component
                 @endif
             </div>
 
-            <div class="mt-12">
-                <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
-                <flux:separator class="mt-4" />
-                @if ($this->galleries->isNotEmpty())
-                    <div class="mt-12">
-                        <div class="grid grid-flow-dense auto-rows-[263px] grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-4 gap-y-6">
-                            @foreach ($this->galleries as $gallery)
-                                <div class="relative flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10">
-                                    <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
-                                        <img src="{{ $gallery->photos()->first()?->thumbnail_url }}" alt="" class="mx-auto object-contain" />
-                                    </a>
-                                    <div class="absolute inset-x-0 bottom-0 flex gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
-                                        <flux:heading>{{ $gallery->name }}</flux:heading>
-                                        <flux:text>
-                                            {{ $gallery->photos()->count() }} {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
-                                            {{ $gallery->getFormattedStorageSize() }} •
-                                            {{ $gallery->created_at->format('M j, Y') }}
-                                        </flux:text>
-                                    </div>
+            @if ($this->galleries->isNotEmpty())
+                <div class="mt-12">
+                    <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
+                    <flux:separator class="mt-4" />
+                </div>
+
+                <div class="mt-12">
+                    <div
+                        class="grid grid-flow-dense auto-rows-[263px] grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-x-4 gap-y-6"
+                    >
+                        @foreach ($this->galleries as $gallery)
+                            <div
+                                class="relative flex overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10"
+                            >
+                                <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
+                                    <img
+                                        src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                        alt=""
+                                        class="mx-auto object-contain"
+                                    />
+                                </a>
+                                <div
+                                    class="absolute inset-x-0 bottom-0 flex gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
+                                >
+                                    <flux:heading>{{ $gallery->name }}</flux:heading>
+                                    <flux:text>
+                                        {{ $gallery->photos()->count() }}
+                                        {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
+                                        {{ $gallery->getFormattedStorageSize() }} •
+                                        {{ $gallery->created_at->format('M j, Y') }}
+                                    </flux:text>
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
+                        @endforeach
                     </div>
-                @else
-                    <div class="mt-4 text-zinc-500">{{ __('No galleries found for this customer.') }}</div>
-                @endif
-            </div>
+                </div>
+            @endif
 
-            <div class="mt-12">
-                <flux:heading level="2">{{ __('Contracts') }}</flux:heading>
-                <flux:separator class="mt-4" />
-                @if ($this->contracts->isNotEmpty())
-                    <x-table class="mt-4">
-                        <x-table.columns>
-                            <x-table.column class="w-full">{{ __('Contract') }}</x-table.column>
-                            <x-table.column>{{ __('Location') }}</x-table.column>
-                            <x-table.column>{{ __('Shooting date') }}</x-table.column>
-                            <x-table.column>{{ __('Signatures') }}</x-table.column>
-                        </x-table.columns>
-                        <x-table.rows>
-                            @foreach ($this->contracts as $contract)
-                                <x-table.row>
-                                    <x-table.cell variant="strong" class="relative">
-                                        <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                                        <div class="flex items-end gap-2">
-                                            {{ $contract->title }}
-                                            @if ($contract->isExecuted())
-                                                <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
-                                            @else
-                                                <flux:badge size="sm">{{ __('Waiting signatures') }}</flux:badge>
-                                            @endif
-                                        </div>
-                                        <flux:text>{{ $contract->description }}</flux:text>
-                                    </x-table.cell>
-                                    <x-table.cell class="relative">
-                                        <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                                        {{ $contract->location }}
-                                    </x-table.cell>
-                                    <x-table.cell class="relative">
-                                        <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                                        {{ $contract->shooting_date }}
-                                    </x-table.cell>
-                                    <x-table.cell class="relative">
-                                        <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                                        {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
-                                    </x-table.cell>
-                                </x-table.row>
-                            @endforeach
-                        </x-table.rows>
-                    </x-table>
-                @else
-                    <div class="mt-4 text-zinc-500">{{ __('No contracts found for this customer.') }}</div>
-                @endif
-            </div>
+            @if ($this->contracts->isNotEmpty())
+                <x-table class="mt-12">
+                    <x-table.columns>
+                        <x-table.column class="w-full">{{ __('Contract') }}</x-table.column>
+                        <x-table.column>{{ __('Location') }}</x-table.column>
+                        <x-table.column>{{ __('Shooting date') }}</x-table.column>
+                        <x-table.column>{{ __('Signatures') }}</x-table.column>
+                    </x-table.columns>
+                    <x-table.rows>
+                        @foreach ($this->contracts as $contract)
+                            <x-table.row>
+                                <x-table.cell variant="strong" class="relative">
+                                    <a
+                                        href="/contracts/{{ $contract->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    <div class="flex items-end gap-2">
+                                        {{ $contract->title }}
 
-            <div class="mt-12">
-                <flux:heading level="2">{{ __('Payments') }}</flux:heading>
-                <flux:separator class="mt-4" />
-                @if ($this->payments->isNotEmpty())
-                    <x-table class="mt-4">
-                        <x-table.columns>
-                            <x-table.column>{{ __('Payments') }}</x-table.column>
-                            <x-table.column>{{ __('Amount') }}</x-table.column>
-                            <x-table.column>{{ __('Payment Date') }}</x-table.column>
-                            <x-table.column>{{ __('Customer Email') }}</x-table.column>
-                        </x-table.columns>
-                        <x-table.rows>
-                            @foreach ($this->payments as $payment)
-                                <x-table.row>
-                                    <x-table.cell>{{ $payment->description }}</x-table.cell>
-                                    <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                                    <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
-                                    <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                                </x-table.row>
-                            @endforeach
-                        </x-table.rows>
-                    </x-table>
-                @else
-                    <div class="mt-4 text-zinc-500">{{ __('No payments found for this customer.') }}</div>
-                @endif
-            </div>
+                                        @if ($contract->isExecuted())
+                                            <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
+                                        @else
+                                            <flux:badge size="sm">{{ __('Waiting signatures') }}</flux:badge>
+                                        @endif
+                                    </div>
+                                    <flux:text>{{ $contract->description }}</flux:text>
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/contracts/{{ $contract->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $contract->location }}
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/contracts/{{ $contract->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $contract->shooting_date }}
+                                </x-table.cell>
+                                <x-table.cell class="relative">
+                                    <a
+                                        href="/contracts/{{ $contract->id }}"
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+                                    {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                                </x-table.cell>
+                            </x-table.row>
+                        @endforeach
+                    </x-table.rows>
+                </x-table>
+            @endif
+
+            @if ($this->payments->isNotEmpty())
+                <x-table class="mt-12">
+                    <x-table.columns>
+                        <x-table.column>{{ __('Payments') }}</x-table.column>
+                        <x-table.column>{{ __('Amount') }}</x-table.column>
+                        <x-table.column>{{ __('Payment Date') }}</x-table.column>
+                        <x-table.column>{{ __('Customer Email') }}</x-table.column>
+                    </x-table.columns>
+                    <x-table.rows>
+                        @foreach ($this->payments as $payment)
+                            <x-table.row>
+                                <x-table.cell>{{ $payment->description }}</x-table.cell>
+                                <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
+                                <x-table.cell>
+                                    {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
+                                </x-table.cell>
+                                <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
+                            </x-table.row>
+                        @endforeach
+                    </x-table.rows>
+                </x-table>
+            @endif
 
             <flux:modal name="edit" class="w-full sm:max-w-lg">
                 <form wire:submit="update" class="space-y-6">
