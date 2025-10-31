@@ -74,7 +74,8 @@ new class extends Component
                 alt=""
                 x-on:load="loaded = true"
                 x-on:error="errored = true"
-                :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
+                class="h-full w-full bg-zinc-300 dark:bg-white/10 object-cover"
+                :class="loaded || errored ? '' : 'animate-pulse '"
                 loading="lazy" />
         @else
             <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
