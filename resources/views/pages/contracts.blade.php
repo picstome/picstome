@@ -112,7 +112,7 @@ new class extends Component
                                         href="/contracts/{{ $contract->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    {{ $contract->shooting_date }}
+                                    {{ $contract->formatted_shooting_date }}
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
