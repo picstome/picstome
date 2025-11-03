@@ -22,7 +22,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['team_id', 'email']);
+            $table->index(['team_id', 'email']);
         });
     }
 
