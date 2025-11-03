@@ -60,32 +60,38 @@
                     </flux:modal>
                 @endauth
 
+                @if (Auth::user()->isAdmin)
+                    <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
+                        {{ __('Customers') }}
+                    </flux:navlist.item>
+                @endif
+
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Photos')">
-                        <flux:navlist.item :href="route('galleries')" icon="photo">
+                        <flux:navlist.item :href="route('galleries')" icon="photo" wire:navigate>
                             {{ __('Galleries') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('photoshoots')" icon="camera">
+                        <flux:navlist.item :href="route('photoshoots')" icon="camera" wire:navigate>
                             {{ __('Photoshoots') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('Contracts')" class="mt-4">
-                        <flux:navlist.item :href="route('contracts')" icon="document-text">
+                        <flux:navlist.item :href="route('contracts')" icon="document-text" wire:navigate>
                             {{ __('Contracts') }}
                         </flux:navlist.item>
-                        <flux:navlist.item :href="route('contract-templates')" icon="clipboard-document-list">
+                        <flux:navlist.item :href="route('contract-templates')" icon="clipboard-document-list" wire:navigate>
                             {{ __('Templates') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
-                        <flux:navlist.item :href="route('public-profile')" icon="at-symbol" wire:navigate>
+                        <flux:navlist.item :href="route('public-profile')" icon="at-symbol" wire:navigate wire:navigate>
                             {{ __('Configure') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate>
+                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate wire:navigate>
                             {{ __('Portfolio') }}
                         </flux:navlist.item>
 
@@ -95,7 +101,7 @@
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('POS')" class="mt-4">
-                        <flux:navlist.item :href="route('payments')" icon="banknotes">
+                        <flux:navlist.item :href="route('payments')" icon="banknotes" wire:navigate>
                             {{ __('Payments') }}
                         </flux:navlist.item>
 
@@ -108,7 +114,7 @@
 
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
-                            <flux:navlist.item :href="route('users')" icon="user">
+                            <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
                                 {{ __('Users') }}
                             </flux:navlist.item>
                         </flux:navlist.group>
@@ -127,7 +133,7 @@
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Studio')" class="mt-4">
-                        <flux:navlist.item :href="route('branding')" icon="paint-brush">
+                        <flux:navlist.item :href="route('branding')" icon="paint-brush" wire:navigate>
                             {{ __('Branding') }}
                         </flux:navlist.item>
                     </flux:navlist.group>

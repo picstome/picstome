@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component
+{
     public ?string $search = null;
 
     public function viewGallery($galleryId)
@@ -28,39 +29,42 @@ new class extends Component {
     }
 
     #[Computed]
-    public function galleries() {
+    public function galleries()
+    {
         if (! $this->search) {
             return collect();
         }
 
         return $this->team
             ->galleries()
-            ->when($this->search, fn($query) => $query->where('name', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($query) => $query->where('name', 'like', '%'.$this->search.'%'))
             ->limit(20)
             ->get();
     }
 
     #[Computed]
-    public function contracts() {
+    public function contracts()
+    {
         if (! $this->search) {
             return collect();
         }
 
         return $this->team
             ->contracts()
-            ->when($this->search, fn($query) => $query->where('title', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
             ->limit(20)
             ->get();
     }
 
     #[Computed]
-    public function photos() {
+    public function photos()
+    {
         if (! $this->search) {
             return collect();
         }
 
         return $this->team->galleries()
-            ->with(['photos' => fn($query) => $query->where('name', 'like', '%' . $this->search . '%')->limit(20)])
+            ->with(['photos' => fn ($query) => $query->where('name', 'like', '%'.$this->search.'%')->limit(20)])
             ->get()
             ->pluck('photos')
             ->flatten()
@@ -68,16 +72,40 @@ new class extends Component {
     }
 
     #[Computed]
-    public function photoshoots() {
+    public function photoshoots()
+    {
         if (! $this->search) {
             return collect();
         }
 
         return $this->team
             ->photoshoots()
-            ->when($this->search, fn($query) => $query->where('name', 'like', '%' . $this->search . '%'))
+            ->when($this->search, fn ($query) => $query->where('name', 'like', '%'.$this->search.'%'))
             ->limit(20)
             ->get();
+    }
+
+    #[Computed]
+    public function customers()
+    {
+        if (! $this->search) {
+            return collect();
+        }
+
+        return $this->team
+            ->customers()
+            ->where(function ($query) {
+                $query->where('name', 'like', '%'.$this->search.'%')
+                    ->orWhere('email', 'like', '%'.$this->search.'%')
+                    ->orWhere('phone', 'like', '%'.$this->search.'%');
+            })
+            ->limit(20)
+            ->get();
+    }
+
+    public function viewCustomer($customerId)
+    {
+        return $this->redirect("/customers/{$customerId}", navigate: true);
     }
 
     #[Computed]
@@ -87,44 +115,68 @@ new class extends Component {
     }
 }; ?>
 
-<flux:command class="border-none shadow-lg inline-flex flex-col max-h-[76vh]">
+<flux:command class="inline-flex max-h-[76vh] flex-col border-none shadow-lg">
     <flux:command.input wire:model.live="search" placeholder="{{ __('Search...') }}" autofocus closable />
 
-    @unless(is_null($this->search))
+    @unless (is_null($this->search))
         <flux:command.items>
-            @unless($this->galleries->isEmpty())
-                <flux:text class="font-medium px-2 py-1.5 text-xs uppercase tracking-wide">
+            @unless ($this->customers->isEmpty())
+                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                    {{ __('Customers') }}
+                </flux:text>
+                @foreach ($this->customers as $customer)
+                    <flux:command.item wire:click="viewCustomer('{{ $customer->id }}')">
+                        <div class="flex gap-3">
+                            {{ $customer->name }}
+                            @if ($customer->email)
+                                <flux:text inline>{{ $customer->email }}</flux:text>
+                            @endif
+                        </div>
+                    </flux:command.item>
+                @endforeach
+            @endunless
+
+            @unless ($this->galleries->isEmpty())
+                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Galleries') }}
                 </flux:text>
                 @foreach ($this->galleries as $gallery)
-                    <flux:command.item wire:click="viewGallery('{{ $gallery->id }}')">{{ $gallery->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewGallery('{{ $gallery->id }}')">
+                        {{ $gallery->name }}
+                    </flux:command.item>
                 @endforeach
             @endunless
 
-            @unless($this->photoshoots->isEmpty())
-                <flux:text class="font-medium px-2 py-1.5 text-xs uppercase tracking-wide">
+            @unless ($this->photoshoots->isEmpty())
+                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Photoshoots') }}
                 </flux:text>
                 @foreach ($this->photoshoots as $photoshoot)
-                    <flux:command.item wire:click="viewPhotoshoot('{{ $photoshoot->id }}')">{{ $photoshoot->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewPhotoshoot('{{ $photoshoot->id }}')">
+                        {{ $photoshoot->name }}
+                    </flux:command.item>
                 @endforeach
             @endunless
 
-            @unless($this->contracts->isEmpty())
-                <flux:text class="font-medium px-2 py-1.5 text-xs uppercase tracking-wide">
+            @unless ($this->contracts->isEmpty())
+                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Contracts') }}
                 </flux:text>
                 @foreach ($this->contracts as $contract)
-                    <flux:command.item wire:click="viewContract('{{ $contract->id }}')">{{ $contract->title }}</flux:command.item>
+                    <flux:command.item wire:click="viewContract('{{ $contract->id }}')">
+                        {{ $contract->title }}
+                    </flux:command.item>
                 @endforeach
             @endunless
 
-            @unless($this->photos->isEmpty())
-                <flux:text class="font-medium px-2 py-1.5 text-xs uppercase tracking-wide">
+            @unless ($this->photos->isEmpty())
+                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Photos') }}
                 </flux:text>
                 @foreach ($this->photos as $photo)
-                    <flux:command.item wire:click="viewPhoto('{{ $photo->gallery->id }}', '{{ $photo->id }}')">{{ $photo->name }}</flux:command.item>
+                    <flux:command.item wire:click="viewPhoto('{{ $photo->gallery->id }}', '{{ $photo->id }}')">
+                        {{ $photo->name }}
+                    </flux:command.item>
                 @endforeach
             @endunless
         </flux:command.items>

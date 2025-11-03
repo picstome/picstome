@@ -32,10 +32,19 @@ new class extends Component
     #[Computed]
     public function photoshoots()
     {
-        return Auth::user()?->currentTeam
+        return Auth::user()->currentTeam
             ->photoshoots()
             ->latest('date')
             ->paginate(25);
+    }
+
+    #[Computed]
+    public function customers()
+    {
+        return Auth::user()->currentTeam
+            ->customers()
+            ->orderBy('name')
+            ->get();
     }
 }; ?>
 
@@ -57,14 +66,13 @@ new class extends Component
             @if ($this->photoshoots?->isNotEmpty())
                 <x-table id="table" class="mt-8">
                     <x-table.columns>
-                        <x-table.column>Name</x-table.column>
-                        <x-table.column>Location</x-table.column>
+                        <x-table.column>{{ __('Name') }}</x-table.column>
+                        <x-table.column>{{ __('Location') }}</x-table.column>
                     </x-table.columns>
 
                     <x-table.rows>
                         @foreach ($this->photoshoots as $photoshoot)
                             <x-table.row>
-
                                 <x-table.cell variant="strong" class="relative">
                                     <a
                                         href="/photoshoots/{{ $photoshoot->id }}"
@@ -72,10 +80,10 @@ new class extends Component
                                     ></a>
                                     <p>{{ $photoshoot->name }}</p>
                                     <flux:text>
-                                        {{ $photoshoot->customer_name }}
+                                        {{ $photoshoot->customer?->name }}
 
-                                        @if ($photoshoot->customer_email)
-                                            ({{ $photoshoot->customer_email }})
+                                        @if ($photoshoot->customer?->email)
+                                            ({{ $photoshoot->customer->email }})
                                         @endif
                                     </flux:text>
                                 </x-table.cell>
@@ -91,18 +99,21 @@ new class extends Component
                     </x-table.rows>
                 </x-table>
 
-                <div x-data
+                <div
+                    x-data
                     x-on:click="
-                        let el = $event.target;
+                        let el = $event.target
                         while (el && el !== $el) {
                             if (el.hasAttribute('wire:click')) {
-                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
-                                break;
+                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
+                                break
                             }
 
-                            el = el.parentElement;
-                        }"
-                class="mt-6">
+                            el = el.parentElement
+                        }
+                    "
+                    class="mt-6"
+                >
                     <flux:pagination :paginator="$this->photoshoots" />
                 </div>
             @else
@@ -128,8 +139,28 @@ new class extends Component
                     </div>
 
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
-                    <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
-                    <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
+
+                    @if ($this->customers)
+                        <flux:select
+                            wire:model.live="form.customer"
+                            :label="__('Customer')"
+                            variant="listbox"
+                            searchable
+                        >
+                            <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
+                            @foreach ($this->customers as $customer)
+                                <flux:select.option value="{{ $customer->id }}">
+                                    {{ $customer->name }}{{ $customer->email ? " ({$customer->email})" : '' }}
+                                </flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+
+                    @if (empty($this->form->customer))
+                        <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+                        <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
+                    @endif
+
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input wire:model="form.date" :label="__('Date')" type="date" />
                         <flux:input wire:model="form.location" :label="__('Location')" type="text" />
