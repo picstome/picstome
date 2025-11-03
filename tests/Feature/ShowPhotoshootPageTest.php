@@ -132,7 +132,8 @@ test('can delete team photoshoot', function () {
     expect(Gallery::count())->toBe(2);
     expect(Photo::count())->toBe(4);
 
-    $component = Volt::test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Volt::actingAs($this->user)
+        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
         ->call('delete');
 
     $component->assertRedirect('/photoshoots');
@@ -150,7 +151,8 @@ test('can delete team photoshoot preserving galleries', function () {
     expect(Gallery::count())->toBe(2);
     expect(Photo::count())->toBe(4);
 
-    $component = Volt::test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Volt::actingAs($this->user)
+        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
         ->call('deletePreservingGalleries');
 
     $component->assertRedirect('/photoshoots');

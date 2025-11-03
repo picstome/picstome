@@ -20,7 +20,6 @@ class CustomerFactory extends Factory
         return [
             'team_id' => Team::factory(),
             'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
             'phone' => $this->faker->optional()->phoneNumber(),
             'birthdate' => $this->faker->optional()->date(),
             'notes' => $this->faker->optional()->sentence(),

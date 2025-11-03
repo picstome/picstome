@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('team_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('email');
+            $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->date('birthdate')->nullable();
             $table->text('notes')->nullable();

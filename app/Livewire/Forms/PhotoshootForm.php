@@ -61,7 +61,6 @@ class PhotoshootForm extends Form
             'customerEmail' => [
                 'nullable',
                 'email',
-                'required_without:customer',
                 Rule::unique('customers', 'email')->where(function ($query) {
                     return $query->where('team_id', $this->team()->id);
                 }),

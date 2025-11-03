@@ -85,7 +85,11 @@ new class extends Component
                     <x-description.details>{{ $customer->name }}</x-description.details>
                     <x-description.term>{{ __('Email') }}</x-description.term>
                     <x-description.details>
-                        <flux:link href="mailto:{{ $customer->email }}">{{ $customer->email }}</flux:link>
+                        @if ($customer->email)
+                            <flux:link href="mailto:{{ $customer->email }}">{{ $customer->email }}</flux:link>
+                        @else
+                            &mdash;
+                        @endif
                     </x-description.details>
                     <x-description.term>{{ __('Phone') }}</x-description.term>
                     <x-description.details>
@@ -261,7 +265,7 @@ new class extends Component
                         <flux:subheading>{{ __('Please enter your customer details.') }}</flux:subheading>
                     </div>
                     <flux:input wire:model="form.name" :label="__('Name')" type="text" />
-                    <flux:input wire:model="form.email" :label="__('Email')" type="email" />
+                    <flux:input wire:model="form.email" :label="__('Email')" type="email" :required="false" />
                     <flux:input wire:model="form.phone" :label="__('Phone')" type="text" />
                     <flux:input wire:model="form.birthdate" :label="__('Birthdate')" type="date" />
                     <flux:textarea wire:model="form.notes" :label="__('Notes')" rows="3" />

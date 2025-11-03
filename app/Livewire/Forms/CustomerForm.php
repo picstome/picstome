@@ -33,7 +33,7 @@ class CustomerForm extends Form
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
+                'nullable',
                 'email',
                 'max:255',
                 $emailRule,
