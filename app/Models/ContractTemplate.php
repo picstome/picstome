@@ -29,7 +29,7 @@ class ContractTemplate extends Model
     protected function formattedUpdatedAt(): Attribute
     {
         return Attribute::get(function () {
-            return $this->updated_at->isoFormat('MMM D, YYYY');
+            return $this->updated_at?->format('Y-m-d');
         });
     }
 }

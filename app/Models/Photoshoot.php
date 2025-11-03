@@ -82,7 +82,7 @@ class Photoshoot extends Model
     protected function formattedDate(): Attribute
     {
         return Attribute::get(function () {
-            return $this->date?->isoFormat('MMM D, YYYY');
+            return $this->date?->format('Y-m-d');
         });
     }
 }
