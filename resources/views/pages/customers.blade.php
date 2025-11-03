@@ -37,6 +37,25 @@ new class extends Component
             ->orderBy('name')
             ->paginate(25);
     }
+
+    #[Computed]
+    public function birthdaySoonCustomers()
+    {
+        return Auth::user()?->currentTeam
+            ->customers()
+            ->get()
+            ->filter(fn ($customer) => $customer->isBirthdaySoon())
+            ->sortBy(function ($customer) {
+                $now = now();
+                $thisYearBirthday = $customer->birthdate->copy()->year($now->year);
+
+                if ($thisYearBirthday->lt($now)) {
+                    $thisYearBirthday->addYear();
+                }
+
+                return $now->diffInDays($thisYearBirthday, false);
+            });
+    }
 }; ?>
 
 <x-app-layout>
@@ -53,6 +72,58 @@ new class extends Component
                     </flux:modal.trigger>
                 </div>
             </div>
+
+            @if ($this->birthdaySoonCustomers?->isNotEmpty())
+                <div class="mt-8 mb-8">
+                    <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
+                    <flux:separator class="mt-3" />
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->birthdaySoonCustomers as $customer)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $customer->name }}
+                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                {{ __('Birthday soon') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->email }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->phone }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->formatted_birthdate }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
+                </div>
+            @endif
 
             @if ($this->customers?->isNotEmpty())
                 <x-table id="table" class="mt-8">
