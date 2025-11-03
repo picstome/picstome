@@ -25,7 +25,7 @@ class PhotoshootForm extends Form
 
     public $comment;
 
-    public $customer;
+    public $customer = '';
 
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
@@ -86,7 +86,7 @@ class PhotoshootForm extends Form
 
         return $this->team()->photoshoots()->create([
             'name' => $this->name,
-            'customer_id' => $this->customer ?? $customer->id,
+            'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
             'date' => $this->date,
             'price' => $this->price,
             'location' => $this->location,

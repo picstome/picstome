@@ -81,9 +81,9 @@ new class extends Component
                                     ></a>
                                     <p>{{ $photoshoot->name }}</p>
                                     <flux:text>
-                                        {{ $photoshoot->customer->name }}
+                                        {{ $photoshoot->customer?->name }}
 
-                                        @if ($photoshoot->customer->email)
+                                        @if ($photoshoot->customer?->email)
                                             ({{ $photoshoot->customer->email }})
                                         @endif
                                     </flux:text>
@@ -139,10 +139,10 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
                     @if ($this->customers)
-                        <flux:select wire:model.live="form.customer" :label="__('Customer')">
-                            <option value="">{{ __('New customer') }}</option>
+                        <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
+                            <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
                             @foreach ($this->customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->email }})</option>
+                                <flux:select.option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->email }})</flux:select.option>
                             @endforeach
                         </flux:select>
                     @endif
