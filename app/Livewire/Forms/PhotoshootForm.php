@@ -14,7 +14,7 @@ class PhotoshootForm extends Form
     #[Validate('required')]
     public $name;
 
-    #[Validate('required')]
+    #[Validate('required_without:customerId')]
     public $customerName;
 
     #[Validate('nullable|email')]
@@ -31,6 +31,9 @@ class PhotoshootForm extends Form
 
     #[Validate('nullable')]
     public $comment;
+
+    #[Validate('nullable|exists:customers,id')]
+    public $customerId;
 
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
@@ -53,8 +56,32 @@ class PhotoshootForm extends Form
     {
         $this->validate();
 
-        return Auth::user()->currentTeam->photoshoots()->create([
+        $team = Auth::user()->currentTeam;
+        $customerId = $this->customerId;
+
+        if (! $customerId) {
+            // Create new customer if not selected
+            $customer = $team->customers()->create([
+                'name' => $this->customerName,
+                'email' => $this->customerEmail ?? '',
+            ]);
+            $customerId = $customer->id;
+        } else {
+            // Use selected customer's name/email if not provided
+            $customer = $team->customers()->find($customerId);
+            if ($customer) {
+                if (empty($this->customerName)) {
+                    $this->customerName = $customer->name;
+                }
+                if (empty($this->customerEmail)) {
+                    $this->customerEmail = $customer->email;
+                }
+            }
+        }
+
+        return $team->photoshoots()->create([
             'name' => $this->name,
+            'customer_id' => $customerId,
             'customer_name' => $this->customerName,
             'customer_email' => $this->customerEmail,
             'date' => $this->date,

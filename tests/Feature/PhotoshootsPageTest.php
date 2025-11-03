@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
@@ -35,6 +36,7 @@ it('allows a user to create a photoshoot', function () {
         ->test('pages.photoshoots')
         ->set('form.name', 'John\'s Photoshoot')
         ->set('form.customerName', 'John Doe')
+        ->set('form.customerEmail', '')
         ->call('save');
 
     expect($this->team->photoshoots()->count())->toBe(1);
@@ -55,4 +57,17 @@ it('forbids guests from creating photoshoots', function () {
     $component = Volt::test('pages.photoshoots')->call('save');
 
     $component->assertStatus(403);
+});
+
+it('allows a user to create a photoshoot with an existing customer', function () {
+    $customer = Customer::factory()->for($this->team)->create();
+
+    $component = Volt::actingAs($this->user)
+        ->test('pages.photoshoots')
+        ->set('form.name', 'Jane Photoshoot')
+        ->set('form.customerId', $customer->id)
+        ->call('save');
+
+    $photoshoot = $this->team->photoshoots()->first();
+    expect($photoshoot->customer->is($customer))->toBeTrue();
 });
