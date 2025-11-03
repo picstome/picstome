@@ -173,7 +173,7 @@ new class extends Component
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    <p>{{ $photoshoot->date?->format('F j, Y') }}, {{ $photoshoot->location }}</p>
+                                    <p>{{ $photoshoot->formatted_date }}, {{ $photoshoot->location }}</p>
                                 </x-table.cell>
                             </x-table.row>
                         @endforeach
