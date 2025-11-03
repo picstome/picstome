@@ -34,7 +34,7 @@ new class extends Component
     {
         return Auth::user()?->currentTeam
             ->customers()
-            ->latest('created_at')
+            ->orderBy('name')
             ->paginate(25);
     }
 }; ?>
