@@ -177,7 +177,7 @@ new class extends Component
                                 <flux:menu.item wire:click="openGeneratePaymentLinkModal">
                                     {{ __('Generate Payment Link') }}
                                 </flux:menu.item>
-                        </flux:menu>
+                            </flux:menu>
                         </flux:dropdown>
                     </flux:button.group>
                 </div>
@@ -193,7 +193,11 @@ new class extends Component
                     <x-description.details>
                         {{ $photoshoot->customer?->name }}
                         @if ($photoshoot->customer?->email)
-                            (<a href="mailto:{{ $photoshoot->customer?->email }}">{{ $photoshoot->customer?->email }}</a>)
+                            (
+                            <a href="mailto:{{ $photoshoot->customer?->email }}">
+                                {{ $photoshoot->customer?->email }}
+                            </a>
+                            )
                         @endif
                     </x-description.details>
 
@@ -230,7 +234,9 @@ new class extends Component
                             {{ __('Total photos') }}
                         </x-description.term>
                         <x-description.details>
-                            {{ $photoshoot->getTotalPhotosCount() }} {{ $photoshoot->getTotalPhotosCount() === 1 ? __('photo') : __('photos') }} • {{ $photoshoot->getFormattedStorageSize() }} {{ __('total storage') }}
+                            {{ $photoshoot->getTotalPhotosCount() }}
+                            {{ $photoshoot->getTotalPhotosCount() === 1 ? __('photo') : __('photos') }} •
+                            {{ $photoshoot->getFormattedStorageSize() }} {{ __('total storage') }}
                         </x-description.details>
                     @endif
                 </x-description.list>
@@ -249,7 +255,9 @@ new class extends Component
                             <x-table.row>
                                 <x-table.cell>{{ $payment->description }}</x-table.cell>
                                 <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                                <x-table.cell>{{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}</x-table.cell>
+                                <x-table.cell>
+                                    {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
+                                </x-table.cell>
                                 <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
                             </x-table.row>
                         @endforeach
@@ -283,7 +291,8 @@ new class extends Component
                                 >
                                     <flux:heading>{{ $gallery->name }}</flux:heading>
                                     <flux:text>
-                                        {{ $gallery->photos()->count() }} {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
+                                        {{ $gallery->photos()->count() }}
+                                        {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
                                         {{ $gallery->getFormattedStorageSize() }} •
                                         {{ $gallery->created_at->format('M j, Y') }}
                                     </flux:text>
@@ -371,16 +380,24 @@ new class extends Component
 
                     <flux:input wire:model="galleryForm.name" :label="__('Gallery name')" type="text" />
 
-                    <flux:input wire:model="galleryForm.expirationDate" :label="__('Expiration date')" :badge="Auth::user()?->currentTeam?->subscribed() ? __('Optional') : null" type="date" :clearable="Auth::user()?->currentTeam?->subscribed()" />
+                    <flux:input
+                        wire:model="galleryForm.expirationDate"
+                        :label="__('Expiration date')"
+                        :badge="Auth::user()?->currentTeam?->subscribed() ? __('Optional') : null"
+                        type="date"
+                        :clearable="Auth::user()?->currentTeam?->subscribed()"
+                    />
 
-                    @if (!Auth::user()?->currentTeam?->subscribed())
+                    @if (! Auth::user()?->currentTeam?->subscribed())
                         <flux:callout icon="bolt" variant="secondary">
                             <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
                             <flux:callout.text>
                                 {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
                             </flux:callout.text>
                             <x-slot name="actions">
-                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Subscribe') }}</flux:button>
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Subscribe') }}
+                                </flux:button>
                             </x-slot>
                         </flux:callout>
                     @endif
@@ -421,7 +438,7 @@ new class extends Component
                     />
 
                     <flux:field
-                        class="**:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!"
+                        class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
                     >
                         <div data-flux-label class="flex items-center justify-between">
                             <flux:label>{{ __('Terms') }}</flux:label>
@@ -432,7 +449,7 @@ new class extends Component
                         </div>
 
                         <trix-editor
-                            class="prose prose-sm mt-2 dark:prose-invert"
+                            class="prose prose-sm dark:prose-invert mt-2"
                             x-on:trix-change="$wire.contractForm.body = $event.target.value"
                             input="trix"
                         ></trix-editor>
@@ -491,10 +508,17 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
                     @if ($this->customers)
-                        <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
+                        <flux:select
+                            wire:model.live="form.customer"
+                            :label="__('Customer')"
+                            variant="listbox"
+                            searchable
+                        >
                             <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
                             @foreach ($this->customers as $customer)
-                                <flux:select.option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->email }})</flux:select.option>
+                                <flux:select.option value="{{ $customer->id }}">
+                                    {{ $customer->name }}{{ $customer->email ? " ({$customer->email})" : '' }}
+                                </flux:select.option>
                             @endforeach
                         </flux:select>
                     @endif
@@ -518,33 +542,40 @@ new class extends Component
                     </div>
                 </form>
             </flux:modal>
-        <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
-            <form wire:submit="generatePaymentLink" class="space-y-6">
-                <div>
-                    <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
-                    <flux:subheading>{{ __('Fill out the details below to generate a payment link you can send to your client.') }}</flux:subheading>
-                </div>
-                <flux:input wire:model="paymentLinkForm.amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])" required />
-                <flux:input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
-                <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                </div>
-            </form>
-        </flux:modal>
+            <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+                <form wire:submit="generatePaymentLink" class="space-y-6">
+                    <div>
+                        <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
+                        <flux:subheading>
+                            {{ __('Fill out the details below to generate a payment link you can send to your client.') }}
+                        </flux:subheading>
+                    </div>
+                    <flux:input
+                        wire:model="paymentLinkForm.amount"
+                        type="number"
+                        :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])"
+                        required
+                    />
+                    <flux:input
+                        wire:model="paymentLinkForm.description"
+                        :label="__('Description')"
+                        type="text"
+                        required
+                    />
+                    <div class="flex">
+                        <flux:spacer />
+                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
 
-        <flux:modal name="show-payment-link" class="w-full sm:max-w-lg">
-            <div class="space-y-6">
-                <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
-                <flux:subheading>{{ __('Share this link with your client to request payment.') }}</flux:subheading>
-                <flux:input
-                    icon="link"
-                    :value="$generatedPaymentLink"
-                    readonly
-                    copyable
-                />
-            </div>
-        </flux:modal>
+            <flux:modal name="show-payment-link" class="w-full sm:max-w-lg">
+                <div class="space-y-6">
+                    <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
+                    <flux:subheading>{{ __('Share this link with your client to request payment.') }}</flux:subheading>
+                    <flux:input icon="link" :value="$generatedPaymentLink" readonly copyable />
+                </div>
+            </flux:modal>
         </div>
         @assets
             <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />
