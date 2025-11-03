@@ -24,9 +24,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            // Drop the regular index
             $table->dropIndex(['team_id', 'email']);
-            // Restore the unique index
+
             $table->unique(['team_id', 'email']);
         });
     }
