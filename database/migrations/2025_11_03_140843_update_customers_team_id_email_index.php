@@ -12,9 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropUnique('customers_team_id_email_unique');
-
-            $table->index(['team_id', 'email']);
+            $table->index('team_id');
+            $table->dropIndex(['team_id', 'email']);
+            $table->unique(['team_id', 'email']);
+            $table->dropIndex(['team_id']);
         });
     }
 
@@ -24,9 +25,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->dropIndex(['team_id', 'email']);
-
-            $table->unique(['team_id', 'email']);
+            $table->index('team_id');
+            $table->dropUnique('customers_team_id_email_unique');
+            $table->index(['team_id', 'email']);
+            $table->dropIndex(['team_id']);
         });
     }
 };
