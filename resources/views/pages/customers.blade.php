@@ -57,10 +57,10 @@ new class extends Component
             @if ($this->customers?->isNotEmpty())
                 <x-table id="table" class="mt-8">
                     <x-table.columns>
-                        <x-table.column>Name</x-table.column>
-                        <x-table.column>Email</x-table.column>
-                        <x-table.column>Phone</x-table.column>
-                        <x-table.column>Birthdate</x-table.column>
+                        <x-table.column>{{ __('Name') }}</x-table.column>
+                        <x-table.column>{{ __('Email') }}</x-table.column>
+                        <x-table.column>{{ __('Phone') }}</x-table.column>
+                        <x-table.column>{{ __('Birthdate') }}</x-table.column>
                     </x-table.columns>
 
                     <x-table.rows>

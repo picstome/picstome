@@ -66,8 +66,8 @@ new class extends Component
             @if ($this->photoshoots?->isNotEmpty())
                 <x-table id="table" class="mt-8">
                     <x-table.columns>
-                        <x-table.column>Name</x-table.column>
-                        <x-table.column>Location</x-table.column>
+                        <x-table.column>{{ __('Name') }}</x-table.column>
+                        <x-table.column>{{ __('Location') }}</x-table.column>
                     </x-table.columns>
 
                     <x-table.rows>
