@@ -64,6 +64,15 @@ new class extends Component
             'user_agent' => request()->userAgent(),
         ]);
 
+        $customer = $this->signature->contract->team
+            ->customers()
+            ->where('email', $this->email)
+            ->first();
+
+        if ($customer) {
+            $customer->update(['birthdate' => $this->birthday]);
+        }
+
         $this->signature->updateSignatureImage($this->signature_image);
 
         $this->signature->markAsSigned();

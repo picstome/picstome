@@ -2,7 +2,9 @@
 
 use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
+use App\Models\Customer;
 use App\Models\Signature;
+use App\Models\Team;
 use App\Models\User;
 use App\Notifications\ContractExecuted;
 use Carbon\Carbon;
@@ -145,4 +147,31 @@ test('sign form is not pre-filled when the user does not have a signed signature
     expect($component->birthday)->toBeNull();
     expect($component->role)->toBeNull();
     expect($component->documentNumber)->toBeNull();
+});
+
+test('signing a contract updates the customer birthdate if customer exists for team and email', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $team = Team::factory()->create();
+    $customer = Customer::factory()->for($team)->create([
+        'email' => 'john@example.com',
+        'birthdate' => null,
+    ]);
+    $contract = Contract::factory()->for($team)->create();
+    $signature = Signature::factory()->for($contract)->unsigned()->create();
+
+    $newBirthdate = '2000-12-12';
+
+    $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
+        ->set('role', 'Model')
+        ->set('legalName', 'John Doe')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', $newBirthdate)
+        ->set('email', 'john@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($customer->fresh()->birthdate->toDateString())->toBe($newBirthdate);
 });
