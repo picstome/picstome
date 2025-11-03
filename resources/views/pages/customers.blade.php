@@ -72,7 +72,14 @@ new class extends Component
                                         wire:navigate
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    <p>{{ $customer->name }}</p>
+                                    <div class="flex items-center gap-2">
+                                        {{ $customer->name }}
+                                        @if ($customer->isBirthdaySoon())
+                                                <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                    {{ __('Birthday soon') }}
+                                                </flux:badge>
+                                            @endif
+                                    </div>
                                 </x-table.cell>
                                 <x-table.cell class="relative">
                                     <a
