@@ -25,7 +25,7 @@ new class extends Component
 
         <flux:menu>
             <flux:menu.group :heading="__('Account')">
-                <flux:menu.item :href="route('settings.profile')">{{ __('Profile') }}</flux:menu.item>
+                <flux:menu.item :href="route('settings.profile')" wire:navigate>{{ __('Profile') }}</flux:menu.item>
                 <flux:menu.item :href="route('billing-portal')">{{ __('Billing') }}</flux:menu.item>
             </flux:menu.group>
             <flux:menu.group :heading="__('App')" x-data="{ isWebApp: window.matchMedia('(display-mode: standalone)').matches }" x-show="!isWebApp" x-cloak>
