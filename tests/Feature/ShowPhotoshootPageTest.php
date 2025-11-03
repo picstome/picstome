@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Contract;
+use App\Models\Customer;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Photoshoot;
@@ -159,11 +160,12 @@ test('can delete team photoshoot preserving galleries', function () {
 });
 
 test('can edit a team photoshoot', function () {
-    $photoshoot = Photoshoot::factory()->create();
+    $customer = Customer::factory()->for($this->team)->create();
+    $photoshoot = Photoshoot::factory()->create(['customer_id' => $customer->id]);
 
-    $component = Volt::test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Volt::actingAs($this->user)
+        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('form.name', 'Edited photoshoot')
-        ->set('form.customerName', 'Edited customer name')
         ->set('form.date', Carbon::parse('2025-12-12'))
         ->set('form.price', '400')
         ->set('form.location', 'Fake City')
@@ -172,7 +174,6 @@ test('can edit a team photoshoot', function () {
 
     tap($photoshoot->fresh(), function (Photoshoot $photoshoot) {
         expect($photoshoot->name)->toBe('Edited photoshoot');
-        expect($photoshoot->customer_name)->toBe('Edited customer name');
         expect((string) $photoshoot->date)->toBe('2025-12-12 00:00:00');
         expect($photoshoot->price)->toBe(400);
         expect($photoshoot->location)->toBe('Fake City');

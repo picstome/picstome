@@ -113,6 +113,15 @@ new class extends Component
 
         $this->modal('templates')->close();
     }
+
+    #[Computed]
+    public function customers()
+    {
+        return Auth::user()->currentTeam
+            ->customers()
+            ->orderBy('name')
+            ->get();
+    }
 }; ?>
 
 <x-app-layout>
@@ -182,9 +191,9 @@ new class extends Component
                         {{ __('Customer') }}
                     </x-description.term>
                     <x-description.details>
-                        {{ $photoshoot->customer_name }}
-                        @if ($photoshoot->customer_email)
-                            (<a href="mailto:{{ $photoshoot->customer_email }}">{{ $photoshoot->customer_email }}</a>)
+                        {{ $photoshoot->customer?->name }}
+                        @if ($photoshoot->customer?->email)
+                            (<a href="mailto:{{ $photoshoot->customer?->email }}">{{ $photoshoot->customer?->email }}</a>)
                         @endif
                     </x-description.details>
 
@@ -480,7 +489,21 @@ new class extends Component
                     </div>
 
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
-                    <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+
+                    @if ($this->customers)
+                        <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
+                            <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
+                            @foreach ($this->customers as $customer)
+                                <flux:select.option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->email }})</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+
+                    @if (empty($this->form->customer))
+                        <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+                        <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
+                    @endif
+
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input wire:model="form.date" :label="__('Date')" type="date" />
                         <flux:input wire:model="form.location" :label="__('Location')" type="text" />

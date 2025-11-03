@@ -33,7 +33,7 @@ class PhotoshootForm extends Form
 
         $this->name = $photoshoot->name;
 
-        $this->customerName = $photoshoot->customer_name;
+        $this->customer = $photoshoot->customer?->id;
 
         $this->date = $photoshoot->date?->isoFormat('YYYY-MM-DD');
 
@@ -53,6 +53,10 @@ class PhotoshootForm extends Form
     {
         return [
             'name' => 'required',
+            'customer' => [
+                'nullable',
+                'exists:customers,id,team_id,'.$this->team()->id,
+            ],
             'customerName' => 'required_without:customer',
             'customerEmail' => [
                 'nullable',
@@ -66,10 +70,6 @@ class PhotoshootForm extends Form
             'price' => 'nullable|integer',
             'location' => 'nullable',
             'comment' => 'nullable',
-            'customer' => [
-                'nullable',
-                'exists:customers,id,team_id,'.$this->team()->id,
-            ],
         ];
     }
 
@@ -98,9 +98,16 @@ class PhotoshootForm extends Form
     {
         $this->validate();
 
+        if (! $this->customer) {
+            $customer = $this->team()->customers()->create([
+                'name' => $this->customerName,
+                'email' => $this->customerEmail,
+            ]);
+        }
+
         return $this->photoshoot->update([
             'name' => $this->name,
-            'customer_name' => $this->customerName,
+            'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
             'date' => $this->date,
             'price' => $this->price,
             'location' => $this->location,
