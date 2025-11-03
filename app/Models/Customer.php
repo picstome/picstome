@@ -32,7 +32,19 @@ class Customer extends Model
     protected function formattedBirthdate(): Attribute
     {
         return Attribute::get(function () {
-            return $this->birthdate?->isoFormat('MMM D');
+            if (! $this->birthdate) {
+                return null;
+            }
+
+            $now = now();
+
+            $nextBirthday = $this->birthdate->copy()->year($now->year);
+
+            if ($nextBirthday->lt($now)) {
+                $nextBirthday->addYear();
+            }
+
+            return $nextBirthday->format('Y-m-d');
         });
     }
 
