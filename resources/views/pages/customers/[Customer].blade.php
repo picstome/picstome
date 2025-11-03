@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
+use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
@@ -52,6 +53,38 @@ new class extends Component
     {
         return $this->customer->photoshoots->flatMap->payments->sortByDesc('completed_at');
     }
+
+    #[Computed]
+    public function stats()
+    {
+        $photoshoots = $this->customer->photoshoots;
+        $galleries = $photoshoots->flatMap->galleries;
+        $photos = $galleries->flatMap->photos;
+        $payments = $photoshoots->flatMap->payments->whereNotNull('completed_at');
+        $totalPayments = $payments->sum('amount');
+
+        return [
+            [
+                'title' => __('Photoshoots'),
+                'value' => $photoshoots->count(),
+            ],
+            [
+                'title' => __('Galleries'),
+                'value' => $galleries->count(),
+            ],
+            [
+                'title' => __('Photos'),
+                'value' => $photos->count(),
+            ],
+            [
+                'title' => __('Payments'),
+                'value' => Cashier::formatAmount(
+                    $totalPayments,
+                    $payments->first()?->currency ?? config('cashier.currency', 'eur')
+                ),
+            ],
+        ];
+    }
 }; ?>
 
 <x-app-layout>
@@ -75,6 +108,15 @@ new class extends Component
                         <flux:button>{{ __('Edit') }}</flux:button>
                     </flux:modal.trigger>
                 </div>
+            </div>
+
+            <div class="mt-6 mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+                @foreach ($this->stats as $stat)
+                    <div class="relative rounded-lg bg-zinc-50 px-6 py-4 dark:bg-zinc-700">
+                        <flux:subheading>{{ $stat['title'] }}</flux:subheading>
+                        <flux:heading size="xl" class="mb-2">{{ $stat['value'] }}</flux:heading>
+                    </div>
+                @endforeach
             </div>
 
             <div class="mt-12">
