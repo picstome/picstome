@@ -78,7 +78,8 @@ new class extends Component
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
                 navigating: false,
-                watermarkTransparency: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }},
+                watermarkTransparency:
+                    {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }},
                 isMobile() {
                     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
                         navigator.userAgent,
@@ -87,27 +88,27 @@ new class extends Component
                 preloadAdjacentImages() {
                     if (this.isMobile()) {
                         if (this.previousThumbnailUrl) {
-                            const img = new Image();
-                            img.src = this.previousThumbnailUrl;
+                            const img = new Image()
+                            img.src = this.previousThumbnailUrl
                         }
                         if (this.nextThumbnailUrl) {
-                            const img = new Image();
-                            img.src = this.nextThumbnailUrl;
+                            const img = new Image()
+                            img.src = this.nextThumbnailUrl
                         }
                     } else {
                         if (this.previousLargeThumbnailUrl) {
-                            const img = new Image();
-                            img.src = this.previousLargeThumbnailUrl;
+                            const img = new Image()
+                            img.src = this.previousLargeThumbnailUrl
                         }
                         if (this.nextLargeThumbnailUrl) {
-                            const img = new Image();
-                            img.src = this.nextLargeThumbnailUrl;
+                            const img = new Image()
+                            img.src = this.nextLargeThumbnailUrl
                         }
                     }
                     // Preload the full photo URL
                     if (this.photoUrl) {
-                        const img = new Image();
-                        img.src = this.photoUrl;
+                        const img = new Image()
+                        img.src = this.photoUrl
                     }
                 },
                 imgWidth: 0,
@@ -141,31 +142,33 @@ new class extends Component
                             renderedWidth = containerHeight * imgAspect
                         }
                         // Watermark position logic
-                        const pos = '{{ $photo->gallery->team->brand_watermark_position }}';
-                        let style = '';
+                        const pos = '{{ $photo->gallery->team->brand_watermark_position }}'
+                        let style = ''
                         if (pos === 'top') {
-                            style = `left: 50%; top: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; top: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
                         } else if (pos === 'bottom') {
-                            style = `left: 50%; bottom: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; bottom: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
                         } else if (pos === 'middle') {
-                            style = `left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: ${this.watermarkTransparency};`;
+                            style = `left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
                         } else if (pos === 'repeated') {
                             // Tile watermark as background
-                            const url = '{{ $photo->gallery->team->brand_watermark_url }}';
+                            const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                left: ${(containerWidth - renderedWidth) / 2}px;
-                                top: ${(containerHeight - renderedHeight) / 2}px;
-                                width: ${renderedWidth}px;
-                                height: ${renderedHeight}px;
-                                background-image: url('${url}');
-                                background-repeat: repeat;
-                                opacity: ${this.watermarkTransparency};
-                                pointer-events: none;
-                                position: absolute;
-                            `;
+                left: ${(containerWidth - renderedWidth) / 2}px;
+                top: ${(containerHeight - renderedHeight) / 2}px;
+                width: ${renderedWidth}px;
+                height: ${renderedHeight}px;
+                max-width: ${renderedWidth}px;
+                max-height: ${renderedHeight}px;
+                background-image: url('${url}');
+                background-repeat: repeat;
+                opacity: ${this.watermarkTransparency};
+                pointer-events: none;
+                position: absolute;
+            `
                         }
-                        this.watermarkStyle = style;
-                        this.showWatermark = true;
+                        this.watermarkStyle = style
+                        this.showWatermark = true
                     }
                 },
             }"
@@ -186,13 +189,17 @@ new class extends Component
             @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
             @pinchstart="pinchZooming = true;"
             @if ($this->photo->gallery->is_share_selectable)
-                @keyup.window.f="$wire.favorite()"
+                @keyup.window.f
+                ="$wire.favorite()"
             @endif
             class="flex h-screen flex-col"
             x-on:resize.window="updateDimensions()"
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
-                <div class="relative flex w-full items-center justify-center" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
+                <div
+                    class="relative flex w-full items-center justify-center"
+                    :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'"
+                >
                     <img
                         src="{{ $photo->thumbnail_url }}"
                         srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
@@ -201,7 +208,11 @@ new class extends Component
                         x-init="if ($el.complete) loaded = true"
                         x-show="!zoom && !pinchZooming"
                         x-ref="photoImg"
-                        x-on:load="loaded = true; updateDimensions(); preloadAdjacentImages()"
+                        x-on:load="
+                            loaded = true
+                            updateDimensions()
+                            preloadAdjacentImages()
+                        "
                         x-on:error="errored = true"
                         @click="if (!isMobile()) zoom = true"
                         @contextmenu.prevent
@@ -253,6 +264,8 @@ new class extends Component
                                 @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
                                 src="{{ $photo->gallery->team->brand_watermark_url }}"
                                 alt=""
+                                :width="Math.min(watermarkWidth, containerWidth)"
+                                :height="Math.min(watermarkHeight, containerHeight)"
                             />
                         @endif
                     @endif
