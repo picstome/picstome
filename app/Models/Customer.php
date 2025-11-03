@@ -36,6 +36,24 @@ class Customer extends Model
         });
     }
 
+    public function isBirthdaySoon(): bool
+    {
+        if (! $this->birthdate) {
+            return false;
+        }
+
+        $now = now();
+
+        $thisYearBirthday = $this->birthdate->copy()->year($now->year);
+
+        if ($thisYearBirthday->lt($now)) {
+            $thisYearBirthday->addYear();
+        }
+
+        return $now->diffInDays($thisYearBirthday, false) >= 0
+            && $now->diffInDays($thisYearBirthday, false) <= 30;
+    }
+
     protected function formattedWhatsappPhone(): Attribute
     {
         return Attribute::get(function () {
