@@ -14,7 +14,7 @@ class PhotoshootForm extends Form
     #[Validate('required')]
     public $name;
 
-    #[Validate('required_without:customerId')]
+    #[Validate('required_without:customer')]
     public $customerName;
 
     #[Validate('nullable|email')]
@@ -33,7 +33,7 @@ class PhotoshootForm extends Form
     public $comment;
 
     #[Validate('nullable|exists:customers,id')]
-    public $customerId;
+    public $customer;
 
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
@@ -57,7 +57,7 @@ class PhotoshootForm extends Form
         $this->validate();
 
         $team = Auth::user()->currentTeam;
-        $customerId = $this->customerId;
+        $customerId = $this->customer;
 
         if (! $customerId) {
             // Create new customer if not selected

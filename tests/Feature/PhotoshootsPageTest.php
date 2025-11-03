@@ -65,7 +65,7 @@ it('allows a user to create a photoshoot with an existing customer', function ()
     $component = Volt::actingAs($this->user)
         ->test('pages.photoshoots')
         ->set('form.name', 'Jane Photoshoot')
-        ->set('form.customerId', $customer->id)
+        ->set('form.customer', $customer->id)
         ->call('save');
 
     $photoshoot = $this->team->photoshoots()->first();
