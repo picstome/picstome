@@ -50,7 +50,9 @@ it('allows a user to create a photoshoot with a customer email', function () {
         ->set('form.customerEmail', 'john@example.com')
         ->call('save');
 
-    expect($this->team->photoshoots()->first()->customer_email)->toBe('john@example.com');
+    $customer = $this->team->photoshoots()->first()->customer;
+    expect($customer->name)->toBe('John Doe');
+    expect($customer->email)->toBe('john@example.com');
 });
 
 it('forbids guests from creating photoshoots', function () {

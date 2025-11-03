@@ -139,7 +139,7 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
                     @if ($this->customers)
-    <flux:select wire:model="form.customer" :label="__('Customer')">
+    <flux:select wire:model.live="form.customer" :label="__('Customer')">
         <option value="">{{ __('New customer') }}</option>
         @foreach ($this->customers as $customer)
             <option value="{{ $customer->id }}">{{ $customer->name }} ({{ $customer->email }})</option>

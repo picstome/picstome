@@ -82,8 +82,6 @@ class PhotoshootForm extends Form
         return $team->photoshoots()->create([
             'name' => $this->name,
             'customer_id' => $customerId,
-            'customer_name' => $this->customerName,
-            'customer_email' => $this->customerEmail,
             'date' => $this->date,
             'price' => $this->price,
             'location' => $this->location,
