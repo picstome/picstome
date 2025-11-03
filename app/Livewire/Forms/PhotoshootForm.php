@@ -4,35 +4,27 @@ namespace App\Livewire\Forms;
 
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class PhotoshootForm extends Form
 {
     public ?Photoshoot $photoshoot;
 
-    #[Validate('required')]
     public $name;
 
-    #[Validate('required_without:customer')]
     public $customerName;
 
-    #[Validate('nullable|email')]
     public $customerEmail;
 
-    #[Validate('nullable|date')]
     public $date;
 
-    #[Validate('nullable|integer')]
     public $price;
 
-    #[Validate('nullable')]
     public $location;
 
-    #[Validate('nullable')]
     public $comment;
 
-    #[Validate('nullable|exists:customers,id')]
     public $customer;
 
     public function setPhotoshoot(Photoshoot $photoshoot)
@@ -52,36 +44,49 @@ class PhotoshootForm extends Form
         $this->comment = $photoshoot->comment;
     }
 
+    protected function team()
+    {
+        return Auth::user()->currentTeam;
+    }
+
+    public function rules()
+    {
+        return [
+            'name' => 'required',
+            'customerName' => 'required_without:customer',
+            'customerEmail' => [
+                'nullable',
+                'email',
+                'required_without:customer',
+                Rule::unique('customers', 'email')->where(function ($query) {
+                    return $query->where('team_id', $this->team()->id);
+                }),
+            ],
+            'date' => 'nullable|date',
+            'price' => 'nullable|integer',
+            'location' => 'nullable',
+            'comment' => 'nullable',
+            'customer' => [
+                'nullable',
+                'exists:customers,id,team_id,'.$this->team()->id,
+            ],
+        ];
+    }
+
     public function store()
     {
         $this->validate();
 
-        $team = Auth::user()->currentTeam;
-        $customerId = $this->customer;
-
-        if (! $customerId) {
-            // Create new customer if not selected
-            $customer = $team->customers()->create([
+        if (! $this->customer) {
+            $customer = $this->team()->customers()->create([
                 'name' => $this->customerName,
-                'email' => $this->customerEmail ?? '',
+                'email' => $this->customerEmail,
             ]);
-            $customerId = $customer->id;
-        } else {
-            // Use selected customer's name/email if not provided
-            $customer = $team->customers()->find($customerId);
-            if ($customer) {
-                if (empty($this->customerName)) {
-                    $this->customerName = $customer->name;
-                }
-                if (empty($this->customerEmail)) {
-                    $this->customerEmail = $customer->email;
-                }
-            }
         }
 
-        return $team->photoshoots()->create([
+        return $this->team()->photoshoots()->create([
             'name' => $this->name,
-            'customer_id' => $customerId,
+            'customer_id' => $this->customer ?? $customer->id,
             'date' => $this->date,
             'price' => $this->price,
             'location' => $this->location,

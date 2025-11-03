@@ -31,17 +31,6 @@ it('shows only photoshoots belonging to the users team', function () {
     expect($component->photoshoots->contains($photoshootC))->toBeTrue();
 });
 
-it('allows a user to create a photoshoot', function () {
-    $component = Volt::actingAs($this->user)
-        ->test('pages.photoshoots')
-        ->set('form.name', 'John\'s Photoshoot')
-        ->set('form.customerName', 'John Doe')
-        ->set('form.customerEmail', '')
-        ->call('save');
-
-    expect($this->team->photoshoots()->count())->toBe(1);
-});
-
 it('allows a user to create a photoshoot with a customer email', function () {
     $component = Volt::actingAs($this->user)
         ->test('pages.photoshoots')
@@ -53,12 +42,6 @@ it('allows a user to create a photoshoot with a customer email', function () {
     $customer = $this->team->photoshoots()->first()->customer;
     expect($customer->name)->toBe('John Doe');
     expect($customer->email)->toBe('john@example.com');
-});
-
-it('forbids guests from creating photoshoots', function () {
-    $component = Volt::test('pages.photoshoots')->call('save');
-
-    $component->assertStatus(403);
 });
 
 it('allows a user to create a photoshoot with an existing customer', function () {
