@@ -191,7 +191,7 @@ new class extends Component
                         @else
                             <div class="flex items-start gap-2">
     @if (empty($customer->notes))
-        <div class="text-zinc-400 italic">{{ __('No notes yet') }}</div>
+        <div class="italic">{{ __('No notes yet') }}</div>
     @else
         <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
     @endif
