@@ -190,7 +190,7 @@ new class extends Component
                             </div>
                         @else
                             <div class="flex items-center gap-2">
-                                <span>{{ $customer->notes }}</span>
+                                <span>{!! $customer->formatted_notes !!}</span>
                                 <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" square size="sm" />
                             </div>
                         @endif

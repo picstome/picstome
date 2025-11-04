@@ -61,4 +61,11 @@ class Customer extends Model
             return preg_replace('/[^0-9]/', '', $this->phone);
         });
     }
+
+    protected function formatted_notes(): Attribute
+    {
+        return Attribute::get(function () {
+            return \Illuminate\Support\Str::markdown($this->notes ?? '');
+        });
+    }
 }
