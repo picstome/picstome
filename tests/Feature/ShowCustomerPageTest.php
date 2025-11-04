@@ -8,6 +8,7 @@ use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -61,4 +62,19 @@ it('forbids users from viewing customers of other teams', function () {
     $customer = Customer::factory()->for($otherTeam)->create();
     $response = actingAs($this->user)->get("/customers/{$customer->id}");
     $response->assertStatus(403);
+});
+
+it('can edit customer notes via Livewire', function () {
+    $customer = Customer::factory()->for($this->team)->create(['notes' => 'Old notes']);
+    actingAs($this->user);
+
+    Volt::test('pages.customers.show', ['customer' => $customer])
+        ->call('startEditingNotes')
+        ->set('editedNotes', 'New notes with **markdown**')
+        ->call('saveNotes')
+        ->assertSet('editingNotes', false);
+
+    $customer->refresh();
+    expect($customer->notes)->toBe('New notes with **markdown**');
+    expect($customer->formatted_notes)->toContain('<strong>markdown</strong>');
 });
