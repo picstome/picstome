@@ -190,13 +190,13 @@ new class extends Component
                             </div>
                         @else
                             <div class="flex items-start gap-2">
-    @if (empty($customer->notes))
-        <div class="italic">{{ __('No notes yet') }}</div>
-    @else
-        <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
-    @endif
-    <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" size="sm" square class="shrink-0" inset="top" />
-</div>
+                                @if (empty($customer->notes))
+                                    <flux:text>{{ __('No notes yet') }}</flux:text>
+                                @else
+                                    <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
+                                @endif
+                                <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" size="sm" square class="shrink-0" inset="top" />
+                            </div>
                         @endif
                     </x-description.details>
                 </x-description.list>
