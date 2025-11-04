@@ -35,7 +35,7 @@ class UpdateCustomerFromSignatureCommand extends Command
                 continue;
             }
             $targetSignature = $signedSignatures->first(function ($sig) {
-                return ! Str::contains($sig->name, 'Chema', true);
+                return ! Str::contains($sig->legal_name, 'Chema', true);
             });
             if (! $targetSignature) {
                 continue;
@@ -45,7 +45,7 @@ class UpdateCustomerFromSignatureCommand extends Command
                 continue;
             }
             $customer = $photoshoot->customer;
-            $customer->name = $targetSignature->name;
+            // $customer->name = $targetSignature->legal_name;
             $customer->email = $targetSignature->email;
             $customer->birthdate = $targetSignature->birthday;
             $customer->save();
