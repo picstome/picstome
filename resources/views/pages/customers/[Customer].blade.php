@@ -17,6 +17,10 @@ new class extends Component
 
     public CustomerForm $form;
 
+    public bool $editingNotes = false;
+
+    public string $editedNotes = '';
+
     public function mount()
     {
         $this->form->setCustomer($this->customer);
@@ -35,6 +39,25 @@ new class extends Component
         $this->customer = $this->customer->fresh();
 
         $this->modal('edit')->close();
+    }
+
+    public function startEditingNotes()
+    {
+        $this->editedNotes = $this->customer->notes;
+        $this->editingNotes = true;
+    }
+
+    public function saveNotes()
+    {
+        $this->customer->notes = $this->editedNotes;
+        $this->customer->save();
+        $this->editingNotes = false;
+        $this->customer = $this->customer->fresh();
+    }
+
+    public function cancelEditingNotes()
+    {
+        $this->editingNotes = false;
     }
 
     public function delete()
@@ -153,7 +176,25 @@ new class extends Component
                     <x-description.term>{{ __('Birthdate') }}</x-description.term>
                     <x-description.details>{{ $customer->formatted_birthdate }}</x-description.details>
                     <x-description.term>{{ __('Notes') }}</x-description.term>
-                    <x-description.details>{{ $customer->notes }}</x-description.details>
+                    <x-description.details>
+                        @if ($editingNotes)
+                            <div class="flex flex-col gap-2">
+                                <flux:field>
+                                    <flux:textarea wire:model="editedNotes" rows="3" placeholder="{{ __('Notes') }}" />
+                                    <flux:error name="editedNotes" />
+                                </flux:field>
+                                <div class="flex gap-2">
+                                    <flux:button wire:click="saveNotes" variant="primary" size="sm">{{ __('Save') }}</flux:button>
+                                    <flux:button wire:click="cancelEditingNotes" variant="subtle" size="sm">{{ __('Cancel') }}</flux:button>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2">
+                                <span>{{ $customer->notes }}</span>
+                                <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" square size="sm" />
+                            </div>
+                        @endif
+                    </x-description.details>
                 </x-description.list>
             </div>
 
