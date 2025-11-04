@@ -205,7 +205,13 @@ new class extends Component
                         srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                         sizes="(max-width: 640px) 100vw, 80vw"
                         x-data="{ loaded: false, errored: false }"
-                        x-init="if ($el.complete) loaded = true"
+                        x-init="
+                            if ($el.complete) {
+                                loaded = true
+                                updateDimensions()
+                                preloadAdjacentImages()
+                            }
+                        "
                         x-show="!zoom && !pinchZooming"
                         x-ref="photoImg"
                         x-on:load="
