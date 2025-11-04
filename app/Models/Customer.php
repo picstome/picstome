@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Customer extends Model
 {
@@ -62,10 +63,10 @@ class Customer extends Model
         });
     }
 
-    protected function formatted_notes(): Attribute
+    protected function formattedNotes(): Attribute
     {
         return Attribute::get(function () {
-            return \Illuminate\Support\Str::markdown($this->notes ?? '');
+            return Str::markdown($this->notes ?? '');
         });
     }
 }
