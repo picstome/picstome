@@ -19,7 +19,7 @@ new class extends Component
 
     public bool $editingNotes = false;
 
-    public string $editedNotes = '';
+    public ?string $editedNotes = null;
 
     public function mount()
     {
