@@ -189,10 +189,10 @@ new class extends Component
                                 </div>
                             </div>
                         @else
-                            <div>
-    <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" square size="sm" />
-    <div class="prose prose-sm dark:prose-invert mt-2">{!! $customer->formatted_notes !!}</div>
-</div>
+                            <div class="flex items-start gap-2">
+                                <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
+                                <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" square size="sm" />
+                            </div>
                         @endif
                     </x-description.details>
                 </x-description.list>
