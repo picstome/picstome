@@ -190,7 +190,7 @@ new class extends Component
                             </div>
                         @else
                             <div class="flex items-center gap-2">
-                                <div class="max-w-prose">{!! $customer->formatted_notes !!}</div>
+                                <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
                                 <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" square size="sm" />
                             </div>
                         @endif
