@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Customer extends Model
 {
@@ -59,6 +60,13 @@ class Customer extends Model
         return Attribute::get(function () {
             // Remove all non-digit characters
             return preg_replace('/[^0-9]/', '', $this->phone);
+        });
+    }
+
+    protected function formattedNotes(): Attribute
+    {
+        return Attribute::get(function () {
+            return Str::markdown($this->notes ?? '');
         });
     }
 }
