@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
@@ -19,6 +20,12 @@ new class extends Component
     public function mount()
     {
         $this->form->setCustomer($this->customer);
+    }
+
+    #[Computed]
+    public function team()
+    {
+        return Auth::user()->currentTeam;
     }
 
     public function update()
@@ -80,7 +87,7 @@ new class extends Component
                 'title' => __('Payments'),
                 'value' => Cashier::formatAmount(
                     $totalPayments,
-                    $payments->first()?->currency ?? config('cashier.currency', 'eur')
+                    $this->team->stripe_currency
                 ),
             ],
         ];
