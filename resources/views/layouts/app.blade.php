@@ -60,11 +60,9 @@
                     </flux:modal>
                 @endauth
 
-                @if (Auth::user()->isAdmin)
-                    <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
-                        {{ __('Customers') }}
-                    </flux:navlist.item>
-                @endif
+                <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
+                    {{ __('Customers') }}
+                </flux:navlist.item>
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Photos')">
