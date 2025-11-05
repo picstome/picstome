@@ -65,23 +65,27 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.subscribe')
-        <div class="h-full flex flex-col items-center justify-center space-y-8 w-full">
-            <!-- Stripe Pricing Table -->
-            <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-            <stripe-pricing-table
-                pricing-table-id="{{ $this->pricingTableId }}"
-                publishable-key="{{ config('cashier.key') }}"
-                customer-session-client-secret="{{ $this->customerSession->client_secret }}"
-            >
-            </stripe-pricing-table>
+        <div class="h-full flex flex-col items-center justify-center">
+            <div class="w-full">
+                <!-- Stripe Pricing Table -->
+                <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+                <stripe-pricing-table
+                    pricing-table-id="{{ $this->pricingTableId }}"
+                    publishable-key="{{ config('cashier.key') }}"
+                    customer-session-client-secret="{{ $this->customerSession->client_secret }}"
+                >
+                </stripe-pricing-table>
 
-            @if (config('services.stripe.lifetime_price_id'))
-                <flux:separator variant="subtle" text="or" />
+                @if (config('services.stripe.lifetime_price_id'))
+                    <flux:separator variant="subtle" text="or" />
 
-                <flux:button wire:click="purchaseLifetime" variant="filled">
-                    {{ __('Purchase Lifetime Subscription') }}
-                </flux:button>
-            @endif
+                    <div class="flex justify-center mt-8">
+                        <flux:button wire:click="purchaseLifetime" variant="filled">
+                            {{ __('Purchase Lifetime Subscription') }}
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
         </div>
     @endvolt
 </x-app-layout>
