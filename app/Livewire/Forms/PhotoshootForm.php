@@ -86,8 +86,8 @@ class PhotoshootForm extends Form
         return $this->team()->photoshoots()->create([
             'name' => $this->name,
             'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
-            'date' => $this->date,
-            'price' => $this->price,
+            'date' => empty($this->date) ? null : $this->date,
+            'price' => empty($this->price) ? null : $this->price,
             'location' => $this->location,
             'comment' => $this->comment,
         ]);
@@ -107,8 +107,8 @@ class PhotoshootForm extends Form
         return $this->photoshoot->update([
             'name' => $this->name,
             'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
-            'date' => $this->date,
-            'price' => $this->price,
+            'date' => empty($this->date) ? null : $this->date,
+            'price' => empty($this->price) ? null : $this->price,
             'location' => $this->location,
             'comment' => $this->comment,
         ]);
