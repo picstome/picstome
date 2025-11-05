@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\Forms\ContractTemplateForm;
-use App\Models\Contract;
 use App\Models\ContractTemplate;
 use Livewire\Volt\Component;
 
@@ -68,7 +67,9 @@ new class extends Component
 
             <flux:separator class="mt-6 mb-10" />
 
-            <div class="prose prose-sm dark:prose-invert">
+            <div
+                class="prose prose-sm dark:prose-invert mx-auto flex min-h-[1123px] min-w-[794px] flex-col items-stretch justify-start overflow-auto border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700"
+            >
                 {!! $contractTemplate->formatted_markdown_body !!}
             </div>
 
@@ -81,9 +82,8 @@ new class extends Component
 
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
-                    <flux:field class="
-                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!
-                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                    <flux:field
+                        class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
                     >
                         <flux:label>{{ __('Terms') }}</flux:label>
 
@@ -91,7 +91,7 @@ new class extends Component
                             input="trix"
                             x-init="$nextTick(() => $el.editor.loadHTML($wire.form.body))"
                             x-on:trix-change="$wire.form.body = $event.target.value"
-                            class="prose prose-sm mt-2 dark:prose-invert"
+                            class="prose prose-sm dark:prose-invert mt-2"
                         ></trix-editor>
 
                         <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />

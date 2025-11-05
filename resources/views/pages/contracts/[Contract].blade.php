@@ -59,13 +59,13 @@ new class extends Component
             'photoshoot_id' => [
                 'nullable',
                 Rule::exists('photoshoots', 'id')->where(
-                    fn($query) => $query->where('team_id', Auth::user()->currentTeam->id)
+                    fn ($query) => $query->where('team_id', Auth::user()->currentTeam->id)
                 ),
             ],
         ]);
 
         $this->contract->update([
-            'photoshoot_id' => $this->photoshoot_id
+            'photoshoot_id' => $this->photoshoot_id,
         ]);
 
         Flux::modal('assign-photoshoot')->close();
@@ -115,9 +115,7 @@ new class extends Component
                             <flux:button icon="ellipsis-horizontal" variant="ghost" square />
                             <flux:menu>
                                 <flux:modal.trigger name="assign-photoshoot">
-                                    <flux:menu.item
-                                        icon="camera"
-                                    >
+                                    <flux:menu.item icon="camera">
                                         {{ __('Assign to photoshoot') }}
                                     </flux:menu.item>
                                 </flux:modal.trigger>
@@ -160,7 +158,11 @@ new class extends Component
 
                     <x-description.term>{{ __('Terms') }}</x-description.term>
                     <x-description.details>
-                        <div class="prose prose-sm dark:prose-invert">{!! $contract->formatted_markdown_body !!}</div>
+                        <div
+                            class="prose prose-sm dark:prose-invert flex min-h-[1123px] min-w-[794px] flex-col items-stretch justify-start overflow-auto border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700"
+                        >
+                            {!! $contract->formatted_markdown_body !!}
+                        </div>
                     </x-description.details>
                 </x-description.list>
             </div>

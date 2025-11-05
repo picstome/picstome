@@ -126,16 +126,19 @@ new class extends Component
                     </x-table.rows>
                 </x-table>
 
-                <div x-data
+                <div
+                    x-data
                     x-on:click="
-                        let el = $event.target;
+                        let el = $event.target
                         while (el && el !== $el) {
                             if (el.hasAttribute('wire:click')) {
-                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
-                                break;
+                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
+                                break
                             }
-                            el = el.parentElement;
-                        }">
+                            el = el.parentElement
+                        }
+                    "
+                >
                     <flux:pagination :paginator="$this->contracts" />
                 </div>
             @else
@@ -153,7 +156,7 @@ new class extends Component
                 </div>
             @endif
 
-            <flux:modal name="create-contract" class="w-full sm:max-w-lg">
+            <flux:modal name="create-contract" class="w-full max-w-[794px]">
                 <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Create a new contract') }}</flux:heading>
@@ -167,7 +170,9 @@ new class extends Component
                                 {{ __('Your current plan does not support creating more contracts. Upgrade your plan to create additional contracts.') }}
                             </flux:callout.text>
                             <x-slot name="actions">
-                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade') }}</flux:button>
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Upgrade') }}
+                                </flux:button>
                             </x-slot>
                         </flux:callout>
                     @endcannot
@@ -183,10 +188,8 @@ new class extends Component
 
                     <flux:input wire:model="form.signature_quantity" :label="__('Signatures required')" type="number" />
 
-                    <flux:field class="
-                        **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white
-                        **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden
-                        dark:**:[trix-toolbar]:bg-zinc-800 dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! dark:**:[.trix-button]:bg-white!"
+                    <flux:field
+                        class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
                     >
                         <div data-flux-label class="flex items-center justify-between">
                             <flux:label>{{ __('Terms') }}</flux:label>
@@ -197,7 +200,7 @@ new class extends Component
                         </div>
 
                         <trix-editor
-                            class="prose prose-sm mt-2 dark:prose-invert"
+                            class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                             x-on:trix-change="$wire.form.body = $event.target.value"
                             input="trix"
                         ></trix-editor>
@@ -211,7 +214,13 @@ new class extends Component
                         <flux:separator />
                         <div class="flex py-6">
                             <flux:spacer />
-                            <flux:button type="submit" variant="primary" :disabled="auth()->user()->cannot('create', App\Models\Contract::class)">{{ __('Save') }}</flux:button>
+                            <flux:button
+                                type="submit"
+                                variant="primary"
+                                :disabled="auth()->user()->cannot('create', App\Models\Contract::class)"
+                            >
+                                {{ __('Save') }}
+                            </flux:button>
                         </div>
                     </div>
                 </form>
