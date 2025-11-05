@@ -73,7 +73,7 @@ new class extends Component
                 {!! $contractTemplate->formatted_markdown_body !!}
             </div>
 
-            <flux:modal name="edit" class="w-full sm:max-w-lg">
+            <flux:modal name="edit" class="w-full max-w-[794px]">
                 <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Edit template') }}</flux:heading>
@@ -91,7 +91,7 @@ new class extends Component
                             input="trix"
                             x-init="$nextTick(() => $el.editor.loadHTML($wire.form.body))"
                             x-on:trix-change="$wire.form.body = $event.target.value"
-                            class="prose prose-sm dark:prose-invert mt-2"
+                            class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                         ></trix-editor>
 
                         <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />
