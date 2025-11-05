@@ -65,7 +65,7 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.subscribe')
-        <div class="h-full flex flex-col items-center justify-center space-y-8">
+        <div class="h-full flex flex-col items-center justify-center space-y-8 w-full">
             <!-- Stripe Pricing Table -->
             <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
             <stripe-pricing-table
