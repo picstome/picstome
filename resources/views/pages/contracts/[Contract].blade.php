@@ -155,21 +155,13 @@ new class extends Component
                     <x-description.details>
                         {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
                     </x-description.details>
-
-                    <x-description.term>{{ __('Terms') }}</x-description.term>
-                    <x-description.details>
-                        <div
-                            class="prose prose-sm dark:prose-invert flex min-h-[1123px] min-w-[794px] flex-col items-stretch justify-start overflow-auto border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700"
-                        >
-                            {!! $contract->formatted_markdown_body !!}
-                        </div>
-                    </x-description.details>
                 </x-description.list>
             </div>
 
             <flux:heading level="2" class="mt-12">{{ __('Signatures') }}</flux:heading>
             <x-table class="mt-4">
                 <x-table.columns>
+                    <x-table.column></x-table.column>
                     <x-table.column>
                         <span class="text-zinc-500 dark:text-zinc-300">
                             {{ __('Signature number') }}
@@ -181,27 +173,11 @@ new class extends Component
                     <x-table.column>
                         <span class="text-zinc-500 dark:text-zinc-300">{{ __('Signed at') }}</span>
                     </x-table.column>
-                    <x-table.column></x-table.column>
                 </x-table.columns>
 
                 <x-table.rows>
                     @foreach ($contract->signatures as $signature)
                         <x-table.row>
-                            <x-table.cell>
-                                <span class="font-mono">{{ $signature->ulid }}</span>
-
-                                @if ($signature->isSigned())
-                                    <flux:badge size="sm" color="lime">{{ __('Signed') }}</flux:badge>
-                                @else
-                                    <flux:badge size="sm">{{ __('Unsigned') }}</flux:badge>
-                                @endif
-                            </x-table.cell>
-                            <x-table.cell>
-                                {{ $signature->legal_name }}
-                                <br />
-                                {{ $signature->email }}
-                            </x-table.cell>
-                            <x-table.cell>{{ $signature->formatted_signed_at }}</x-table.cell>
                             <x-table.cell>
                                 @if ($signature->isSigned())
                                     <flux:button
@@ -221,10 +197,40 @@ new class extends Component
                                     </flux:button>
                                 @endif
                             </x-table.cell>
+                            <x-table.cell>
+                                <span class="font-mono">{{ $signature->ulid }}</span>
+
+                                @if ($signature->isSigned())
+                                    <flux:badge size="sm" color="lime">{{ __('Signed') }}</flux:badge>
+                                @else
+                                    <flux:badge size="sm">{{ __('Unsigned') }}</flux:badge>
+                                @endif
+                            </x-table.cell>
+                            <x-table.cell>
+                                {{ $signature->legal_name }}
+                                <br />
+                                {{ $signature->email }}
+                            </x-table.cell>
+                            <x-table.cell>{{ $signature->formatted_signed_at }}</x-table.cell>
                         </x-table.row>
                     @endforeach
                 </x-table.rows>
             </x-table>
+
+            <div class="mt-12">
+                <flux:heading level="2">{{ __('Contract terms') }}</flux:heading>
+                <flux:separator class="mt-4" />
+                <x-description.list>
+                    <x-description.term>{{ __('Terms') }}</x-description.term>
+                    <x-description.details>
+                        <div
+                            class="prose prose-sm dark:prose-invert flex lg:min-h-[1123px] lg:min-w-[794px] flex-col items-stretch justify-start overflow-auto lg:border lg:border-zinc-200 lg:p-6 lg:shadow-sm dark:border-zinc-700"
+                        >
+                            {!! $contract->formatted_markdown_body !!}
+                        </div>
+                    </x-description.details>
+                </x-description.list>
+            </div>
 
             <flux:modal name="assign-photoshoot" class="md:w-96">
                 <form wire:submit="assignToPhotoshoot" class="space-y-6">

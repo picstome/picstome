@@ -68,7 +68,7 @@ new class extends Component
             <flux:separator class="mt-6 mb-10" />
 
             <div
-                class="prose prose-sm dark:prose-invert mx-auto flex min-h-[1123px] min-w-[794px] flex-col items-stretch justify-start overflow-auto border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700"
+                class="prose prose-sm dark:prose-invert lg:mx-auto lg:flex lg:min-h-[1123px] lg:min-w-[794px] lg:flex-col lg:items-stretch lg:justify-start lg:overflow-auto lg:border lg:border-zinc-200 lg:p-6 lg:shadow-sm lg:dark:border-zinc-700"
             >
                 {!! $contractTemplate->formatted_markdown_body !!}
             </div>
