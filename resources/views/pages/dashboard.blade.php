@@ -30,6 +30,15 @@ new class extends Component
     @volt('page.dashboard')
         <div>
             <flux:heading size="xl" level="1">{{ __('Welcome back, :name', ['name' => $this->user->name]) }}</flux:heading>
+
+            <flux:modal.trigger name="search" shortcut="cmd.k">
+                <flux:input
+                    as="button"
+                    :placeholder="__('Search...')"
+                    icon="magnifying-glass"
+                    kbd="⌘K"
+                />
+            </flux:modal.trigger>
         </div>
     @endvolt
 </x-app-layout>
