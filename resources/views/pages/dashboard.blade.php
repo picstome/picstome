@@ -46,26 +46,22 @@ new class extends Component
         return Auth::user();
     }
 
-    #[Computed]
-    public function portfolioComplete()
+    public function isPortfolioComplete()
     {
         return $this->team->galleries()->public()->exists();
     }
 
-    #[Computed]
-    public function paymentsConfigured()
+    public function isPaymentsConfigured()
     {
         return $this->team->hasCompletedOnboarding();
     }
 
-    #[Computed]
-    public function biolinkCreated()
+    public function isBiolinkCreated()
     {
         return $this->team->bioLinks()->exists();
     }
 
-    #[Computed]
-    public function watermarkConfigured()
+    public function isWatermarkConfigured()
     {
         return ! empty($this->team->brand_watermark_path);
     }
@@ -101,7 +97,7 @@ new class extends Component
                 'action' => __('Set up portfolio'),
                 'route' => route('portfolio'),
                 'icon' => 'folder',
-                'complete' => $this->portfolioComplete,
+                'complete' => $this->isPortfolioComplete(),
             ],
             [
                 'key' => 'payments',
@@ -110,7 +106,7 @@ new class extends Component
                 'action' => __('Configure payments'),
                 'route' => route('branding.payments'),
                 'icon' => 'credit-card',
-                'complete' => $this->paymentsConfigured,
+                'complete' => $this->isPaymentsConfigured(),
             ],
             [
                 'key' => 'biolink',
@@ -119,7 +115,7 @@ new class extends Component
                 'action' => __('Create BioLink'),
                 'route' => route('public-profile'),
                 'icon' => 'link',
-                'complete' => $this->biolinkCreated,
+                'complete' => $this->isBiolinkCreated(),
             ],
             [
                 'key' => 'watermark',
@@ -128,7 +124,7 @@ new class extends Component
                 'action' => __('Configure watermark'),
                 'route' => route('branding.watermark'),
                 'icon' => 'sparkles',
-                'complete' => $this->watermarkConfigured,
+                'complete' => $this->isWatermarkConfigured(),
             ],
         ];
     }
