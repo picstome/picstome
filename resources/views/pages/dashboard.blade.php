@@ -215,18 +215,18 @@ new class extends Component
                     <div class="space-y-4">
                         <flux:heading size="lg">{{ __('Account Stats') }}</flux:heading>
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                                <flux:subheading>{{ __('Customers') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
-                            </div>
-                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                                <flux:subheading>{{ __('Galleries') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
-                            </div>
-                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                                <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
-                            </div>
+<a href="{{ route('customers') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
+    <flux:subheading>{{ __('Customers') }}</flux:subheading>
+    <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
+</a>
+<a href="{{ route('galleries') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
+    <flux:subheading>{{ __('Galleries') }}</flux:subheading>
+    <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
+</a>
+<a href="{{ route('payments') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
+    <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
+    <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
+</a>
                             <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
                                 <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
                                 <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
