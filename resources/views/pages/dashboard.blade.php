@@ -87,6 +87,23 @@ new class extends Component
     }
 
     #[Computed]
+    public function birthdaySoonCustomers()
+    {
+        return $this->team->customers()
+            ->get()
+            ->filter(fn ($customer) => $customer->isBirthdaySoon())
+            ->sortBy(function ($customer) {
+                $now = now();
+                $thisYearBirthday = $customer->birthdate->copy()->year($now->year);
+                if ($thisYearBirthday->lt($now)) {
+                    $thisYearBirthday->addYear();
+                }
+
+                return $now->diffInDays($thisYearBirthday, false);
+            });
+    }
+
+    #[Computed]
     public function steps()
     {
         return [
@@ -215,18 +232,30 @@ new class extends Component
                     <div class="space-y-4">
                         <flux:heading size="lg">{{ __('Account Stats') }}</flux:heading>
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-<a href="{{ route('customers') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
-    <flux:subheading>{{ __('Customers') }}</flux:subheading>
-    <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
-</a>
-<a href="{{ route('galleries') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
-    <flux:subheading>{{ __('Galleries') }}</flux:subheading>
-    <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
-</a>
-<a href="{{ route('payments') }}" wire:navigate class="block rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 transition">
-    <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
-    <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
-</a>
+                            <a
+                                href="{{ route('customers') }}"
+                                wire:navigate
+                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                            >
+                                <flux:subheading>{{ __('Customers') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
+                            </a>
+                            <a
+                                href="{{ route('galleries') }}"
+                                wire:navigate
+                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                            >
+                                <flux:subheading>{{ __('Galleries') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
+                            </a>
+                            <a
+                                href="{{ route('payments') }}"
+                                wire:navigate
+                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                            >
+                                <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
+                            </a>
                             <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
                                 <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
                                 <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
@@ -251,6 +280,58 @@ new class extends Component
                             </div>
                         </div>
                     </div>
+                </section>
+            @endif
+
+            @if ($this->birthdaySoonCustomers?->isNotEmpty())
+                <section class="mt-8 mb-8">
+                    <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
+                    <flux:separator class="mt-3" />
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->birthdaySoonCustomers as $customer)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $customer->name }}
+                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                {{ __('Birthday soon') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->email }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->phone }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->formatted_birthdate }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
                 </section>
             @endif
         </div>
