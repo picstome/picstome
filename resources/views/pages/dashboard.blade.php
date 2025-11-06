@@ -23,6 +23,24 @@ new class extends Component
     }
 
     #[Computed]
+    public function usedGb()
+    {
+        return $this->team->storage_used_gb;
+    }
+
+    #[Computed]
+    public function totalGb()
+    {
+        return $this->team->hasUnlimitedStorage ? __('Unlimited') : $this->team->storage_limit_gb;
+    }
+
+    #[Computed]
+    public function usagePercent()
+    {
+        return $this->team->hasUnlimitedStorage ? null : $this->team->storage_used_percent;
+    }
+
+    #[Computed]
     public function user()
     {
         return Auth::user();
@@ -154,7 +172,9 @@ new class extends Component
                         {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade to Premium') }}</flux:button>
+                        <flux:button :href="route('subscribe')" variant="primary">
+                            {{ __('Upgrade to Premium') }}
+                        </flux:button>
                     </x-slot>
                 </flux:callout>
             @endif
@@ -183,8 +203,8 @@ new class extends Component
                                         <flux:button
                                             icon="x-mark"
                                             variant="subtle"
-                                             wire:click="dismissStep('{{ $step['key'] }}')"
-                                             size="sm"
+                                            wire:click="dismissStep('{{ $step['key'] }}')"
+                                            size="sm"
                                         />
                                     </x-slot>
                                 </flux:callout>
@@ -198,7 +218,7 @@ new class extends Component
                 <section>
                     <div class="space-y-4">
                         <flux:heading size="lg">{{ __('Account Stats') }}</flux:heading>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                             <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
                                 <flux:subheading>{{ __('Customers') }}</flux:subheading>
                                 <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
@@ -213,7 +233,25 @@ new class extends Component
                             </div>
                             <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
                                 <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
-@livewire('storage-usage-indicator')
+                                <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
+                                <flux:spacer class="mt-2" />
+                                <div class="space-y-2">
+                                    @if (! $this->team->hasUnlimitedStorage)
+                                        <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                            <div
+                                                class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                                style="width: {{ min($this->usagePercent, 100) }}%"
+                                            ></div>
+                                        </div>
+                                        <flux:text class="mt-2 text-[11px]!">
+                                            {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
+                                        </flux:text>
+                                    @else
+                                        <flux:text class="text-[11px]">
+                                            {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
+                                        </flux:text>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>

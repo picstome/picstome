@@ -251,7 +251,7 @@ class Team extends Model
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
 
-            return number_format($gb, 2).' GB';
+            return number_format($gb, 0).' GB';
         });
     }
 
