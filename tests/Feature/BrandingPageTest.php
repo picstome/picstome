@@ -53,6 +53,20 @@ it('prevents guests from viewing branding pages', function () {
     $response->assertRedirect('/login');
 });
 
+it('can reset dismissed setup steps from general branding page', function () {
+    $this->team->dismissed_setup_steps = ['portfolio', 'payments'];
+    $this->team->save();
+
+    expect($this->team->dismissed_setup_steps)->toContain('portfolio');
+    expect($this->team->dismissed_setup_steps)->toContain('payments');
+
+    Volt::actingAs($this->user)->test('pages.branding.general')
+        ->call('resetDismissedSetupSteps');
+
+    $this->team->refresh();
+    expect($this->team->dismissed_setup_steps)->toBe([]);
+});
+
 it('can save a brand logo', function () {
     Storage::fake('s3');
     expect($this->team->brand_logo_path)->toBeNull();
