@@ -113,6 +113,17 @@ new class extends Component
     }
 
     #[Computed]
+    public function expiringGalleries()
+    {
+        return $this->team->galleries()
+            ->whereNotNull('expiration_date')
+            ->where('expiration_date', '>=', now()->toDateString())
+            ->where('expiration_date', '<=', now()->addDays(30)->toDateString())
+            ->orderBy('expiration_date')
+            ->get();
+    }
+
+    #[Computed]
     public function steps()
     {
         return [
@@ -292,7 +303,7 @@ new class extends Component
                 </section>
             @endif
 
-            @if ($this->birthdaySoonCustomers?->isNotEmpty() || $this->upcomingPhotoshoots?->isNotEmpty())
+            @if ($this->birthdaySoonCustomers?->isNotEmpty() || $this->upcomingPhotoshoots?->isNotEmpty() || $this->expiringGalleries?->isNotEmpty())
                 <section class="mt-8 mb-8">
                     <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
                     <flux:separator class="mt-3" />
@@ -349,7 +360,7 @@ new class extends Component
                     @endif
 
                     @if ($this->upcomingPhotoshoots?->isNotEmpty())
-                        <div>
+                        <div class="mb-8">
                             <x-heading level="2">{{ __('Upcoming Photoshoots') }}</x-heading>
                             <x-table>
                                 <x-table.rows>
@@ -383,6 +394,49 @@ new class extends Component
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
                                                 {{ $photoshoot->location ?? '-' }}
+                                            </x-table.cell>
+                                        </x-table.row>
+                                    @endforeach
+                                </x-table.rows>
+                            </x-table>
+                        </div>
+                    @endif
+
+                    @if ($this->expiringGalleries?->isNotEmpty())
+                        <div>
+                            <x-heading level="2">{{ __('Expiring Galleries') }}</x-heading>
+                            <x-table>
+                                <x-table.rows>
+                                    @foreach ($this->expiringGalleries as $gallery)
+                                        <x-table.row>
+                                            <x-table.cell variant="strong" class="relative w-full">
+                                                <a
+                                                    href="/galleries/{{ $gallery->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                <div class="flex items-center gap-2">
+                                                    {{ $gallery->name }}
+                                                    <flux:badge color="red" inset="top bottom" icon="clock" size="sm">
+                                                        {{ __('Expiring soon') }}
+                                                    </flux:badge>
+                                                </div>
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/galleries/{{ $gallery->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $gallery->expiration_date->format('Y-m-d') }}
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/galleries/{{ $gallery->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $gallery->photoshoot?->title ?? '-' }}
                                             </x-table.cell>
                                         </x-table.row>
                                     @endforeach
