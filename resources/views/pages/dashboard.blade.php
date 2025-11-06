@@ -43,13 +43,13 @@ new class extends Component
             <flux:spacer class="my-6" />
 
             @if (! $this->team->subscribed())
-                <flux:callout icon="shield-check" color="blue" inline>
+                <flux:callout icon="shield-check" color="teal" inline>
                     <flux:callout.heading>{{ __('Get More With Premium') }}</flux:callout.heading>
                     <flux:callout.text>
                         {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
-                        <flux:button href="/pricing">{{ __('Upgrade to Premium') }}</flux:button>
+                        <flux:button :href="route('subscribe')">{{ __('Upgrade to Premium') }}</flux:button>
                     </x-slot>
                 </flux:callout>
             @endif
