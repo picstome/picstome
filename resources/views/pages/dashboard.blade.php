@@ -104,6 +104,15 @@ new class extends Component
     }
 
     #[Computed]
+    public function upcomingPhotoshoots()
+    {
+        return $this->team->photoshoots()
+            ->whereDate('date', '>=', now()->toDateString())
+            ->orderBy('date')
+            ->get();
+    }
+
+    #[Computed]
     public function steps()
     {
         return [
@@ -283,55 +292,104 @@ new class extends Component
                 </section>
             @endif
 
-            @if ($this->birthdaySoonCustomers?->isNotEmpty())
+            @if ($this->birthdaySoonCustomers?->isNotEmpty() || $this->upcomingPhotoshoots?->isNotEmpty())
                 <section class="mt-8 mb-8">
                     <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
                     <flux:separator class="mt-3" />
-                    <x-table>
-                        <x-table.rows>
-                            @foreach ($this->birthdaySoonCustomers as $customer)
-                                <x-table.row>
-                                    <x-table.cell variant="strong" class="relative w-full">
-                                        <a
-                                            href="/customers/{{ $customer->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        <div class="flex items-center gap-2">
-                                            {{ $customer->name }}
-                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
-                                                {{ __('Birthday soon') }}
-                                            </flux:badge>
-                                        </div>
-                                    </x-table.cell>
-                                    <x-table.cell class="relative" align="end">
-                                        <a
-                                            href="/customers/{{ $customer->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        {{ $customer->email }}
-                                    </x-table.cell>
-                                    <x-table.cell class="relative" align="end">
-                                        <a
-                                            href="/customers/{{ $customer->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        {{ $customer->phone }}
-                                    </x-table.cell>
-                                    <x-table.cell class="relative" align="end">
-                                        <a
-                                            href="/customers/{{ $customer->id }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        {{ $customer->formatted_birthdate }}
-                                    </x-table.cell>
-                                </x-table.row>
-                            @endforeach
-                        </x-table.rows>
-                    </x-table>
+
+                    @if ($this->birthdaySoonCustomers?->isNotEmpty())
+                        <div class="mb-8">
+                            <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
+                            <x-table>
+                                <x-table.rows>
+                                    @foreach ($this->birthdaySoonCustomers as $customer)
+                                        <x-table.row>
+                                            <x-table.cell variant="strong" class="relative w-full">
+                                                <a
+                                                    href="/customers/{{ $customer->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                <div class="flex items-center gap-2">
+                                                    {{ $customer->name }}
+                                                    <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                        {{ __('Birthday soon') }}
+                                                    </flux:badge>
+                                                </div>
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/customers/{{ $customer->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $customer->email }}
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/customers/{{ $customer->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $customer->phone }}
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/customers/{{ $customer->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $customer->formatted_birthdate }}
+                                            </x-table.cell>
+                                        </x-table.row>
+                                    @endforeach
+                                </x-table.rows>
+                            </x-table>
+                        </div>
+                    @endif
+
+                    @if ($this->upcomingPhotoshoots?->isNotEmpty())
+                        <div>
+                            <x-heading level="2">{{ __('Upcoming Photoshoots') }}</x-heading>
+                            <x-table>
+                                <x-table.rows>
+                                    @foreach ($this->upcomingPhotoshoots as $photoshoot)
+                                        <x-table.row>
+                                            <x-table.cell variant="strong" class="relative w-full">
+                                                <a
+                                                    href="/photoshoots/{{ $photoshoot->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                <div class="flex items-center gap-2">
+                                                    {{ $photoshoot->title ?? __('Photoshoot') }}
+                                                    <flux:badge color="blue" inset="top bottom" icon="camera" size="sm">
+                                                        {{ __('Scheduled') }}
+                                                    </flux:badge>
+                                                </div>
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/photoshoots/{{ $photoshoot->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $photoshoot->date->format('Y-m-d') }}
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/photoshoots/{{ $photoshoot->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $photoshoot->location ?? '-' }}
+                                            </x-table.cell>
+                                        </x-table.row>
+                                    @endforeach
+                                </x-table.rows>
+                            </x-table>
+                        </div>
+                    @endif
                 </section>
             @endif
         </div>
