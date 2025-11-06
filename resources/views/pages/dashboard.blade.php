@@ -1,5 +1,7 @@
 <?php
 
+use Carbon\Carbon;
+use Laravel\Cashier\Cashier;
 use Livewire\Volt\Component;
 
 use function Laravel\Folio\middleware;
@@ -48,6 +50,26 @@ new class extends Component
     public function watermarkConfigured()
     {
         return ! empty($this->team->brand_watermark_path);
+    }
+
+    #[Computed]
+    public function customersCount()
+    {
+        return $this->team->customers()->count();
+    }
+
+    #[Computed]
+    public function galleriesCount()
+    {
+        return $this->team->galleries()->count();
+    }
+
+    #[Computed]
+    public function revenue30Days()
+    {
+        $start = Carbon::now()->subDays(30);
+
+        return Cashier::formatAmount($this->team->payments()->where('completed_at', '>=', $start)->sum('amount'), $this->team->stripe_currency);
     }
 
     #[Computed]
@@ -168,6 +190,31 @@ new class extends Component
                                 </flux:callout>
                             @endif
                         @endforeach
+                    </div>
+                </section>
+
+                <flux:spacer class="my-6" />
+
+                <section>
+                    <div class="space-y-4">
+                        <flux:heading size="lg">{{ __('Account Stats') }}</flux:heading>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                                <flux:subheading>{{ __('Customers') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
+                            </div>
+                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                                <flux:subheading>{{ __('Galleries') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
+                            </div>
+                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                                <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
+                                <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
+                            </div>
+                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                                @livewire('storage-usage-indicator')
+                            </div>
+                        </div>
                     </div>
                 </section>
             @endif

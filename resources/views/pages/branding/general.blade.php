@@ -69,14 +69,14 @@ new class extends Component
                         <form wire:submit="save" class="space-y-6">
                             <flux:input wire:model="form.name" :label="__('Studio name')" />
 
-                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
-                         </form>
+                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        </form>
 
                         <flux:separator variant="subtle" class="my-8" />
 
-                         <flux:button wire:click="resetDismissedSetupSteps" variant="subtle" inset="left">
-                             {{ __('Reset setup steps') }}
-                         </flux:button>
+                        <flux:button wire:click="resetDismissedSetupSteps" variant="subtle" inset="left">
+                            {{ __('Reset setup steps') }}
+                        </flux:button>
                     </div>
                 </div>
             </div>
