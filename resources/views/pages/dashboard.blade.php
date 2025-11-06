@@ -93,15 +93,25 @@ new class extends Component
         ];
     }
 
+    public function dismissStep(string $step)
+    {
+        $this->team->dismissSetupStep($step);
+        $this->team->refresh();
+    }
+
     #[Computed]
     public function incompleteSteps()
     {
-        return collect($this->steps)->where('complete', false);
+        $dismissed = $this->team->dismissed_setup_steps ?? [];
+
+        return collect($this->steps)
+            ->where('complete', false)
+            ->reject(fn ($step) => in_array($step['key'], $dismissed));
     }
 } ?>
 
 <x-app-layout>
-    @volt('page.dashboard')
+    @volt('pages.dashboard')
         <div>
             <flux:heading size="xl" level="1">
                 {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
@@ -138,26 +148,24 @@ new class extends Component
                     <div class="space-y-2">
                         @foreach ($this->steps as $step)
                             @if (! $step['complete'])
-                                <div x-data="{ visible: true }" x-show="visible">
-                                    <flux:callout icon="{{ $step['icon'] }}" variant="secondary" inline>
-                                        <flux:callout.heading>
-                                            {{ $step['label'] }}
-                                        </flux:callout.heading>
-                                        <x-slot name="actions">
-                                            <flux:button size="sm" :href="$step['route']">
-                                                {{ $step['action'] }}
-                                            </flux:button>
-                                        </x-slot>
-                                        <x-slot name="controls">
-                                            <flux:button
-                                                icon="x-mark"
-                                                variant="subtle"
-                                                x-on:click="visible = false"
-                                                size="sm"
-                                            />
-                                        </x-slot>
-                                    </flux:callout>
-                                </div>
+                                <flux:callout icon="{{ $step['icon'] }}" variant="secondary" inline>
+                                    <flux:callout.heading>
+                                        {{ $step['label'] }}
+                                    </flux:callout.heading>
+                                    <x-slot name="actions">
+                                        <flux:button size="sm" :href="$step['route']">
+                                            {{ $step['action'] }}
+                                        </flux:button>
+                                    </x-slot>
+                                    <x-slot name="controls">
+                                        <flux:button
+                                            icon="x-mark"
+                                            variant="subtle"
+                                             wire:click="dismissStep('{{ $step['key'] }}')"
+                                             size="sm"
+                                        />
+                                    </x-slot>
+                                </flux:callout>
                             @endif
                         @endforeach
                     </div>
