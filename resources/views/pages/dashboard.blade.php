@@ -29,29 +29,25 @@ new class extends Component
     #[Computed]
     public function portfolioComplete()
     {
-        // TODO: Replace with real logic
-        return false;
+        return $this->team->galleries()->public()->exists();
     }
 
     #[Computed]
     public function paymentsConfigured()
     {
-        // TODO: Replace with real logic
-        return false;
+        return $this->team->hasCompletedOnboarding();
     }
 
     #[Computed]
     public function biolinkCreated()
     {
-        // TODO: Replace with real logic
-        return false;
+        return $this->team->bioLinks()->exists();
     }
 
     #[Computed]
     public function watermarkConfigured()
     {
-        // TODO: Replace with real logic
-        return false;
+        return ! empty($this->team->brand_watermark_path);
     }
 
     #[Computed]
