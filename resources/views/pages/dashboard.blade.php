@@ -212,7 +212,8 @@ new class extends Component
                                 <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
                             </div>
                             <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                                @livewire('storage-usage-indicator')
+                                <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
+@livewire('storage-usage-indicator')
                             </div>
                         </div>
                     </div>
