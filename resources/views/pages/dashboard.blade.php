@@ -25,6 +25,83 @@ new class extends Component
     {
         return Auth::user();
     }
+
+    #[Computed]
+    public function portfolioComplete()
+    {
+        // TODO: Replace with real logic
+        return false;
+    }
+
+    #[Computed]
+    public function paymentsConfigured()
+    {
+        // TODO: Replace with real logic
+        return false;
+    }
+
+    #[Computed]
+    public function biolinkCreated()
+    {
+        // TODO: Replace with real logic
+        return false;
+    }
+
+    #[Computed]
+    public function watermarkConfigured()
+    {
+        // TODO: Replace with real logic
+        return false;
+    }
+
+    #[Computed]
+    public function steps()
+    {
+        return [
+            [
+                'key' => 'portfolio',
+                'label' => __('Set up your portfolio'),
+                'desc' => __('Showcase your best work to attract clients.'),
+                'action' => __('Set up portfolio'),
+                'route' => route('portfolio'),
+                'icon' => 'folder',
+                'complete' => $this->portfolioComplete,
+            ],
+            [
+                'key' => 'payments',
+                'label' => __('Configure payment settings'),
+                'desc' => __('Enable payments to get paid for your work.'),
+                'action' => __('Configure payments'),
+                'route' => route('branding.payments'),
+                'icon' => 'credit-card',
+                'complete' => $this->paymentsConfigured,
+            ],
+            [
+                'key' => 'biolink',
+                'label' => __('Create your first BioLink'),
+                'desc' => __('Share a single link to all your socials and portfolio.'),
+                'action' => __('Create BioLink'),
+                'route' => route('public-profile'),
+                'icon' => 'link',
+                'complete' => $this->biolinkCreated,
+            ],
+            [
+                'key' => 'watermark',
+                'label' => __('Configure watermark settings'),
+                'desc' => __('Protect your photos with custom watermarks.'),
+                'action' => __('Configure watermark'),
+                'route' => route('branding.watermark'),
+                'icon' => 'sparkles',
+                'complete' => $this->watermarkConfigured,
+            ],
+        ];
+    }
+
+    #[Computed]
+    public function incompleteSteps()
+    {
+        return collect($this->steps)->where('complete', false);
+    }
 } ?>
 
 <x-app-layout>
@@ -43,15 +120,52 @@ new class extends Component
             <flux:spacer class="my-6" />
 
             @if (! $this->team->subscribed())
-                <flux:callout icon="shield-check" color="teal" inline>
+                <flux:callout icon="shield-check">
                     <flux:callout.heading>{{ __('Get More With Premium') }}</flux:callout.heading>
                     <flux:callout.text>
                         {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')">{{ __('Upgrade to Premium') }}</flux:button>
+                        <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade to Premium') }}</flux:button>
                     </x-slot>
                 </flux:callout>
+            @endif
+
+            <flux:spacer class="my-6" />
+
+            @if ($this->incompleteSteps->count())
+                <section>
+                    <flux:heading size="lg">
+                        {{ __('Complete your account setup') }}
+                    </flux:heading>
+                    <flux:spacer class="my-4" />
+                    <div class="space-y-2">
+                        @foreach ($this->steps as $step)
+                            @if (! $step['complete'])
+                                <div x-data="{ visible: true }" x-show="visible">
+                                    <flux:callout icon="{{ $step['icon'] }}" variant="secondary" inline>
+                                        <flux:callout.heading>
+                                            {{ $step['label'] }}
+                                        </flux:callout.heading>
+                                        <x-slot name="actions">
+                                            <flux:button size="sm" :href="$step['route']">
+                                                {{ $step['action'] }}
+                                            </flux:button>
+                                        </x-slot>
+                                        <x-slot name="controls">
+                                            <flux:button
+                                                icon="x-mark"
+                                                variant="subtle"
+                                                x-on:click="visible = false"
+                                                size="sm"
+                                            />
+                                        </x-slot>
+                                    </flux:callout>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </section>
             @endif
         </div>
     @endvolt
