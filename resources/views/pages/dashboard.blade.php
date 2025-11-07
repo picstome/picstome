@@ -327,61 +327,61 @@ new class extends Component
                 </section>
 
                 <flux:spacer class="my-6" />
+            @endif
 
-                <section>
-                    <div class="space-y-4">
-                        <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
-                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <a
-                                href="{{ route('customers') }}"
-                                wire:navigate
-                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                            >
-                                <flux:subheading>{{ __('Customers') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
-                            </a>
-                            <a
-                                href="{{ route('galleries') }}"
-                                wire:navigate
-                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                            >
-                                <flux:subheading>{{ __('Galleries') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
-                            </a>
-                            <a
-                                href="{{ route('payments') }}"
-                                wire:navigate
-                                class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                            >
-                                <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
-                            </a>
-                            <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                                <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
-                                <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
-                                <flux:spacer class="mt-2" />
-                                <div class="space-y-2">
-                                    @if (! $this->team->hasUnlimitedStorage)
-                                        <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                                            <div
-                                                class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
-                                                style="width: {{ min($this->usagePercent, 100) }}%"
-                                            ></div>
-                                        </div>
-                                        <flux:text class="mt-2 text-[11px]">
-                                            {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
-                                        </flux:text>
-                                    @else
-                                        <flux:text class="text-[11px]">
-                                            {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
-                                        </flux:text>
-                                    @endif
-                                </div>
+            <section>
+                <div class="space-y-4">
+                    <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <a
+                            href="{{ route('customers') }}"
+                            wire:navigate
+                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                        >
+                            <flux:subheading>{{ __('Customers') }}</flux:subheading>
+                            <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
+                        </a>
+                        <a
+                            href="{{ route('galleries') }}"
+                            wire:navigate
+                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                        >
+                            <flux:subheading>{{ __('Galleries') }}</flux:subheading>
+                            <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
+                        </a>
+                        <a
+                            href="{{ route('payments') }}"
+                            wire:navigate
+                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                        >
+                            <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
+                            <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
+                        </a>
+                        <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                            <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
+                            <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
+                            <flux:spacer class="mt-2" />
+                            <div class="space-y-2">
+                                @if (! $this->team->hasUnlimitedStorage)
+                                    <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                        <div
+                                            class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                            style="width: {{ min($this->usagePercent, 100) }}%"
+                                        ></div>
+                                    </div>
+                                    <flux:text class="mt-2 text-[11px]">
+                                        {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
+                                    </flux:text>
+                                @else
+                                    <flux:text class="text-[11px]">
+                                        {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
+                                    </flux:text>
+                                @endif
                             </div>
                         </div>
                     </div>
-                </section>
-            @endif
+                </div>
+            </section>
 
             @if ($this->hasUpcomingEventsOrReminders())
                 <section class="mt-8 mb-8">
