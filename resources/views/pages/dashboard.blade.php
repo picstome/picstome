@@ -124,6 +124,16 @@ new class extends Component
     }
 
     #[Computed]
+    public function upcomingContractsAwaitingSignature()
+    {
+        return $this->team->contracts()
+            ->whereDate('shooting_date', '>=', now()->toDateString())
+            ->whereNull('executed_at')
+            ->orderBy('shooting_date')
+            ->get();
+    }
+
+    #[Computed]
     public function steps()
     {
         return [
@@ -303,7 +313,12 @@ new class extends Component
                 </section>
             @endif
 
-            @if ($this->birthdaySoonCustomers?->isNotEmpty() || $this->upcomingPhotoshoots?->isNotEmpty() || $this->expiringGalleries?->isNotEmpty())
+            @if (
+                $this->birthdaySoonCustomers?->isNotEmpty() ||
+                $this->upcomingPhotoshoots?->isNotEmpty() ||
+                $this->expiringGalleries?->isNotEmpty() ||
+                $this->upcomingContractsAwaitingSignature?->isNotEmpty()
+            )
                 <section class="mt-8 mb-8">
                     <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
                     <flux:separator class="mt-3" />
@@ -403,7 +418,7 @@ new class extends Component
                     @endif
 
                     @if ($this->expiringGalleries?->isNotEmpty())
-                        <div>
+                        <div class="mb-8">
                             <x-heading level="2">{{ __('Expiring Galleries') }}</x-heading>
                             <x-table>
                                 <x-table.rows>
@@ -437,6 +452,49 @@ new class extends Component
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
                                                 {{ $gallery->photoshoot?->title ?? '-' }}
+                                            </x-table.cell>
+                                        </x-table.row>
+                                    @endforeach
+                                </x-table.rows>
+                            </x-table>
+                        </div>
+                    @endif
+
+                    @if ($this->upcomingContractsAwaitingSignature?->isNotEmpty())
+                        <div>
+                            <x-heading level="2">{{ __('Upcoming Contracts Awaiting Signature') }}</x-heading>
+                            <x-table>
+                                <x-table.rows>
+                                    @foreach ($this->upcomingContractsAwaitingSignature as $contract)
+                                        <x-table.row>
+                                            <x-table.cell variant="strong" class="relative w-full">
+                                                <a
+                                                    href="/contracts/{{ $contract->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                <div class="flex items-center gap-2">
+                                                    {{ $contract->title ?? __('Contract') }}
+                                                    <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
+                                                        {{ __('Awaiting signature') }}
+                                                    </flux:badge>
+                                                </div>
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/contracts/{{ $contract->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $contract->formattedShootingDate }}
+                                            </x-table.cell>
+                                            <x-table.cell class="relative" align="end">
+                                                <a
+                                                    href="/contracts/{{ $contract->id }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 focus:outline-hidden"
+                                                ></a>
+                                                {{ $contract->photoshoot?->title ?? '-' }}
                                             </x-table.cell>
                                         </x-table.row>
                                     @endforeach
