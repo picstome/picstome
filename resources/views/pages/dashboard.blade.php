@@ -16,81 +16,6 @@ use Livewire\Attributes\Computed;
 
 new class extends Component
 {
-    public function formatEventDate($date)
-    {
-        return $date->format('M j');
-    }
-
-    #[Computed]
-    public function team()
-    {
-        return Auth::user()->currentTeam;
-    }
-
-    #[Computed]
-    public function usedGb()
-    {
-        return $this->team->storage_used_gb;
-    }
-
-    #[Computed]
-    public function totalGb()
-    {
-        return $this->team->hasUnlimitedStorage ? __('Unlimited') : $this->team->storage_limit_gb;
-    }
-
-    #[Computed]
-    public function usagePercent()
-    {
-        return $this->team->hasUnlimitedStorage ? null : $this->team->storage_used_percent;
-    }
-
-    #[Computed]
-    public function user()
-    {
-        return Auth::user();
-    }
-
-    public function isPortfolioComplete()
-    {
-        return $this->team->galleries()->public()->exists();
-    }
-
-    public function isPaymentsConfigured()
-    {
-        return $this->team->hasCompletedOnboarding();
-    }
-
-    public function isBiolinkCreated()
-    {
-        return $this->team->bioLinks()->exists();
-    }
-
-    public function isWatermarkConfigured()
-    {
-        return ! empty($this->team->brand_watermark_path);
-    }
-
-    #[Computed]
-    public function customersCount()
-    {
-        return $this->team->customers()->count();
-    }
-
-    #[Computed]
-    public function galleriesCount()
-    {
-        return $this->team->galleries()->count();
-    }
-
-    #[Computed]
-    public function revenue30Days()
-    {
-        $start = Carbon::now()->subDays(30);
-
-        return Cashier::formatAmount($this->team->payments()->where('completed_at', '>=', $start)->sum('amount'), $this->team->stripe_currency);
-    }
-
     #[Computed]
     public function birthdaySoonCustomers()
     {
@@ -109,12 +34,9 @@ new class extends Component
     }
 
     #[Computed]
-    public function upcomingPhotoshoots()
+    public function customersCount()
     {
-        return $this->team->photoshoots()
-            ->whereDate('date', '>=', now()->toDateString())
-            ->orderBy('date')
-            ->get();
+        return $this->team->customers()->count();
     }
 
     #[Computed]
@@ -129,73 +51,27 @@ new class extends Component
     }
 
     #[Computed]
-    public function upcomingContractsAwaitingSignature()
+    public function galleriesCount()
     {
-        return $this->team->contracts()
-            ->whereDate('shooting_date', '>=', now()->toDateString())
-            ->whereNull('executed_at')
-            ->orderBy('shooting_date')
-            ->get();
+        return $this->team->galleries()->count();
     }
 
-    public function hasUpcomingEventsOrReminders()
+    #[Computed]
+    public function incompleteSteps()
     {
-        return
-            $this->birthdaySoonCustomers?->isNotEmpty() ||
-            $this->upcomingPhotoshoots?->isNotEmpty() ||
-            $this->expiringGalleries?->isNotEmpty() ||
-            $this->upcomingContractsAwaitingSignature?->isNotEmpty();
+        $dismissed = $this->team->dismissed_setup_steps ?? [];
+
+        return collect($this->steps)
+            ->where('complete', false)
+            ->reject(fn ($step) => in_array($step['key'], $dismissed));
     }
 
-    public function getUpcomingEventsAndReminders()
+    #[Computed]
+    public function revenue30Days()
     {
-        $events = collect();
+        $start = Carbon::now()->subDays(30);
 
-        foreach ($this->birthdaySoonCustomers as $customer) {
-            $now = now();
-
-            $birthday = $customer->birthdate->copy()->year($now->year);
-
-            if ($birthday->lt($now)) {
-                $birthday->addYear();
-            }
-
-            $events->push([
-                'type' => 'birthday',
-                'label' => $customer->name,
-                'date' => $birthday,
-                'link' => "/customers/{$customer->id}",
-            ]);
-        }
-
-        foreach ($this->upcomingPhotoshoots as $photoshoot) {
-            $events->push([
-                'type' => 'photoshoot',
-                'label' => $photoshoot->title ?? __('Photoshoot'),
-                'date' => $photoshoot->date,
-                'link' => "/photoshoots/{$photoshoot->id}",
-            ]);
-        }
-
-        foreach ($this->expiringGalleries as $gallery) {
-            $events->push([
-                'type' => 'gallery',
-                'label' => $gallery->name,
-                'date' => $gallery->expiration_date,
-                'link' => "/galleries/{$gallery->id}",
-            ]);
-        }
-
-        foreach ($this->upcomingContractsAwaitingSignature as $contract) {
-            $events->push([
-                'type' => 'contract',
-                'label' => $contract->title ?? __('Contract'),
-                'date' => $contract->shooting_date,
-                'link' => "/contracts/{$contract->id}",
-            ]);
-        }
-
-        return $events->sortBy('date')->values();
+        return Cashier::formatAmount($this->team->payments()->where('completed_at', '>=', $start)->sum('amount'), $this->team->stripe_currency);
     }
 
     #[Computed]
@@ -241,21 +117,144 @@ new class extends Component
         ];
     }
 
-    public function dismissStep(string $step)
+    #[Computed]
+    public function team()
     {
-        $this->team->dismissSetupStep($step);
-
-        $this->team->refresh();
+        return Auth::user()->currentTeam;
     }
 
     #[Computed]
-    public function incompleteSteps()
+    public function totalGb()
     {
-        $dismissed = $this->team->dismissed_setup_steps ?? [];
+        return $this->team->hasUnlimitedStorage ? __('Unlimited') : $this->team->storage_limit_gb;
+    }
 
-        return collect($this->steps)
-            ->where('complete', false)
-            ->reject(fn ($step) => in_array($step['key'], $dismissed));
+    #[Computed]
+    public function upcomingContractsAwaitingSignature()
+    {
+        return $this->team->contracts()
+            ->whereDate('shooting_date', '>=', now()->toDateString())
+            ->whereNull('executed_at')
+            ->orderBy('shooting_date')
+            ->get();
+    }
+
+    #[Computed]
+    public function upcomingPhotoshoots()
+    {
+        return $this->team->photoshoots()
+            ->whereDate('date', '>=', now()->toDateString())
+            ->orderBy('date')
+            ->get();
+    }
+
+    #[Computed]
+    public function usagePercent()
+    {
+        return $this->team->hasUnlimitedStorage ? null : $this->team->storage_used_percent;
+    }
+
+    #[Computed]
+    public function usedGb()
+    {
+        return $this->team->storage_used_gb;
+    }
+
+    #[Computed]
+    public function user()
+    {
+        return Auth::user();
+    }
+
+    public function dismissStep(string $step)
+    {
+        $this->team->dismissSetupStep($step);
+        $this->team->refresh();
+    }
+
+    public function formatEventDate($date)
+    {
+        return $date->format('M j');
+    }
+
+    public function getUpcomingEventsAndReminders()
+    {
+        $events = collect();
+
+        foreach ($this->birthdaySoonCustomers as $customer) {
+            $now = now();
+
+            $birthday = $customer->birthdate->copy()->year($now->year);
+
+            if ($birthday->lt($now)) {
+                $birthday->addYear();
+            }
+
+            $events->push([
+                'type' => 'birthday',
+                'label' => $customer->name,
+                'date' => $birthday,
+                'link' => "/customers/{$customer->id}",
+            ]);
+        }
+
+        foreach ($this->upcomingPhotoshoots as $photoshoot) {
+            $events->push([
+                'type' => 'photoshoot',
+                'label' => $photoshoot->name,
+                'date' => $photoshoot->date,
+                'link' => "/photoshoots/{$photoshoot->id}",
+            ]);
+        }
+
+        foreach ($this->expiringGalleries as $gallery) {
+            $events->push([
+                'type' => 'gallery',
+                'label' => $gallery->name,
+                'date' => $gallery->expiration_date,
+                'link' => "/galleries/{$gallery->id}",
+            ]);
+        }
+
+        foreach ($this->upcomingContractsAwaitingSignature as $contract) {
+            $events->push([
+                'type' => 'contract',
+                'label' => $contract->title ?? __('Contract'),
+                'date' => $contract->shooting_date,
+                'link' => "/contracts/{$contract->id}",
+            ]);
+        }
+
+        return $events->sortBy('date')->values();
+    }
+
+    public function hasUpcomingEventsOrReminders()
+    {
+        return
+            $this->birthdaySoonCustomers?->isNotEmpty() ||
+            $this->upcomingPhotoshoots?->isNotEmpty() ||
+            $this->expiringGalleries?->isNotEmpty() ||
+            $this->upcomingContractsAwaitingSignature?->isNotEmpty();
+    }
+
+    public function isBiolinkCreated()
+    {
+        return $this->team->bioLinks()->exists();
+    }
+
+    public function isPaymentsConfigured()
+    {
+        return $this->team->hasCompletedOnboarding();
+    }
+
+    public function isPortfolioComplete()
+    {
+        return $this->team->galleries()->public()->exists();
+    }
+
+    public function isWatermarkConfigured()
+    {
+        return ! empty($this->team->brand_watermark_path);
     }
 } ?>
 
@@ -299,7 +298,12 @@ new class extends Component
                     <div class="space-y-2">
                         @foreach ($this->incompleteSteps as $step)
                             @if (! $step['complete'])
-                                <flux:callout wire:key="{{ $step['key'] }}" icon="{{ $step['icon'] }}" variant="secondary" inline>
+                                <flux:callout
+                                    wire:key="{{ $step['key'] }}"
+                                    icon="{{ $step['icon'] }}"
+                                    variant="secondary"
+                                    inline
+                                >
                                     <flux:callout.heading>
                                         {{ $step['label'] }}
                                     </flux:callout.heading>
@@ -393,7 +397,7 @@ new class extends Component
                                             wire:navigate
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
-                                        <div class="flex items-center gap-2 flex-wrap">
+                                        <div class="flex flex-wrap items-center gap-2">
                                             {{ $event['label'] }}
                                             @if ($event['type'] === 'birthday')
                                                 <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
@@ -420,7 +424,7 @@ new class extends Component
                                             wire:navigate
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
-                                         {{ $this->formatEventDate($event['date']) }}
+                                        {{ $this->formatEventDate($event['date']) }}
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
