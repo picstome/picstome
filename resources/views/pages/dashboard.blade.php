@@ -365,7 +365,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $customer->formatted_birthdate }} ({{ $customer->birthdate->diffForHumans() }})
+                                                @php $bday = $customer->birthdate->copy()->year(now()->year); if ($bday->lt(now())) $bday->addYear(); @endphp {{ $bday->isToday() ? __('Today') : ($bday->isTomorrow() ? __('Tomorrow') : $bday->diffForHumans(now(), ['parts' => 1, 'short' => true])) }}
                                             </x-table.cell>
                                         </x-table.row>
                                     @endforeach
@@ -400,7 +400,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $photoshoot->date->format('Y-m-d') }} ({{ $photoshoot->date->diffForHumans() }})
+                                                {{ $photoshoot->date->isToday() ? __('Today') : ($photoshoot->date->isTomorrow() ? __('Tomorrow') : $photoshoot->date->diffForHumans(now(), ['parts' => 1, 'short' => true])) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -443,7 +443,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $gallery->expiration_date->format('Y-m-d') }} ({{ $gallery->expiration_date->diffForHumans() }})
+                                                {{ $gallery->expiration_date->isToday() ? __('Today') : ($gallery->expiration_date->isTomorrow() ? __('Tomorrow') : $gallery->expiration_date->diffForHumans(now(), ['parts' => 1, 'short' => true])) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -486,7 +486,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $contract->formattedShootingDate }} ({{ $contract->shooting_date->diffForHumans() }})
+                                                {{ $contract->shooting_date->isToday() ? __('Today') : ($contract->shooting_date->isTomorrow() ? __('Tomorrow') : $contract->shooting_date->diffForHumans(now(), ['parts' => 1, 'short' => true])) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
