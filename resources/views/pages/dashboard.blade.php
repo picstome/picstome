@@ -16,27 +16,9 @@ use Livewire\Attributes\Computed;
 
 new class extends Component
 {
-    public function formatUpcomingDate($date, $isBirthday = false)
+    public function formatEventDate($date)
     {
-        if ($isBirthday) {
-            $date = $date->copy()->year(now()->year);
-
-            if ($date->lt(now())) {
-                $date->addYear();
-            }
-        }
-
-        if ($date->isToday()) {
-            return __('Today');
-        }
-
-        if ($date->isTomorrow()) {
-            return __('Tomorrow');
-        }
-
-        return __('in :days days', [
-            'days' => (int) now()->diffInDays($date, false),
-        ]);
+        return $date->format('M j');
     }
 
     #[Computed]
@@ -170,10 +152,18 @@ new class extends Component
         $events = collect();
 
         foreach ($this->birthdaySoonCustomers as $customer) {
+            $now = now();
+
+            $birthday = $customer->birthdate->copy()->year($now->year);
+
+            if ($birthday->lt($now)) {
+                $birthday->addYear();
+            }
+
             $events->push([
                 'type' => 'birthday',
                 'label' => $customer->name,
-                'date' => $customer->birthdate,
+                'date' => $birthday,
                 'link' => "/customers/{$customer->id}",
             ]);
         }
@@ -429,11 +419,9 @@ new class extends Component
                                             wire:navigate
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
-                                        @if ($event['type'] === 'birthday')
-                                            {{ $this->formatUpcomingDate($event['date'], true) }}
-                                        @else
-                                            {{ $this->formatUpcomingDate($event['date']) }}
-                                        @endif
+                                         <a href="{{ $event['link'] }}" wire:navigate class="underline">
+                                             {{ $this->formatEventDate($event['date']) }}
+                                         </a>
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
