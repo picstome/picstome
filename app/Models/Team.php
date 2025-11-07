@@ -43,6 +43,7 @@ class Team extends Model
             'show_pay_button' => 'boolean',
             'stripe_test_mode' => 'boolean',
             'stripe_test_onboarded' => 'boolean',
+            'dismissed_setup_steps' => 'array',
         ];
     }
 
@@ -250,7 +251,7 @@ class Team extends Model
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
 
-            return number_format($gb, 2).' GB';
+            return number_format($gb, 0).' GB';
         });
     }
 
@@ -358,5 +359,18 @@ class Team extends Model
         }
 
         $this->update(['stripe_onboarded' => true]);
+    }
+
+    /**
+     * Dismiss a dashboard setup step for this team.
+     */
+    public function dismissSetupStep(string $step): void
+    {
+        $steps = $this->dismissed_setup_steps ?? [];
+
+        if (! in_array($step, $steps)) {
+            $steps[] = $step;
+            $this->update(['dismissed_setup_steps' => $steps]);
+        }
     }
 }

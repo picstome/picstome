@@ -4,13 +4,11 @@ use App\Livewire\Forms\GeneralForm;
 use App\Models\Team;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
 use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
-use function Laravel\Folio\render;
 
 name('branding.general');
 
@@ -33,6 +31,14 @@ new class extends Component
         Flux::toast(__('Your changes have been saved.'), variant: 'success');
 
         $this->redirectRoute('branding.general', navigate: true);
+    }
+
+    public function resetDismissedSetupSteps()
+    {
+        $this->team->dismissed_setup_steps = [];
+        $this->team->save();
+        Flux::toast(__('Setup steps have been reset.'), variant: 'success');
+        $this->team = $this->team->fresh();
     }
 
     public function mount()
@@ -65,6 +71,12 @@ new class extends Component
 
                             <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                         </form>
+
+                        <flux:separator variant="subtle" class="my-8" />
+
+                        <flux:button wire:click="resetDismissedSetupSteps" variant="subtle" inset="left">
+                            {{ __('Reset setup steps') }}
+                        </flux:button>
                     </div>
                 </div>
             </div>
