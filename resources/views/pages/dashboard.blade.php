@@ -79,31 +79,13 @@ new class extends Component
     {
         return [
             [
-                'key' => 'portfolio',
-                'label' => __('Set up your portfolio'),
-                'desc' => __('Showcase your best work to attract clients.'),
-                'action' => __('Set up portfolio'),
-                'route' => route('portfolio'),
-                'icon' => 'folder',
-                'complete' => $this->isPortfolioComplete(),
-            ],
-            [
-                'key' => 'payments',
-                'label' => __('Configure payment settings'),
-                'desc' => __('Enable payments to get paid for your work.'),
-                'action' => __('Configure payments'),
-                'route' => route('branding.payments'),
-                'icon' => 'credit-card',
-                'complete' => $this->isPaymentsConfigured(),
-            ],
-            [
-                'key' => 'biolink',
-                'label' => __('Create your first BioLink'),
-                'desc' => __('Share a single link to all your socials and portfolio.'),
-                'action' => __('Create BioLink'),
-                'route' => route('public-profile'),
-                'icon' => 'link',
-                'complete' => $this->isBiolinkCreated(),
+                'key' => 'branding',
+                'label' => __('Configure branding settings'),
+                'desc' => __('Upload your studio logos and visual identity.'),
+                'action' => __('Configure branding'),
+                'route' => route('branding.logos'),
+                'icon' => 'paint-brush',
+                'complete' => $this->isBrandingConfigured(),
             ],
             [
                 'key' => 'watermark',
@@ -113,6 +95,33 @@ new class extends Component
                 'route' => route('branding.watermark'),
                 'icon' => 'sparkles',
                 'complete' => $this->isWatermarkConfigured(),
+            ],
+            [
+                'key' => 'portfolio',
+                'label' => __('Set up your portfolio'),
+                'desc' => __('Showcase your best work to attract clients.'),
+                'action' => __('Set up portfolio'),
+                'route' => route('portfolio'),
+                'icon' => 'folder',
+                'complete' => $this->isPortfolioComplete(),
+            ],
+            [
+                'key' => 'biolink',
+                'label' => __('Create your BioLink'),
+                'desc' => __('Share a single link to all your socials and portfolio.'),
+                'action' => __('Create BioLink'),
+                'route' => route('public-profile'),
+                'icon' => 'link',
+                'complete' => $this->isBiolinkCreated(),
+            ],
+            [
+                'key' => 'payments',
+                'label' => __('Configure payment settings'),
+                'desc' => __('Enable payments to get paid for your work.'),
+                'action' => __('Configure payments'),
+                'route' => route('branding.payments'),
+                'icon' => 'credit-card',
+                'complete' => $this->isPaymentsConfigured(),
             ],
         ];
     }
@@ -174,7 +183,7 @@ new class extends Component
 
     public function formatEventDate($date)
     {
-        return $date->format('M j');
+        return $date->isoFormat('MMM D, YYYY');
     }
 
     public function getUpcomingEventsAndReminders()
@@ -256,6 +265,11 @@ new class extends Component
     {
         return ! empty($this->team->brand_watermark_path);
     }
+
+    public function isBrandingConfigured()
+    {
+        return ! empty($this->team->brand_logo_path);
+    }
 } ?>
 
 <x-app-layout>
@@ -275,13 +289,13 @@ new class extends Component
 
             @if (! $this->team->subscribed())
                 <flux:callout icon="shield-check">
-                    <flux:callout.heading>{{ __('Get More With Premium') }}</flux:callout.heading>
+                    <flux:callout.heading>{{ __('Get More With Picstome PRO') }}</flux:callout.heading>
                     <flux:callout.text>
                         {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
                         <flux:button :href="route('subscribe')" variant="primary">
-                            {{ __('Upgrade to Premium') }}
+                            {{ __('Upgrade to Pro') }}
                         </flux:button>
                     </x-slot>
                 </flux:callout>
