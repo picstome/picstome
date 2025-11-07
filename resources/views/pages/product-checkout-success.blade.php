@@ -27,7 +27,7 @@ render(function (View $view, Request $request) {
             'custom_storage_limit' => config('picstome.subscription_storage_limit'),
         ]);
 
-        return redirect()->route('galleries')->with('success', 'Payment successful!');
+        return redirect()->route('dashboard')->with('success', 'Payment successful!');
     }
 
     if (!$sessionId) {

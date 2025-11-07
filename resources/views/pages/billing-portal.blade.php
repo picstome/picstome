@@ -17,5 +17,5 @@ render(function (Request $request) {
         return redirect()->route('subscribe');
     }
 
-    return $team->redirectToBillingPortal(route('galleries'));
+    return $team->redirectToBillingPortal(route('dashboard'));
 }); ?>
