@@ -244,6 +244,7 @@ new class extends Component
     public function dismissStep(string $step)
     {
         $this->team->dismissSetupStep($step);
+
         $this->team->refresh();
     }
 
@@ -296,9 +297,9 @@ new class extends Component
                     </flux:heading>
                     <flux:spacer class="my-4" />
                     <div class="space-y-2">
-                        @foreach ($this->steps as $step)
+                        @foreach ($this->incompleteSteps as $step)
                             @if (! $step['complete'])
-                                <flux:callout icon="{{ $step['icon'] }}" variant="secondary" inline>
+                                <flux:callout wire:key="{{ $step['key'] }}" icon="{{ $step['icon'] }}" variant="secondary" inline>
                                     <flux:callout.heading>
                                         {{ $step['label'] }}
                                     </flux:callout.heading>
@@ -392,7 +393,7 @@ new class extends Component
                                             wire:navigate
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-2 flex-wrap">
                                             {{ $event['label'] }}
                                             @if ($event['type'] === 'birthday')
                                                 <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
