@@ -365,7 +365,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $customer->formatted_birthdate }}
+                                                {{ $customer->formatted_birthdate }} ({{ $customer->birthdate->diffForHumans() }})
                                             </x-table.cell>
                                         </x-table.row>
                                     @endforeach
@@ -400,7 +400,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $photoshoot->date->format('Y-m-d') }}
+                                                {{ $photoshoot->date->format('Y-m-d') }} ({{ $photoshoot->date->diffForHumans() }})
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -443,7 +443,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $gallery->expiration_date->format('Y-m-d') }}
+                                                {{ $gallery->expiration_date->format('Y-m-d') }} ({{ $gallery->expiration_date->diffForHumans() }})
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -486,7 +486,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $contract->formattedShootingDate }}
+                                                {{ $contract->formattedShootingDate }} ({{ $contract->shooting_date->diffForHumans() }})
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
