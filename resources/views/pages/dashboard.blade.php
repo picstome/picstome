@@ -292,7 +292,7 @@ new class extends Component
             @if ($this->incompleteSteps->count())
                 <section>
                     <flux:heading size="lg">
-                        {{ __('Complete your account setup') }}
+                        {{ __('Complete Your Account Setup') }}
                     </flux:heading>
                     <flux:spacer class="my-4" />
                     <div class="space-y-2">
@@ -325,7 +325,7 @@ new class extends Component
 
                 <section>
                     <div class="space-y-4">
-                        <flux:heading size="lg">{{ __('Account Stats') }}</flux:heading>
+                        <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                             <a
                                 href="{{ route('customers') }}"
