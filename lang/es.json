@@ -510,7 +510,7 @@
     "Configure watermark": "Configurar marca de agua",
     "Welcome back, :name": "¡Bienvenido de nuevo, :name!",
     "Get More With Premium": "Obtén más con Premium",
-    "Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.": "Desbloquea 1000GB de almacenamiento, pagos, fechas de expiración de galerías, contratos ilimitados y marca blanca. Mejora a Premium y potencia tu negocio.",
+    "Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.": "Desbloquea 1000GB de almacenamiento, pagos, fechas de expiración de galerías, contratos ilimitados y marca blanca. Mejora a Pro y potencia tu negocio.",
     "Upgrade to Premium": "Mejorar a Premium",
     "Complete Your Account Setup": "Completa la configuración de tu cuenta",
     "Account Overview": "Resumen de la cuenta",
@@ -521,5 +521,7 @@
     "Upcoming Events & Reminders": "Próximos eventos y recordatorios",
     "Scheduled": "Programado",
     "Expiring soon": "Pronto expira",
-    "Awaiting signature": "Esperando firma"
+    "Awaiting signature": "Esperando firma",
+    "Get More With Picstome Pro": "Obtén más con Picstome Pro",
+    "Upgrade to Pro": "Mejorar a Pro"
 }

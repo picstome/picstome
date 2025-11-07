@@ -289,9 +289,9 @@ new class extends Component
 
             @if (! $this->team->subscribed())
                 <flux:callout icon="shield-check">
-                    <flux:callout.heading>{{ __('Get More With Picstome PRO') }}</flux:callout.heading>
+                    <flux:callout.heading>{{ __('Get More With Picstome Pro') }}</flux:callout.heading>
                     <flux:callout.text>
-                        {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Premium and power up your business.') }}
+                        {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
                         <flux:button :href="route('subscribe')" variant="primary">
