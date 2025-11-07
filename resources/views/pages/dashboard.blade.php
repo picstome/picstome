@@ -16,6 +16,29 @@ use Livewire\Attributes\Computed;
 
 new class extends Component
 {
+    public function formatUpcomingDate($date, $isBirthday = false)
+    {
+        if ($isBirthday) {
+            $date = $date->copy()->year(now()->year);
+
+            if ($date->lt(now())) {
+                $date->addYear();
+            }
+        }
+
+        if ($date->isToday()) {
+            return __('Today');
+        }
+
+        if ($date->isTomorrow()) {
+            return __('Tomorrow');
+        }
+
+        return __('in :days days', [
+            'days' => (int) now()->diffInDays($date, false)
+        ]);
+    }
+
     #[Computed]
     public function team()
     {
@@ -313,12 +336,10 @@ new class extends Component
                 </section>
             @endif
 
-            @if (
-                $this->birthdaySoonCustomers?->isNotEmpty() ||
-                $this->upcomingPhotoshoots?->isNotEmpty() ||
-                $this->expiringGalleries?->isNotEmpty() ||
-                $this->upcomingContractsAwaitingSignature?->isNotEmpty()
-            )
+            @if ($this->birthdaySoonCustomers?->isNotEmpty() ||
+                 $this->upcomingPhotoshoots?->isNotEmpty() ||
+                 $this->expiringGalleries?->isNotEmpty() ||
+                 $this->upcomingContractsAwaitingSignature?->isNotEmpty())
                 <section class="mt-8 mb-8">
                     <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
                     <flux:separator class="mt-3" />
@@ -365,7 +386,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                @php $bday = $customer->birthdate->copy()->year(now()->year); if ($bday->lt(now())) $bday->addYear(); @endphp {{ $bday->isToday() ? __('Today') : ($bday->isTomorrow() ? __('Tomorrow') : $bday->diffForHumans(now(), ['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW])) }}
+                                                {{ $this->formatUpcomingDate($customer->birthdate, true) }}
                                             </x-table.cell>
                                         </x-table.row>
                                     @endforeach
@@ -400,7 +421,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $photoshoot->date->isToday() ? __('Today') : ($photoshoot->date->isTomorrow() ? __('Tomorrow') : $photoshoot->date->diffForHumans(now(), ['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW])) }}
+                                                {{ $this->formatUpcomingDate($photoshoot->date) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -443,7 +464,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $gallery->expiration_date->isToday() ? __('Today') : ($gallery->expiration_date->isTomorrow() ? __('Tomorrow') : $gallery->expiration_date->diffForHumans(now(), ['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW])) }}
+                                                {{ $this->formatUpcomingDate($gallery->expiration_date) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
@@ -475,7 +496,12 @@ new class extends Component
                                                 ></a>
                                                 <div class="flex items-center gap-2">
                                                     {{ $contract->title ?? __('Contract') }}
-                                                    <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
+                                                    <flux:badge
+                                                        color="orange"
+                                                        inset="top bottom"
+                                                        icon="document"
+                                                        size="sm"
+                                                    >
                                                         {{ __('Awaiting signature') }}
                                                     </flux:badge>
                                                 </div>
@@ -486,7 +512,7 @@ new class extends Component
                                                     wire:navigate
                                                     class="absolute inset-0 focus:outline-hidden"
                                                 ></a>
-                                                {{ $contract->shooting_date->isToday() ? __('Today') : ($contract->shooting_date->isTomorrow() ? __('Tomorrow') : $contract->shooting_date->diffForHumans(now(), ['parts' => 1, 'syntax' => \Carbon\CarbonInterface::DIFF_RELATIVE_TO_NOW])) }}
+                                                {{ $this->formatUpcomingDate($contract->shooting_date) }}
                                             </x-table.cell>
                                             <x-table.cell class="relative" align="end">
                                                 <a
