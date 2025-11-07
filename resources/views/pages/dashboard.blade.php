@@ -123,7 +123,7 @@ new class extends Component
         return $this->team->galleries()
             ->whereNotNull('expiration_date')
             ->where('expiration_date', '>=', now()->toDateString())
-            ->where('expiration_date', '<=', now()->addDays(30)->toDateString())
+            ->where('expiration_date', '<=', now()->addDays(7)->toDateString())
             ->orderBy('expiration_date')
             ->get();
     }
@@ -419,9 +419,7 @@ new class extends Component
                                             wire:navigate
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
-                                         <a href="{{ $event['link'] }}" wire:navigate class="underline">
-                                             {{ $this->formatEventDate($event['date']) }}
-                                         </a>
+                                         {{ $this->formatEventDate($event['date']) }}
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
