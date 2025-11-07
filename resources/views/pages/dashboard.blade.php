@@ -156,6 +156,16 @@ new class extends Component
             ->get();
     }
 
+    public function hasUpcomingEventsOrReminders()
+    {
+        return (
+            $this->birthdaySoonCustomers?->isNotEmpty() ||
+            $this->upcomingPhotoshoots?->isNotEmpty() ||
+            $this->expiringGalleries?->isNotEmpty() ||
+            $this->upcomingContractsAwaitingSignature?->isNotEmpty()
+        );
+    }
+
     #[Computed]
     public function steps()
     {
@@ -321,7 +331,7 @@ new class extends Component
                                                 style="width: {{ min($this->usagePercent, 100) }}%"
                                             ></div>
                                         </div>
-                                        <flux:text class="mt-2 text-[11px]!">
+                                        <flux:text class="mt-2 text-[11px]">
                                             {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
                                         </flux:text>
                                     @else
@@ -336,10 +346,7 @@ new class extends Component
                 </section>
             @endif
 
-            @if ($this->birthdaySoonCustomers?->isNotEmpty() ||
-                 $this->upcomingPhotoshoots?->isNotEmpty() ||
-                 $this->expiringGalleries?->isNotEmpty() ||
-                 $this->upcomingContractsAwaitingSignature?->isNotEmpty())
+            @if ($this->hasUpcomingEventsOrReminders())
                 <section class="mt-8 mb-8">
                     <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
                     <flux:separator class="mt-3" />
