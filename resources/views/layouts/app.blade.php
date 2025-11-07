@@ -61,11 +61,9 @@
                 @endauth
 
                 <flux:navlist>
-                    @if (auth()->user()->is_admin)
-                        <flux:navlist.item :href="route('dashboard')" icon="home" wire:navigate>
-                            {{ __('Dashboard') }}
-                        </flux:navlist.item>
-                    @endif
+                    <flux:navlist.item :href="route('dashboard')" icon="home" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </flux:navlist.item>
 
                     <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
                         {{ __('Customers') }}
