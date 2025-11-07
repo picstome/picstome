@@ -346,195 +346,188 @@ new class extends Component
                 </section>
             @endif
 
-            @if ($this->hasUpcomingEventsOrReminders())
+            @if ($this->birthdaySoonCustomers?->isNotEmpty())
                 <section class="mt-8 mb-8">
-                    <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
-                    <flux:separator class="mt-3" />
+                    <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->birthdaySoonCustomers as $customer)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $customer->name }}
+                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                {{ __('Birthday soon') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->email }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $customer->phone }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $this->formatUpcomingDate($customer->birthdate, true) }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
+                </section>
+            @endif
 
-                    @if ($this->birthdaySoonCustomers?->isNotEmpty())
-                        <div class="mb-8">
-                            <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
-                            <x-table>
-                                <x-table.rows>
-                                    @foreach ($this->birthdaySoonCustomers as $customer)
-                                        <x-table.row>
-                                            <x-table.cell variant="strong" class="relative w-full">
-                                                <a
-                                                    href="/customers/{{ $customer->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                <div class="flex items-center gap-2">
-                                                    {{ $customer->name }}
-                                                    <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
-                                                        {{ __('Birthday soon') }}
-                                                    </flux:badge>
-                                                </div>
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/customers/{{ $customer->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $customer->email }}
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/customers/{{ $customer->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $customer->phone }}
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/customers/{{ $customer->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $this->formatUpcomingDate($customer->birthdate, true) }}
-                                            </x-table.cell>
-                                        </x-table.row>
-                                    @endforeach
-                                </x-table.rows>
-                            </x-table>
-                        </div>
-                    @endif
+            @if ($this->upcomingPhotoshoots?->isNotEmpty())
+                <section class="mt-8 mb-8">
+                    <x-heading level="2">{{ __('Upcoming Photoshoots') }}</x-heading>
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->upcomingPhotoshoots as $photoshoot)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/photoshoots/{{ $photoshoot->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $photoshoot->title ?? __('Photoshoot') }}
+                                            <flux:badge color="blue" inset="top bottom" icon="camera" size="sm">
+                                                {{ __('Scheduled') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/photoshoots/{{ $photoshoot->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $this->formatUpcomingDate($photoshoot->date) }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/photoshoots/{{ $photoshoot->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $photoshoot->location ?? '-' }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
+                </section>
+            @endif
 
-                    @if ($this->upcomingPhotoshoots?->isNotEmpty())
-                        <div class="mb-8">
-                            <x-heading level="2">{{ __('Upcoming Photoshoots') }}</x-heading>
-                            <x-table>
-                                <x-table.rows>
-                                    @foreach ($this->upcomingPhotoshoots as $photoshoot)
-                                        <x-table.row>
-                                            <x-table.cell variant="strong" class="relative w-full">
-                                                <a
-                                                    href="/photoshoots/{{ $photoshoot->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                <div class="flex items-center gap-2">
-                                                    {{ $photoshoot->title ?? __('Photoshoot') }}
-                                                    <flux:badge color="blue" inset="top bottom" icon="camera" size="sm">
-                                                        {{ __('Scheduled') }}
-                                                    </flux:badge>
-                                                </div>
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/photoshoots/{{ $photoshoot->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $this->formatUpcomingDate($photoshoot->date) }}
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/photoshoots/{{ $photoshoot->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $photoshoot->location ?? '-' }}
-                                            </x-table.cell>
-                                        </x-table.row>
-                                    @endforeach
-                                </x-table.rows>
-                            </x-table>
-                        </div>
-                    @endif
+            @if ($this->expiringGalleries?->isNotEmpty())
+                <section class="mt-8 mb-8">
+                    <x-heading level="2">{{ __('Expiring Galleries') }}</x-heading>
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->expiringGalleries as $gallery)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/galleries/{{ $gallery->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $gallery->name }}
+                                            <flux:badge color="red" inset="top bottom" icon="clock" size="sm">
+                                                {{ __('Expiring soon') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/galleries/{{ $gallery->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $this->formatUpcomingDate($gallery->expiration_date) }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/galleries/{{ $gallery->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $gallery->photoshoot?->title ?? '-' }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
+                </section>
+            @endif
 
-                    @if ($this->expiringGalleries?->isNotEmpty())
-                        <div class="mb-8">
-                            <x-heading level="2">{{ __('Expiring Galleries') }}</x-heading>
-                            <x-table>
-                                <x-table.rows>
-                                    @foreach ($this->expiringGalleries as $gallery)
-                                        <x-table.row>
-                                            <x-table.cell variant="strong" class="relative w-full">
-                                                <a
-                                                    href="/galleries/{{ $gallery->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                <div class="flex items-center gap-2">
-                                                    {{ $gallery->name }}
-                                                    <flux:badge color="red" inset="top bottom" icon="clock" size="sm">
-                                                        {{ __('Expiring soon') }}
-                                                    </flux:badge>
-                                                </div>
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/galleries/{{ $gallery->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $this->formatUpcomingDate($gallery->expiration_date) }}
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/galleries/{{ $gallery->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $gallery->photoshoot?->title ?? '-' }}
-                                            </x-table.cell>
-                                        </x-table.row>
-                                    @endforeach
-                                </x-table.rows>
-                            </x-table>
-                        </div>
-                    @endif
-
-                    @if ($this->upcomingContractsAwaitingSignature?->isNotEmpty())
-                        <div>
-                            <x-heading level="2">{{ __('Upcoming Contracts Awaiting Signature') }}</x-heading>
-                            <x-table>
-                                <x-table.rows>
-                                    @foreach ($this->upcomingContractsAwaitingSignature as $contract)
-                                        <x-table.row>
-                                            <x-table.cell variant="strong" class="relative w-full">
-                                                <a
-                                                    href="/contracts/{{ $contract->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                <div class="flex items-center gap-2">
-                                                    {{ $contract->title ?? __('Contract') }}
-                                                    <flux:badge
-                                                        color="orange"
-                                                        inset="top bottom"
-                                                        icon="document"
-                                                        size="sm"
-                                                    >
-                                                        {{ __('Awaiting signature') }}
-                                                    </flux:badge>
-                                                </div>
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/contracts/{{ $contract->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $this->formatUpcomingDate($contract->shooting_date) }}
-                                            </x-table.cell>
-                                            <x-table.cell class="relative" align="end">
-                                                <a
-                                                    href="/contracts/{{ $contract->id }}"
-                                                    wire:navigate
-                                                    class="absolute inset-0 focus:outline-hidden"
-                                                ></a>
-                                                {{ $contract->photoshoot?->title ?? '-' }}
-                                            </x-table.cell>
-                                        </x-table.row>
-                                    @endforeach
-                                </x-table.rows>
-                            </x-table>
-                        </div>
-                    @endif
+            @if ($this->upcomingContractsAwaitingSignature?->isNotEmpty())
+                <section class="mt-8 mb-8">
+                    <x-heading level="2">{{ __('Upcoming Contracts Awaiting Signature') }}</x-heading>
+                    <x-table>
+                        <x-table.rows>
+                            @foreach ($this->upcomingContractsAwaitingSignature as $contract)
+                                <x-table.row>
+                                    <x-table.cell variant="strong" class="relative w-full">
+                                        <a
+                                            href="/contracts/{{ $contract->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        <div class="flex items-center gap-2">
+                                            {{ $contract->title ?? __('Contract') }}
+                                            <flux:badge
+                                                color="orange"
+                                                inset="top bottom"
+                                                icon="document"
+                                                size="sm"
+                                            >
+                                                {{ __('Awaiting signature') }}
+                                            </flux:badge>
+                                        </div>
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/contracts/{{ $contract->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $this->formatUpcomingDate($contract->shooting_date) }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/contracts/{{ $contract->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        {{ $contract->photoshoot?->title ?? '-' }}
+                                    </x-table.cell>
+                                </x-table.row>
+                            @endforeach
+                        </x-table.rows>
+                    </x-table>
                 </section>
             @endif
         </div>
