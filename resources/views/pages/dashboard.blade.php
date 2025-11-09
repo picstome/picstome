@@ -44,7 +44,7 @@ new class extends Component
     {
         return $this->team->galleries()
             ->whereNotNull('expiration_date')
-            ->where('expiration_date', '>=', now()->toDateString())
+            ->where('expiration_date', '>=', now()->copy()->startOfDay())
             ->where('expiration_date', '<=', now()->addDays(7)->toDateString())
             ->orderBy('expiration_date')
             ->get();
@@ -142,7 +142,7 @@ new class extends Component
     public function upcomingContractsAwaitingSignature()
     {
         return $this->team->contracts()
-            ->whereDate('shooting_date', '>=', now()->toDateString())
+            ->where('shooting_date', '>=', now()->copy()->startOfDay())
             ->whereNull('executed_at')
             ->orderBy('shooting_date')
             ->get();
@@ -152,7 +152,7 @@ new class extends Component
     public function upcomingPhotoshoots()
     {
         return $this->team->photoshoots()
-            ->whereDate('date', '>=', now()->toDateString())
+            ->where('date', '>=', now()->copy()->startOfDay())
             ->orderBy('date')
             ->get();
     }
