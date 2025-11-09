@@ -191,7 +191,7 @@ new class extends Component
         $events = collect();
 
         foreach ($this->birthdaySoonCustomers as $customer) {
-            $now = now();
+            $now = now()->startOfDay();
 
             $birthday = $customer->birthdate->copy()->year($now->year);
 
