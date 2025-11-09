@@ -23,7 +23,7 @@ new class extends Component
             ->get()
             ->filter(fn ($customer) => $customer->isBirthdaySoon())
             ->sortBy(function ($customer) {
-                $now = now();
+                $now = now()->startOfDay();
                 $thisYearBirthday = $customer->birthdate->copy()->year($now->year);
                 if ($thisYearBirthday->lt($now)) {
                     $thisYearBirthday->addYear();
