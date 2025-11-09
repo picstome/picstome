@@ -43,7 +43,7 @@ class Customer extends Model
             return false;
         }
 
-        $now = now();
+        $now = now()->startOfDay();
 
         $thisYearBirthday = $this->birthdate->copy()->year($now->year);
 
