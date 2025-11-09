@@ -47,7 +47,7 @@ class Customer extends Model
 
         $thisYearBirthday = $this->birthdate->copy()->year($now->year);
 
-        if ($thisYearBirthday->lt($now)) {
+        if ($thisYearBirthday->lt($now->startOfDay())) {
             $thisYearBirthday->addYear();
         }
 
