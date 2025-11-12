@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('galleries:delete-expired')->daily();
 Schedule::command('galleries:send-expiration-reminders')->dailyAt('09:00');
+Schedule::command('subscriptions:cleanup')->daily();

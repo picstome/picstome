@@ -13,6 +13,8 @@ class UserForm extends Form
 
     public ?int $monthly_contract_limit = null;
 
+    public bool $lifetime = false;
+
     public function setUser(User $user)
     {
         $this->user = $user;
@@ -22,6 +24,7 @@ class UserForm extends Form
             : null;
 
         $this->monthly_contract_limit = $user->personalTeam()->monthly_contract_limit;
+        $this->lifetime = (bool) $user->personalTeam()->lifetime;
     }
 
     public function update()
@@ -38,6 +41,7 @@ class UserForm extends Form
         $this->user->personalTeam()->update([
             'custom_storage_limit' => $bytes,
             'monthly_contract_limit' => $this->monthly_contract_limit,
+            'lifetime' => $this->lifetime,
         ]);
     }
 }

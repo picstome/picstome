@@ -115,7 +115,7 @@ class Contract extends Model
     protected function formattedShootingDate(): Attribute
     {
         return Attribute::get(function () {
-            return $this->shooting_date->isoFormat('MMM D, YYYY');
+            return $this->shooting_date?->format('Y-m-d');
         });
     }
 

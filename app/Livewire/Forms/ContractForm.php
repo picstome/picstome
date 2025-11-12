@@ -13,13 +13,13 @@ class ContractForm extends Form
 {
     public ?Photoshoot $photoshoot = null;
 
-    #[Validate('required')]
+    #[Validate(['required', 'string', 'max:255'])]
     public $title;
 
-    #[Validate('required')]
+    #[Validate(['required', 'string', 'max:255'])]
     public $description;
 
-    #[Validate('required')]
+    #[Validate(['required', 'string', 'max:255'])]
     public $location;
 
     #[Validate('required')]

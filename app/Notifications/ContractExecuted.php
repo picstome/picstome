@@ -34,11 +34,17 @@ class ContractExecuted extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('Signed').': '.$this->contract->title)
             ->line(__('Contract signed'))
             ->line(__('Download the signed contract for your records. All relevant parties have been notified by email.'))
             ->action('Download contract', $this->contract->pdf_file_url);
+
+        if ($this->contract->team->subscribed()) {
+            $mail->salutation($this->contract->team->name);
+        }
+
+        return $mail;
     }
 
     /**

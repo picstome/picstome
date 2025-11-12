@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\AddToAcumbamailList;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 use function Laravel\Folio\middleware;
@@ -16,6 +17,12 @@ render(function (EmailVerificationRequest $request) {
     }
 
     $request->fulfill();
+
+    $listId = app()->getLocale() === 'es'
+        ? config('services.acumbamail.list_id_es')
+        : config('services.acumbamail.list_id');
+
+    AddToAcumbamailList::dispatch($request->user()->email, $request->user()->name, $listId);
 
     return redirect()->intended(route('galleries', absolute: false).'?verified=1');
 }); ?>

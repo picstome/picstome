@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Customer;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class PhotoshootFactory extends Factory
     {
         return [
             'team_id' => Team::factory(),
+            'customer_id' => Customer::factory(),
             'name' => 'The Great Photoshoot',
             'customer_name' => 'The Best Customer Ever',
         ];

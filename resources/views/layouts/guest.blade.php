@@ -3,9 +3,16 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{ config('app.name') }}</title>
+        <title>{{ $title ?? config('app.name') }}</title>
 
-        @if (! empty($font))
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="Picstome" />
+        <link rel="manifest" href="/site-b.webmanifest" />
+
+        @if (! empty((string) ($font ?? '')))
             <link
                 rel="stylesheet"
                 href="https://fonts.googleapis.com/css2?family={{ str()->of($font)->replace(' ', '+') }}:ital,wght@0,400..900;1,400..900&display=swap"
@@ -38,9 +45,13 @@
         @endif
 
         @fluxAppearance
+
+        {{ $head ?? '' }}
+
+        @stack('head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:main :container="!$fullScreen">
+        <flux:main :container="! ($fullScreen ?? false)" @class(['p-0!' => ($fullScreen) ?? false])>
             {{ $slot }}
         </flux:main>
 

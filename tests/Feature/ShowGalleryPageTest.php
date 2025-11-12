@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\PhotoAdded;
+use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Team;
@@ -9,6 +10,7 @@ use App\Models\Photoshoot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
 use Livewire\Volt\Volt;
@@ -61,6 +63,54 @@ describe('Gallery Viewing', function () {
 });
 
 describe('Photo Upload', function () {
+    it('blocks photo upload when image exceeds max_photo_pixels with keep_original_size enabled (oversized)', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $oversizedPhoto = UploadedFile::fake()->image('oversized.jpg', 101, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $oversizedPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        $component->assertHasErrors(['photos.0']);
+    });
+
+    it('blocks photo upload when image is exactly at max_photo_pixels with keep_original_size enabled', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $exactPhoto = UploadedFile::fake()->image('exact.jpg', 100, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $exactPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        $component->assertHasErrors(['photos.0']);
+    });
+
+    it('allows photo upload when image is under max_photo_pixels with keep_original_size enabled', function () {
+        config(['picstome.max_photo_pixels' => 10000]); // 100x100
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->create(['keep_original_size' => true]);
+
+        $validPhoto = UploadedFile::fake()->image('valid.jpg', 99, 100);
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('photos', [0 => $validPhoto])
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(1);
+        $component->assertHasNoErrors();
+    });
+
     it('allows photos to be added to a gallery', function () {
         Storage::fake('public');
         Storage::fake('s3');
@@ -247,11 +297,81 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->protected('password')->create();
         expect($gallery->share_password)->not->toBeNull();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.passwordProtected', false)
             ->call('share');
 
         expect($gallery->fresh()->share_password)->toBeNull();
+    });
+
+    it('can be shared with a description', function () {
+        $gallery = Gallery::factory()->create();
+        expect($gallery->share_description)->toBeNull();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
+            ->set('shareForm.description', 'This is a beautiful wedding gallery')
+            ->call('share');
+
+        expect($gallery->fresh()->is_shared)->toBeTrue();
+        expect($gallery->fresh()->share_description)->toBe('This is a beautiful wedding gallery');
+    });
+
+    it('can update the share description', function () {
+        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Old description']);
+        expect($gallery->share_description)->toBe('Old description');
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
+            ->set('shareForm.description', 'Updated description')
+            ->call('share');
+
+        expect($gallery->fresh()->share_description)->toBe('Updated description');
+    });
+
+    it('can be shared without a description', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', false)
+            ->call('share');
+
+        expect($gallery->fresh()->is_shared)->toBeTrue();
+        expect($gallery->fresh()->share_description)->toBeNull();
+    });
+
+    it('can remove the share description', function () {
+        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Some description']);
+        expect($gallery->share_description)->toBe('Some description');
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', false)
+            ->call('share');
+
+        expect($gallery->fresh()->share_description)->toBeNull();
+    });
+
+    it('requires description when description is enabled', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', true)
+            ->set('shareForm.description', '')
+            ->call('share');
+
+        $component->assertHasErrors('shareForm.description');
+    });
+
+    it('does not require description when description is disabled', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.descriptionEnabled', false)
+            ->set('shareForm.description', '')
+            ->call('share');
+
+        $component->assertHasNoErrors('shareForm.description');
+        expect($gallery->fresh()->share_description)->toBeNull();
     });
 });
 
@@ -448,6 +568,20 @@ describe('Gallery Editing', function () {
         $gallery->refresh();
         expect($gallery->expiration_date)->not->toBeNull();
     });
+
+    it('does not require expiration date when gallery is public, even if not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['expiration_date' => now()->addDays(5)]);
+        expect($gallery->is_public)->toBeTrue();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update')
+            ->assertHasNoErrors('form.expirationDate');
+
+        $gallery->refresh();
+
+        expect($gallery->expiration_date)->toBeNull();
+    });
 });
 
 describe('Storage Limits', function () {
@@ -615,5 +749,183 @@ describe('Storage Limits', function () {
         expect($gallery->fresh()->photos()->count())->toBe(1);
         expect($this->team->calculateStorageUsed())->toBeGreaterThanOrEqual($initialStorageUsed);
         $component->assertHasNoErrors();
+    });
+});
+
+describe('Cover Photo', function () {
+    it('allows setting a photo as the gallery cover', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('allows changing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo1 = Photo::factory()->for($gallery)->create();
+        $photo2 = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo1->id]);
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo2])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
+    });
+
+    it('allows removing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo->id]);
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('removeAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+
+    it('prevents setting cover photo from another team', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherTeam = Team::factory()->create();
+        $otherGallery = Gallery::factory()->for($otherTeam)->create();
+        $photo = Photo::factory()->for($otherGallery)->create();
+
+        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        $component->assertStatus(403);
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+});
+
+describe('Gallery Public Access', function () {
+    it('dispatches photo processing and disables keep_original_size when toggling gallery to public', function () {
+        Queue::fake();
+
+        $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
+        $photos = Photo::factory()->for($gallery)->count(3)->create();
+
+        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        $gallery->refresh();
+
+        expect($gallery->is_public)->toBeTrue();
+        expect($gallery->keep_original_size)->toBeFalse();
+
+        foreach ($photos as $photo) {
+            Queue::assertPushed(ProcessPhoto::class, function ($job) use ($photo) {
+                return $job->photo->is($photo);
+            });
+        }
+    });
+
+    it('disables expiration when toggling gallery to public', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+        expect($gallery->is_public)->toBeFalse();
+        expect($gallery->expiration_date)->not->toBeNull();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        $gallery->refresh();
+        expect($gallery->is_public)->toBeTrue();
+        expect($gallery->expiration_date)->toBeNull();
+    });
+
+    it('allows marking a gallery as public', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        expect($gallery->is_public)->toBeFalse();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        expect($gallery->fresh()->is_public)->toBeTrue();
+    });
+
+    it('allows marking a public gallery as private', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create();
+        expect($gallery->is_public)->toBeTrue();
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        expect($gallery->fresh()->is_public)->toBeFalse();
+    });
+
+    it('sets expiration date to one month when toggling gallery from public to private', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create([
+            'expiration_date' => null,
+        ]);
+
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('togglePublic');
+
+        $gallery->refresh();
+        expect($gallery->is_public)->toBeFalse();
+        expect($gallery->expiration_date->toDateString())->toBe(now()->addMonth()->toDateString());
+    });
+
+    it('allows guests to view public galleries via public route', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+
+        $response->assertStatus(200);
+    });
+
+    it('prevents guests from viewing private galleries via public route', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
+        expect($gallery->is_public)->toBeFalse();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+
+        $response->assertStatus(404);
+    });
+});
+
+describe('Portfolio Photo Public Access', function () {
+    it('allows guests to view public portfolio photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+
+        $response->assertStatus(200);
+    });
+
+    it('prevents guests from viewing private portfolio photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
+        $photo = Photo::factory()->for($gallery)->create();
+        expect($gallery->is_public)->toBeFalse();
+
+        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+
+        $response->assertStatus(404);
+    });
+});
+
+describe('Portfolio Index Public Access', function () {
+    it('allows guests to view portfolio index with public galleries', function () {
+        $publicGallery = Gallery::factory()->for($this->team)->public()->create(['name' => 'Public Gallery']);
+        $privateGallery = Gallery::factory()->for($this->team)->create(['name' => 'Private Gallery']);
+        Photo::factory()->for($publicGallery)->create();
+
+        $response = get('/@' . $this->team->handle . '/portfolio');
+
+        $response->assertStatus(200);
+        $response->assertSee($publicGallery->name);
+        $response->assertDontSee($privateGallery->name);
+    });
+
+
+
+    it('returns 404 for non-existent team handle', function () {
+        $response = get('/@nonexistent/portfolio');
+
+        $response->assertStatus(404);
     });
 });

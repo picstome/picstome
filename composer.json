@@ -1,13 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "picstome/picstome",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": [
-        "laravel",
-        "framework"
-    ],
-    "license": "MIT",
+    "description": "Galleries and contracts for photographers",
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
@@ -23,10 +18,8 @@
         "livewire/volt": "^1.6",
         "maennchen/zipstream-php": "^3.1",
         "spatie/image": "^3.8",
-        "spatie/temporary-directory": "^2.3"
-    },
-    "suggest": {
-        "livewire/flux-pro": "Pro components for Flux UI (optional)"
+        "spatie/temporary-directory": "^2.3",
+        "stevebauman/purify": "^6.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -36,8 +29,9 @@
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.1",
-        "pestphp/pest": "^3.7",
-        "pestphp/pest-plugin-laravel": "^3.1"
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-browser": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
     },
     "autoload": {
         "psr-4": {

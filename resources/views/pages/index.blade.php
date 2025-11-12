@@ -2,5 +2,5 @@
 use function Laravel\Folio\render;
 
 render(function () {
-    return to_route('galleries');
+    return to_route('dashboard');
 }); ?>

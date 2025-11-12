@@ -34,6 +34,8 @@ new class extends Component
 
     public Collection $favorites;
 
+    public Collection $allPhotos;
+
     public array $existingPhotoNames = [];
 
     public ?Collection $photoshoots;
@@ -50,13 +52,14 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
+        $this->getAllPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
 
     public function save($index)
     {
-        if(! isset($this->photos[$index])) {
+        if (! isset($this->photos[$index])) {
             return;
         }
 
@@ -74,6 +77,19 @@ new class extends Component
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
+
+                    if ($this->gallery->keep_original_size) {
+                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
+
+                        $maxPixels = config('picstome.max_photo_pixels');
+
+                        if ($width * $height >= $maxPixels) {
+                            $fail(__('Image :name exceeds :max pixels.', [
+                                'name' => $uploadedPhoto->getClientOriginalName(),
+                                'max' => number_format($maxPixels / 1000000, 0).'M',
+                            ]));
+                        }
+                    }
                 },
             ],
         ]);
@@ -82,6 +98,7 @@ new class extends Component
 
         $this->addPhotoToGallery($uploadedPhoto);
 
+        $this->getAllPhotos();
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
@@ -114,11 +131,23 @@ new class extends Component
         });
 
         $this->gallery = $this->gallery->fresh();
+        $this->getAllPhotos();
+
+        $this->dispatch('gallery-sharing-changed');
     }
 
     public function disableSharing()
     {
         $this->gallery->update(['is_shared' => false]);
+
+        $this->dispatch('gallery-sharing-changed');
+    }
+
+    public function togglePublic()
+    {
+        $this->gallery->togglePublic();
+
+        $this->dispatch('gallery-public-changed');
     }
 
     public function deletePhoto(Photo $photo)
@@ -128,6 +157,7 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
+        $this->getAllPhotos();
 
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
@@ -137,6 +167,7 @@ new class extends Component
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
+        $this->getAllPhotos();
 
         $this->modal('edit')->close();
     }
@@ -156,15 +187,11 @@ new class extends Component
         $this->favorites = $favorites->naturalSortBy('name');
     }
 
-    public function with()
+    public function getAllPhotos()
     {
         $photos = $this->gallery->photos()->with('gallery')->get();
 
-        $sortedPhotos = $photos->naturalSortBy('name');
-
-        return [
-            'allPhotos' => $sortedPhotos,
-        ];
+        $this->allPhotos = $photos->naturalSortBy('name');
     }
 }; ?>
 
@@ -181,9 +208,22 @@ new class extends Component
                 <div class="max-sm:w-full sm:flex-1">
                     <div class="flex items-center gap-4">
                         <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                        @if ($gallery->is_shared)
-                            <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if ($gallery->is_shared)
+                                <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
+                            @endif
+                            @if ($gallery->is_public)
+                                <div class="flex items-center gap-1">
+                                    <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
+                                    <flux:tooltip toggleable>
+                                        <flux:button icon="information-circle" size="xs" variant="subtle" />
+                                        <flux:tooltip.content class="max-w-[20rem]">
+                                            <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
@@ -209,13 +249,22 @@ new class extends Component
                                 {{ __('Download') }}
                             </flux:menu.item>
 
-                            <flux:modal.trigger name="favorite-list">
-                                <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
-                            </flux:modal.trigger>
+                            @if($favorites->isNotEmpty())
+                                <flux:modal.trigger name="favorite-list">
+                                    <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
+                                </flux:modal.trigger>
+                            @endif
 
                             <flux:modal.trigger name="edit">
                                 <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
                             </flux:modal.trigger>
+
+                            <flux:menu.item
+                                wire:click="togglePublic"
+                                :icon="$gallery->is_public ? 'eye-slash' : 'eye'"
+                            >
+                                {{ $gallery->is_public ? __('Make private') : __('Make public') }}
+                            </flux:menu.item>
 
                             <flux:menu.separator />
 
@@ -273,6 +322,11 @@ new class extends Component
                         >
                             {{ __('Favorited') }}
                         </flux:navbar.item>
+                        @if($favorites->isNotEmpty())
+                            <flux:modal.trigger name="favorite-list">
+                                <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
+                            </flux:modal.trigger>
+                        @endif
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
@@ -280,7 +334,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" />
+                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -290,7 +344,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($favorites as $photo)
-                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" />
+                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" :html-id="'favorite-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -329,26 +383,39 @@ new class extends Component
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader">
+                    @if ($gallery->keep_original_size)
+                        <flux:callout icon="information-circle" variant="secondary" class="mb-4">
+                            <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
+                            </flux:callout.text>
+                        </flux:callout>
+                    @endif
+
+                    <div x-data="multiFileUploader"
+                        x-on:dragover.prevent="dragActive = true"
+                        x-on:dragleave.prevent="dragActive = false"
+                        x-on:drop.prevent="handleDrop($event)"
+                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}">
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
                             accept=".jpg, .jpeg, .png, .tiff"
                             multiple
-                            class="mb-4"
                         />
+                        <flux:description class="max-sm:hidden mt-2">
+                            {{ __('Drag and drop files here, or click on choose files.') }}
+                        </flux:description>
 
                         <flux:error name="photos" />
-
-                        <flux:error name="photos.*" />
 
                         <div
                             x-show="
                                 files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
                                     .length > 0
                             "
-                            class="text-sm font-medium text-zinc-800 dark:text-white"
+                            class="text-sm font-medium text-zinc-800 dark:text-white mt-4"
                         >
                             <span
                                 x-text="
@@ -433,11 +500,17 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
+                     <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
 
-                    <div x-show="$wire.shareForm.passwordProtected">
-                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
-                    </div>
+                     <div x-show="$wire.shareForm.passwordProtected">
+                         <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
+                     </div>
+
+                     <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
+
+                     <div x-show="$wire.shareForm.descriptionEnabled">
+                         <flux:textarea wire:model="shareForm.description" :label="__('Description')" :placeholder="__('Add a description for your shared gallery...')" rows="3" />
+                     </div>
 
                     <div class="flex">
                         <flux:spacer />
@@ -482,7 +555,15 @@ new class extends Component
                         </flux:select>
                     @endif
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable />
+                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable :disabled="$gallery->is_public" />
+
+                    @if ($gallery->is_public)
+                        <flux:callout variant="secondary" icon="information-circle" class="mt-2">
+                            <flux:callout.text>
+                                {{ __('Public galleries do not expire. You cannot set an expiration date while the gallery is public.') }}
+                            </flux:callout.text>
+                        </flux:callout>
+                    @endif
 
                     <div class="flex">
                         <flux:spacer />
@@ -514,8 +595,21 @@ new class extends Component
 
         @script
             <script>
+                document.addEventListener('livewire:navigated', () => {
+                    const hash = window.location.hash;
+                    if (hash) {
+                        setTimeout(() => {
+                            const element = document.querySelector(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 500);
+                    }
+                });
+
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
+                    dragActive: false,
                     maxParallelUploads: 5,
                     activeUploads: 0,
                     maxUploadsPerMinute: 60,
@@ -542,6 +636,21 @@ new class extends Component
                             });
                         });
                         this.processUploadQueue();
+                    },
+
+                    handleDrop(event) {
+                        this.dragActive = false;
+                        const dt = event.dataTransfer;
+                        if (dt && dt.files && dt.files.length > 0) {
+                            Array.from(dt.files).forEach((file) => {
+                                this.files.push({
+                                    file: file,
+                                    progress: 0,
+                                    status: 'pending',
+                                });
+                            });
+                            this.processUploadQueue();
+                        }
                     },
 
                     canUpload() {

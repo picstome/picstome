@@ -27,7 +27,7 @@ new class extends Component
         $user = Auth::user();
 
         if($user->currentTeam->subscribed()) {
-            return redirect()->route('galleries');
+            return redirect()->route('dashboard');
         };
 
         $stripeId = $user->currentTeam->stripe_id;
@@ -50,18 +50,42 @@ new class extends Component
             $this->pricingTableId = config('services.stripe.en_pricing_table_id');
         }
     }
+
+    public function purchaseLifetime()
+    {
+        $user = Auth::user();
+        $priceId = config('services.stripe.lifetime_price_id');
+
+        return $user->currentTeam->checkout($priceId, [
+            'success_url' => route('product-checkout-success').'?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('subscribe'),
+        ]);
+    }
 }; ?>
 
 <x-app-layout>
     @volt('pages.subscribe')
-        <div class="h-full flex flex-row items-center justify-center">
-            <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-            <stripe-pricing-table
-                pricing-table-id="{{ $this->pricingTableId }}"
-                publishable-key="{{ config('cashier.key') }}"
-                customer-session-client-secret="{{ $this->customerSession->client_secret }}"
-            >
-            </stripe-pricing-table>
+        <div class="h-full flex flex-col items-center justify-center">
+            <div class="w-full">
+                <!-- Stripe Pricing Table -->
+                <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+                <stripe-pricing-table
+                    pricing-table-id="{{ $this->pricingTableId }}"
+                    publishable-key="{{ config('cashier.key') }}"
+                    customer-session-client-secret="{{ $this->customerSession->client_secret }}"
+                >
+                </stripe-pricing-table>
+
+                @if (config('services.stripe.lifetime_price_id'))
+                    <flux:separator variant="subtle" text="or" />
+
+                    <div class="flex justify-center mt-8">
+                        <flux:button wire:click="purchaseLifetime" variant="filled">
+                            {{ __('Purchase Lifetime Subscription') }}
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
         </div>
     @endvolt
 </x-app-layout>

@@ -36,9 +36,11 @@ return [
     ],
 
     'stripe' => [
-        'monthly_price_id' => env('STRIPE_MONTHLY_PRICE_ID'),
         'en_pricing_table_id' => env('STRIPE_EN_PRICING_TABLE_ID'),
         'es_pricing_table_id' => env('STRIPE_ES_PRICING_TABLE_ID'),
+        'lifetime_price_id' => env('STRIPE_LIFETIME_PRICE_ID'),
+        'test_secret' => env('STRIPE_TEST_SECRET'),
+        'live_secret' => env('STRIPE_LIVE_SECRET'),
     ],
 
     'acumbamail' => [

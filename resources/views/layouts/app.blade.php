@@ -5,7 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{{ config('app.name') }}</title>
 
-        <link rel="icon" href="/favicon.png">
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="Picstome" />
+        <link rel="manifest" href="/site-b.webmanifest" />
 
         <link rel="preconnect" href="https://fonts.bunny.net" />
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
@@ -36,33 +41,84 @@
                             <img src="/app-logo-dark.png" class="h-16 -mx-2 rounded hidden dark:block" alt="Picstome">
                         @endif
                     </div>
-                @else
-                    <flux:brand href="/" logo="/logo.png" class="px-2" />
                 @endauth
+
+
+                @auth
+                    <flux:modal.trigger name="search" shortcut="cmd.k">
+                        <flux:input
+                            as="button"
+                            variant="filled"
+                            :placeholder="__('Search...')"
+                            icon="magnifying-glass"
+                            kbd="⌘K"
+                        />
+                    </flux:modal.trigger>
+
+                    <flux:modal name="search" variant="bare" class="w-full max-w-[30rem] my-[12vh] max-h-screen overflow-y-hidden px-2">
+                        <livewire:search />
+                    </flux:modal>
+                @endauth
+
+                <flux:navlist>
+                    <flux:navlist.item :href="route('dashboard')" icon="home" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </flux:navlist.item>
+
+                    <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
+                        {{ __('Customers') }}
+                    </flux:navlist.item>
+                </flux:navlist>
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Photos')">
-                        <flux:navlist.item :href="route('galleries')" icon="photo">
+                        <flux:navlist.item :href="route('galleries')" icon="photo" wire:navigate>
                             {{ __('Galleries') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('photoshoots')" icon="camera">
+                        <flux:navlist.item :href="route('photoshoots')" icon="camera" wire:navigate>
                             {{ __('Photoshoots') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
                     <flux:navlist.group :heading="__('Contracts')" class="mt-4">
-                        <flux:navlist.item :href="route('contracts')" icon="document-text">
+                        <flux:navlist.item :href="route('contracts')" icon="document-text" wire:navigate>
                             {{ __('Contracts') }}
                         </flux:navlist.item>
-                        <flux:navlist.item :href="route('contract-templates')" icon="clipboard-document-list">
+                        <flux:navlist.item :href="route('contract-templates')" icon="clipboard-document-list" wire:navigate>
                             {{ __('Templates') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
+                    <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
+                        <flux:navlist.item :href="route('public-profile')" icon="at-symbol" wire:navigate wire:navigate>
+                            {{ __('Configure') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate wire:navigate>
+                            {{ __('Portfolio') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="arrow-top-right-on-square" target="_blank">
+                            {{ __('View Profile') }}
+                        </flux:navlist.item>
+                    </flux:navlist.group>
+
+                    <flux:navlist.group :heading="__('POS')" class="mt-4">
+                        <flux:navlist.item :href="route('payments')" icon="banknotes" wire:navigate>
+                            {{ __('Payments') }}
+                        </flux:navlist.item>
+
+                        @unless(auth()->user()->currentTeam->hasCompletedOnboarding())
+                            <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
+                                {{ __('Connect with Stripe') }}
+                            </flux:navlist.item>
+                        @endunless
+                    </flux:navlist.group>
+
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
-                            <flux:navlist.item :href="route('users')" icon="user">
+                            <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
                                 {{ __('Users') }}
                             </flux:navlist.item>
                         </flux:navlist.group>
@@ -81,7 +137,7 @@
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Studio')" class="mt-4">
-                        <flux:navlist.item :href="route('branding')" icon="paint-brush">
+                        <flux:navlist.item :href="route('branding')" icon="paint-brush" wire:navigate>
                             {{ __('Branding') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
@@ -99,7 +155,7 @@
             </flux:header>
         @endunless
 
-        <flux:main :container="!$fullScreen">
+        <flux:main :container="!$fullScreen" @class(['p-0!' => $fullScreen])>
             {{ $slot }}
         </flux:main>
 
@@ -109,5 +165,9 @@
         @endguest
 
         @fluxScripts
+
+        @persist('toast')
+            <flux:toast />
+        @endpersist
     </body>
 </html>

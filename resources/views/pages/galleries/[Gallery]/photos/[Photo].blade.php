@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Photo;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
@@ -43,6 +45,32 @@ new class extends Component
 
         return $this->redirect("/galleries/{$gallery->id}");
     }
+
+    public function setAsCover()
+    {
+        $this->authorize('updateCover', $this->photo->gallery);
+
+        $this->photo->gallery->setCoverPhoto($this->photo);
+    }
+
+    public function removeAsCover()
+    {
+        $this->authorize('updateCover', $this->photo->gallery);
+
+        if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
+            $this->photo->gallery->removeCoverPhoto();
+        }
+    }
+
+    #[Computed]
+    public function galleryUrl()
+    {
+        return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
+            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
+            ->append('#')
+            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->photo->id);
+    }
 }; ?>
 
 <x-app-layout :full-screen="true">
@@ -51,93 +79,167 @@ new class extends Component
             x-data="{
                 swipe: '',
                 zoom: false,
+                pinchZooming: false,
                 thumbnailUrl: '{{ $photo->thumbnail_url }}',
                 photoUrl: '{{ $photo->url }}',
+                navigating: false,
+                isMobile() {
+                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                }
             }"
-            x-init="new Hammer($el).on('swipeleft swiperight', function(ev) {$dispatch(ev.type)})"
+            x-init="(() => {
+                const hammer = new Hammer($el, { touchAction: 'auto' });
+                hammer.get('pinch').set({ enable: true });
+                hammer.on('pinch panleft panright', function(ev) {
+                    $dispatch(ev.type, ev);
+                });
+            })()"
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
             @keyup.window.f="$wire.favorite()"
-            @swipeleft="$refs.next && Livewire.navigate($refs.next.href)"
-            @swiperight="$refs.previous && Livewire.navigate($refs.previous.href)"
-            class="flex h-[calc(100vh-64px)] flex-col"
+            @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
+            @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
+            @pinchstart="pinchZooming = true;"
+            class="flex h-screen flex-col"
         >
-            <div>
-                <flux:button
-                    :href="route('galleries.show', ['gallery' => $photo->gallery, 'activeTab' => $navigateFavorites ? 'favorited' : null])"
-                    wire:navigate.hover
-                    icon="chevron-left"
-                    variant="subtle"
-                    inset
-                >
-                    {{ $photo->gallery->name }}
-                </flux:button>
-            </div>
-
-            <div class="mt-8 flex flex-wrap items-end justify-between gap-4">
-                <div class="max-sm:w-full sm:flex-1">
-                    <div class="flex items-center gap-4">
-                        <x-heading level="1" size="xl">{{ $photo->name }}</x-heading>
-                        @if ($photo->isFavorited())
-                            <flux:badge color="lime" size="sm">{{ __('Favorited') }}</flux:badge>
-                        @endif
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <flux:button
-                        wire:click="delete"
-                        icon="trash"
-                        variant="subtle"
-                        wire:confirm="{{ __('Are you sure?') }}"
-                    ></flux:button>
-                    <flux:button
-                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                        icon="cloud-arrow-down"
-                        variant="subtle"
-                    />
-                    <flux:button wire:click="favorite" square>
-                        @if ($photo->isFavorited())
-                            <flux:icon.heart class="size-5" variant="solid" />
-                        @else
-                            <flux:icon.heart class="size-5" />
-                        @endif
-                    </flux:button>
-                </div>
-            </div>
-
-            <div class="relative mt-12 h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
+            <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <img
                     src="{{ $photo->thumbnail_url }}"
-                    @click="zoom = !zoom"
-                    class="mx-auto object-contain"
-                    :class="zoom ? 'max-w-none hover:cursor-zoom-out' : 'max-w-full hover:cursor-zoom-in'"
-                    :src = "zoom ? photoUrl : thumbnailUrl"
-                    alt=""
+                    srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                    sizes="(max-width: 640px) 100vw, 80vw"
+                    x-data="{ loaded: false, errored: false }"
+                    x-init="if ($el.complete) loaded = true"
+                    x-show="!zoom && !pinchZooming"
+                    x-on:load="loaded = true"
+                    x-on:error="errored = true"
+                    @click="if (!isMobile()) zoom = true"
+                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    alt="{{ $photo->name }}"
                 />
-            </div>
 
-            <div class="mt-12 flex justify-between">
-                <div>
+                <img
+                    src="{{ $photo->url }}"
+                    x-data="{ loaded: false, errored: false }"
+                    x-init="if ($el.complete) loaded = true"
+                    x-show="!zoom && pinchZooming"
+                    x-on:load="loaded = true"
+                    x-on:error="errored = true"
+                    @click="if (!isMobile()) zoom = true"
+                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                    loading="lazy"
+                    alt="{{ $photo->name }}"
+                    x-cloak
+                />
+
+                <img
+                    src="{{ $photo->url }}"
+                    x-data="{ loaded: false, errored: false }"
+                    x-init="if ($el.complete) loaded = true"
+                    x-show="zoom"
+                    x-on:load="loaded = true"
+                    x-on:error="errored = true"
+                    @click="zoom = false"
+                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out"
+                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                    loading="lazy"
+                    alt="{{ $photo->name }}"
+                    x-cloak
+                />
+
+                <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
+                    :class="zoom ? 'hidden' : 'flex'">
                     @if ($previous)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
-                            wire:navigate.hover
+                            wire:navigate
                             x-ref="previous"
-                        >
-                            {{ __('Previous') }}
-                        </flux:button>
+                            icon="chevron-left"
+                            size="sm"
+                            class="py-10 max-sm:py-0"
+                            square
+                        />
                     @endif
                 </div>
-                <div>
+                <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
+                    :class="zoom ? 'hidden' : 'flex'">
                     @if ($next)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
-                            wire:navigate.hover
+                            wire:navigate
                             x-ref="next"
-                        >
-                            {{ __('Next') }}
-                        </flux:button>
+                            icon="chevron-right"
+                            size="sm"
+                            class="py-10 max-sm:py-0"
+                            square
+                        />
                     @endif
+                </div>
+                <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3 max-sm:p-1"
+                    :class="zoom ? 'hidden' : 'flex'">
+                    <div class="flex gap-3">
+                        <flux:button
+                            :href="$this->galleryUrl"
+                            wire:navigate
+                            icon="arrow-left"
+                            size="sm"
+                            icon:variant="micro"
+                        >
+                            {{ __('Back') }}
+                        </flux:button>
+                    </div>
+                    <div class="flex gap-3">
+                        <flux:tooltip toggleable>
+                            <flux:button icon="information-circle" size="sm" variant="subtle" />
+                            <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                                <p>{{ $photo->name }}</p>
+                            </flux:tooltip.content>
+                        </flux:tooltip>
+                        <flux:dropdown>
+                            <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
+                            <flux:menu>
+                                @if ($photo->gallery->coverPhoto?->is($photo))
+                                    <flux:menu.item
+                                        wire:click="removeAsCover"
+                                        icon="x-mark"
+                                    >
+                                        {{ __('Remove as Cover') }}
+                                    </flux:menu.item>
+                                @else
+                                    <flux:menu.item
+                                        wire:click="setAsCover"
+                                        icon="star"
+                                    >
+                                        {{ __('Set as Cover') }}
+                                    </flux:menu.item>
+                                @endif
+                                <flux:menu.item
+                                    wire:click="delete"
+                                    wire:confirm="{{ __('Are you sure?') }}"
+                                    icon="trash"
+                                    variant="danger"
+                                >
+                                    {{ __('Delete') }}
+                                </flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                        <flux:button
+                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                            icon="cloud-arrow-down"
+                            icon:variant="mini"
+                            size="sm"
+                            square
+                        />
+                        <flux:button
+                            wire:click="favorite"
+                            icon="heart"
+                            :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                            size="sm"
+                            @class(['text-red-500!' => $photo->isFavorited()])
+                            square
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -148,13 +250,17 @@ new class extends Component
 
         @push('head')
             <link rel="preload" as="image" href="{{ $photo->url }}">
+
             @if ($next)
                 <link rel="preload" as="image" href="{{ $next->url }}">
                 <link rel="preload" as="image" href="{{ $next->thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}">
             @endif
+
             @if ($previous)
                 <link rel="preload" as="image" href="{{ $previous->url }}">
                 <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}">
             @endif
         @endpush
     @endvolt

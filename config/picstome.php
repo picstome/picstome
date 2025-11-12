@@ -6,11 +6,19 @@ return [
 
     'photo_thumb_resize' => 1000,
 
+    'photo_small_thumb_resize' => 500,
+
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
     'subscription_storage_limit' => 1073741824000, // 1TB in bytes
 
     'personal_team_monthly_contract_limit' => 5,
+
+    /**
+     * Maximum allowed pixels for original size images (width * height).
+     * This limit is set because wsrv.nl cannot process images larger than this.
+     */
+    'max_photo_pixels' => env('PICSTOME_MAX_PHOTO_PIXELS', 71000000),
 
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
@@ -19,4 +27,23 @@ return [
     // Number of days before expiration to send gallery reminder
     'gallery_expiration_reminder_days' => env('GALLERY_EXPIRATION_REMINDER_DAYS', 3),
 
+    // Subscription notification intervals (days before expiration)
+    'subscription_warning_days' => [15, 7, 1],
+
+    // Days after expiration to send deletion warning
+    'subscription_expired_warning_days' => 1,
+
+    // Grace period in days after expiration before deleting data
+    'subscription_grace_period_days' => 7,
+
+    'stripe_commission_percent' => env('STRIPE_COMMISSION_PERCENT', 1),
+
+    // The base URL for short links (e.g., payment links)
+    'short_url_domain' => env('SHORT_URL_DOMAIN'),
+
+    /**
+     * The base URL for the photo CDN. Example: 'https://wsrv.nl/' or 'https://i0.wp.com/'.
+     * Switch this to change the CDN provider for image delivery and resizing.
+     */
+    'photo_cdn_domain' => env('PICSTOME_PHOTO_CDN_DOMAIN', 'wsrv.nl'),
 ];

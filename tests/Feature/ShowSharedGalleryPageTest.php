@@ -78,6 +78,28 @@ test('visitors can view shared gallery favorites', function () {
     expect($component->favorites->contains($favorite))->toBeTrue();
 });
 
+test('shared gallery displays description when present', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'share_description' => 'This is a beautiful wedding gallery showcasing our special day'
+    ]);
+
+    $response = get('/shares/' . $gallery->ulid);
+
+    $response->assertStatus(200)
+             ->assertSee('This is a beautiful wedding gallery showcasing our special day');
+});
+
+test('shared gallery does not display description when empty', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'share_description' => null
+    ]);
+
+    $response = get('/shares/' . $gallery->ulid);
+
+    $response->assertStatus(200)
+             ->assertDontSee('<x-subheading');
+});
+
 test('visitors can favorite a photo', function () {
     $photo = Photo::factory()->for(Gallery::factory()->selectable())->unfavorited()->create();
     expect($photo->isFavorited())->toBeFalse();

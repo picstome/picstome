@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\Forms\ContractTemplateForm;
-use App\Models\Contract;
 use App\Models\ContractTemplate;
 use Livewire\Volt\Component;
 
@@ -68,12 +67,14 @@ new class extends Component
 
             <flux:separator class="mt-6 mb-10" />
 
-            <div class="prose prose-sm">
+            <div
+                class="prose prose-sm dark:prose-invert lg:mx-auto lg:flex lg:min-h-[1123px] lg:min-w-[794px] lg:flex-col lg:items-stretch lg:justify-start lg:overflow-auto lg:border lg:border-zinc-200 lg:p-6 lg:shadow-sm lg:dark:border-zinc-700"
+            >
                 {!! $contractTemplate->formatted_markdown_body !!}
             </div>
 
-            <flux:modal name="edit" class="w-full sm:max-w-lg">
-                <form wire:submit="save" class="space-y-6">
+            <flux:modal name="edit" class="w-full max-w-[794px]">
+                <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Edit template') }}</flux:heading>
                         <flux:subheading>{{ __('Enter the template details.') }}</flux:subheading>
@@ -82,14 +83,15 @@ new class extends Component
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
                     <flux:field
-                        class="**:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                        class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
                     >
                         <flux:label>{{ __('Terms') }}</flux:label>
 
                         <trix-editor
-                            class="prose prose-sm mt-2"
-                            x-on:trix-change="$wire.form.body = $event.target.value"
                             input="trix"
+                            x-init="$nextTick(() => $el.editor.loadHTML($wire.form.body))"
+                            x-on:trix-change="$wire.form.body = $event.target.value"
+                            class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                         ></trix-editor>
 
                         <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />
@@ -97,10 +99,13 @@ new class extends Component
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="flex">
-                        <flux:spacer />
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
+                        <flux:separator />
+                        <div class="flex py-6">
+                            <flux:spacer />
 
-                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        </div>
                     </div>
                 </form>
             </flux:modal>

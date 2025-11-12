@@ -31,6 +31,7 @@ it('sets 1TB storage limit when subscription is created', function () {
     expect($team->fresh()->custom_storage_limit)->toBe(
         config('picstome.subscription_storage_limit')
     );
+    expect($team->fresh()->monthly_contract_limit)->toBeNull();
 });
 
 it('resets storage limit to 1GB when subscription is deleted', function () {
@@ -58,6 +59,9 @@ it('resets storage limit to 1GB when subscription is deleted', function () {
 
     expect($team->fresh()->custom_storage_limit)->toBe(
         config('picstome.personal_team_storage_limit')
+    );
+    expect($team->fresh()->monthly_contract_limit)->toBe(
+        config('picstome.personal_team_monthly_contract_limit')
     );
 });
 

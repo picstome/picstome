@@ -88,14 +88,14 @@ class Signature extends Model
     protected function formattedSignedAt(): Attribute
     {
         return Attribute::get(function () {
-            return $this->signed_at?->isoFormat('MMM D, YYYY');
+            return $this->signed_at?->format('Y-m-d');
         });
     }
 
     protected function formattedBirthday(): Attribute
     {
         return Attribute::get(function () {
-            return $this->birthday?->isoFormat('MMM D, YYYY');
+            return $this->birthday?->format('Y-m-d');
         });
     }
 

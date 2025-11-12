@@ -52,7 +52,7 @@ class Photo extends Model
     public function next()
     {
         $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex + 1);
     }
@@ -60,7 +60,7 @@ class Photo extends Model
     public function previous()
     {
         $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $photos->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex - 1);
     }
@@ -68,7 +68,7 @@ class Photo extends Model
     public function nextFavorite()
     {
         $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex + 1);
     }
@@ -76,7 +76,7 @@ class Photo extends Model
     public function previousFavorite()
     {
         $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
-        $currentIndex = $favorites->search(fn($photo) => $photo->id === $this->id);
+        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex - 1);
     }
@@ -103,24 +103,134 @@ class Photo extends Model
     {
         return Attribute::get(function () {
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $encodedUrl = urlencode($originalUrl);
+            $height = config('picstome.photo_resize', 2048);
+            $width = config('picstome.photo_resize', 2048);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&q=90&output=webp";
+            if ($this->gallery->keep_original_size) {
+                $height = $height * 2;
+                $width = $width * 2;
+            }
+
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $height,
+                'w' => $width,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
         });
     }
 
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
-            $originalUrl = $this->thumb_path
-                ? Storage::disk($this->diskOrDefault())->url($this->thumb_path)
-                : Storage::disk($this->diskOrDefault())->url($this->path);
-
-            $encodedUrl = urlencode($originalUrl);
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $height = config('picstome.photo_thumb_resize', 1000);
+            $width = config('picstome.photo_thumb_resize', 1000);
 
-            return "https://wsrv.nl/?url={$encodedUrl}&h={$height}&q=90&output=webp";
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $height,
+                'w' => $width,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
         });
+    }
+
+    /**
+     * Get the large thumbnail URL
+     */
+    protected function largeThumbnailUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $size = config('picstome.photo_resize', 2048);
+
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $size,
+                'w' => $size,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
+        });
+    }
+
+    /**
+     * Get the large thumbnail URL
+     */
+    protected function smallThumbnailUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->diskOrDefault() !== 's3') {
+                return null;
+            }
+
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $size = config('picstome.photo_small_thumb_resize', 500);
+
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => $size,
+                'w' => $size,
+                'q' => 93,
+                'output' => 'webp',
+            ]);
+        });
+    }
+
+    /**
+     * Generate a CDN URL for the image, supporting wsrv.nl, i0.wp.com, and Bunny.net.
+     */
+    private function generateCdnUrl(string $originalUrl, array $params = [])
+    {
+        $cdn = config('picstome.photo_cdn_domain', 'wsrv.nl');
+
+        // Bunny.net Dynamic Image API
+        if ($cdn === 'bunny' || $cdn === 'bunny.net') {
+            $bunnyParams = [];
+
+            if (isset($params['w']) || isset($params['width'])) {
+                $bunnyParams['width'] = $params['w'] ?? $params['width'];
+            }
+
+            if (isset($params['h']) || isset($params['height'])) {
+                $bunnyParams['height'] = $params['h'] ?? $params['height'];
+            }
+
+            if (isset($params['q']) || isset($params['quality'])) {
+                $bunnyParams['quality'] = $params['q'] ?? $params['quality'];
+            }
+
+            if (isset($params['output']) || isset($params['format'])) {
+                $bunnyParams['format'] = $params['output'] ?? $params['format'];
+            }
+
+            $query = http_build_query($bunnyParams);
+
+            return "$originalUrl?$query";
+        }
+
+        if ($cdn === 'i0.wp.com') {
+            // Rotate between i0.wp.com, i1.wp.com, i2.wp.com, i3.wp.com based on photo id
+            $subdomainIndex = 0;
+
+            if (isset($this->id) && is_numeric($this->id)) {
+                $subdomainIndex = $this->id % 4;
+            }
+
+            $cdn = 'https://i'.$subdomainIndex.'.wp.com';
+
+            // i0.wp.com expects the image URL as a path, not a query param
+            // Example: https://i0.wp.com/example.com/image.jpg?w=1000&q=90
+            $strippedUrl = preg_replace('/^https?:\/\//', '', $originalUrl);
+
+            $query = http_build_query($params);
+
+            return "$cdn/$strippedUrl".($query ? "?$query" : '');
+        }
+
+        // wsrv.nl expects ?url=...&params
+        $query = http_build_query(array_merge(['url' => $originalUrl], $params));
+
+        return "https://$cdn/?$query";
     }
 
     protected function diskOrDefault(): string

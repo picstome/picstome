@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Team;
 use App\Models\User;
+use App\Services\HandleGenerationService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,12 +19,30 @@ class TeamFactory extends Factory
      */
     public function definition(): array
     {
+        $handleGenerator = new HandleGenerationService();
+        $name = $this->faker->words(2, true);
+        $handle = $handleGenerator->generateUniqueHandle($name);
+
         return [
-            'name' => 'Personal',
+            'name' => $name,
+            'handle' => $handle,
             'user_id' => User::factory(),
             'personal_team' => true,
-            'brand_watermark_position' => 'top',
             'brand_color' => 'blue',
+            'brand_watermark_position' => 'top',
         ];
+    }
+
+    /**
+     * Indicate that the team should have watermark branding.
+     *
+     * @return $this
+     */
+    public function withWatermark(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'brand_watermark_path' => 'teams/watermark.png',
+            'brand_watermark_transparency' => 50,
+        ]);
     }
 }

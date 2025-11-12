@@ -4,33 +4,28 @@ namespace App\Livewire\Forms;
 
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class PhotoshootForm extends Form
 {
     public ?Photoshoot $photoshoot;
 
-    #[Validate('required')]
     public $name;
 
-    #[Validate('required')]
     public $customerName;
 
-    #[Validate('nullable|email')]
     public $customerEmail;
 
-    #[Validate('nullable|date')]
     public $date;
 
-    #[Validate('nullable|integer')]
     public $price;
 
-    #[Validate('nullable')]
     public $location;
 
-    #[Validate('nullable')]
     public $comment;
+
+    public $customer = '';
 
     public function setPhotoshoot(Photoshoot $photoshoot)
     {
@@ -38,7 +33,7 @@ class PhotoshootForm extends Form
 
         $this->name = $photoshoot->name;
 
-        $this->customerName = $photoshoot->customer_name;
+        $this->customer = $photoshoot->customer?->id;
 
         $this->date = $photoshoot->date?->isoFormat('YYYY-MM-DD');
 
@@ -49,16 +44,50 @@ class PhotoshootForm extends Form
         $this->comment = $photoshoot->comment;
     }
 
+    protected function team()
+    {
+        return Auth::user()->currentTeam;
+    }
+
+    public function rules()
+    {
+        return [
+            'name' => 'required',
+            'customer' => [
+                'nullable',
+                'exists:customers,id,team_id,'.$this->team()->id,
+            ],
+            'customerName' => 'required_without:customer',
+            'customerEmail' => [
+                'nullable',
+                'email',
+                Rule::unique('customers', 'email')->where(function ($query) {
+                    return $query->where('team_id', $this->team()->id);
+                }),
+            ],
+            'date' => 'nullable|date',
+            'price' => 'nullable|integer',
+            'location' => 'nullable',
+            'comment' => 'nullable',
+        ];
+    }
+
     public function store()
     {
         $this->validate();
 
-        return Auth::user()->currentTeam->photoshoots()->create([
+        if (! $this->customer) {
+            $customer = $this->team()->customers()->create([
+                'name' => $this->customerName,
+                'email' => $this->customerEmail,
+            ]);
+        }
+
+        return $this->team()->photoshoots()->create([
             'name' => $this->name,
-            'customer_name' => $this->customerName,
-            'customer_email' => $this->customerEmail,
-            'date' => $this->date,
-            'price' => $this->price,
+            'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
+            'date' => empty($this->date) ? null : $this->date,
+            'price' => empty($this->price) ? null : $this->price,
             'location' => $this->location,
             'comment' => $this->comment,
         ]);
@@ -68,11 +97,18 @@ class PhotoshootForm extends Form
     {
         $this->validate();
 
+        if (! $this->customer) {
+            $customer = $this->team()->customers()->create([
+                'name' => $this->customerName,
+                'email' => $this->customerEmail,
+            ]);
+        }
+
         return $this->photoshoot->update([
             'name' => $this->name,
-            'customer_name' => $this->customerName,
-            'date' => $this->date,
-            'price' => $this->price,
+            'customer_id' => empty($this->customer) ? $customer->id : $this->customer,
+            'date' => empty($this->date) ? null : $this->date,
+            'price' => empty($this->price) ? null : $this->price,
             'location' => $this->location,
             'comment' => $this->comment,
         ]);

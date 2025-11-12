@@ -36,7 +36,7 @@ class GalleryPolicy
      */
     public function update(User $user, Gallery $gallery): bool
     {
-        return false;
+        return $gallery->team->is($user->currentTeam);
     }
 
     /**
@@ -61,5 +61,13 @@ class GalleryPolicy
     public function forceDelete(User $user, Gallery $gallery): bool
     {
         return false;
+    }
+
+    /**
+     * Determine whether the user can update the cover photo of the gallery.
+     */
+    public function updateCover(User $user, Gallery $gallery): bool
+    {
+        return $gallery->team->is($user->currentTeam);
     }
 }

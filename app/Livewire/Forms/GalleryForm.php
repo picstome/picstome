@@ -26,19 +26,6 @@ class GalleryForm extends Form
     protected function rules()
     {
         $team = Auth::user()?->currentTeam;
-        $maxExpirationDate = now()->addYear()->format('Y-m-d');
-
-        $expirationRules = [
-            'date',
-            'after_or_equal:today',
-            'before_or_equal:' . $maxExpirationDate,
-        ];
-
-        if (!$team?->subscribed()) {
-            array_unshift($expirationRules, 'required');
-        } else {
-            array_unshift($expirationRules, 'nullable');
-        }
 
         return [
             'photoshoot_id' => [
@@ -46,7 +33,7 @@ class GalleryForm extends Form
                 Rule::exists('photoshoots', 'id')->where(fn($query) => $query->where('team_id', $team->id)),
             ],
             'name' => ['nullable', 'string'],
-            'expirationDate' => $expirationRules,
+            'expirationDate' => $this->getExpirationRules($team),
             'keepOriginalSize' => ['required', 'boolean'],
         ];
     }
@@ -84,7 +71,35 @@ class GalleryForm extends Form
         return $this->gallery->update([
             'photoshoot_id' => $this->photoshoot_id ?: null,
             'name' => $this->name ?? __('Untitled'),
-            'expiration_date' => $this->expirationDate ?: null,
+            'expiration_date' => $this->gallery->is_public ? null : ($this->expirationDate ?: null),
         ]);
+    }
+
+    private function getExpirationRules($team)
+    {
+        $maxExpirationDate = now()->addYear()->format('Y-m-d');
+
+        if (isset($this->gallery) && $this->gallery->is_public) {
+            return [
+                'nullable',
+                'date',
+                'after_or_equal:today',
+                'before_or_equal:' . $maxExpirationDate,
+            ];
+        }
+
+        $rules = [
+            'date',
+            'after_or_equal:today',
+            'before_or_equal:' . $maxExpirationDate,
+        ];
+
+        if (!$team?->subscribed()) {
+            array_unshift($rules, 'required');
+        } else {
+            array_unshift($rules, 'nullable');
+        }
+
+        return $rules;
     }
 }

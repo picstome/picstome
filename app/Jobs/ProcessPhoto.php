@@ -6,32 +6,41 @@ use App\Models\Photo;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
-use Illuminate\Support\Facades\Storage;
-use Spatie\Image\Image;
-use Spatie\TemporaryDirectory\TemporaryDirectory;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Spatie\Image\Image;
 
 class ProcessPhoto implements ShouldQueue
 {
     use Queueable;
 
-    public $temporaryDirectory;
+    public $timeout = 60 * 4; // 4 minutes
 
     public $temporaryPhotoPath;
+
+    public $temporaryPhotoRelativePath;
 
     /**
      * Create a new job instance.
      */
     public function __construct(public Photo $photo)
     {
-        $this->temporaryDirectory = TemporaryDirectory::make();
+        $tempDir = 'photo-processing-temp';
+        $ulid = Str::ulid()->toBase32();
+        $tempFileName = $ulid.'_'.$this->photo->name;
+        $tempFileRelativePath = $tempDir.'/'.$tempFileName;
 
-        $this->temporaryPhotoPath = tap($this->temporaryDirectory->path($this->photo->name), function ($temporaryPhotoPath) {
-            file_put_contents(
-                $temporaryPhotoPath,
-                Storage::disk('public')->get($this->photo->path)
-            );
-        });
+        Storage::disk('local')->makeDirectory($tempDir);
+
+        $this->temporaryPhotoPath = Storage::disk('local')->path($tempFileRelativePath);
+
+        file_put_contents(
+            $this->temporaryPhotoPath,
+            Storage::disk('public')->get($this->photo->path)
+        );
+
+        $this->temporaryPhotoRelativePath = $tempFileRelativePath;
     }
 
     /**
@@ -49,7 +58,7 @@ class ProcessPhoto implements ShouldQueue
 
         $this->triggerWsrvCache($this->photo);
 
-        $this->temporaryDirectory->delete();
+        @unlink($this->temporaryPhotoPath);
     }
 
     /**
@@ -60,6 +69,8 @@ class ProcessPhoto implements ShouldQueue
         if (app()->environment('production')) {
             Http::async()->get($photo->url);
             Http::async()->get($photo->thumbnail_url);
+            Http::async()->get($photo->large_thumbnail_url);
+            Http::async()->get($photo->small_thumbnail_url);
         }
     }
 
@@ -74,6 +85,8 @@ class ProcessPhoto implements ShouldQueue
                 ->save();
         }
 
+        $fileSize = filesize($this->temporaryPhotoPath);
+
         $newPath = Storage::disk('s3')->putFile(
             path: $this->photo->gallery->storage_path,
             file: new File($this->temporaryPhotoPath),
@@ -81,7 +94,7 @@ class ProcessPhoto implements ShouldQueue
 
         $this->photo->update([
             'path' => $newPath,
-            'size' => filesize($this->temporaryPhotoPath),
+            'size' => $fileSize,
             'disk' => 's3',
         ]);
 

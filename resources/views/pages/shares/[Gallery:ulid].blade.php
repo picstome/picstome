@@ -57,17 +57,37 @@ new class extends Component
         <div
             x-data
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
+            class="h-full"
         >
-            <div>
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto" />
-            </div>
-
-            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-                <div class="max-sm:w-full sm:flex-1">
-                    <div class="flex items-center gap-4">
-                        <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                    </div>
+            @if($allPhotos->isNotEmpty())
+                <div class="relative">
+                    <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
+                        <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                    </a>
                 </div>
+
+                <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
+                    <img src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->large_thumbnail_url }}" class="w-full h-full object-cover" />
+                </div>
+            @else
+                <div>
+                    <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
+                        <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                    </a>
+                </div>
+            @endif
+
+             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
+                 <div class="max-sm:w-full sm:flex-1">
+                     <div class="flex items-center gap-4">
+                         <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                     </div>
+                     @if($gallery->share_description)
+                         <x-subheading class="mt-2">
+                             {{ $gallery->share_description }}
+                         </x-subheading>
+                     @endif
+                 </div>
                 <div class="flex gap-4">
                     @if ($this->gallery->is_share_downloadable)
                         <flux:button x-show="$wire.activeTab !== 'favorited'" :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
@@ -106,7 +126,7 @@ new class extends Component
                             class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                         >
                             @foreach ($allPhotos as $photo)
-                                <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" lazy />
+                                <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
@@ -120,7 +140,7 @@ new class extends Component
                                     :$photo
                                     :asFavorite="true"
                                     :key="'favorite-'.$photo->id"
-                                    lazy
+                                    :html-id="'favorite-'.$photo->id"
                                 />
                             @endforeach
                         </div>
@@ -135,6 +155,26 @@ new class extends Component
                     </flux:subheading>
                 </div>
             @endif
+            @unlesssubscribed($gallery->team)
+                <div class="mt-10">
+                    @include('partials.powered-by')
+                </div>
+            @endsubscribed
         </div>
+        @script
+            <script>
+                document.addEventListener('livewire:navigated', () => {
+                    const hash = window.location.hash;
+                    if (hash) {
+                        setTimeout(() => {
+                            const element = document.querySelector(hash);
+                            if (element) {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 500);
+                    }
+                });
+            </script>
+        @endscript
     @endvolt
 </x-guest-layout>

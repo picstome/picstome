@@ -7,9 +7,11 @@ use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
+use function Laravel\Folio\middleware;
 use function Laravel\Folio\name;
 
 name('contract-templates');
+middleware(['auth', 'verified']);
 
 new class extends Component
 {
@@ -82,17 +84,20 @@ new class extends Component
                     </x-table.rows>
                 </x-table>
 
-                <div x-data
+                <div
+                    x-data
                     x-on:click="
-                        let el = $event.target;
+                        let el = $event.target
                         while (el && el !== $el) {
                             if (el.hasAttribute('wire:click')) {
-                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' });
-                                break;
+                                document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
+                                break
                             }
-                            el = el.parentElement;
-                        }"
-                    class="mt-6">
+                            el = el.parentElement
+                        }
+                    "
+                    class="mt-6"
+                >
                     <flux:pagination :paginator="$this->templates" />
                 </div>
             @else
@@ -110,8 +115,8 @@ new class extends Component
                 </div>
             @endif
 
-            <flux:modal name="create-template" class="w-full sm:max-w-lg">
-                <form wire:submit="save" class="space-y-6">
+            <flux:modal name="create-template" class="w-full max-w-[794px]">
+                <form wire:submit="save" class="-mb-6 space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Create a new template') }}</flux:heading>
                         <flux:subheading>{{ __('Enter the template details.') }}</flux:subheading>
@@ -120,22 +125,25 @@ new class extends Component
                     <flux:input wire:model="form.title" :label="__('Title')" type="text" />
 
                     <flux:field
-                        class="**:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden"
+                        class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
                     >
                         <flux:label>{{ __('Terms') }}</flux:label>
 
                         <trix-editor
-                            class="prose prose-sm mt-2"
+                            class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                             x-on:trix-change="$wire.form.body = $event.target.value"
                         ></trix-editor>
 
                         <flux:error name="form.body" />
                     </flux:field>
 
-                    <div class="flex">
-                        <flux:spacer />
+                    <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
+                        <flux:separator />
+                        <div class="flex py-6">
+                            <flux:spacer />
 
-                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        </div>
                     </div>
                 </form>
             </flux:modal>

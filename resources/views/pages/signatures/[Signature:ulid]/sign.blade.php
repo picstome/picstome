@@ -64,6 +64,15 @@ new class extends Component
             'user_agent' => request()->userAgent(),
         ]);
 
+        $customer = $this->signature->contract->team
+            ->customers()
+            ->where('email', $this->email)
+            ->first();
+
+        if ($customer) {
+            $customer->update(['birthdate' => $this->birthday]);
+        }
+
         $this->signature->updateSignatureImage($this->signature_image);
 
         $this->signature->markAsSigned();
@@ -167,11 +176,10 @@ new class extends Component
 
                         <flux:input wire:model="email" :label="__('Email')" type="email" />
 
-                        <flux:field>
+                        <flux:field x-data="signaturePad">
                             <flux:label>{{ __('Sign bellow') }}</flux:label>
 
                             <div
-                                x-data="signaturePad"
                                 data-flux-control
                                 class="block touch-none w-full overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
                             >
@@ -179,6 +187,12 @@ new class extends Component
                             </div>
 
                             <flux:error name="signature_image" />
+
+                            <div x-show="$wire.signature_image" class="mt-2">
+                                <flux:button type="button" @click="clearSignature" size="sm">
+                                    {{ __('Clear') }}
+                                </flux:button>
+                            </div>
                         </flux:field>
 
                         <div class="flex">
@@ -219,6 +233,13 @@ new class extends Component
                                 const file = new File([blob], 'signature.png', { type: 'image/png' });
 
                                 this.$wire.upload('signature_image', file);
+                            },
+
+                            clearSignature() {
+                                if (this.signaturePad) {
+                                    this.signaturePad.clear();
+                                    this.$wire.signature_image = null;
+                                }
                             },
                         }));
                     </script>

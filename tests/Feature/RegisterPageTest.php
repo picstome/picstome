@@ -1,9 +1,7 @@
 <?php
 
-use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
@@ -79,54 +77,42 @@ it('gives the personal team 1GB of storage upon creation', function () {
     expect($team->storage_limit)->toBe(1073741824); // 1GB in bytes
 });
 
-it('adds new user to Acumbamail mailing list upon registration', function () {
-    Queue::fake();
-
-    config(['services.acumbamail.auth_token' => 'test_token']);
-    config(['services.acumbamail.list_id' => '123']);
-    config(['services.acumbamail.list_id_es' => '456']);
-
-    app()->setLocale('en');
-
+it('creates a personal team with a handle upon registration', function () {
     $component = Volt::test('pages.register')
-        ->set('name', 'Test User')
-        ->set('email', 'acumbamail@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
+        ->set('name', 'Handle User')
+        ->set('email', 'handleuser@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
-    expect(User::count())->toBe(1);
+    $user = User::where('email', 'handleuser@example.com')->first();
+    $team = $user->currentTeam;
 
-    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
-        return $job->email === 'acumbamail@example.com' &&
-               $job->name === 'Test User' &&
-               $job->listId === '123';
-    });
+    expect($team->handle)->not->toBeNull();
+    expect($team->handle)->toBe('handleuser');
 });
 
-it('adds spanish users to spanish Acumbamail mailing list upon registration', function () {
-    Queue::fake();
-
-    config(['services.acumbamail.auth_token' => 'test_token']);
-    config(['services.acumbamail.list_id' => '123']);
-    config(['services.acumbamail.list_id_es' => '456']);
-
-    app()->setLocale('es');
-
-    $component = Volt::test('pages.register')
-        ->set('name', 'Usuario de Prueba')
-        ->set('email', 'acumbamail-es@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
+it('generates unique handles when registering users with similar names', function () {
+    Volt::test('pages.register')
+        ->set('name', 'Test User')
+        ->set('email', 'testuser1@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
-    expect(User::count())->toBe(1);
+    Volt::test('pages.register')
+        ->set('name', 'Test User')
+        ->set('email', 'testuser2@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
 
-    Queue::assertPushed(AddToAcumbamailList::class, function ($job) {
-        return $job->email === 'acumbamail-es@example.com' &&
-               $job->name === 'Usuario de Prueba' &&
-               $job->listId === '456';
-    });
+    $user1 = User::where('email', 'testuser1@example.com')->first();
+    $user2 = User::where('email', 'testuser2@example.com')->first();
+
+    expect($user1->currentTeam->handle)->toBe('testuser');
+    expect($user2->currentTeam->handle)->toBe('testuser1');
 });

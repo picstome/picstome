@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use Laravel\Cashier\Billable;
+use Stevebauman\Purify\Casts\PurifyHtmlOnGet;
 
 class Team extends Model
 {
@@ -32,7 +35,51 @@ class Team extends Model
     {
         return [
             'personal_team' => 'boolean',
+            'lifetime' => 'boolean',
+            'bio' => PurifyHtmlOnGet::class,
+            'other_social_links' => 'array',
+            'portfolio_public_disabled' => 'boolean',
+            'stripe_onboarded' => 'boolean',
+            'show_pay_button' => 'boolean',
+            'stripe_test_mode' => 'boolean',
+            'stripe_test_onboarded' => 'boolean',
+            'dismissed_setup_steps' => 'array',
         ];
+    }
+
+    public function getInstagramUrlAttribute()
+    {
+        return $this->instagram_handle ? "https://instagram.com/{$this->instagram_handle}" : null;
+    }
+
+    public function getYoutubeUrlAttribute()
+    {
+        return $this->youtube_handle ? "https://youtube.com/{$this->youtube_handle}" : null;
+    }
+
+    public function getFacebookUrlAttribute()
+    {
+        return $this->facebook_handle ? "https://facebook.com/{$this->facebook_handle}" : null;
+    }
+
+    public function getXUrlAttribute()
+    {
+        return $this->x_handle ? "https://x.com/{$this->x_handle}" : null;
+    }
+
+    public function getTiktokUrlAttribute()
+    {
+        return $this->tiktok_handle ? "https://tiktok.com/@{$this->tiktok_handle}" : null;
+    }
+
+    public function getTwitchUrlAttribute()
+    {
+        return $this->twitch_handle ? "https://twitch.tv/{$this->twitch_handle}" : null;
+    }
+
+    public function hasSocialLinks(): bool
+    {
+        return $this->instagram_url || $this->youtube_url || $this->facebook_url || $this->x_url || $this->tiktok_url || $this->twitch_url || $this->website_url || $this->other_social_links;
     }
 
     public function owner()
@@ -43,6 +90,16 @@ class Team extends Model
     public function photoshoots()
     {
         return $this->hasMany(Photoshoot::class);
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 
     public function galleries()
@@ -58,6 +115,11 @@ class Team extends Model
     public function contractTemplates()
     {
         return $this->hasMany(ContractTemplate::class);
+    }
+
+    public function bioLinks()
+    {
+        return $this->hasMany(BioLink::class)->orderBy('order');
     }
 
     public function updateBrandLogo(UploadedFile $image)
@@ -78,9 +140,21 @@ class Team extends Model
     protected function brandLogoUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_logo_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_path)
-                    : null;
+            if (! $this->brand_logo_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_path);
+
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
@@ -102,9 +176,21 @@ class Team extends Model
     protected function brandWatermarkUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_watermark_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path)
-                    : null;
+            if (! $this->brand_watermark_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_watermark_path);
+
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
@@ -126,9 +212,21 @@ class Team extends Model
     protected function brandLogoIconUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->brand_logo_icon_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path)
-                    : null;
+            if (! $this->brand_logo_icon_path) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk(config('picstome.disk'))->url($this->brand_logo_icon_path);
+
+            return Str::of($originalUrl)
+                ->when(config('picstome.photo_cdn_domain') === 'wsrv.nl', function (Stringable $string) {
+                    return Str::of('https://wsrv.nl/')
+                        ->append('?url=', urlencode($string->toString()))
+                        ->append('&q=90&output=webp');
+                })
+                ->when(config('picstome.photo_cdn_domain') === 'bunny', function (Stringable $string) {
+                    return $string->append('?quality=90&format=webp');
+                });
         });
     }
 
@@ -153,7 +251,7 @@ class Team extends Model
         return Attribute::get(function () {
             $gb = $this->storage_limit / 1073741824;
 
-            return number_format($gb, 2).' GB';
+            return number_format($gb, 0).' GB';
         });
     }
 
@@ -213,5 +311,66 @@ class Team extends Model
             ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
             ->where('galleries.team_id', $this->id)
             ->sum('photos.size');
+    }
+
+    /**
+     * Determine if the Stripe model has a given subscription.
+     *
+     * @param  string  $type
+     * @param  string|null  $price
+     * @return bool
+     */
+    public function subscribed($type = 'default', $price = null)
+    {
+        if ($this->lifetime) {
+            return true;
+        }
+
+        $subscription = $this->subscription($type);
+
+        if (! $subscription || ! $subscription->valid()) {
+            return false;
+        }
+
+        return ! $price || $subscription->hasPrice($price);
+    }
+
+    /**
+     * Check if Stripe onboarding is complete for this team.
+     */
+    public function hasCompletedOnboarding(): bool
+    {
+        if ($this->stripe_test_mode) {
+            return (bool) $this->stripe_test_onboarded;
+        }
+
+        return (bool) $this->stripe_onboarded;
+    }
+
+    /**
+     * Mark this team as Stripe onboarded.
+     */
+    public function markOnboarded(): void
+    {
+        if ($this->stripe_test_mode) {
+            $this->update(['stripe_test_onboarded' => true]);
+
+            return;
+        }
+
+        $this->update(['stripe_onboarded' => true]);
+    }
+
+    /**
+     * Dismiss a dashboard setup step for this team.
+     */
+    public function dismissSetupStep(string $step): void
+    {
+        $steps = $this->dismissed_setup_steps ?? [];
+
+        if (! in_array($step, $steps)) {
+            $steps[] = $step;
+            $this->update(['dismissed_setup_steps' => $steps]);
+        }
     }
 }

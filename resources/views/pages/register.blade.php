@@ -1,7 +1,7 @@
 <?php
 
-use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
+use App\Services\HandleGenerationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -34,19 +34,15 @@ new class extends Component {
 
         event(new Registered($user = User::create($validated)));
 
+        $handleGenerator = new HandleGenerationService();
+
         $user->ownedTeams()->create([
             'name' => "{$user->name}'s Studio",
+            'handle' => $handleGenerator->generateUniqueHandle($user->name),
             'personal_team' => true,
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
         ]);
-
-        // Add user to Acumbamail mailing list asynchronously
-        $listId = app()->getLocale() === 'es'
-            ? config('services.acumbamail.list_id_es')
-            : config('services.acumbamail.list_id');
-
-        \App\Jobs\AddToAcumbamailList::dispatch($user->email, $user->name, $listId);
 
         Auth::login($user);
 

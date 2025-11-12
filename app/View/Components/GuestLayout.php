@@ -11,7 +11,7 @@ class GuestLayout extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct(public ?string $font, public ?string $color, public ?bool $fullScreen)
+    public function __construct(public ?string $font, public ?string $color, public ?bool $fullScreen, public ?string $title)
     {
         //
     }

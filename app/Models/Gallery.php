@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
 use App\Traits\FormatsFileSize;
@@ -31,10 +32,13 @@ class Gallery extends Model
             'is_share_selectable' => 'boolean',
             'is_share_downloadable' => 'boolean',
             'is_share_watermarked' => 'boolean',
+            'is_public' => 'boolean',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
+            'share_description' => 'string',
             'expiration_date' => 'date',
             'selection_limit_notification_sent_at' => 'datetime',
+            'portfolio_order' => 'integer',
         ];
     }
 
@@ -62,6 +66,11 @@ class Gallery extends Model
         return $this->belongsTo(Photoshoot::class);
     }
 
+    public function coverPhoto()
+    {
+        return $this->belongsTo(Photo::class, 'cover_photo_id');
+    }
+
     public function favorites()
     {
         return $this->photos()->favorited();
@@ -86,6 +95,20 @@ class Gallery extends Model
     protected function reminderNotSent(Builder $query): void
     {
         $query->whereNull('reminder_sent_at');
+    }
+
+    #[Scope]
+    protected function public(Builder $query): void
+    {
+        $query->where('is_public', true)
+            ->orderBy('portfolio_order')
+            ->orderBy('created_at', 'desc');
+    }
+
+    #[Scope]
+    protected function private(Builder $query): void
+    {
+        $query->where('is_public', false);
     }
 
     public function sendExpirationReminder(): void
@@ -189,5 +212,95 @@ class Gallery extends Model
     public function getFormattedStorageSize()
     {
         return $this->formatFileSize($this->getTotalStorageSize());
+    }
+
+    public function setCoverPhoto(Photo $photo)
+    {
+        if (!$this->is($photo->gallery)) {
+            throw new \Exception('Photo does not belong to this gallery');
+        }
+
+        $this->update(['cover_photo_id' => $photo->id]);
+    }
+
+    public function removeCoverPhoto()
+    {
+        $this->update(['cover_photo_id' => null]);
+        $this->setRelation('coverPhoto', null);
+    }
+
+    public function togglePublic()
+    {
+        if (!$this->is_public) {
+            $this->makePublic();
+
+            return;
+        }
+
+        $this->makePrivate();
+    }
+
+    public function makePublic()
+    {
+        $maxOrder = $this->team->galleries()->public()->whereNotNull('portfolio_order')->max('portfolio_order') ?? 0;
+
+        $updateData = [
+            'is_public' => true,
+            'portfolio_order' => $maxOrder + 1,
+            'expiration_date' => null,
+        ];
+
+        $shouldProcessPhotos = false;
+
+        if ($this->keep_original_size) {
+            $updateData['keep_original_size'] = false;
+            $shouldProcessPhotos = true;
+        }
+
+        $this->update($updateData);
+
+        if ($shouldProcessPhotos) {
+            foreach ($this->photos()->cursor() as $photo) {
+                ProcessPhoto::dispatch($photo);
+            }
+        }
+    }
+
+    public function makePrivate()
+    {
+        $this->update([
+            'is_public' => false,
+            'portfolio_order' => null,
+            'expiration_date' => now()->addMonth(),
+        ]);
+    }
+
+    public function reorder(int $newOrder): void
+    {
+        $currentOrder = $this->portfolio_order;
+
+        if (is_null($currentOrder)) {
+            $this->update(['portfolio_order' => $newOrder]);
+
+            return;
+        }
+
+        if ($newOrder > $currentOrder) {
+            $this->team->galleries()
+                ->public()
+                ->whereNotNull('portfolio_order')
+                ->where('portfolio_order', '>', $currentOrder)
+                ->where('portfolio_order', '<=', $newOrder)
+                ->decrement('portfolio_order');
+        } elseif ($newOrder < $currentOrder) {
+            $this->team->galleries()
+                ->public()
+                ->whereNotNull('portfolio_order')
+                ->where('portfolio_order', '>=', $newOrder)
+                ->where('portfolio_order', '<', $currentOrder)
+                ->increment('portfolio_order');
+        }
+
+        $this->update(['portfolio_order' => $newOrder]);
     }
 }
