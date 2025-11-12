@@ -186,6 +186,11 @@ new class extends Component
         return $date->isoFormat('MMM D, YYYY');
     }
 
+    public function isToday($date)
+    {
+        return $date->isSameDay(now());
+    }
+
     public function getUpcomingEventsAndReminders()
     {
         $events = collect();
@@ -204,6 +209,7 @@ new class extends Component
                 'label' => $customer->name,
                 'date' => $birthday,
                 'link' => "/customers/{$customer->id}",
+                'is_today' => $this->isToday($birthday),
             ]);
         }
 
@@ -213,6 +219,7 @@ new class extends Component
                 'label' => $photoshoot->name,
                 'date' => $photoshoot->date,
                 'link' => "/photoshoots/{$photoshoot->id}",
+                'is_today' => $this->isToday($photoshoot->date),
             ]);
         }
 
@@ -222,6 +229,7 @@ new class extends Component
                 'label' => $gallery->name,
                 'date' => $gallery->expiration_date,
                 'link' => "/galleries/{$gallery->id}",
+                'is_today' => $this->isToday($gallery->expiration_date),
             ]);
         }
 
@@ -231,6 +239,7 @@ new class extends Component
                 'label' => $contract->title ?? __('Contract'),
                 'date' => $contract->shooting_date,
                 'link' => "/contracts/{$contract->id}",
+                'is_today' => $this->isToday($contract->shooting_date),
             ]);
         }
 
@@ -404,7 +413,7 @@ new class extends Component
                     <x-table>
                         <x-table.rows>
                             @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                                <x-table.row>
+                                <x-table.row :class="!empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''">
                                     <x-table.cell variant="strong" class="relative w-full">
                                         <a
                                             href="{{ $event['link'] }}"
@@ -413,6 +422,11 @@ new class extends Component
                                         ></a>
                                         <div class="flex flex-wrap items-center gap-2">
                                             {{ $event['label'] }}
+                                            @if (!empty($event['is_today']) && $event['is_today'])
+                                                <flux:badge color="green" inset="top bottom" icon="sun" size="sm">
+                                                    {{ __('Today') }}
+                                                </flux:badge>
+                                            @endif
                                             @if ($event['type'] === 'birthday')
                                                 <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
                                                     {{ __('Birthday soon') }}

@@ -22,8 +22,11 @@ new class extends Component
     public Team $team;
 
     public PublicProfileForm $form;
+
     public SocialLinksForm $socialLinksForm;
+
     public BioLinkForm $addForm;
+
     public BioLinkForm $editForm;
 
     public ?BioLink $editingLink = null;
@@ -187,8 +190,8 @@ new class extends Component
                                                         <flux:text variant="strong">{{ $link->title }}</flux:text>
                                                     </div>
                                                 </flux:table.cell>
-                                                <flux:table.cell class="hidden sm:table-cell">
-                                                    {{ $link->url }}
+                                                <flux:table.cell class="hidden sm:table-cell" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    {{ str()->of($link->url)->limit(40) }}
                                                 </flux:table.cell>
                                                 <flux:table.cell>
                                                     <flux:dropdown>
