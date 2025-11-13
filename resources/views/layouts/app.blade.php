@@ -117,6 +117,12 @@
                     </flux:navlist.group>
 
                     @if (auth()->user()?->is_admin)
+                        <flux:navlist.group :heading="__('Tools')" expandable :expanded="false" class="mt-4">
+                            <flux:navlist.item href="/tools/invoice-generator">{{ __('Invoice Generator') }}</flux:navlist.item>
+                        </flux:navlist.group>
+                    @endif
+
+                    @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
                             <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
                                 {{ __('Users') }}
