@@ -191,14 +191,7 @@ new class extends Component
                         {{ __('Customer') }}
                     </x-description.term>
                     <x-description.details>
-                        {{ $photoshoot->customer?->name }}
-                        @if ($photoshoot->customer?->email)
-                            (
-                            <a href="mailto:{{ $photoshoot->customer?->email }}">
-                                {{ $photoshoot->customer?->email }}
-                            </a>
-                            )
-                        @endif
+                        <flux:link href="/customers/{{ $photoshoot->customer->id }}">{{ $photoshoot->customer?->name }}</flux:link>
                     </x-description.details>
 
                     <x-description.term>
