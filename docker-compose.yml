@@ -5,6 +5,7 @@ services:
       target: app
       args:
         APP_ENV: production
+        INCLUDE_FLUX: "true"
     environment:
       APP_ENV: production
       REDIS_HOST: redis
