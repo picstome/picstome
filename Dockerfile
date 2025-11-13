@@ -56,7 +56,7 @@ RUN if [ "$APP_ENV" = "production" ]; then \
 FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
 WORKDIR /var/www/html
 COPY package.json package-lock.json* ./
-RUN npm ci || npm install
+RUN npm ci
 # Copy vendor directory from composer (needed for some frontend builds)
 COPY --from=composer_stage /var/www/html/vendor ./vendor
 COPY resources ./resources
