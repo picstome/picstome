@@ -161,7 +161,7 @@
             </flux:header>
         @endunless
 
-        <flux:main :container="!$fullScreen" @class(['p-0!' => $fullScreen])>
+        <flux:main :container="!$fullScreen && !$isTool" @class(['p-0!' => $fullScreen || $isTool])>
             {{ $slot }}
         </flux:main>
 

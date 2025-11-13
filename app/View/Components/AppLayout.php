@@ -11,7 +11,7 @@ class AppLayout extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct(public $fullScreen = false)
+    public function __construct(public $fullScreen = false, public $isTool = false)
     {
         //
     }
