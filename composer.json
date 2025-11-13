@@ -14,6 +14,7 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "league/html-to-markdown": "^5.1",
         "livewire/flux": "^2.0",
+        "livewire/flux-pro": "^2.2",
         "livewire/volt": "^1.6",
         "maennchen/zipstream-php": "^3.1",
         "spatie/image": "^3.8",
@@ -82,5 +83,10 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "repositories": {}
+    "repositories": {
+        "flux-pro": {
+            "type": "composer",
+            "url": "https://composer.fluxui.dev"
+        }
+    }
 }
