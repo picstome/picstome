@@ -45,6 +45,8 @@ class extends Component
         abort_unless($this->team->hasCompletedOnboarding(), 404);
 
         $this->formattedAmount = Cashier::formatAmount($this->amount * 100, $this->team->stripe_currency);
+
+        $this->checkout();
     }
 
     public function rendering(View $view): void
@@ -91,6 +93,6 @@ class extends Component
     }
 }; ?>
 
-<div x-init="$wire.checkout">
+<div>
     {{--  --}}
 </div>
