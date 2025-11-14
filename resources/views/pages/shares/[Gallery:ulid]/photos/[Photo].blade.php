@@ -34,17 +34,25 @@ new class extends Component
     #[Url]
     public $navigateFavorites = false;
 
+    #[Url]
+    public $navigateCommented = false;
+
     public $commentText = '';
 
     public function mount()
     {
-        $this->next = $this->navigateFavorites
-            ? $this->photo->nextFavorite()
-            : $this->photo->next();
-
-        $this->previous = $this->navigateFavorites
-            ? $this->photo->previousFavorite()
-            : $this->photo->previous();
+        if ($this->navigateFavorites) {
+            $this->next = $this->photo->nextFavorite();
+            $this->previous = $this->photo->previousFavorite();
+        } elseif ($this->navigateCommented) {
+            $commented = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
+            $index = $commented->search(fn ($photo) => $photo->id === $this->photo->id);
+            $this->next = $commented->get($index + 1);
+            $this->previous = $commented->get($index - 1);
+        } else {
+            $this->next = $this->photo->next();
+            $this->previous = $this->photo->previous();
+        }
     }
 
     public function favorite()
@@ -63,8 +71,9 @@ new class extends Component
     {
         return Str::of(route('shares.show', ['gallery' => $this->photo->gallery]))
             ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
+            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
             ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
             ->append($this->photo->id);
     }
 
@@ -325,7 +334,7 @@ new class extends Component
                 >
                     @if ($previous)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="previous"
                             icon="chevron-left"
@@ -341,7 +350,7 @@ new class extends Component
                 >
                     @if ($next)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="next"
                             icon="chevron-right"
@@ -368,7 +377,7 @@ new class extends Component
                     </div>
                     <div class="flex gap-3">
                         <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle">
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm">
                                 @if ($this->comments->isEmpty())
                                     {{ __('Add comment') }}
                                 @else
