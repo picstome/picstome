@@ -256,8 +256,18 @@ new class extends Component
                             </flux:menu>
                         </flux:dropdown>
 
+                        @php
+                            $comments = $photo->comments()->latest()->with('user')->get();
+                        @endphp
+
                         <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle" />
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle">
+                                @if ($comments->isEmpty())
+                                    {{ __('Add comment') }}
+                                @else
+                                    {{ __('Comments (:count)', ['count' => $comments->count()]) }}
+                                @endif
+                            </flux:button>
                         </flux:modal.trigger>
 
                         <flux:button
@@ -298,35 +308,50 @@ new class extends Component
                             </div>
                         @else
                             @foreach ($comments as $comment)
-                                <div class="group relative rounded bg-zinc-100 p-3 dark:bg-zinc-800">
-                                    <div class="mb-1 flex items-center gap-2">
-                                        <span class="text-xs font-semibold text-zinc-700 dark:text-white/80">
-                                            {{ $comment->user?->name ?? __('Unknown') }}
-                                        </span>
-                                        <span class="text-xs text-zinc-400">&middot;</span>
+                                <div
+                                    @class([
+                                        'group relative rounded bg-zinc-100 p-3 dark:bg-zinc-800',
+                                        'ml-auto bg-blue-50 text-right dark:bg-blue-900' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                    ])
+                                >
+                                    <div
+                                        @class([
+                                            'mb-1 flex items-center gap-2',
+                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        ])
+                                    >
+                                        @if ($comment->user)
+                                            <span class="text-xs font-semibold text-zinc-700 dark:text-white/80">
+                                                {{ $comment->user->name }}
+                                            </span>
+                                            <span class="text-xs text-zinc-400">&middot;</span>
+                                        @endif
+
                                         <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
                                             {{ $comment->created_at->diffForHumans() }}
                                         </span>
-                                        <button
-                                            wire:click="deleteComment({{ $comment->id }})"
-                                            class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
-                                            title="{{ __('Delete comment') }}"
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                class="h-4 w-4"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
+                                        @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
+                                            <button
+                                                wire:click="deleteComment({{ $comment->id }})"
+                                                class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
+                                                title="{{ __('Delete comment') }}"
                                             >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M6 18L18 6M6 6l12 12"
-                                                />
-                                            </svg>
-                                        </button>
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-4 w-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        @endif
                                     </div>
                                     <div class="text-sm text-zinc-800 dark:text-white/90">
                                         {{ $comment->comment }}
