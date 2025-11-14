@@ -197,18 +197,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                                                left: ${(containerWidth - renderedWidth) / 2}px;
-                                                                top: ${(containerHeight - renderedHeight) / 2}px;
-                                                                width: ${renderedWidth}px;
-                                                                height: ${renderedHeight}px;
-                                                                max-width: ${renderedWidth}px;
-                                                                max-height: ${renderedHeight}px;
-                                                                background-image: url('${url}');
-                                                                background-repeat: repeat;
-                                                                opacity: ${this.watermarkTransparency};
-                                                                pointer-events: none;
-                                                                position: absolute;
-                                                            `
+                                                                            left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                            top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                            width: ${renderedWidth}px;
+                                                                            height: ${renderedHeight}px;
+                                                                            max-width: ${renderedWidth}px;
+                                                                            max-height: ${renderedHeight}px;
+                                                                            background-image: url('${url}');
+                                                                            background-repeat: repeat;
+                                                                            opacity: ${this.watermarkTransparency};
+                                                                            pointer-events: none;
+                                                                            position: absolute;
+                                                                        `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -403,19 +403,37 @@ new class extends Component
                     @if ($this->comments->isNotEmpty())
                         <div class="max-h-64 space-y-4 overflow-y-auto">
                             @foreach ($this->comments as $comment)
-                                <div class="group relative rounded p-3 bg-zinc-50 dark:bg-zinc-900">
-                                    <div class="mb-1 flex items-center gap-2">
+                                <div
+                                    @class([
+                                        'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                        'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                    ])
+                                >
+                                    <div
+                                        @class([
+                                            'mb-1 flex items-center gap-2',
+                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        ])
+                                    >
                                         @if ($comment->user)
-                                            <flux:text variant="strong" class="font-semibold text-sm">
+                                            <flux:text variant="strong" class="text-sm font-semibold">
                                                 {{ $comment->user->name }}
                                             </flux:text>
                                             <flux:text>&middot;</flux:text>
                                         @endif
+
                                         <flux:text class="text-xs">
                                             {{ $comment->created_at->diffForHumans() }}
                                         </flux:text>
                                         @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
-                                            <flux:button wire:click="deleteComment({{ $comment->id }})" icon="x-mark" variant="subtle" size="sm" square class="ml-auto" />
+                                            <flux:button
+                                                wire:click="deleteComment({{ $comment->id }})"
+                                                icon="x-mark"
+                                                variant="subtle"
+                                                size="xs"
+                                                inset="right"
+                                                square
+                                            />
                                         @endif
                                     </div>
                                     <flux:text variant="strong">
