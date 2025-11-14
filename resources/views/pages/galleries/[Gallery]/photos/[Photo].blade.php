@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Photo;
+use App\Models\PhotoComment;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -67,17 +68,17 @@ new class extends Component
         ]);
 
         $this->commentText = '';
-        $this->dispatch('comment-added');
     }
 
-    public function deleteComment($commentId)
+    public function deleteComment(PhotoComment $comment)
     {
-        $comment = $this->photo->comments()->findOrFail($commentId);
+        abort_unless($comment->photo->is($this->photo), 404);
+
         if ($comment->user_id !== auth()->id()) {
             abort(403);
         }
+
         $comment->delete();
-        $this->dispatch('comment-deleted');
     }
 
     public function removeAsCover()
@@ -353,17 +354,6 @@ new class extends Component
         @assets
             <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
         @endassets
-
-        @script
-            <script>
-                document.addEventListener('comment-added', () => {
-                    $flux.modals('add-comment').close();
-                });
-                document.addEventListener('comment-deleted', () => {
-                    // Optionally, show a toast or refresh comments if needed
-                });
-            </script>
-        @endscript
 
         @push('head')
             <link rel="preload" as="image" href="{{ $photo->url }}" />
