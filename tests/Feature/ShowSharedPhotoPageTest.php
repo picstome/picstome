@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 
@@ -84,4 +85,92 @@ test('favorite photo via browser on watermarked gallery', function () {
     $page->pressAndWaitFor('favorite', 0.1);
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
+});
+
+// --- Comment functionality tests ---
+
+test('authenticated user can add a comment to a shared photo', function () {
+    $user = User::factory()->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+
+    Volt::actingAs($user)
+        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->set('commentText', 'This is a shared photo comment!')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->count())->toBe(1);
+    $comment = $photo->comments()->first();
+    expect($comment->comment)->toBe('This is a shared photo comment!');
+    expect($comment->user_id)->toBe($user->id);
+});
+
+test('comment is required when adding a comment to a shared photo', function () {
+    $user = User::factory()->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+
+    Volt::actingAs($user)
+        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->set('commentText', '')
+        ->call('addComment')
+        ->assertHasErrors(['commentText' => 'required']);
+
+    expect($photo->comments()->count())->toBe(0);
+});
+
+test('user can delete their own comment on a shared photo', function () {
+    $user = User::factory()->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+    $comment = $photo->comments()->create([
+        'user_id' => $user->id,
+        'comment' => 'My shared comment',
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->find($comment->id))->toBeNull();
+});
+
+test('user cannot delete another user\'s comment on a shared photo', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+    $comment = $photo->comments()->create([
+        'user_id' => $otherUser->id,
+        'comment' => 'Other user shared comment',
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertStatus(403);
+
+    expect($photo->comments()->find($comment->id))->not()->toBeNull();
+});
+
+test('guest cannot add or delete comments on a shared photo', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+    $comment = $photo->comments()->create([
+        'user_id' => User::factory()->create()->id,
+        'comment' => 'Guest cannot delete',
+    ]);
+
+    Volt::test('pages.shares.photos.show', ['photo' => $photo])
+        ->set('commentText', 'Guest comment')
+        ->call('addComment')
+        ->assertStatus(403);
+
+    Volt::test('pages.shares.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertStatus(403);
+
+    expect($photo->comments()->find($comment->id))->not()->toBeNull();
 });
