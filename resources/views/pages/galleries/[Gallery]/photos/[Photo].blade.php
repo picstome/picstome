@@ -25,15 +25,21 @@ new class extends Component
     #[Url]
     public $navigateFavorites = false;
 
+    #[Url]
+    public $navigateCommented = false;
+
     public function mount()
     {
-        $this->next = $this->navigateFavorites
-            ? $this->photo->nextFavorite()
-            : $this->photo->next();
-
-        $this->previous = $this->navigateFavorites
-            ? $this->photo->previousFavorite()
-            : $this->photo->previous();
+        if ($this->navigateFavorites) {
+            $this->next = $this->photo->nextFavorite();
+            $this->previous = $this->photo->previousFavorite();
+        } elseif ($this->navigateCommented) {
+            $this->next = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->get($this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->search(fn ($photo) => $photo->id === $this->photo->id) + 1);
+            $this->previous = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->get($this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->search(fn ($photo) => $photo->id === $this->photo->id) - 1);
+        } else {
+            $this->next = $this->photo->next();
+            $this->previous = $this->photo->previous();
+        }
     }
 
     public function favorite()
@@ -94,8 +100,9 @@ new class extends Component
     {
         return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
             ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
+            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
             ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
             ->append($this->photo->id);
     }
 
@@ -191,7 +198,7 @@ new class extends Component
                 >
                     @if ($previous)
                         <flux:button
-                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
+                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
                             wire:navigate
                             x-ref="previous"
                             icon="chevron-left"
@@ -207,7 +214,7 @@ new class extends Component
                 >
                     @if ($next)
                         <flux:button
-                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
+                            href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
                             wire:navigate
                             x-ref="next"
                             icon="chevron-right"
@@ -267,7 +274,7 @@ new class extends Component
                         @endphp
 
                         <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle">
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm">
                                 @if ($comments->isEmpty())
                                     {{ __('Add comment') }}
                                 @else

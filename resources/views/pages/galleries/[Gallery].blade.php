@@ -185,7 +185,7 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get();
+        $favorites = $this->gallery->photos()->favorited()->with('gallery')->withCount('comments')->get();
 
         $this->favorites = $favorites->naturalSortBy('name');
     }
@@ -195,6 +195,7 @@ new class extends Component
         $commented = $this->gallery->photos()
             ->whereHas('comments')
             ->with('gallery')
+            ->withCount('comments')
             ->get();
 
         $this->commentedPhotos = $commented->naturalSortBy('name');
@@ -202,7 +203,7 @@ new class extends Component
 
     public function getAllPhotos()
     {
-        $photos = $this->gallery->photos()->with('gallery')->get();
+        $photos = $this->gallery->photos()->with('gallery')->withCount('comments')->get();
 
         $this->allPhotos = $photos->naturalSortBy('name');
     }
