@@ -20,7 +20,6 @@ class PhotoCommentFactory extends Factory
     {
         return [
             'photo_id' => Photo::factory(),
-            'user_id' => User::factory(),
             'comment' => $this->faker->sentence(),
         ];
     }
