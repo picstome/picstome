@@ -197,18 +197,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                                                            left: ${(containerWidth - renderedWidth) / 2}px;
-                                                                            top: ${(containerHeight - renderedHeight) / 2}px;
-                                                                            width: ${renderedWidth}px;
-                                                                            height: ${renderedHeight}px;
-                                                                            max-width: ${renderedWidth}px;
-                                                                            max-height: ${renderedHeight}px;
-                                                                            background-image: url('${url}');
-                                                                            background-repeat: repeat;
-                                                                            opacity: ${this.watermarkTransparency};
-                                                                            pointer-events: none;
-                                                                            position: absolute;
-                                                                        `
+                                                                                        left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                                        top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                                        width: ${renderedWidth}px;
+                                                                                        height: ${renderedHeight}px;
+                                                                                        max-width: ${renderedWidth}px;
+                                                                                        max-height: ${renderedHeight}px;
+                                                                                        background-image: url('${url}');
+                                                                                        background-repeat: repeat;
+                                                                                        opacity: ${this.watermarkTransparency};
+                                                                                        pointer-events: none;
+                                                                                        position: absolute;
+                                                                                    `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -368,7 +368,13 @@ new class extends Component
                     </div>
                     <div class="flex gap-3">
                         <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle" />
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle">
+                                @if ($this->comments->isEmpty())
+                                    {{ __('Add comment') }}
+                                @else
+                                    {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
+                                @endif
+                            </flux:button>
                         </flux:modal.trigger>
                         @if ($this->photo->gallery->is_share_downloadable)
                             <flux:button
