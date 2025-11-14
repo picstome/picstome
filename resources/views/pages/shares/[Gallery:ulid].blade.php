@@ -26,12 +26,15 @@ new class extends Component
 
     public Collection $favorites;
 
+    public Collection $commentedPhotos;
+
     #[Url]
     public $activeTab = 'all';
 
     public function mount(Gallery $gallery)
     {
         $this->getFavorites();
+        $this->getCommentedPhotos();
     }
 
     #[On('photo-favorited')]
@@ -42,12 +45,23 @@ new class extends Component
         $this->favorites = $favorites->naturalSortBy('name');
     }
 
+    public function getCommentedPhotos()
+    {
+        $commented = $this->gallery->photos()
+            ->whereHas('comments')
+            ->with('gallery')
+            ->get();
+
+        $this->commentedPhotos = $commented->naturalSortBy('name');
+    }
+
     public function with()
     {
         $photos = $this->gallery->photos()->with('gallery')->get();
 
         return [
             'allPhotos' => $photos->naturalSortBy('name'),
+            'commentedPhotos' => $this->commentedPhotos ?? collect(),
         ];
     }
 }; ?>
@@ -104,21 +118,28 @@ new class extends Component
             @if ($allPhotos->isNotEmpty())
                 <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                        <flux:navbar.item
-                            @click="$wire.activeTab = 'all'"
-                            x-bind:data-current="$wire.activeTab === 'all'"
-                        >
-                            {{ __('All photos') }}
-                        </flux:navbar.item>
+                    <flux:navbar.item
+                        @click="$wire.activeTab = 'all'"
+                        x-bind:data-current="$wire.activeTab === 'all'"
+                    >
+                        {{ __('All photos') }}
+                    </flux:navbar.item>
 
-                        @if ($gallery->is_share_selectable)
-                            <flux:navbar.item
-                                @click="$wire.activeTab = 'favorited'"
-                                x-bind:data-current="$wire.activeTab === 'favorited'"
-                            >
-                                {{ __('Favorited') }}
-                            </flux:navbar.item>
-                        @endif
+                    <flux:navbar.item
+                        @click="$wire.activeTab = 'commented'"
+                        x-bind:data-current="$wire.activeTab === 'commented'"
+                    >
+                        {{ __('Commented') }}
+                    </flux:navbar.item>
+
+                    @if ($gallery->is_share_selectable)
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'favorited'"
+                            x-bind:data-current="$wire.activeTab === 'favorited'"
+                        >
+                            {{ __('Favorited') }}
+                        </flux:navbar.item>
+                    @endif
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
@@ -127,6 +148,21 @@ new class extends Component
                         >
                             @foreach ($allPhotos as $photo)
                                 <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                        <div
+                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
+                        >
+                            @foreach ($commentedPhotos as $photo)
+                                <livewire:shared-photo-item
+                                    :$photo
+                                    :asCommented="true"
+                                    :key="'commented-'.$photo->id"
+                                    :html-id="'commented-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>

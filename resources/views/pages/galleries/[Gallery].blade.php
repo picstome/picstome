@@ -34,6 +34,8 @@ new class extends Component
 
     public Collection $favorites;
 
+    public Collection $commentedPhotos;
+
     public Collection $allPhotos;
 
     public array $existingPhotoNames = [];
@@ -53,6 +55,7 @@ new class extends Component
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
         $this->getAllPhotos();
+        $this->getCommentedPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
@@ -187,6 +190,16 @@ new class extends Component
         $this->favorites = $favorites->naturalSortBy('name');
     }
 
+    public function getCommentedPhotos()
+    {
+        $commented = $this->gallery->photos()
+            ->whereHas('comments')
+            ->with('gallery')
+            ->get();
+
+        $this->commentedPhotos = $commented->naturalSortBy('name');
+    }
+
     public function getAllPhotos()
     {
         $photos = $this->gallery->photos()->with('gallery')->get();
@@ -317,6 +330,12 @@ new class extends Component
                             {{ __('All photos') }}
                         </flux:navbar.item>
                         <flux:navbar.item
+                            @click="$wire.activeTab = 'commented'"
+                            x-bind:data-current="$wire.activeTab === 'commented'"
+                        >
+                            {{ __('Commented') }}
+                        </flux:navbar.item>
+                        <flux:navbar.item
                             @click="$wire.activeTab = 'favorited'"
                             x-bind:data-current="$wire.activeTab === 'favorited'"
                         >
@@ -335,6 +354,16 @@ new class extends Component
                         >
                             @foreach ($allPhotos as $photo)
                                 <livewire:photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                        <div
+                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
+                        >
+                            @foreach ($commentedPhotos as $photo)
+                                <livewire:photo-item :$photo :asCommented="true" :key="'commented-'.$photo->id" :html-id="'commented-'.$photo->id" />
                             @endforeach
                         </div>
                     </div>
