@@ -99,6 +99,12 @@ new class extends Component
 
         $comment->delete();
     }
+
+    #[Computed]
+    public function comments()
+    {
+        return $this->photo->comments()->latest()->with('user')->get();
+    }
 }; ?>
 
 <x-guest-layout :full-screen="true">
@@ -191,18 +197,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                            left: ${(containerWidth - renderedWidth) / 2}px;
-                            top: ${(containerHeight - renderedHeight) / 2}px;
-                            width: ${renderedWidth}px;
-                            height: ${renderedHeight}px;
-                            max-width: ${renderedWidth}px;
-                            max-height: ${renderedHeight}px;
-                            background-image: url('${url}');
-                            background-repeat: repeat;
-                            opacity: ${this.watermarkTransparency};
-                            pointer-events: none;
-                            position: absolute;
-                        `
+                                                                left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                width: ${renderedWidth}px;
+                                                                height: ${renderedHeight}px;
+                                                                max-width: ${renderedWidth}px;
+                                                                max-height: ${renderedHeight}px;
+                                                                background-image: url('${url}');
+                                                                background-repeat: repeat;
+                                                                opacity: ${this.watermarkTransparency};
+                                                                pointer-events: none;
+                                                                position: absolute;
+                                                            `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -232,11 +238,7 @@ new class extends Component
             class="flex h-screen flex-col"
             x-on:resize.window="updateDimensions()"
         >
-            <div
-                id="photo"
-                class="relative h-full flex-1"
-                :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'"
-            >
+            <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
                 <div
                     class="relative flex w-full items-center justify-center"
                     :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'"
@@ -377,7 +379,8 @@ new class extends Component
                                 square
                             />
                         @endif
-                     @if ($this->photo->gallery->is_share_selectable)
+
+                        @if ($this->photo->gallery->is_share_selectable)
                             <flux:button
                                 name="favorite"
                                 wire:click="favorite"
@@ -391,77 +394,49 @@ new class extends Component
                     </div>
                 </div>
             </div>
-         <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+            <flux:modal name="add-comment" class="w-full sm:max-w-lg">
                 <div class="space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
                         <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
                     </div>
-                 <div class="max-h-64 space-y-4 overflow-y-auto">
-                        @php
-                            $comments = $photo->comments()->latest()->with('user')->get();
-                        @endphp
-                     @if ($comments->isEmpty())
-                            <div class="py-4 text-center text-sm text-zinc-500 dark:text-white/70">
-                                {{ __('No comments yet.') }}
-                            </div>
-                        @else
-                            @foreach ($comments as $comment)
-                                <div class="group relative rounded bg-zinc-100 p-3 dark:bg-zinc-800">
+                    @if ($this->comments->isNotEmpty())
+                        <div class="max-h-64 space-y-4 overflow-y-auto">
+                            @foreach ($this->comments as $comment)
+                                <div class="group relative rounded p-3 bg-zinc-50 dark:bg-zinc-900">
                                     <div class="mb-1 flex items-center gap-2">
-                                        <span class="text-xs font-semibold text-zinc-700 dark:text-white/80">
-                                            {{ $comment->user?->name ?? __('Guest') }}
-                                        </span>
-                                        <span class="text-xs text-zinc-400">&middot;</span>
-                                        <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
+                                        @if ($comment->user)
+                                            <flux:text variant="strong" class="font-semibold text-sm">
+                                                {{ $comment->user->name }}
+                                            </flux:text>
+                                            <flux:text>&middot;</flux:text>
+                                        @endif
+                                        <flux:text class="text-xs">
                                             {{ $comment->created_at->diffForHumans() }}
-                                        </span>
-                                        @if (auth()->check() && auth()->id() === $photo->gallery->team->user_id)
-                                            <button
-                                                wire:click="deleteComment({{ $comment->id }})"
-                                                class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
-                                                title="{{ __('Delete comment') }}"
-                                            >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    class="h-4 w-4"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                            </button>
+                                        </flux:text>
+                                        @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
+                                            <flux:button wire:click="deleteComment({{ $comment->id }})" icon="x-mark" variant="subtle" size="sm" square class="ml-auto" />
                                         @endif
                                     </div>
-                                    <div class="text-sm text-zinc-800 dark:text-white/90">
+                                    <flux:text variant="strong">
                                         {{ $comment->comment }}
-                                    </div>
+                                    </flux:text>
                                 </div>
                             @endforeach
-                        @endif
-                    </div>
-                 @php
-                        $isTeamOwner = auth()->check() && auth()->id() === $photo->gallery->team->user_id;
-                    @endphp
-                 @if (auth()->guest() || $isTeamOwner)
-                        <form wire:submit="addComment" class="space-y-4 pt-2">
-                            <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
-                            <flux:error name="commentText" />
-                            <div class="flex">
-                                <flux:spacer />
-                                <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
-                            </div>
-                        </form>
+                        </div>
                     @endif
+
+                    <form wire:submit="addComment" class="space-y-4 pt-2">
+                        <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+                        <flux:error name="commentText" />
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                        </div>
+                    </form>
                 </div>
             </flux:modal>
-         @unlesssubscribed($photo->gallery->team)
+            @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">
                     @include('partials.powered-by')
                 </div>
