@@ -185,3 +185,27 @@ test('guest can add a comment to a shared photo', function () {
     expect($comment->comment)->toBe('Guest comment');
     expect($comment->user_id)->toBeNull();
 });
+
+test('team owner is notified by email when guest submits a comment', function () {
+    \Illuminate\Support\Facades\Notification::fake();
+    $owner = User::factory()->create();
+    $team = \App\Models\Team::factory()->for($owner, 'owner')->create();
+    $gallery = Gallery::factory()->shared()->for($team)->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+
+    Volt::test('pages.shares.photos.show', ['photo' => $photo])
+        ->set('commentText', 'A guest comment for notification!')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->latest()->first();
+    \Illuminate\Support\Facades\Notification::assertSentTo(
+        $owner,
+        \App\Notifications\GuestPhotoCommented::class,
+        function ($notification, $channels) use ($photo, $comment) {
+            return $notification->photo->is($photo)
+                && $notification->comment->is($comment)
+                && in_array('mail', $channels);
+        }
+    );
+});
