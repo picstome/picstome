@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -160,9 +161,8 @@ test('comment is required when adding a comment', function () {
 test('user can delete their own comment', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $user = $this->user;
-    $comment = $photo->comments()->create([
+    $comment = PhotoComment::factory()->for($photo)->create([
         'user_id' => $user->id,
-        'comment' => 'My comment',
     ]);
 
     Volt::actingAs($user)
@@ -177,9 +177,8 @@ test('user cannot delete another user\'s comment', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $user = $this->user;
     $otherUser = User::factory()->create();
-    $comment = $photo->comments()->create([
+    $comment = PhotoComment::factory()->for($photo)->create([
         'user_id' => $otherUser->id,
-        'comment' => 'Other user comment',
     ]);
 
     Volt::actingAs($user)
@@ -193,9 +192,8 @@ test('user cannot delete another user\'s comment', function () {
 test('guest cannot delete any comment', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $user = $this->user;
-    $comment = $photo->comments()->create([
+    $comment = PhotoComment::factory()->for($photo)->create([
         'user_id' => $user->id,
-        'comment' => 'Guest cannot delete',
     ]);
 
     Volt::test('pages.galleries.photos.show', ['photo' => $photo])
