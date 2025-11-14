@@ -70,6 +70,16 @@ new class extends Component
         $this->dispatch('comment-added');
     }
 
+    public function deleteComment($commentId)
+    {
+        $comment = $this->photo->comments()->findOrFail($commentId);
+        if ($comment->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $comment->delete();
+        $this->dispatch('comment-deleted');
+    }
+
     public function removeAsCover()
     {
         $this->authorize('updateCover', $this->photo->gallery);
@@ -267,18 +277,52 @@ new class extends Component
 
             {{-- add comment modal here --}}
             <flux:modal name="add-comment" class="w-full sm:max-w-lg">
-                <form wire:submit="addComment" class="space-y-6">
+                <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Add a comment') }}</flux:heading>
-                        <flux:subheading>{{ __('Leave a comment about this photo.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
+                        <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
                     </div>
-                    <flux:textarea wire:model.defer="commentText" :label="__('Comment')" rows="3" />
-                    <flux:error name="commentText" />
-                    <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+
+                    <div class="max-h-64 overflow-y-auto space-y-4">
+                        @php $comments = $photo->comments()->latest()->with('user')->get(); @endphp
+                        @if ($comments->isEmpty())
+                            <div class="text-zinc-500 dark:text-white/70 text-sm text-center py-4">
+                                {{ __('No comments yet.') }}
+                            </div>
+                        @else
+                            @foreach ($comments as $comment)
+    <div class="rounded bg-zinc-100 dark:bg-zinc-800 p-3 relative group">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="font-semibold text-xs text-zinc-700 dark:text-white/80">
+                {{ $comment->user?->name ?? __('Unknown') }}
+            </span>
+            <span class="text-xs text-zinc-400">&middot;</span>
+            <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
+                {{ $comment->created_at->diffForHumans() }}
+            </span>
+            @if (auth()->id() === $comment->user_id)
+                <button wire:click="deleteComment({{ $comment->id }})" class="ml-auto text-zinc-400 hover:text-red-500 transition p-1" title="{{ __('Delete comment') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            @endif
+        </div>
+        <div class="text-sm text-zinc-800 dark:text-white/90">
+            {{ $comment->comment }}
+        </div>
+    </div>
+@endforeach
+                        @endif
                     </div>
-                </form>
+
+                    <form wire:submit="addComment" class="space-y-4 pt-2">
+                        <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+                        <flux:error name="commentText" />
+                        <div class="flex">
+                            <flux:spacer />
+                            <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                        </div>
+                    </form>
+                </div>
             </flux:modal>
         </div>
 
@@ -290,6 +334,9 @@ new class extends Component
         <script>
             document.addEventListener('comment-added', () => {
                 $flux.modals('add-comment').close();
+            });
+            document.addEventListener('comment-deleted', () => {
+                // Optionally, show a toast or refresh comments if needed
             });
         </script>
         @endscript

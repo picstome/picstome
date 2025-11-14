@@ -156,3 +156,51 @@ test('comment is required when adding a comment', function () {
 
     expect($photo->comments()->count())->toBe(0);
 });
+
+test('user can delete their own comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+    $comment = $photo->comments()->create([
+        'user_id' => $user->id,
+        'comment' => 'My comment',
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->find($comment->id))->toBeNull();
+});
+
+test('user cannot delete another user\'s comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+    $otherUser = User::factory()->create();
+    $comment = $photo->comments()->create([
+        'user_id' => $otherUser->id,
+        'comment' => 'Other user comment',
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertStatus(403);
+
+    expect($photo->comments()->find($comment->id))->not()->toBeNull();
+});
+
+test('guest cannot delete any comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+    $comment = $photo->comments()->create([
+        'user_id' => $user->id,
+        'comment' => 'Guest cannot delete',
+    ]);
+
+    Volt::test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertStatus(403);
+
+    expect($photo->comments()->find($comment->id))->not()->toBeNull();
+});
