@@ -2,6 +2,9 @@
 
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
+use App\Notifications\GuestPhotoCommented;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -22,49 +25,6 @@ render(function (View $view, Photo $photo) {
 
 new class extends Component
 {
-    public $commentText = '';
-
-    public function addComment()
-    {
-        $this->validate([
-            'commentText' => 'required|string|max:1000',
-        ]);
-
-        // Only allow guests or the team owner to add comments
-        if (auth()->check()) {
-            if (auth()->id() !== $this->photo->gallery->team->user_id) {
-                abort(403);
-            }
-        }
-
-        $comment = $this->photo->comments()->create([
-            'user_id' => auth()->id() ?: null,
-            'comment' => $this->commentText,
-        ]);
-
-        // Notify team owner if guest
-        if (auth()->guest()) {
-            $owner = $this->photo->gallery->team->owner;
-            if ($owner) {
-                $owner->notify(new \App\Notifications\GuestPhotoCommented($this->photo, $comment));
-            }
-        }
-
-        $this->commentText = '';
-        $this->dispatch('comment-added');
-    }
-
-    public function deleteComment($commentId)
-    {
-        $comment = $this->photo->comments()->findOrFail($commentId);
-        // Only the team owner can delete any comment
-        if (! auth()->check() || auth()->id() !== $this->photo->gallery->team->user_id) {
-            abort(403);
-        }
-        $comment->delete();
-        $this->dispatch('comment-deleted');
-    }
-
     public Photo $photo;
 
     public ?Photo $next;
@@ -73,6 +33,8 @@ new class extends Component
 
     #[Url]
     public $navigateFavorites = false;
+
+    public $commentText = '';
 
     public function mount()
     {
@@ -104,6 +66,38 @@ new class extends Component
             ->append('#')
             ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
             ->append($this->photo->id);
+    }
+
+    public function addComment()
+    {
+        $this->validate([
+            'commentText' => 'required|string|max:1000',
+        ]);
+
+        abort_if(Auth::check() && ! $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment = $this->photo->comments()->create([
+            'user_id' => Auth::id() ?: null,
+            'comment' => $this->commentText,
+        ]);
+
+        if (Auth::guest()) {
+            $this->photo
+                ->gallery
+                ->team
+                ->owner->notify(new GuestPhotoCommented($this->photo, $comment));
+        }
+
+        $this->commentText = '';
+    }
+
+    public function deleteComment(PhotoComment $comment)
+    {
+        abort_unless($comment->photo->is($this->photo), 404);
+
+        abort_unless(Auth::check() && $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment->delete();
     }
 }; ?>
 
