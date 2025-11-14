@@ -129,6 +129,10 @@
                         <flux:navlist.item href="/tools/invoice-generator" icon="document-plus">
                             {{ __('Invoice Generator') }}
                         </flux:navlist.item>
+
+                        <flux:navlist.item href="/tools/calculator" icon="calculator">
+                            {{ __('Calculator') }}
+                        </flux:navlist.item>
                     </flux:navlist.group>
 
                     @if (auth()->user()?->is_admin)
