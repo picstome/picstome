@@ -18,6 +18,8 @@ new class extends Component
 
     public ?Photo $previous;
 
+    public $commentText = '';
+
     #[Url]
     public $navigateFavorites = false;
 
@@ -53,6 +55,21 @@ new class extends Component
         $this->photo->gallery->setCoverPhoto($this->photo);
     }
 
+    public function addComment()
+    {
+        $this->validate([
+            'commentText' => 'required|string|max:1000',
+        ]);
+
+        $this->photo->comments()->create([
+            'user_id' => auth()->id(),
+            'comment' => $this->commentText,
+        ]);
+
+        $this->commentText = '';
+        $this->dispatch('comment-added');
+    }
+
     public function removeAsCover()
     {
         $this->authorize('updateCover', $this->photo->gallery);
@@ -66,7 +83,7 @@ new class extends Component
     public function galleryUrl()
     {
         return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
-            ->when($this->navigateFavorites, fn($str) => $str->append('?activeTab=favorited'))
+            ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
             ->append('#')
             ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
             ->append($this->photo->id);
@@ -224,6 +241,11 @@ new class extends Component
                                 </flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
+
+                        <flux:modal.trigger name="add-comment">
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" variant="subtle" />
+                        </flux:modal.trigger>
+
                         <flux:button
                             :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
                             icon="cloud-arrow-down"
@@ -242,11 +264,35 @@ new class extends Component
                     </div>
                 </div>
             </div>
+
+            {{-- add comment modal here --}}
+            <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+                <form wire:submit="addComment" class="space-y-6">
+                    <div>
+                        <flux:heading size="lg">{{ __('Add a comment') }}</flux:heading>
+                        <flux:subheading>{{ __('Leave a comment about this photo.') }}</flux:subheading>
+                    </div>
+                    <flux:textarea wire:model.defer="commentText" :label="__('Comment')" rows="3" />
+                    <flux:error name="commentText" />
+                    <div class="flex">
+                        <flux:spacer />
+                        <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
         </div>
 
         @assets
             <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
         @endassets
+
+        @script
+        <script>
+            document.addEventListener('comment-added', () => {
+                $flux.modals('add-comment').close();
+            });
+        </script>
+        @endscript
 
         @push('head')
             <link rel="preload" as="image" href="{{ $photo->url }}">

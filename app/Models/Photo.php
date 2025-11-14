@@ -242,4 +242,9 @@ class Photo extends Model
     {
         return $this->diskOrDefault() === 'public';
     }
+
+    public function comments()
+    {
+        return $this->hasMany(PhotoComment::class);
+    }
 }

@@ -127,3 +127,32 @@ test('prevents setting cover photo from another team', function () {
     $component->assertStatus(403);
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
 });
+
+test('authenticated user can add a comment to a photo', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->set('commentText', 'This is a test comment!')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->count())->toBe(1);
+    $comment = $photo->comments()->first();
+    expect($comment->comment)->toBe('This is a test comment!');
+    expect($comment->user_id)->toBe($user->id);
+});
+
+test('comment is required when adding a comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->set('commentText', '')
+        ->call('addComment')
+        ->assertHasErrors(['commentText' => 'required']);
+
+    expect($photo->comments()->count())->toBe(0);
+});
