@@ -98,6 +98,12 @@ new class extends Component
             ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
             ->append($this->photo->id);
     }
+
+    #[Computed]
+    public function comments()
+    {
+        return $this->photo->comments()->latest()->with('user')->get();
+    }
 }; ?>
 
 <x-app-layout :full-screen="true">
@@ -289,7 +295,6 @@ new class extends Component
                 </div>
             </div>
 
-            {{-- add comment modal here --}}
             <flux:modal name="add-comment" class="w-full sm:max-w-lg">
                 <div class="space-y-6">
                     <div>
@@ -298,66 +303,46 @@ new class extends Component
                     </div>
 
                     <div class="max-h-64 space-y-4 overflow-y-auto">
-                        @php
-                            $comments = $photo->comments()->latest()->with('user')->get();
-                        @endphp
-
-                        @if ($comments->isEmpty())
-                            <div class="py-4 text-center text-sm text-zinc-500 dark:text-white/70">
-                                {{ __('No comments yet.') }}
-                            </div>
-                        @else
-                            @foreach ($comments as $comment)
-                                <div
-                                    @class([
-                                        'group relative rounded bg-zinc-100 p-3 dark:bg-zinc-800',
-                                        'ml-auto bg-blue-50 text-right dark:bg-blue-900' => $comment->user && $comment->user->is($photo->gallery->team->owner),
-                                    ])
-                                >
+                        @if ($this->comments->isNotEmpty())
+                            <div class="max-h-64 space-y-4 overflow-y-auto">
+                                @foreach ($this->comments as $comment)
                                     <div
                                         @class([
-                                            'mb-1 flex items-center gap-2',
-                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                            'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                         ])
                                     >
-                                        @if ($comment->user)
-                                            <span class="text-xs font-semibold text-zinc-700 dark:text-white/80">
-                                                {{ $comment->user->name }}
-                                            </span>
-                                            <span class="text-xs text-zinc-400">&middot;</span>
-                                        @endif
+                                        <div
+                                            @class([
+                                                'mb-1 flex items-center gap-2',
+                                                'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            ])
+                                        >
+                                            @if ($comment->user)
+                                                <flux:text variant="strong" class="text-sm font-semibold">
+                                                    {{ $comment->user->name }}
+                                                </flux:text>
+                                                <flux:text>&middot;</flux:text>
+                                            @endif
 
-                                        <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
-                                            {{ $comment->created_at->diffForHumans() }}
-                                        </span>
-                                        @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
-                                            <button
+                                            <flux:text class="text-xs">
+                                                {{ $comment->created_at->diffForHumans() }}
+                                            </flux:text>
+                                            <flux:button
                                                 wire:click="deleteComment({{ $comment->id }})"
-                                                class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
-                                                title="{{ __('Delete comment') }}"
-                                            >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    class="h-4 w-4"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        @endif
+                                                icon="x-mark"
+                                                variant="subtle"
+                                                size="xs"
+                                                inset="right"
+                                                square
+                                            />
+                                        </div>
+                                        <flux:text variant="strong">
+                                            {{ $comment->comment }}
+                                        </flux:text>
                                     </div>
-                                    <div class="text-sm text-zinc-800 dark:text-white/90">
-                                        {{ $comment->comment }}
-                                    </div>
-                                </div>
-                            @endforeach
+                                @endforeach
+                            </div>
                         @endif
                     </div>
 
