@@ -73,42 +73,60 @@ new class extends Component
             x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
             class="h-full"
         >
-            @if($allPhotos->isNotEmpty())
+            @if ($allPhotos->isNotEmpty())
                 <div class="relative">
                     <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
-                        <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                        <img
+                            src="{{ $gallery->team->brand_logo_url }}"
+                            class="mx-auto max-h-[90px] md:max-h-[160px]"
+                        />
                     </a>
                 </div>
 
-                <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
-                    <img src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->large_thumbnail_url }}" class="w-full h-full object-cover" />
+                <div class="relative mt-4 h-[164px] overflow-hidden max-sm:-mx-6 md:h-[240px] lg:mt-8">
+                    <img
+                        src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->large_thumbnail_url }}"
+                        class="h-full w-full object-cover"
+                    />
                 </div>
             @else
                 <div>
                     <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
-                        <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                        <img
+                            src="{{ $gallery->team->brand_logo_url }}"
+                            class="mx-auto max-h-[90px] md:max-h-[160px]"
+                        />
                     </a>
                 </div>
             @endif
 
-             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-                 <div class="max-sm:w-full sm:flex-1">
-                     <div class="flex items-center gap-4">
-                         <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                     </div>
-                     @if($gallery->share_description)
-                         <x-subheading class="mt-2">
-                             {{ $gallery->share_description }}
-                         </x-subheading>
-                     @endif
-                 </div>
+            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
+                <div class="max-sm:w-full sm:flex-1">
+                    <div class="flex items-center gap-4">
+                        <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                    </div>
+                    @if ($gallery->share_description)
+                        <x-subheading class="mt-2">
+                            {{ $gallery->share_description }}
+                        </x-subheading>
+                    @endif
+                </div>
                 <div class="flex gap-4">
                     @if ($this->gallery->is_share_downloadable)
-                        <flux:button x-show="$wire.activeTab !== 'favorited'" :href="route('shares.download', ['gallery' => $gallery])" variant="primary">
+                        <flux:button
+                            x-show="$wire.activeTab !== 'favorited'"
+                            :href="route('shares.download', ['gallery' => $gallery])"
+                            variant="primary"
+                        >
                             {{ __('Download') }}
                         </flux:button>
 
-                        <flux:button x-show="$wire.activeTab === 'favorited'" :href="route('shares.download', ['gallery' => $gallery, 'favorites' => true])" variant="primary" x-cloak>
+                        <flux:button
+                            x-show="$wire.activeTab === 'favorited'"
+                            :href="route('shares.download', ['gallery' => $gallery, 'favorites' => true])"
+                            variant="primary"
+                            x-cloak
+                        >
                             {{ __('Download') }}
                         </flux:button>
                     @endif
@@ -118,44 +136,44 @@ new class extends Component
             @if ($allPhotos->isNotEmpty())
                 <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                    <flux:navbar.item
-                        @click="$wire.activeTab = 'all'"
-                        x-bind:data-current="$wire.activeTab === 'all'"
-                    >
-                        {{ __('All photos') }}
-                    </flux:navbar.item>
-
-                    <flux:navbar.item
-                        @click="$wire.activeTab = 'commented'"
-                        x-bind:data-current="$wire.activeTab === 'commented'"
-                    >
-                        {{ __('Commented') }}
-                    </flux:navbar.item>
-
-                    @if ($gallery->is_share_selectable)
                         <flux:navbar.item
-                            @click="$wire.activeTab = 'favorited'"
-                            x-bind:data-current="$wire.activeTab === 'favorited'"
+                            @click="$wire.activeTab = 'all'"
+                            x-bind:data-current="$wire.activeTab === 'all'"
                         >
-                            {{ __('Favorited') }}
+                            {{ __('All photos') }}
                         </flux:navbar.item>
-                    @endif
+
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'commented'"
+                            x-bind:data-current="$wire.activeTab === 'commented'"
+                        >
+                            {{ __('Commented') }}
+                        </flux:navbar.item>
+
+                        @if ($gallery->is_share_selectable)
+                            <flux:navbar.item
+                                @click="$wire.activeTab = 'favorited'"
+                                x-bind:data-current="$wire.activeTab === 'favorited'"
+                            >
+                                {{ __('Favorited') }}
+                            </flux:navbar.item>
+                        @endif
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($allPhotos as $photo)
-                                <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                                <livewire:shared-photo-item
+                                    :$photo
+                                    :key="'photo-'.$photo->id"
+                                    :html-id="'photo-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
 
                     <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($commentedPhotos as $photo)
                                 <livewire:shared-photo-item
                                     :$photo
@@ -168,9 +186,7 @@ new class extends Component
                     </div>
 
                     <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($favorites as $photo)
                                 <livewire:shared-photo-item
                                     :$photo

@@ -111,16 +111,20 @@ new class extends Component
                 photoUrl: '{{ $photo->url }}',
                 navigating: false,
                 isMobile() {
-                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                }
+                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                        navigator.userAgent,
+                    )
+                },
             }"
-            x-init="(() => {
-                const hammer = new Hammer($el, { touchAction: 'auto' });
-                hammer.get('pinch').set({ enable: true });
-                hammer.on('pinch panleft panright', function(ev) {
-                    $dispatch(ev.type, ev);
-                });
-            })()"
+            x-init="
+                (() => {
+                    const hammer = new Hammer($el, { touchAction: 'auto' })
+                    hammer.get('pinch').set({ enable: true })
+                    hammer.on('pinch panleft panright', function (ev) {
+                        $dispatch(ev.type, ev)
+                    })
+                })()
+            "
             @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
             @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
             @keyup.window.f="$wire.favorite()"
@@ -141,7 +145,7 @@ new class extends Component
                     x-on:error="errored = true"
                     @click="if (!isMobile()) zoom = true"
                     :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
                     alt="{{ $photo->name }}"
                 />
 
@@ -153,7 +157,7 @@ new class extends Component
                     x-on:load="loaded = true"
                     x-on:error="errored = true"
                     @click="if (!isMobile()) zoom = true"
-                    class="mx-auto object-contain max-w-full hover:cursor-zoom-in"
+                    class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
                     :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
                     loading="lazy"
                     alt="{{ $photo->name }}"
@@ -168,15 +172,17 @@ new class extends Component
                     x-on:load="loaded = true"
                     x-on:error="errored = true"
                     @click="zoom = false"
-                    class="mx-auto object-contain max-w-none hover:cursor-zoom-out"
+                    class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
                     :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
                     loading="lazy"
                     alt="{{ $photo->name }}"
                     x-cloak
                 />
 
-                <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
-                    :class="zoom ? 'hidden' : 'flex'">
+                <div
+                    class="absolute top-0 bottom-0 left-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
+                    :class="zoom ? 'hidden' : 'flex'"
+                >
                     @if ($previous)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
@@ -189,8 +195,10 @@ new class extends Component
                         />
                     @endif
                 </div>
-                <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
-                    :class="zoom ? 'hidden' : 'flex'">
+                <div
+                    class="absolute top-0 right-0 bottom-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
+                    :class="zoom ? 'hidden' : 'flex'"
+                >
                     @if ($next)
                         <flux:button
                             href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : '' }}"
@@ -203,8 +211,10 @@ new class extends Component
                         />
                     @endif
                 </div>
-                <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3 max-sm:p-1"
-                    :class="zoom ? 'hidden' : 'flex'">
+                <div
+                    class="absolute top-0 right-0 left-0 flex items-center justify-between gap-4 p-3 max-sm:p-1"
+                    :class="zoom ? 'hidden' : 'flex'"
+                >
                     <div class="flex gap-3">
                         <flux:button
                             :href="$this->galleryUrl"
@@ -227,17 +237,11 @@ new class extends Component
                             <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
                             <flux:menu>
                                 @if ($photo->gallery->coverPhoto?->is($photo))
-                                    <flux:menu.item
-                                        wire:click="removeAsCover"
-                                        icon="x-mark"
-                                    >
+                                    <flux:menu.item wire:click="removeAsCover" icon="x-mark">
                                         {{ __('Remove as Cover') }}
                                     </flux:menu.item>
                                 @else
-                                    <flux:menu.item
-                                        wire:click="setAsCover"
-                                        icon="star"
-                                    >
+                                    <flux:menu.item wire:click="setAsCover" icon="star">
                                         {{ __('Set as Cover') }}
                                     </flux:menu.item>
                                 @endif
@@ -283,34 +287,54 @@ new class extends Component
                         <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
                     </div>
 
-                    <div class="max-h-64 overflow-y-auto space-y-4">
-                        @php $comments = $photo->comments()->latest()->with('user')->get(); @endphp
+                    <div class="max-h-64 space-y-4 overflow-y-auto">
+                        @php
+                            $comments = $photo->comments()->latest()->with('user')->get();
+                        @endphp
+
                         @if ($comments->isEmpty())
-                            <div class="text-zinc-500 dark:text-white/70 text-sm text-center py-4">
+                            <div class="py-4 text-center text-sm text-zinc-500 dark:text-white/70">
                                 {{ __('No comments yet.') }}
                             </div>
                         @else
                             @foreach ($comments as $comment)
-    <div class="rounded bg-zinc-100 dark:bg-zinc-800 p-3 relative group">
-        <div class="flex items-center gap-2 mb-1">
-            <span class="font-semibold text-xs text-zinc-700 dark:text-white/80">
-                {{ $comment->user?->name ?? __('Unknown') }}
-            </span>
-            <span class="text-xs text-zinc-400">&middot;</span>
-            <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
-                {{ $comment->created_at->diffForHumans() }}
-            </span>
-            @if (auth()->id() === $comment->user_id)
-                <button wire:click="deleteComment({{ $comment->id }})" class="ml-auto text-zinc-400 hover:text-red-500 transition p-1" title="{{ __('Delete comment') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            @endif
-        </div>
-        <div class="text-sm text-zinc-800 dark:text-white/90">
-            {{ $comment->comment }}
-        </div>
-    </div>
-@endforeach
+                                <div class="group relative rounded bg-zinc-100 p-3 dark:bg-zinc-800">
+                                    <div class="mb-1 flex items-center gap-2">
+                                        <span class="text-xs font-semibold text-zinc-700 dark:text-white/80">
+                                            {{ $comment->user?->name ?? __('Unknown') }}
+                                        </span>
+                                        <span class="text-xs text-zinc-400">&middot;</span>
+                                        <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
+                                            {{ $comment->created_at->diffForHumans() }}
+                                        </span>
+                                        @if (auth()->id() === $comment->user_id)
+                                            <button
+                                                wire:click="deleteComment({{ $comment->id }})"
+                                                class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
+                                                title="{{ __('Delete comment') }}"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-4 w-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <div class="text-sm text-zinc-800 dark:text-white/90">
+                                        {{ $comment->comment }}
+                                    </div>
+                                </div>
+                            @endforeach
                         @endif
                     </div>
 
@@ -331,29 +355,29 @@ new class extends Component
         @endassets
 
         @script
-        <script>
-            document.addEventListener('comment-added', () => {
-                $flux.modals('add-comment').close();
-            });
-            document.addEventListener('comment-deleted', () => {
-                // Optionally, show a toast or refresh comments if needed
-            });
-        </script>
+            <script>
+                document.addEventListener('comment-added', () => {
+                    $flux.modals('add-comment').close();
+                });
+                document.addEventListener('comment-deleted', () => {
+                    // Optionally, show a toast or refresh comments if needed
+                });
+            </script>
         @endscript
 
         @push('head')
-            <link rel="preload" as="image" href="{{ $photo->url }}">
+            <link rel="preload" as="image" href="{{ $photo->url }}" />
 
             @if ($next)
-                <link rel="preload" as="image" href="{{ $next->url }}">
-                <link rel="preload" as="image" href="{{ $next->thumbnail_url }}">
-                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $next->url }}" />
+                <link rel="preload" as="image" href="{{ $next->thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}" />
             @endif
 
             @if ($previous)
-                <link rel="preload" as="image" href="{{ $previous->url }}">
-                <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}">
-                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}">
+                <link rel="preload" as="image" href="{{ $previous->url }}" />
+                <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}" />
+                <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}" />
             @endif
         @endpush
     @endvolt

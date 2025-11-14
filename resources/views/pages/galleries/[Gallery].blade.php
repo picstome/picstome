@@ -225,13 +225,16 @@ new class extends Component
                             @if ($gallery->is_shared)
                                 <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
                             @endif
+
                             @if ($gallery->is_public)
                                 <div class="flex items-center gap-1">
                                     <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
                                     <flux:tooltip toggleable>
                                         <flux:button icon="information-circle" size="xs" variant="subtle" />
                                         <flux:tooltip.content class="max-w-[20rem]">
-                                            <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
+                                            <p>
+                                                {{ __('This gallery is public and visible in your portfolio section.') }}
+                                            </p>
                                         </flux:tooltip.content>
                                     </flux:tooltip>
                                 </div>
@@ -241,12 +244,13 @@ new class extends Component
                     <x-subheading class="mt-2">
                         {{ __('View, upload, and manage your gallery photos.') }}
                         @if ($gallery->expiration_date)
-                            &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
+                                &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                         @endif
                     </x-subheading>
                     @if ($allPhotos->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
-                            {{ $allPhotos->count() }} {{ $allPhotos->count() === 1 ? __('photo') : __('photos') }} • {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
+                            {{ $allPhotos->count() }} {{ $allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                            {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                         </div>
                     @endif
                 </div>
@@ -262,7 +266,7 @@ new class extends Component
                                 {{ __('Download') }}
                             </flux:menu.item>
 
-                            @if($favorites->isNotEmpty())
+                            @if ($favorites->isNotEmpty())
                                 <flux:modal.trigger name="favorite-list">
                                     <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
                                 </flux:modal.trigger>
@@ -272,10 +276,7 @@ new class extends Component
                                 <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
                             </flux:modal.trigger>
 
-                            <flux:menu.item
-                                wire:click="togglePublic"
-                                :icon="$gallery->is_public ? 'eye-slash' : 'eye'"
-                            >
+                            <flux:menu.item wire:click="togglePublic" :icon="$gallery->is_public ? 'eye-slash' : 'eye'">
                                 {{ $gallery->is_public ? __('Make private') : __('Make public') }}
                             </flux:menu.item>
 
@@ -341,7 +342,7 @@ new class extends Component
                         >
                             {{ __('Favorited') }}
                         </flux:navbar.item>
-                        @if($favorites->isNotEmpty())
+                        @if ($favorites->isNotEmpty())
                             <flux:modal.trigger name="favorite-list">
                                 <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
                             </flux:modal.trigger>
@@ -349,31 +350,39 @@ new class extends Component
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                                <livewire:photo-item
+                                    :$photo
+                                    :key="'photo-'.$photo->id"
+                                    :html-id="'photo-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
 
                     <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($commentedPhotos as $photo)
-                                <livewire:photo-item :$photo :asCommented="true" :key="'commented-'.$photo->id" :html-id="'commented-'.$photo->id" />
+                                <livewire:photo-item
+                                    :$photo
+                                    :asCommented="true"
+                                    :key="'commented-'.$photo->id"
+                                    :html-id="'commented-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
 
                     <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($favorites as $photo)
-                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" :html-id="'favorite-'.$photo->id" />
+                                <livewire:photo-item
+                                    :$photo
+                                    :asFavorite="true"
+                                    :key="'favorite-'.$photo->id"
+                                    :html-id="'favorite-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
@@ -407,7 +416,9 @@ new class extends Component
                                 {{ __('You have less than 5% storage remaining. ') }}
                             </flux:callout.text>
                             <x-slot name="actions">
-                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade') }}</flux:button>
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Upgrade') }}
+                                </flux:button>
                             </x-slot>
                         </flux:callout>
                     @endif
@@ -416,16 +427,18 @@ new class extends Component
                         <flux:callout icon="information-circle" variant="secondary" class="mb-4">
                             <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
                             <flux:callout.text>
-                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
+                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels') / 1000000, 0).'M']) }}
                             </flux:callout.text>
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader"
+                    <div
+                        x-data="multiFileUploader"
                         x-on:dragover.prevent="dragActive = true"
                         x-on:dragleave.prevent="dragActive = false"
                         x-on:drop.prevent="handleDrop($event)"
-                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}">
+                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}"
+                    >
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
@@ -433,7 +446,7 @@ new class extends Component
                             accept=".jpg, .jpeg, .png, .tiff"
                             multiple
                         />
-                        <flux:description class="max-sm:hidden mt-2">
+                        <flux:description class="mt-2 max-sm:hidden">
                             {{ __('Drag and drop files here, or click on choose files.') }}
                         </flux:description>
 
@@ -441,15 +454,23 @@ new class extends Component
 
                         <div
                             x-show="
-                                files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
-                                    .length > 0
+                                files.filter(
+                                    (file) =>
+                                        file.status === 'pending' ||
+                                        file.status === 'queued' ||
+                                        file.status === 'uploading',
+                                ).length > 0
                             "
-                            class="text-sm font-medium text-zinc-800 dark:text-white mt-4"
+                            class="mt-4 text-sm font-medium text-zinc-800 dark:text-white"
                         >
                             <span
                                 x-text="
-                                    files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
-                                        .length
+                                    files.filter(
+                                        (file) =>
+                                            file.status === 'pending' ||
+                                            file.status === 'queued' ||
+                                            file.status === 'uploading',
+                                    ).length
                                 "
                             ></span>
                             {{ __('remaining files.') }}
@@ -467,11 +488,14 @@ new class extends Component
                                             x-text="fileObj.file.name"
                                             class="flex-1 text-sm font-medium text-zinc-800 dark:text-white"
                                         ></div>
-                                        <div class="text-sm text-zinc-500 dark:text-white/70" x-show="fileObj.status !== 'duplicated'">
+                                        <div
+                                            class="text-sm text-zinc-500 dark:text-white/70"
+                                            x-show="fileObj.status !== 'duplicated'"
+                                        >
                                             <span x-text="fileObj.progress + '%'"></span>
                                         </div>
                                         <flux:badge
-                                            x-show="!['failed', 'duplicated'].includes(fileObj.status)"
+                                            x-show="! ['failed', 'duplicated'].includes(fileObj.status)"
                                             x-text="fileObj.status"
                                             size="sm"
                                             color="zinc"
@@ -511,9 +535,17 @@ new class extends Component
                         <flux:subheading>{{ __('Customize your shared gallery.') }}</flux:subheading>
                     </div>
 
-                    <flux:switch wire:model="shareForm.watermarked" :label="__('Watermark photos')" @click="$wire.shareForm.downloadable = false" />
+                    <flux:switch
+                        wire:model="shareForm.watermarked"
+                        :label="__('Watermark photos')"
+                        @click="$wire.shareForm.downloadable = false"
+                    />
 
-                    <flux:switch wire:model="shareForm.downloadable" :label="__('Visitors can download photos')" x-bind:disabled="$wire.shareForm.watermarked" />
+                    <flux:switch
+                        wire:model="shareForm.downloadable"
+                        :label="__('Visitors can download photos')"
+                        x-bind:disabled="$wire.shareForm.watermarked"
+                    />
 
                     <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 
@@ -529,17 +561,22 @@ new class extends Component
                         />
                     </div>
 
-                     <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
+                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
 
-                     <div x-show="$wire.shareForm.passwordProtected">
-                         <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
-                     </div>
+                    <div x-show="$wire.shareForm.passwordProtected">
+                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
+                    </div>
 
-                     <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
+                    <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
 
-                     <div x-show="$wire.shareForm.descriptionEnabled">
-                         <flux:textarea wire:model="shareForm.description" :label="__('Description')" :placeholder="__('Add a description for your shared gallery...')" rows="3" />
-                     </div>
+                    <div x-show="$wire.shareForm.descriptionEnabled">
+                        <flux:textarea
+                            wire:model="shareForm.description"
+                            :label="__('Description')"
+                            :placeholder="__('Add a description for your shared gallery...')"
+                            rows="3"
+                        />
+                    </div>
 
                     <div class="flex">
                         <flux:spacer />
@@ -573,7 +610,11 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
                     @if ($photoshoots)
-                        <flux:select wire:model="form.photoshoot_id" :label="__('Photoshoot')" :placeholder="__('Choose photoshoot...')">
+                        <flux:select
+                            wire:model="form.photoshoot_id"
+                            :label="__('Photoshoot')"
+                            :placeholder="__('Choose photoshoot...')"
+                        >
                             <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
                             <hr />
                             @foreach ($photoshoots as $photoshoot)
@@ -584,7 +625,14 @@ new class extends Component
                         </flux:select>
                     @endif
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable :disabled="$gallery->is_public" />
+                    <flux:input
+                        wire:model="form.expirationDate"
+                        :label="__('Expiration date')"
+                        :badge="__('Optional')"
+                        type="date"
+                        clearable
+                        :disabled="$gallery->is_public"
+                    />
 
                     @if ($gallery->is_public)
                         <flux:callout variant="secondary" icon="information-circle" class="mt-2">
