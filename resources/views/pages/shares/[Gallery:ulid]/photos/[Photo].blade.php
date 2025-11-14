@@ -471,16 +471,5 @@ new class extends Component
         @assets
             <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
         @endassets
-
-        @script
-            <script>
-                document.addEventListener('comment-added', () => {
-                    $flux.modals('add-comment').close();
-                });
-                document.addEventListener('comment-deleted', () => {
-                    // Optionally, show a toast or refresh comments if needed
-                });
-            </script>
-        @endscript
     @endvolt
 </x-guest-layout>
