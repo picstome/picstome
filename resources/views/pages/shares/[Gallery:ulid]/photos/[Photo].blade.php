@@ -30,10 +30,18 @@ new class extends Component
             'commentText' => 'required|string|max:1000',
         ]);
 
-        $this->photo->comments()->create([
+        $comment = $this->photo->comments()->create([
             'user_id' => auth()->id() ?: null,
             'comment' => $this->commentText,
         ]);
+
+        // Notify team owner if guest
+        if (auth()->guest()) {
+            $owner = $this->photo->gallery->team->owner;
+            if ($owner) {
+                $owner->notify(new \App\Notifications\GuestPhotoCommented($this->photo, $comment));
+            }
+        }
 
         $this->commentText = '';
         $this->dispatch('comment-added');
