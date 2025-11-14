@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -63,7 +64,7 @@ new class extends Component
         ]);
 
         $this->photo->comments()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'comment' => $this->commentText,
         ]);
 
@@ -74,9 +75,7 @@ new class extends Component
     {
         abort_unless($comment->photo->is($this->photo), 404);
 
-        if ($comment->user_id !== auth()->id()) {
-            abort(403);
-        }
+        abort_unless($comment->photo->gallery->team->owner->is(Auth::user()), 403);
 
         $comment->delete();
     }
@@ -308,28 +307,26 @@ new class extends Component
                                         <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
                                             {{ $comment->created_at->diffForHumans() }}
                                         </span>
-                                        @if (auth()->id() === $comment->user_id)
-                                            <button
-                                                wire:click="deleteComment({{ $comment->id }})"
-                                                class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
-                                                title="{{ __('Delete comment') }}"
+                                        <button
+                                            wire:click="deleteComment({{ $comment->id }})"
+                                            class="ml-auto p-1 text-zinc-400 transition hover:text-red-500"
+                                            title="{{ __('Delete comment') }}"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-4 w-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
                                             >
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    class="h-4 w-4"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M6 18L18 6M6 6l12 12"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        @endif
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12"
+                                                />
+                                            </svg>
+                                        </button>
                                     </div>
                                     <div class="text-sm text-zinc-800 dark:text-white/90">
                                         {{ $comment->comment }}

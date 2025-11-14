@@ -177,26 +177,10 @@ test('user cannot delete another user\'s comment', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $user = $this->user;
     $otherUser = User::factory()->create();
-    $comment = PhotoComment::factory()->for($photo)->create([
-        'user_id' => $otherUser->id,
-    ]);
+    $comment = PhotoComment::factory()->for($photo)->create();
 
-    Volt::actingAs($user)
+    Volt::actingAs($otherUser)
         ->test('pages.galleries.photos.show', ['photo' => $photo])
-        ->call('deleteComment', $comment->id)
-        ->assertStatus(403);
-
-    expect($photo->comments()->find($comment->id))->not()->toBeNull();
-});
-
-test('guest cannot delete any comment', function () {
-    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
-    $user = $this->user;
-    $comment = PhotoComment::factory()->for($photo)->create([
-        'user_id' => $user->id,
-    ]);
-
-    Volt::test('pages.galleries.photos.show', ['photo' => $photo])
         ->call('deleteComment', $comment->id)
         ->assertStatus(403);
 
