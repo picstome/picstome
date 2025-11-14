@@ -30,6 +30,13 @@ new class extends Component
             'commentText' => 'required|string|max:1000',
         ]);
 
+        // Only allow guests or the team owner to add comments
+        if (auth()->check()) {
+            if (auth()->id() !== $this->photo->gallery->team->user_id) {
+                abort(403);
+            }
+        }
+
         $comment = $this->photo->comments()->create([
             'user_id' => auth()->id() ?: null,
             'comment' => $this->commentText,
@@ -50,8 +57,8 @@ new class extends Component
     public function deleteComment($commentId)
     {
         $comment = $this->photo->comments()->findOrFail($commentId);
-        // Only authenticated users can delete: their own or guest comments
-        if (! auth()->check() || ($comment->user_id !== null && $comment->user_id !== auth()->id())) {
+        // Only the team owner can delete any comment
+        if (! auth()->check() || auth()->id() !== $this->photo->gallery->team->user_id) {
             abort(403);
         }
         $comment->delete();
@@ -421,11 +428,11 @@ new class extends Component
                                     <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
                                         {{ $comment->created_at->diffForHumans() }}
                                     </span>
-                                    @if (auth()->check() && (auth()->id() === $comment->user_id || is_null($comment->user_id)))
-                                        <button wire:click="deleteComment({{ $comment->id }})" class="ml-auto text-zinc-400 hover:text-red-500 transition p-1" title="{{ __('Delete comment') }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
-                                    @endif
+@if (auth()->check() && auth()->id() === $photo->gallery->team->user_id)
+    <button wire:click="deleteComment({{ $comment->id }})" class="ml-auto text-zinc-400 hover:text-red-500 transition p-1" title="{{ __('Delete comment') }}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    </button>
+@endif
                                 </div>
                                 <div class="text-sm text-zinc-800 dark:text-white/90">
                                     {{ $comment->comment }}
@@ -435,14 +442,19 @@ new class extends Component
                     @endif
                 </div>
 
-                <form wire:submit="addComment" class="space-y-4 pt-2">
-                    <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
-                    <flux:error name="commentText" />
-                    <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
-                    </div>
-                </form>
+@php
+    $isTeamOwner = auth()->check() && auth()->id() === $photo->gallery->team->user_id;
+@endphp
+@if (auth()->guest() || $isTeamOwner)
+<form wire:submit="addComment" class="space-y-4 pt-2">
+    <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+    <flux:error name="commentText" />
+    <div class="flex">
+        <flux:spacer />
+        <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+    </div>
+</form>
+@endif
             </div>
         </flux:modal>
     </div>
