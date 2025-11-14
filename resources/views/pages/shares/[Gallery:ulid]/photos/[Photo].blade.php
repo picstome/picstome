@@ -30,12 +30,8 @@ new class extends Component
             'commentText' => 'required|string|max:1000',
         ]);
 
-        if (! auth()->check()) {
-            abort(403);
-        }
-
         $this->photo->comments()->create([
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id() ?: null,
             'comment' => $this->commentText,
         ]);
 
@@ -46,7 +42,8 @@ new class extends Component
     public function deleteComment($commentId)
     {
         $comment = $this->photo->comments()->findOrFail($commentId);
-        if ($comment->user_id !== auth()->id()) {
+        // Only authenticated users can delete: their own or guest comments
+        if (! auth()->check() || ($comment->user_id !== null && $comment->user_id !== auth()->id())) {
             abort(403);
         }
         $comment->delete();
@@ -410,13 +407,13 @@ new class extends Component
                             <div class="rounded bg-zinc-100 dark:bg-zinc-800 p-3 relative group">
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="font-semibold text-xs text-zinc-700 dark:text-white/80">
-                                        {{ $comment->user?->name ?? __('Unknown') }}
+                                        {{ $comment->user?->name ?? __('Guest') }}
                                     </span>
                                     <span class="text-xs text-zinc-400">&middot;</span>
                                     <span class="text-xs text-zinc-400" title="{{ $comment->created_at }}">
                                         {{ $comment->created_at->diffForHumans() }}
                                     </span>
-                                    @if (auth()->id() === $comment->user_id)
+                                    @if (auth()->check() && (auth()->id() === $comment->user_id || is_null($comment->user_id)))
                                         <button wire:click="deleteComment({{ $comment->id }})" class="ml-auto text-zinc-400 hover:text-red-500 transition p-1" title="{{ __('Delete comment') }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                                         </button>
@@ -430,7 +427,6 @@ new class extends Component
                     @endif
                 </div>
 
-                @if(auth()->check())
                 <form wire:submit="addComment" class="space-y-4 pt-2">
                     <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
                     <flux:error name="commentText" />
@@ -439,11 +435,6 @@ new class extends Component
                         <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
                     </div>
                 </form>
-                @else
-                <div class="text-center text-zinc-500 dark:text-white/70 py-4">
-                    {{ __('You must be logged in to comment.') }}
-                </div>
-                @endif
             </div>
         </flux:modal>
     </div>

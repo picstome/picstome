@@ -137,6 +137,23 @@ test('user can delete their own comment on a shared photo', function () {
     expect($photo->comments()->find($comment->id))->toBeNull();
 });
 
+test('user can delete a guest comment on a shared photo', function () {
+    $user = User::factory()->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $photo = $gallery->photos()->first();
+    $guestComment = $photo->comments()->create([
+        'user_id' => null,
+        'comment' => 'Guest comment',
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $guestComment->id)
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->find($guestComment->id))->toBeNull();
+});
+
 test('user cannot delete another user\'s comment on a shared photo', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
@@ -155,22 +172,16 @@ test('user cannot delete another user\'s comment on a shared photo', function ()
     expect($photo->comments()->find($comment->id))->not()->toBeNull();
 });
 
-test('guest cannot add or delete comments on a shared photo', function () {
+test('guest can add a comment to a shared photo', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
     $photo = $gallery->photos()->first();
-    $comment = $photo->comments()->create([
-        'user_id' => User::factory()->create()->id,
-        'comment' => 'Guest cannot delete',
-    ]);
 
     Volt::test('pages.shares.photos.show', ['photo' => $photo])
         ->set('commentText', 'Guest comment')
         ->call('addComment')
-        ->assertStatus(403);
+        ->assertHasNoErrors();
 
-    Volt::test('pages.shares.photos.show', ['photo' => $photo])
-        ->call('deleteComment', $comment->id)
-        ->assertStatus(403);
-
-    expect($photo->comments()->find($comment->id))->not()->toBeNull();
+    $comment = $photo->comments()->latest()->first();
+    expect($comment->comment)->toBe('Guest comment');
+    expect($comment->user_id)->toBeNull();
 });
