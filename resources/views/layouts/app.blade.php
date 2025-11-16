@@ -33,16 +33,15 @@
                         @if (auth()->user()->currentTeam->brand_logo_icon_url)
                             <img
                                 src="{{ auth()->user()->currentTeam->brand_logo_icon_url }}"
-                                class="h-16 block rounded"
+                                class="block h-16 rounded"
                                 alt="{{ auth()->user()->currentTeam->name }}"
-                            >
+                            />
                         @else
-                            <img src="/app-logo.png" class="h-16 block -mx-2 rounded dark:hidden" alt="Picstome">
-                            <img src="/app-logo-dark.png" class="h-16 -mx-2 rounded hidden dark:block" alt="Picstome">
+                            <img src="/app-logo.png" class="-mx-2 block h-16 rounded dark:hidden" alt="Picstome" />
+                            <img src="/app-logo-dark.png" class="-mx-2 hidden h-16 rounded dark:block" alt="Picstome" />
                         @endif
                     </div>
                 @endauth
-
 
                 @auth
                     <flux:modal.trigger name="search" shortcut="cmd.k">
@@ -55,7 +54,11 @@
                         />
                     </flux:modal.trigger>
 
-                    <flux:modal name="search" variant="bare" class="w-full max-w-[30rem] my-[12vh] max-h-screen overflow-y-hidden px-2">
+                    <flux:modal
+                        name="search"
+                        variant="bare"
+                        class="my-[12vh] max-h-screen w-full max-w-[30rem] overflow-y-hidden px-2"
+                    >
                         <livewire:search />
                     </flux:modal>
                 @endauth
@@ -85,7 +88,11 @@
                         <flux:navlist.item :href="route('contracts')" icon="document-text" wire:navigate>
                             {{ __('Contracts') }}
                         </flux:navlist.item>
-                        <flux:navlist.item :href="route('contract-templates')" icon="clipboard-document-list" wire:navigate>
+                        <flux:navlist.item
+                            :href="route('contract-templates')"
+                            icon="clipboard-document-list"
+                            wire:navigate
+                        >
                             {{ __('Templates') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
@@ -99,25 +106,33 @@
                             {{ __('Portfolio') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])" icon="arrow-top-right-on-square" target="_blank">
+                        <flux:navlist.item
+                            :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])"
+                            icon="arrow-top-right-on-square"
+                            target="_blank"
+                        >
                             {{ __('View Profile') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('POS')" class="mt-4">
+                    <flux:navlist.group :heading="__('Finance')" class="mt-4">
                         <flux:navlist.item :href="route('payments')" icon="banknotes" wire:navigate>
                             {{ __('Payments') }}
                         </flux:navlist.item>
 
-                        @unless(auth()->user()->currentTeam->hasCompletedOnboarding())
+                        @unless (auth()->user()->currentTeam->hasCompletedOnboarding())
                             <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
                                 {{ __('Connect with Stripe') }}
                             </flux:navlist.item>
                         @endunless
-                    </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('Tools')" expandable :expanded="false" class="mt-4">
-                        <flux:navlist.item href="/tools/invoice-generator">{{ __('Invoice Generator') }}</flux:navlist.item>
+                        <flux:navlist.item href="/tools/invoice-generator" icon="document-plus">
+                            {{ __('Invoice Generator') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item href="/tools/calculator" icon="calculator">
+                            {{ __('Calculator') }}
+                        </flux:navlist.item>
                     </flux:navlist.group>
 
                     @if (auth()->user()?->is_admin)
@@ -134,8 +149,10 @@
                 @auth
                     <livewire:storage-usage-indicator />
 
-                    @unless(auth()->user()->currentTeam->subscribed())
-                        <flux:button :href="route('subscribe')" size="sm" class="mx-2">{{ __('Subscribe') }}</flux:button>
+                    @unless (auth()->user()->currentTeam->subscribed())
+                        <flux:button :href="route('subscribe')" size="sm" class="mx-2">
+                            {{ __('Subscribe') }}
+                        </flux:button>
                     @endunless
                 @endauth
 
