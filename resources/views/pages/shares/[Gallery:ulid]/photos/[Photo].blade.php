@@ -79,6 +79,8 @@ new class extends Component
 
     public function addComment()
     {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
         $this->validate([
             'commentText' => 'required|string|max:1000',
         ]);
@@ -102,6 +104,8 @@ new class extends Component
 
     public function deleteComment(PhotoComment $comment)
     {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
         abort_unless($comment->photo->is($this->photo), 404);
 
         abort_unless(Auth::check() && $this->photo->gallery->team->owner->is(Auth::user()), 403);
@@ -376,15 +380,17 @@ new class extends Component
                         </flux:button>
                     </div>
                     <div class="flex gap-3">
-                        <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm">
-                                @if ($this->comments->isEmpty())
-                                    {{ __('Add comment') }}
-                                @else
-                                    {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
-                                @endif
-                            </flux:button>
-                        </flux:modal.trigger>
+                        @if ($photo->gallery->are_comments_enabled)
+                            <flux:modal.trigger name="add-comment">
+                                <flux:button icon="chat-bubble-left-ellipsis" size="sm">
+                                    @if ($this->comments->isEmpty())
+                                        {{ __('Add comment') }}
+                                    @else
+                                        {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
+                                    @endif
+                                </flux:button>
+                            </flux:modal.trigger>
+                        @endif
                         @if ($this->photo->gallery->is_share_downloadable)
                             <flux:button
                                 :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
@@ -409,66 +415,68 @@ new class extends Component
                     </div>
                 </div>
             </div>
-            <flux:modal name="add-comment" class="w-full sm:max-w-lg">
-                <div class="space-y-6">
-                    <div>
-                        <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
-                        <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
-                    </div>
-                    @if ($this->comments->isNotEmpty())
-                        <div class="max-h-64 space-y-4 overflow-y-auto">
-                            @foreach ($this->comments as $comment)
-                                <div
-                                    @class([
-                                        'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
-                                        'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
-                                    ])
-                                >
+            @if ($photo->gallery->are_comments_enabled)
+                <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+                    <div class="space-y-6">
+                        <div>
+                            <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
+                            <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
+                        </div>
+                        @if ($this->comments->isNotEmpty())
+                            <div class="max-h-64 space-y-4 overflow-y-auto">
+                                @foreach ($this->comments as $comment)
                                     <div
                                         @class([
-                                            'mb-1 flex items-center gap-2',
-                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                            'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                         ])
                                     >
-                                        @if ($comment->user)
-                                            <flux:text variant="strong" class="text-sm font-semibold">
-                                                {{ $comment->user->name }}
+                                        <div
+                                            @class([
+                                                'mb-1 flex items-center gap-2',
+                                                'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            ])
+                                        >
+                                            @if ($comment->user)
+                                                <flux:text variant="strong" class="text-sm font-semibold">
+                                                    {{ $comment->user->name }}
+                                                </flux:text>
+                                                <flux:text>&middot;</flux:text>
+                                            @endif
+
+                                            <flux:text class="text-xs">
+                                                {{ $comment->created_at->diffForHumans() }}
                                             </flux:text>
-                                            <flux:text>&middot;</flux:text>
-                                        @endif
-
-                                        <flux:text class="text-xs">
-                                            {{ $comment->created_at->diffForHumans() }}
+                                            @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
+                                                <flux:button
+                                                    wire:click="deleteComment({{ $comment->id }})"
+                                                    icon="x-mark"
+                                                    variant="subtle"
+                                                    size="xs"
+                                                    inset="right"
+                                                    square
+                                                />
+                                            @endif
+                                        </div>
+                                        <flux:text variant="strong">
+                                            {{ $comment->comment }}
                                         </flux:text>
-                                        @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
-                                            <flux:button
-                                                wire:click="deleteComment({{ $comment->id }})"
-                                                icon="x-mark"
-                                                variant="subtle"
-                                                size="xs"
-                                                inset="right"
-                                                square
-                                            />
-                                        @endif
                                     </div>
-                                    <flux:text variant="strong">
-                                        {{ $comment->comment }}
-                                    </flux:text>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
+                                @endforeach
+                            </div>
+                        @endif
 
-                    <form wire:submit="addComment" class="space-y-4 pt-2">
-                        <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
-                        <flux:error name="commentText" />
-                        <div class="flex">
-                            <flux:spacer />
-                            <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
-                        </div>
-                    </form>
-                </div>
-            </flux:modal>
+                        <form wire:submit="addComment" class="space-y-4 pt-2">
+                            <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+                            <flux:error name="commentText" />
+                            <div class="flex">
+                                <flux:spacer />
+                                <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                            </div>
+                        </form>
+                    </div>
+                </flux:modal>
+            @endif
             @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">
                     @include('partials.powered-by')

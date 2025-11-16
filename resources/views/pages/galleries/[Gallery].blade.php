@@ -332,12 +332,6 @@ new class extends Component
                             {{ __('All photos') }}
                         </flux:navbar.item>
                         <flux:navbar.item
-                            @click="$wire.activeTab = 'commented'"
-                            x-bind:data-current="$wire.activeTab === 'commented'"
-                        >
-                            {{ __('Commented') }}
-                        </flux:navbar.item>
-                        <flux:navbar.item
                             @click="$wire.activeTab = 'favorited'"
                             x-bind:data-current="$wire.activeTab === 'favorited'"
                         >
@@ -347,6 +341,14 @@ new class extends Component
                             <flux:modal.trigger name="favorite-list">
                                 <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
                             </flux:modal.trigger>
+                        @endif
+                        @if (auth()->user()?->is_admin)
+                            <flux:navbar.item
+                                @click="$wire.activeTab = 'commented'"
+                                x-bind:data-current="$wire.activeTab === 'commented'"
+                            >
+                                {{ __('Commented') }}
+                            </flux:navbar.item>
                         @endif
                     </flux:navbar>
 
@@ -569,6 +571,10 @@ new class extends Component
                     </div>
 
                     <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
+
+                    @if (auth()->user()?->is_admin)
+                        <flux:switch wire:model="shareForm.commentsEnabled" :label="__('Enable photo comments')" />
+                    @endif
 
                     <div x-show="$wire.shareForm.descriptionEnabled">
                         <flux:textarea

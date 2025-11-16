@@ -91,7 +91,9 @@ test('favorite photo via browser on watermarked gallery', function () {
 });
 
 test('comment is required when adding a comment to a shared photo', function () {
-    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
     $photo = $gallery->photos()->first();
     $user = $gallery->team->owner;
 
@@ -105,7 +107,9 @@ test('comment is required when adding a comment to a shared photo', function () 
 });
 
 test('user cannot delete another user\'s comment on a shared photo', function () {
-    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
     $photo = $gallery->photos()->first();
     $user = $gallery->team->owner;
     $otherUser = User::factory()->create();
@@ -123,7 +127,9 @@ test('user cannot delete another user\'s comment on a shared photo', function ()
 });
 
 test('guest can add a comment to a shared photo', function () {
-    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
     $photo = $gallery->photos()->first();
 
     Volt::test('pages.shares.photos.show', ['photo' => $photo])
@@ -137,8 +143,28 @@ test('guest can add a comment to a shared photo', function () {
     expect($comment->user_id)->toBeNull();
 });
 
+test('comments are not allowed when comments are disabled', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create(['are_comments_enabled' => false]);
+    $photo = $gallery->photos()->first();
+
+    $component = Volt::test('pages.shares.photos.show', ['photo' => $photo])
+        ->set('commentText', 'Should not work')
+        ->call('addComment');
+
+    $component->assertStatus(403);
+
+    $comment = PhotoComment::factory()->for($photo)->create();
+
+    $component = Volt::test('pages.shares.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id);
+
+    $component->assertStatus(403);
+});
+
 test('only the team owner can add a comment as an authenticated user', function () {
-    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
     $photo = $gallery->photos()->first();
     $owner = $gallery->team->owner;
 
@@ -167,7 +193,9 @@ test('only the team owner can add a comment as an authenticated user', function 
 });
 
 test('only the team owner can delete any comment', function () {
-    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create();
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
     $photo = $gallery->photos()->first();
     $owner = $gallery->team->owner;
 

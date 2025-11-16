@@ -4,9 +4,9 @@ use App\Events\PhotoAdded;
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Photoshoot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
@@ -302,6 +302,26 @@ describe('Gallery Sharing', function () {
             ->call('share');
 
         expect($gallery->fresh()->share_password)->toBeNull();
+    });
+
+    it('can enable and disable photo comments for a shared gallery', function () {
+        $gallery = Gallery::factory()->create();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.commentsEnabled', true)
+            ->call('share');
+
+        $gallery->refresh();
+
+        expect($gallery->are_comments_enabled)->toBeTrue();
+
+        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.commentsEnabled', false)
+            ->call('share');
+
+        $gallery->refresh();
+
+        expect($gallery->are_comments_enabled)->toBeFalse();
     });
 
     it('can be shared with a description', function () {
@@ -872,7 +892,7 @@ describe('Gallery Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
         $photo = Photo::factory()->for($gallery)->create();
 
-        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+        $response = get('/@'.$this->team->handle.'/portfolio/'.$gallery->ulid);
 
         $response->assertStatus(200);
     });
@@ -881,7 +901,7 @@ describe('Gallery Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'PRIVATEGALLERY']);
         expect($gallery->is_public)->toBeFalse();
 
-        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid);
+        $response = get('/@'.$this->team->handle.'/portfolio/'.$gallery->ulid);
 
         $response->assertStatus(404);
     });
@@ -892,7 +912,7 @@ describe('Portfolio Photo Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->public()->create(['ulid' => 'PUBLICGALLERY']);
         $photo = Photo::factory()->for($gallery)->create();
 
-        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+        $response = get('/@'.$this->team->handle.'/portfolio/'.$gallery->ulid.'/photos/'.$photo->id);
 
         $response->assertStatus(200);
     });
@@ -902,7 +922,7 @@ describe('Portfolio Photo Public Access', function () {
         $photo = Photo::factory()->for($gallery)->create();
         expect($gallery->is_public)->toBeFalse();
 
-        $response = get('/@' . $this->team->handle . '/portfolio/' . $gallery->ulid . '/photos/' . $photo->id);
+        $response = get('/@'.$this->team->handle.'/portfolio/'.$gallery->ulid.'/photos/'.$photo->id);
 
         $response->assertStatus(404);
     });
@@ -914,14 +934,12 @@ describe('Portfolio Index Public Access', function () {
         $privateGallery = Gallery::factory()->for($this->team)->create(['name' => 'Private Gallery']);
         Photo::factory()->for($publicGallery)->create();
 
-        $response = get('/@' . $this->team->handle . '/portfolio');
+        $response = get('/@'.$this->team->handle.'/portfolio');
 
         $response->assertStatus(200);
         $response->assertSee($publicGallery->name);
         $response->assertDontSee($privateGallery->name);
     });
-
-
 
     it('returns 404 for non-existent team handle', function () {
         $response = get('/@nonexistent/portfolio');

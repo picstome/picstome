@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotosFactory> */
+    /** @use HasFactory<\Database\Factories\PhotoFactory> */
     use HasFactory;
 
     protected $guarded = [];

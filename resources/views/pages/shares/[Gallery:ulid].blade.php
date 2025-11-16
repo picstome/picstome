@@ -144,19 +144,21 @@ new class extends Component
                             {{ __('All photos') }}
                         </flux:navbar.item>
 
-                        <flux:navbar.item
-                            @click="$wire.activeTab = 'commented'"
-                            x-bind:data-current="$wire.activeTab === 'commented'"
-                        >
-                            {{ __('Commented') }}
-                        </flux:navbar.item>
-
                         @if ($gallery->is_share_selectable)
                             <flux:navbar.item
                                 @click="$wire.activeTab = 'favorited'"
                                 x-bind:data-current="$wire.activeTab === 'favorited'"
                             >
                                 {{ __('Favorited') }}
+                            </flux:navbar.item>
+                        @endif
+
+                        @if ($gallery->are_comments_enabled)
+                            <flux:navbar.item
+                                @click="$wire.activeTab = 'commented'"
+                                x-bind:data-current="$wire.activeTab === 'commented'"
+                            >
+                                {{ __('Commented') }}
                             </flux:navbar.item>
                         @endif
                     </flux:navbar>

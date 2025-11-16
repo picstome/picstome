@@ -6,11 +6,11 @@ use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
 use App\Traits\FormatsFileSize;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -39,6 +39,7 @@ class Gallery extends Model
             'expiration_date' => 'date',
             'selection_limit_notification_sent_at' => 'datetime',
             'portfolio_order' => 'integer',
+            'are_comments_enabled' => 'boolean',
         ];
     }
 
@@ -88,7 +89,7 @@ class Gallery extends Model
     {
         $threshold = now()->addDays($days);
         $query->whereNotNull('expiration_date')
-              ->where('expiration_date', '<=', $threshold);
+            ->where('expiration_date', '<=', $threshold);
     }
 
     #[Scope]
@@ -125,7 +126,7 @@ class Gallery extends Model
 
     public function notifyOwnerWhenSelectionLimitReached(): void
     {
-        if ($this->isSelectionLimitReached() && !$this->selection_limit_notification_sent_at) {
+        if ($this->isSelectionLimitReached() && ! $this->selection_limit_notification_sent_at) {
             Notification::send($this->team->owner, new SelectionLimitReached($this));
 
             $this->update(['selection_limit_notification_sent_at' => now()]);
@@ -216,7 +217,7 @@ class Gallery extends Model
 
     public function setCoverPhoto(Photo $photo)
     {
-        if (!$this->is($photo->gallery)) {
+        if (! $this->is($photo->gallery)) {
             throw new \Exception('Photo does not belong to this gallery');
         }
 
@@ -231,7 +232,7 @@ class Gallery extends Model
 
     public function togglePublic()
     {
-        if (!$this->is_public) {
+        if (! $this->is_public) {
             $this->makePublic();
 
             return;
