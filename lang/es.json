@@ -534,5 +534,20 @@
     "remaining files.": "archivos restantes.",
     "results": "resultados",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "New comment on your photo": "Nuevo comentario en tu foto",
+    "A new comment has been left on a photo in your gallery:": "Se ha dejado un nuevo comentario en una foto de tu galería:",
+    "You are receiving this because someone commented on your shared gallery.": "Recibes este mensaje porque alguien comentó en tu galería compartida.",
+    "Gallery: :name": "Galería: :name",
+    "Photo: :name": "Foto: :name",
+    "Comment: \":comment\"": "Comentario: \":comment\"",
+    "View Photo": "Ver foto",
+    "Add comment": "Agregar comentario",
+    "Comments (:count)": "Comentarios (:count)",
+    "Comments": "Comentarios",
+    "All comments for this photo.": "Todos los comentarios para esta foto.",
+    "Add a comment": "Agregar un comentario",
+    "Commented": "Comentado",
+    "Enable photo comments": "Habilitar comentarios en fotos",
+    "Add description": "Agregar descripción"
 }

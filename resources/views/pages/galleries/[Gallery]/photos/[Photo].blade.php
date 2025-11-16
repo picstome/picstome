@@ -339,6 +339,7 @@ new class extends Component
                                             </flux:text>
                                             <flux:button
                                                 wire:click="deleteComment({{ $comment->id }})"
+                                                wire:confirm="{{ __('Are you sure?') }}"
                                                 icon="x-mark"
                                                 variant="subtle"
                                                 size="xs"

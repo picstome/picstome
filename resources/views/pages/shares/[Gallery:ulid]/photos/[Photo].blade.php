@@ -210,18 +210,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                left: ${(containerWidth - renderedWidth) / 2}px;
-                                top: ${(containerHeight - renderedHeight) / 2}px;
-                                width: ${renderedWidth}px;
-                                height: ${renderedHeight}px;
-                                max-width: ${renderedWidth}px;
-                                max-height: ${renderedHeight}px;
-                                background-image: url('${url}');
-                                background-repeat: repeat;
-                                opacity: ${this.watermarkTransparency};
-                                pointer-events: none;
-                                position: absolute;
-                            `
+                                            left: ${(containerWidth - renderedWidth) / 2}px;
+                                            top: ${(containerHeight - renderedHeight) / 2}px;
+                                            width: ${renderedWidth}px;
+                                            height: ${renderedHeight}px;
+                                            max-width: ${renderedWidth}px;
+                                            max-height: ${renderedHeight}px;
+                                            background-image: url('${url}');
+                                            background-repeat: repeat;
+                                            opacity: ${this.watermarkTransparency};
+                                            pointer-events: none;
+                                            position: absolute;
+                                        `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -391,6 +391,7 @@ new class extends Component
                                 </flux:button>
                             </flux:modal.trigger>
                         @endif
+
                         @if ($this->photo->gallery->is_share_downloadable)
                             <flux:button
                                 :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
@@ -450,6 +451,7 @@ new class extends Component
                                             @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
                                                 <flux:button
                                                     wire:click="deleteComment({{ $comment->id }})"
+                                                    wire:confirm="{{ __('Are you sure?') }}"
                                                     icon="x-mark"
                                                     variant="subtle"
                                                     size="xs"
@@ -477,6 +479,7 @@ new class extends Component
                     </div>
                 </flux:modal>
             @endif
+
             @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">
                     @include('partials.powered-by')

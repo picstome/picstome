@@ -33,14 +33,14 @@ class GuestPhotoCommented extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('New guest comment on your photo'))
+            ->subject(__('New comment on your photo'))
             ->greeting(__('Hello!'))
-            ->line(__('A guest has left a new comment on a photo in your gallery:'))
+            ->line(__('A new comment has been left on a photo in your gallery:'))
             ->line(__('Gallery: :name', ['name' => $this->photo->gallery->name]))
             ->line(__('Photo: :name', ['name' => $this->photo->name]))
             ->line(__('Comment: ":comment"', ['comment' => $this->comment->comment]))
             ->action(__('View Photo'), url('/galleries/'.$this->photo->gallery->id.'/photos/'.$this->photo->id))
-            ->line(__('You are receiving this because a guest commented on your shared gallery.'));
+            ->line(__('You are receiving this because someone commented on your shared gallery.'));
     }
 
     /**
