@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotosFactory> */
+    /** @use HasFactory<\Database\Factories\PhotoFactory> */
     use HasFactory;
 
     protected $guarded = [];
@@ -241,5 +241,10 @@ class Photo extends Model
     public function isOnPublicDisk()
     {
         return $this->diskOrDefault() === 'public';
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(PhotoComment::class);
     }
 }

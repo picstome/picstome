@@ -15,6 +15,8 @@ new class extends Component
 
     public $asFavorite = false;
 
+    public $asCommented = false;
+
     public function mount()
     {
         $this->gallery = $this->photo->gallery;
@@ -60,12 +62,12 @@ new class extends Component
     @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false"
     @if (!$photo->small_thumbnail_url) wire:poll.visible.5s @endif
 >
-    <a
-        id="{{ $htmlId }}"
-        href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
-        wire:navigate
-        class="mx-auto flex w-full"
-    >
+        <a
+            id="{{ $htmlId }}"
+            href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asCommented ? '?navigateCommented=true' : ($asFavorite ? '?navigateFavorites=true' : null) }}"
+            wire:navigate
+            class="mx-auto flex w-full"
+        >
         @if ($photo->small_thumbnail_url)
             <img
                 x-data="{ loaded: false, errored: false }"
@@ -81,6 +83,13 @@ new class extends Component
             <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
         @endif
     </a>
+    @if (($photo->comments_count ?? 0) > 0)
+        <div class="absolute left-1.5 top-1.5 z-10 flex" :class="showActions ? 'flex' : 'hidden'">
+            <flux:badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
+                {{ $photo->comments_count }}
+            </flux:badge>
+        </div>
+    @endif
     <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
             @if ($photo->isFavorited())

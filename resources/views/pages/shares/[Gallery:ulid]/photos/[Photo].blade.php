@@ -2,6 +2,9 @@
 
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
+use App\Notifications\GuestPhotoCommented;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -31,15 +34,25 @@ new class extends Component
     #[Url]
     public $navigateFavorites = false;
 
+    #[Url]
+    public $navigateCommented = false;
+
+    public $commentText = '';
+
     public function mount()
     {
-        $this->next = $this->navigateFavorites
-            ? $this->photo->nextFavorite()
-            : $this->photo->next();
-
-        $this->previous = $this->navigateFavorites
-            ? $this->photo->previousFavorite()
-            : $this->photo->previous();
+        if ($this->navigateFavorites) {
+            $this->next = $this->photo->nextFavorite();
+            $this->previous = $this->photo->previousFavorite();
+        } elseif ($this->navigateCommented) {
+            $commented = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
+            $index = $commented->search(fn ($photo) => $photo->id === $this->photo->id);
+            $this->next = $commented->get($index + 1);
+            $this->previous = $commented->get($index - 1);
+        } else {
+            $this->next = $this->photo->next();
+            $this->previous = $this->photo->previous();
+        }
     }
 
     public function favorite()
@@ -58,9 +71,52 @@ new class extends Component
     {
         return Str::of(route('shares.show', ['gallery' => $this->photo->gallery]))
             ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
+            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
             ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
             ->append($this->photo->id);
+    }
+
+    public function addComment()
+    {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
+        $this->validate([
+            'commentText' => 'required|string|max:1000',
+        ]);
+
+        abort_if(Auth::check() && ! $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment = $this->photo->comments()->create([
+            'user_id' => Auth::id() ?: null,
+            'comment' => $this->commentText,
+        ]);
+
+        if (Auth::guest()) {
+            $this->photo
+                ->gallery
+                ->team
+                ->owner->notify(new GuestPhotoCommented($this->photo, $comment));
+        }
+
+        $this->commentText = '';
+    }
+
+    public function deleteComment(PhotoComment $comment)
+    {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
+        abort_unless($comment->photo->is($this->photo), 404);
+
+        abort_unless(Auth::check() && $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment->delete();
+    }
+
+    #[Computed]
+    public function comments()
+    {
+        return $this->photo->comments()->latest()->with('user')->get();
     }
 }; ?>
 
@@ -154,18 +210,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                left: ${(containerWidth - renderedWidth) / 2}px;
-                top: ${(containerHeight - renderedHeight) / 2}px;
-                width: ${renderedWidth}px;
-                height: ${renderedHeight}px;
-                max-width: ${renderedWidth}px;
-                max-height: ${renderedHeight}px;
-                background-image: url('${url}');
-                background-repeat: repeat;
-                opacity: ${this.watermarkTransparency};
-                pointer-events: none;
-                position: absolute;
-            `
+                                left: ${(containerWidth - renderedWidth) / 2}px;
+                                top: ${(containerHeight - renderedHeight) / 2}px;
+                                width: ${renderedWidth}px;
+                                height: ${renderedHeight}px;
+                                max-width: ${renderedWidth}px;
+                                max-height: ${renderedHeight}px;
+                                background-image: url('${url}');
+                                background-repeat: repeat;
+                                opacity: ${this.watermarkTransparency};
+                                pointer-events: none;
+                                position: absolute;
+                            `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -282,7 +338,7 @@ new class extends Component
                 >
                     @if ($previous)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="previous"
                             icon="chevron-left"
@@ -298,7 +354,7 @@ new class extends Component
                 >
                     @if ($next)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="next"
                             icon="chevron-right"
@@ -324,6 +380,17 @@ new class extends Component
                         </flux:button>
                     </div>
                     <div class="flex gap-3">
+                        @if ($photo->gallery->are_comments_enabled)
+                            <flux:modal.trigger name="add-comment">
+                                <flux:button icon="chat-bubble-left-ellipsis" size="sm">
+                                    @if ($this->comments->isEmpty())
+                                        {{ __('Add comment') }}
+                                    @else
+                                        {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
+                                    @endif
+                                </flux:button>
+                            </flux:modal.trigger>
+                        @endif
                         @if ($this->photo->gallery->is_share_downloadable)
                             <flux:button
                                 :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
@@ -348,7 +415,68 @@ new class extends Component
                     </div>
                 </div>
             </div>
+            @if ($photo->gallery->are_comments_enabled)
+                <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+                    <div class="space-y-6">
+                        <div>
+                            <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
+                            <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
+                        </div>
+                        @if ($this->comments->isNotEmpty())
+                            <div class="max-h-64 space-y-4 overflow-y-auto">
+                                @foreach ($this->comments as $comment)
+                                    <div
+                                        @class([
+                                            'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                            'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        ])
+                                    >
+                                        <div
+                                            @class([
+                                                'mb-1 flex items-center gap-2',
+                                                'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            ])
+                                        >
+                                            @if ($comment->user)
+                                                <flux:text variant="strong" class="text-sm font-semibold">
+                                                    {{ $comment->user->name }}
+                                                </flux:text>
+                                                <flux:text>&middot;</flux:text>
+                                            @endif
 
+                                            <flux:text class="text-xs">
+                                                {{ $comment->created_at->diffForHumans() }}
+                                            </flux:text>
+                                            @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
+                                                <flux:button
+                                                    wire:click="deleteComment({{ $comment->id }})"
+                                                    icon="x-mark"
+                                                    variant="subtle"
+                                                    size="xs"
+                                                    inset="right"
+                                                    square
+                                                />
+                                            @endif
+                                        </div>
+                                        <flux:text variant="strong">
+                                            {{ $comment->comment }}
+                                        </flux:text>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <form wire:submit="addComment" class="space-y-4 pt-2">
+                            <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+                            <flux:error name="commentText" />
+                            <div class="flex">
+                                <flux:spacer />
+                                <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                            </div>
+                        </form>
+                    </div>
+                </flux:modal>
+            @endif
             @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">
                     @include('partials.powered-by')
