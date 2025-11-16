@@ -19,9 +19,9 @@
     }
   },
   "formatter": {
-    "pint": {
-      "command": ["./vendor/bin/pint", "$FILE"],
+    "php": {
+      "command": ["./.opencode/format.sh", "$FILE"],
       "extensions": [".php"]
-    }
+    },
   }
 }
