@@ -273,17 +273,15 @@ new class extends Component
                             $comments = $photo->comments()->latest()->with('user')->get();
                         @endphp
 
-                        @if (auth()->user()?->is_admin)
-                            <flux:modal.trigger name="add-comment">
-                                <flux:button icon="chat-bubble-left-ellipsis" size="sm">
-                                    @if ($comments->isEmpty())
-                                        {{ __('Add comment') }}
-                                    @else
-                                        {{ __('Comments (:count)', ['count' => $comments->count()]) }}
-                                    @endif
-                                </flux:button>
-                            </flux:modal.trigger>
-                        @endif
+                        <flux:modal.trigger name="add-comment">
+                            <flux:button icon="chat-bubble-left-ellipsis" size="sm">
+                                @if ($comments->isEmpty())
+                                    {{ __('Add comment') }}
+                                @else
+                                    {{ __('Comments (:count)', ['count' => $comments->count()]) }}
+                                @endif
+                            </flux:button>
+                        </flux:modal.trigger>
 
                         <flux:button
                             :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
