@@ -9,6 +9,7 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
@@ -121,19 +122,22 @@ new class extends Component
 
     public function share()
     {
-        tap($this->shareForm->gallery->is_shared, function ($previouslyShared) {
-            $this->shareForm->gallery->is_shared = true;
+        $this->shareForm->gallery->is_shared = true;
 
-            $this->shareForm->update();
+        if (!$this->team->subscribed()) {
+            $this->shareForm->passwordProtected = false;
+            $this->shareForm->descriptionEnabled = false;
+            $this->shareForm->commentsEnabled = false;
+        }
 
-            Flux::modal('share')->close();
+        $this->shareForm->update();
 
-            if (! $previouslyShared) {
-                Flux::modal('share-link')->show();
-            }
-        });
+        Flux::modal('share')->close();
+
+        Flux::modal('share-link')->show();
 
         $this->gallery = $this->gallery->fresh();
+
         $this->getAllPhotos();
 
         $this->dispatch('gallery-sharing-changed');
@@ -206,6 +210,12 @@ new class extends Component
         $photos = $this->gallery->photos()->with('gallery')->withCount('comments')->get();
 
         $this->allPhotos = $photos->naturalSortBy('name');
+    }
+
+    #[Computed]
+    public function team()
+    {
+        return Auth::user()?->currentTeam;
     }
 }; ?>
 
@@ -564,16 +574,16 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
+                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" :disabled="!$this->team->subscribed()" />
 
                     <div x-show="$wire.shareForm.passwordProtected">
-                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
+                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" :disabled="!$this->team->subscribed()" />
                     </div>
 
-                    <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
+                    <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" :disabled="!$this->team->subscribed()" />
 
                     @if (auth()->user()?->is_admin)
-                        <flux:switch wire:model="shareForm.commentsEnabled" :label="__('Enable photo comments')" />
+                        <flux:switch wire:model="shareForm.commentsEnabled" :label="__('Enable photo comments')" :disabled="!$this->team->subscribed()" />
                     @endif
 
                     <div x-show="$wire.shareForm.descriptionEnabled">

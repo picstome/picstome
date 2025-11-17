@@ -33,7 +33,7 @@ describe('Gallery Viewing', function () {
         $photoC = Photo::factory()->for($gallery)->create();
 
         $response = actingAs($this->user)->get('/galleries/1');
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery]);
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
 
         $response->assertStatus(200);
         $response->assertViewHas('gallery');
@@ -71,7 +71,7 @@ describe('Photo Upload', function () {
         $gallery = Gallery::factory()->create(['keep_original_size' => true]);
 
         $oversizedPhoto = UploadedFile::fake()->image('oversized.jpg', 101, 100);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $oversizedPhoto])
             ->call('save', 0);
 
@@ -87,7 +87,7 @@ describe('Photo Upload', function () {
         $gallery = Gallery::factory()->create(['keep_original_size' => true]);
 
         $exactPhoto = UploadedFile::fake()->image('exact.jpg', 100, 100);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $exactPhoto])
             ->call('save', 0);
 
@@ -103,7 +103,7 @@ describe('Photo Upload', function () {
         $gallery = Gallery::factory()->create(['keep_original_size' => true]);
 
         $validPhoto = UploadedFile::fake()->image('valid.jpg', 99, 100);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos', [0 => $validPhoto])
             ->call('save', 0);
 
@@ -119,7 +119,7 @@ describe('Photo Upload', function () {
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos' => [
                 0 => UploadedFile::fake()->image('photo1.jpg'),
                 1 => UploadedFile::fake()->image('photo2.jpg'),
@@ -151,7 +151,7 @@ describe('Photo Upload', function () {
         Storage::fake('s3');
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 129, 129)],
         ])->call('save', 0);
 
@@ -170,7 +170,7 @@ describe('Photo Upload', function () {
         Storage::fake('s3');
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 129, 129)],
         ])->call('save', 0);
 
@@ -189,7 +189,7 @@ describe('Photo Upload', function () {
         Storage::fake('s3');
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos' => [0 => UploadedFile::fake()->image('photo1.jpg', 65, 65)],
         ])->call('save', 0);
 
@@ -209,7 +209,7 @@ describe('Photo Upload', function () {
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
         $photoFile = UploadedFile::fake()->image('photo1.jpg', 129, 129);
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos' => [0 => $photoFile],
         ])->call('save', 0);
 
@@ -223,15 +223,17 @@ describe('Gallery Sharing', function () {
     it('can be shared with no options enabled', function () {
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->call('share');
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+            ->call('share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
     });
 
     it('can be shared with selectable options enabled', function () {
         $gallery = Gallery::factory()->create();
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.selectable', true)
             ->call('share');
 
@@ -242,7 +244,7 @@ describe('Gallery Sharing', function () {
     it('can be shared with downloadable options enabled', function () {
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.downloadable', true)
             ->call('share');
 
@@ -253,7 +255,7 @@ describe('Gallery Sharing', function () {
     it('can be shared with limited selection', function () {
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.limitedSelection', true)
             ->set('shareForm.selectionLimit', 10)
             ->call('share');
@@ -264,16 +266,17 @@ describe('Gallery Sharing', function () {
     it('can be disabled for sharing', function () {
         $gallery = Gallery::factory()->shared()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->call('disableSharing');
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('disableSharing');
 
         expect($gallery->fresh()->is_shared)->toBeFalse();
     });
 
     it('can be shared with password protection', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->create();
         expect($gallery->share_password)->toBeNull();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.passwordProtected', true)
             ->set('shareForm.password', 'secret')
             ->call('share');
@@ -285,7 +288,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->create();
         expect($gallery->fresh()->is_share_watermarked)->toBeFalse();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.watermarked', true)
             ->call('share');
 
@@ -305,9 +308,10 @@ describe('Gallery Sharing', function () {
     });
 
     it('can enable and disable photo comments for a shared gallery', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', true)
             ->call('share');
 
@@ -315,7 +319,7 @@ describe('Gallery Sharing', function () {
 
         expect($gallery->are_comments_enabled)->toBeTrue();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', false)
             ->call('share');
 
@@ -325,10 +329,11 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared with a description', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->create();
         expect($gallery->share_description)->toBeNull();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', 'This is a beautiful wedding gallery')
             ->call('share');
@@ -338,6 +343,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can update the share description', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->shared()->create(['share_description' => 'Old description']);
         expect($gallery->share_description)->toBe('Old description');
 
@@ -352,7 +358,7 @@ describe('Gallery Sharing', function () {
     it('can be shared without a description', function () {
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
             ->call('share');
 
@@ -372,9 +378,10 @@ describe('Gallery Sharing', function () {
     });
 
     it('requires description when description is enabled', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', '')
             ->call('share');
@@ -385,7 +392,7 @@ describe('Gallery Sharing', function () {
     it('does not require description when description is disabled', function () {
         $gallery = Gallery::factory()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
             ->set('shareForm.description', '')
             ->call('share');
@@ -400,7 +407,7 @@ describe('Favorites', function () {
         $gallery = Gallery::factory()->create();
         $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery]);
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
 
         expect($component->favorites->contains($favorite))->toBeTrue();
     });
@@ -466,7 +473,7 @@ describe('Photo Deletion', function () {
             Storage::disk('public')->assertExists($photo->path);
         });
 
-        $component = Volt::test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
+        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
         $component->assertRedirect('/galleries');
         expect(Gallery::count())->toBe(0);
         expect(Photo::count())->toBe(0);
