@@ -124,7 +124,7 @@ new class extends Component
     {
         $this->shareForm->gallery->is_shared = true;
 
-        if (!$this->team->subscribed()) {
+        if (! $this->team->subscribed()) {
             $this->shareForm->passwordProtected = false;
             $this->shareForm->descriptionEnabled = false;
             $this->shareForm->commentsEnabled = false;
@@ -352,6 +352,7 @@ new class extends Component
                                 <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
                             </flux:modal.trigger>
                         @endif
+
                         <flux:navbar.item
                             @click="$wire.activeTab = 'commented'"
                             x-bind:data-current="$wire.activeTab === 'commented'"
@@ -572,15 +573,46 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" :disabled="!$this->team->subscribed()" />
+                    @if (! $this->team->subscribed())
+                        <flux:callout icon="bolt" variant="secondary" class="mb-4">
+                            <flux:callout.heading>{{ __('Unlock more sharing features') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('Subscribe to enable password protection, gallery descriptions, and photo comments for shared galleries.') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Subscribe') }}
+                                </flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endif
+
+                    <flux:switch
+                        wire:model="shareForm.passwordProtected"
+                        :label="__('Protect with a password')"
+                        :disabled="!$this->team->subscribed()"
+                    />
 
                     <div x-show="$wire.shareForm.passwordProtected">
-                        <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" :disabled="!$this->team->subscribed()" />
+                        <flux:input
+                            wire:model="shareForm.password"
+                            type="password"
+                            :label="__('Password')"
+                            :disabled="!$this->team->subscribed()"
+                        />
                     </div>
 
-                    <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" :disabled="!$this->team->subscribed()" />
+                    <flux:switch
+                        wire:model="shareForm.descriptionEnabled"
+                        :label="__('Add description')"
+                        :disabled="!$this->team->subscribed()"
+                    />
 
-                    <flux:switch wire:model="shareForm.commentsEnabled" :label="__('Enable photo comments')" :disabled="!$this->team->subscribed()" />
+                    <flux:switch
+                        wire:model="shareForm.commentsEnabled"
+                        :label="__('Enable photo comments')"
+                        :disabled="!$this->team->subscribed()"
+                    />
 
                     <div x-show="$wire.shareForm.descriptionEnabled">
                         <flux:textarea
