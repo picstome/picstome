@@ -103,6 +103,7 @@ new class extends Component
         $this->addPhotoToGallery($uploadedPhoto);
 
         $this->getAllPhotos();
+
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 

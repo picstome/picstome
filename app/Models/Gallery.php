@@ -171,6 +171,7 @@ class Gallery extends Model
     public function addPhoto(UploadedFile $photo)
     {
         $team = $this->team;
+
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
@@ -182,8 +183,9 @@ class Gallery extends Model
             'size' => $photoSize,
             'path' => $photo->store(
                 path: $this->storage_path,
-                options: ['disk' => 'public']
+                options: ['disk' => 's3']
             ),
+            'disk' => 's3',
         ]);
 
         return $photoModel;
