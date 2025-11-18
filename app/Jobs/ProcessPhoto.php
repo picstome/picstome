@@ -37,7 +37,7 @@ class ProcessPhoto implements ShouldQueue
 
         file_put_contents(
             $this->temporaryPhotoPath,
-            Storage::disk('public')->get($this->photo->path)
+            Storage::disk('s3')->get($this->photo->path)
         );
 
         $this->temporaryPhotoRelativePath = $tempFileRelativePath;

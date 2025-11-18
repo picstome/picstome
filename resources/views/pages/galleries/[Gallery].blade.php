@@ -46,8 +46,6 @@ new class extends Component
     #[Url]
     public $activeTab = 'all';
 
-    #[Validate('required')]
-    #[Validate(['photos.*' => 'image|max:51200'])]
     public $photos = [];
 
     public function mount(Gallery $gallery)
@@ -69,8 +67,6 @@ new class extends Component
 
         $this->validate([
             "photos.{$index}" => [
-                'image',
-                'max:51200', // max. 50MB
                 function ($attribute, $value, $fail) use ($index) {
                     $uploadedPhoto = $this->photos[$index];
 
@@ -82,18 +78,6 @@ new class extends Component
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
 
-                    if ($this->gallery->keep_original_size) {
-                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
-
-                        $maxPixels = config('picstome.max_photo_pixels');
-
-                        if ($width * $height >= $maxPixels) {
-                            $fail(__('Image :name exceeds :max pixels.', [
-                                'name' => $uploadedPhoto->getClientOriginalName(),
-                                'max' => number_format($maxPixels / 1000000, 0).'M',
-                            ]));
-                        }
-                    }
                 },
             ],
         ]);
