@@ -184,7 +184,7 @@ class Gallery extends Model
             'size' => $photoSize,
             'path' => FileUploadConfiguration::isUsingS3()
                 ? tap($this->storage_path . '/' . $photo->getFilename(), function ($path) use ($photo) {
-                    Storage::disk('s3')->copy($photo->getRealPath(), $path);
+                    Storage::disk('s3')->move($photo->getRealPath(), $path);
                 })
                 : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
             'disk' => 's3',
