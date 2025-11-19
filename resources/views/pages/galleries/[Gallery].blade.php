@@ -77,14 +77,15 @@ new class extends Component
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
-
                 },
             ],
         ]);
 
         $uploadedPhoto = $this->photos[$index];
 
-        $this->addPhotoToGallery($uploadedPhoto);
+        defer(function () use ($uploadedPhoto) {
+            $this->addPhotoToGallery($uploadedPhoto);
+        });
 
         $this->getAllPhotos();
 
