@@ -435,7 +435,7 @@ new class extends Component
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
-                            accept=".jpg, .jpeg, .png, .tiff"
+                            accept=".jpg, .jpeg, .png, .tiff, .mp4"
                             multiple
                         />
                         <flux:description class="mt-2 max-sm:hidden">
