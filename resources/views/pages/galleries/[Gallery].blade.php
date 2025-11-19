@@ -238,7 +238,7 @@ new class extends Component
                                 &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                         @endif
                     </x-subheading>
-                    @if ($this->allPhotos->isNotEmpty())
+                    @if ($this->allPhotos?->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
                             {{ $this->allPhotos->count() }} {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
                             {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
@@ -312,7 +312,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($this->allPhotos->isNotEmpty())
+            @if ($this->allPhotos?->isNotEmpty())
                 <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
                         <flux:navbar.item
