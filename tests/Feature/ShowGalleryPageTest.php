@@ -17,10 +17,13 @@ use Livewire\Volt\Volt;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
+use function Pest\Laravel\withoutDefer;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    withoutDefer();
+
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
 });
