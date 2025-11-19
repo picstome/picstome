@@ -89,7 +89,6 @@ new class extends Component
             <video
                 class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
                 controls
-                @if ($photo->small_thumbnail_url) poster="{{ $photo->small_thumbnail_url }}" @endif
             >
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                 Your browser does not support the video tag.
