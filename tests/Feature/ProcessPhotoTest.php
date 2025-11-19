@@ -62,6 +62,22 @@ it('deletes the original photo from public disk after processing', function () {
     expect(Storage::disk('s3')->allFiles())->toHaveCount(1);
 });
 
+it('deletes oversized photo if keep_original_size is enabled', function () {
+    config(['picstome.max_photo_pixels' => 10000]); // 100x100
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
+    $photoFile = UploadedFile::fake()->image('oversized.jpg', 101, 100); // 10100 pixels
+    $photo = $gallery->addPhoto($photoFile);
+    $originalPath = $photo->path;
+
+    (new ProcessPhoto($photo))->handle();
+
+    expect($gallery->fresh()->photos()->where('id', $photo->id)->exists())->toBeFalse();
+    expect(Storage::disk('s3')->exists($originalPath))->toBeFalse();
+});
+
 it('does not process photo if extension is not allowed', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('s3');

@@ -36,6 +36,10 @@ class ProcessPhoto implements ShouldQueue
 
         $this->prepareTemporaryPhoto();
 
+        if ($this->deleteIfOversizedAndOriginal()) {
+            return;
+        }
+
         $this->resizePhoto();
 
         @unlink($this->temporaryPhotoPath);
@@ -95,5 +99,25 @@ class ProcessPhoto implements ShouldQueue
         if ($previousPath) {
             Storage::disk('s3')->delete($previousPath);
         }
+    }
+
+    protected function deleteIfOversizedAndOriginal(): bool
+    {
+        if (! $this->photo->gallery->keep_original_size) {
+            return false;
+        }
+
+        $maxPixels = config('picstome.max_photo_pixels');
+        [$width, $height] = getimagesize($this->temporaryPhotoPath);
+
+        if ($width * $height <= $maxPixels) {
+            return false;
+        }
+
+        $this->photo->deleteFromDisk()->delete();
+
+        @unlink($this->temporaryPhotoPath);
+
+        return true;
     }
 }
