@@ -6,7 +6,6 @@ use App\Models\Photo;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Image\Image;
@@ -24,7 +23,33 @@ class ProcessPhoto implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Photo $photo)
+    public function __construct(public Photo $photo) {}
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        if (! $this->shouldProcess()) {
+            return;
+        }
+
+        $this->prepareTemporaryPhoto();
+
+        $this->resizePhoto();
+
+        @unlink($this->temporaryPhotoPath);
+    }
+
+    protected function shouldProcess(): bool
+    {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
+        $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
+
+        return in_array($extension, $allowedExtensions, true);
+    }
+
+    protected function prepareTemporaryPhoto()
     {
         $tempDir = 'photo-processing-temp';
         $ulid = Str::ulid()->toBase32();
@@ -41,16 +66,6 @@ class ProcessPhoto implements ShouldQueue
         );
 
         $this->temporaryPhotoRelativePath = $tempFileRelativePath;
-    }
-
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        $this->resizePhoto();
-
-        @unlink($this->temporaryPhotoPath);
     }
 
     protected function resizePhoto()

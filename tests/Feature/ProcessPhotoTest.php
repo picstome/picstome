@@ -61,3 +61,20 @@ it('deletes the original photo from public disk after processing', function () {
     $photo->refresh();
     expect(Storage::disk('s3')->allFiles())->toHaveCount(1);
 });
+
+it('does not process photo if extension is not allowed', function () {
+    config(['picstome.photo_resize' => 128]);
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photoFile = UploadedFile::fake()->create('photo1.gif', 100, 'image/gif');
+    $photo = $gallery->addPhoto($photoFile);
+    $originalPath = $photo->path;
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+
+    expect(Storage::disk('s3')->exists($originalPath))->toBeTrue();
+});
