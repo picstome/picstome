@@ -181,23 +181,6 @@ describe('Photo Upload', function () {
         });
     });
 
-    it('generates a thumbnail from the added photo', function () {
-        config(['picstome.photo_thumb_resize' => 64]);
-        Storage::fake('s3');
-
-        $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
-            'photos.0' => UploadedFile::fake()->image('photo1.jpg', 65, 65),
-        ])->call('save', 0);
-
-        tap($gallery->fresh()->photos[0], function ($photo) {
-            $resizedImage = Storage::disk('s3')->get($photo->thumb_path);
-            [$width, $height] = getimagesizefromstring($resizedImage);
-            expect($width)->toBe(64);
-            expect($height)->toBe(64);
-        });
-    });
-
     it('deletes the original photo from public disk after processing', function () {
         config(['picstome.photo_resize' => 128]);
         config(['picstome.photo_thumb_resize' => 64]);
@@ -210,9 +193,8 @@ describe('Photo Upload', function () {
         ])->call('save', 0);
 
         $photo = $gallery->fresh()->photos[0];
-
-        expect(Storage::disk('s3')->allFiles())->toBeEmpty();
-    })->skip();
+        expect(Storage::disk('s3')->allFiles())->toHaveCount(1);
+    });
 });
 
 describe('Gallery Sharing', function () {
