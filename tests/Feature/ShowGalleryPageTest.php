@@ -42,10 +42,9 @@ describe('Gallery Viewing', function () {
         $response->assertViewHas('gallery');
         expect($response['gallery']->is($gallery))->toBeTrue();
 
-        $component->assertViewHas('allPhotos');
-        expect($component->viewData('allPhotos')->contains($photoA))->toBeTrue();
-        expect($component->viewData('allPhotos')->contains($photoB))->toBeFalse();
-        expect($component->viewData('allPhotos')->contains($photoC))->toBeTrue();
+        expect($component->allPhotos->contains($photoA))->toBeTrue();
+        expect($component->allPhotos->contains($photoB))->toBeFalse();
+        expect($component->allPhotos->contains($photoC))->toBeTrue();
     });
 
     it('prevents guests from viewing any galleries', function () {
@@ -132,7 +131,7 @@ describe('Photo Upload', function () {
             expect($photo->path)->toContain('galleries/1243ABC/photos/');
             expect($photo->url)->not()->toBeNull();
             expect($photo->size)->not()->toBeNull();
-            Storage::disk('s3')->assertExists($photo->path);
+            expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
             Event::assertDispatched(PhotoAdded::class);
         });
         tap($gallery->fresh()->photos[1], function ($photo) {
@@ -140,60 +139,24 @@ describe('Photo Upload', function () {
             expect($photo->path)->toContain('galleries/1243ABC/photos/');
             expect($photo->url)->not()->toBeNull();
             expect($photo->size)->not()->toBeNull();
-            Storage::disk('s3')->assertExists($photo->path);
+            expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
             Event::assertDispatched(PhotoAdded::class);
         });
     });
 
-    it('resizes an added photo', function () {
-        config(['picstome.photo_resize' => 128]);
+    it('dispatches ProcessPhoto job when a photo is added', function () {
+        Queue::fake();
         Storage::fake('s3');
 
         $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg', 129, 129),
-        ])->call('save', 0);
-
-        tap($gallery->fresh()->photos[0], function ($photo) {
-            $resizedImage = Storage::disk('s3')->get($photo->path);
-            [$width, $height] = getimagesizefromstring($resizedImage);
-            expect($width)->toBe(128);
-            expect($height)->toBe(128);
-            expect($photo->disk)->toBe('s3');
-        });
-    });
-
-    it('does not resize photo when keep original size is enabled', function () {
-        config(['picstome.photo_resize' => 128]);
-        Storage::fake('s3');
-
-        $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
-            'photos.0' => UploadedFile::fake()->image('photo1.jpg', 129, 129),
-        ])->call('save', 0);
-
-        tap($gallery->fresh()->photos[0], function ($photo) {
-            $resizedImage = Storage::disk('s3')->get($photo->path);
-            [$width, $height] = getimagesizefromstring($resizedImage);
-            expect($width)->toBe(129);
-            expect($height)->toBe(129);
-            expect($photo->disk)->toBe('s3');
-        });
-    });
-
-    it('deletes the original photo from public disk after processing', function () {
-        config(['picstome.photo_resize' => 128]);
-        config(['picstome.photo_thumb_resize' => 64]);
-        Storage::fake('s3');
-
-        $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-        $photoFile = UploadedFile::fake()->image('photo1.jpg', 129, 129);
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
-            'photos.0' => $photoFile,
         ])->call('save', 0);
 
         $photo = $gallery->fresh()->photos[0];
-        expect(Storage::disk('s3')->allFiles())->toHaveCount(1);
+        Queue::assertPushed(ProcessPhoto::class, function ($job) use ($photo) {
+            return $job->photo->is($photo);
+        });
     });
 });
 
@@ -415,14 +378,14 @@ describe('Photo Deletion', function () {
                 ->image('photo1.jpg')
                 ->storeAs('galleries/1/photos', 'photo1.jpg', 's3'),
         ]);
-        Storage::disk('s3')->assertExists('galleries/1/photos/photo1.jpg');
+        expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeTrue();
         expect(Photo::count())->toBe(1);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('deletePhoto', $photo->id);
 
         expect($gallery->photos()->count())->toBe(0);
-        Storage::disk('s3')->assertMissing('galleries/1/photos/photo1.jpg');
+        expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeFalse();
     });
 
     it('prevents users from deleting another team\'s photo', function () {
@@ -447,7 +410,7 @@ describe('Photo Deletion', function () {
             $gallery->addPhoto($photo);
         });
         $gallery->photos->each(function ($photo) {
-            Storage::disk('s3')->assertExists($photo->path);
+            expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
         });
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
@@ -455,7 +418,7 @@ describe('Photo Deletion', function () {
         expect(Gallery::count())->toBe(0);
         expect(Photo::count())->toBe(0);
         $gallery->photos->each(function ($photo) {
-            Storage::disk('s3')->assertMissing($photo->path);
+            expect(Storage::disk('s3')->exists($photo->path))->toBeFalse();
         });
     });
 });
