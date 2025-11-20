@@ -192,6 +192,28 @@ new class extends Component
                     />
                 @elseif ($photo->isVideo())
                     <video
+                        x-data="{
+                            key: 'video-pos-{{ $photo->id }}',
+                            savePosition(e) {
+                                if (!e.target.seeking && !e.target.paused) {
+                                    localStorage.setItem(this.key, e.target.currentTime);
+                                }
+                            },
+                            restorePosition(e) {
+                                const saved = localStorage.getItem(this.key);
+                                if (saved && !isNaN(saved) && saved > 0 && saved < e.target.duration - 2) {
+                                    e.target.currentTime = parseFloat(saved);
+                                }
+                            },
+                            clearPosition() {
+                                localStorage.removeItem(this.key);
+                            }
+                        }"
+                        x-init="
+                            $el.addEventListener('loadedmetadata', restorePosition)
+                            $el.addEventListener('timeupdate', savePosition)
+                            $el.addEventListener('ended', clearPosition)
+                        "
                         class="mx-auto h-full w-full max-w-full bg-black/60 object-contain dark:bg-white/60"
                         controls
                         autoplay
