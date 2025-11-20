@@ -201,7 +201,7 @@ new class extends Component
 
 <x-app-layout>
     @volt('pages.galleries.show')
-        <div wire:poll>
+        <div>
             <div class="max-lg:hidden">
                 <flux:button :href="route('galleries')" icon="chevron-left" variant="subtle" inset>
                     {{ __('Galleries') }}
