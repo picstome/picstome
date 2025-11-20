@@ -56,38 +56,6 @@ new class extends Component
             @else
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
-            @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                @if ($photo->gallery->team->brand_watermark_position === 'repeated')
-                    <div
-                        class="pointer-events-none absolute inset-0"
-                        style="
-                            background-image: url('{{ $photo->gallery->team->brand_watermark_url }}');
-                            background-repeat: repeat;
-                            background-size: 75%;
-                            opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
-                        "
-                    ></div>
-                @else
-                    <div
-                        @class([
-                            'absolute flex justify-center',
-                            'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
-                            'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
-                            'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
-                        ])
-                    >
-                        <img
-                            class="max-w-full"
-                            src="{{ $photo->gallery->team->brand_watermark_url }}"
-                            alt=""
-                            style="
-                                opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
-                            "
-                            loading="lazy"
-                        />
-                    </div>
-                @endif
-            @endif
         @elseif ($photo->isVideo())
             <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted>
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
@@ -95,6 +63,39 @@ new class extends Component
             </video>
         @else
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+        @endif
+
+        @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+            @if ($photo->gallery->team->brand_watermark_position === 'repeated')
+                <div
+                    class="pointer-events-none absolute inset-0"
+                    style="
+                        background-image: url('{{ $photo->gallery->team->brand_watermark_url }}');
+                        background-repeat: repeat;
+                        background-size: 75%;
+                        opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
+                    "
+                ></div>
+            @else
+                <div
+                    @class([
+                        'absolute flex justify-center',
+                        'inset-x-0 bottom-0' => $photo->gallery->team->brand_watermark_position === 'bottom',
+                        'inset-x-0 top-0' => $photo->gallery->team->brand_watermark_position === 'top',
+                        'inset-0 flex items-center' => $photo->gallery->team->brand_watermark_position === 'middle',
+                    ])
+                >
+                    <img
+                        class="max-w-full"
+                        src="{{ $photo->gallery->team->brand_watermark_url }}"
+                        alt=""
+                        style="
+                            opacity: {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }};
+                        "
+                        loading="lazy"
+                    />
+                </div>
+            @endif
         @endif
     </a>
     @if (($photo->comments_count ?? 0) > 0)

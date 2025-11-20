@@ -311,30 +311,11 @@ new class extends Component
                             alt="{{ $photo->name }}"
                             x-cloak
                         />
-                        @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                            @if ($photo->gallery->team->brand_watermark_position === 'repeated')
-                                <div
-                                    x-show="showWatermark"
-                                    :style="repeatedWatermarkStyle"
-                                    class="pointer-events-none absolute"
-                                ></div>
-                            @else
-                                <img
-                                    x-show="showWatermark"
-                                    :style="watermarkStyle"
-                                    class="pointer-events-none absolute"
-                                    x-ref="watermarkImg"
-                                    @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
-                                    src="{{ $photo->gallery->team->brand_watermark_url }}"
-                                    alt=""
-                                    :width="Math.min(watermarkWidth, containerWidth)"
-                                    :height="Math.min(watermarkHeight, containerHeight)"
-                                />
-                            @endif
-                        @endif
                     @elseif ($photo->isVideo())
                         <video
                             x-data="{
+                                loaded: false,
+                                errored: false,
                                 key: 'video-pos-{{ $photo->id }}',
                                 savePosition(e) {
                                     if (!e.target.seeking && !e.target.paused) {
@@ -352,6 +333,11 @@ new class extends Component
                                 }
                             }"
                             x-init="
+                                if ($el.complete) {
+                                    loaded = true
+                                    updateDimensions()
+                                    preloadAdjacentImages()
+                                }
                                 $el.addEventListener('loadedmetadata', restorePosition)
                                 $el.addEventListener('timeupdate', savePosition)
                                 $el.addEventListener('ended', clearPosition)
@@ -361,6 +347,13 @@ new class extends Component
                             autoplay
                             muted
                             playsinline
+                            x-ref="photoImg"
+                            x-on:load="
+                                loaded = true
+                                updateDimensions()
+                                preloadAdjacentImages()
+                            "
+                            x-on:error="errored = true"
                         >
                             <source
                                 src="{{ $photo->url }}"
@@ -370,6 +363,27 @@ new class extends Component
                         </video>
                     @else
                         <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+                    @endif
+                    @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+                        @if ($photo->gallery->team->brand_watermark_position === 'repeated')
+                            <div
+                                x-show="showWatermark"
+                                :style="repeatedWatermarkStyle"
+                                class="pointer-events-none absolute"
+                            ></div>
+                        @else
+                            <img
+                                x-show="showWatermark"
+                                :style="watermarkStyle"
+                                class="pointer-events-none absolute"
+                                x-ref="watermarkImg"
+                                @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
+                                src="{{ $photo->gallery->team->brand_watermark_url }}"
+                                alt=""
+                                :width="Math.min(watermarkWidth, containerWidth)"
+                                :height="Math.min(watermarkHeight, containerHeight)"
+                            />
+                        @endif
                     @endif
                 </div>
                 <div
