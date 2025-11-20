@@ -62,7 +62,7 @@ new class extends Component
     x-data="{ showActions: false, moreActionsOpen: false }"
     @mouseenter="showActions = true"
     @mouseleave="if (!moreActionsOpen) showActions = false"
-    @if (!$photo->small_thumbnail_url) wire:poll.visible.5s @endif
+    @if ($photo->status === 'pending') wire:poll.visible.5s @endif
 >
     <a
         id="{{ $htmlId }}"
