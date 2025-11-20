@@ -210,18 +210,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                            left: ${(containerWidth - renderedWidth) / 2}px;
-                                            top: ${(containerHeight - renderedHeight) / 2}px;
-                                            width: ${renderedWidth}px;
-                                            height: ${renderedHeight}px;
-                                            max-width: ${renderedWidth}px;
-                                            max-height: ${renderedHeight}px;
-                                            background-image: url('${url}');
-                                            background-repeat: repeat;
-                                            opacity: ${this.watermarkTransparency};
-                                            pointer-events: none;
-                                            position: absolute;
-                                        `
+                                                        left: ${(containerWidth - renderedWidth) / 2}px;
+                                                        top: ${(containerHeight - renderedHeight) / 2}px;
+                                                        width: ${renderedWidth}px;
+                                                        height: ${renderedHeight}px;
+                                                        max-width: ${renderedWidth}px;
+                                                        max-height: ${renderedHeight}px;
+                                                        background-image: url('${url}');
+                                                        background-repeat: repeat;
+                                                        opacity: ${this.watermarkTransparency};
+                                                        pointer-events: none;
+                                                        position: absolute;
+                                                    `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -256,80 +256,98 @@ new class extends Component
                     class="relative flex w-full items-center justify-center"
                     :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'"
                 >
-                    <img
-                        src="{{ $photo->thumbnail_url }}"
-                        srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
-                        sizes="(max-width: 640px) 100vw, 80vw"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="
-                            if ($el.complete) {
+                    @if ($photo->isImage())
+                        <img
+                            src="{{ $photo->thumbnail_url }}"
+                            srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                            sizes="(max-width: 640px) 100vw, 80vw"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="
+                                if ($el.complete) {
+                                    loaded = true
+                                    updateDimensions()
+                                    preloadAdjacentImages()
+                                }
+                            "
+                            x-show="!zoom && !pinchZooming"
+                            x-ref="photoImg"
+                            x-on:load="
                                 loaded = true
                                 updateDimensions()
                                 preloadAdjacentImages()
-                            }
-                        "
-                        x-show="!zoom && !pinchZooming"
-                        x-ref="photoImg"
-                        x-on:load="
-                            loaded = true
-                            updateDimensions()
-                            preloadAdjacentImages()
-                        "
-                        x-on:error="errored = true"
-                        @click="if (!isMobile()) zoom = true"
-                        @contextmenu.prevent
-                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                        class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
-                        alt="{{ $photo->name }}"
-                    />
-                    <img
-                        src="{{ $photo->url }}"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="if ($el.complete) loaded = true"
-                        x-show="!zoom && pinchZooming"
-                        x-on:load="loaded = true"
-                        x-on:error="errored = true"
-                        @click="if (!isMobile()) zoom = true"
-                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                        class="mx-auto h-full w-full max-w-full object-contain"
-                        alt="{{ $photo->name }}"
-                        loading="lazy"
-                        x-cloak
-                    />
-                    <img
-                        src="{{ $photo->url }}"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="if ($el.complete) loaded = true"
-                        x-show="zoom"
-                        x-on:load="loaded = true"
-                        x-on:error="errored = true"
-                        @click="zoom = false"
-                        @contextmenu.prevent
-                        class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
-                        loading="lazy"
-                        alt="{{ $photo->name }}"
-                        x-cloak
-                    />
-                    @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
-                        @if ($photo->gallery->team->brand_watermark_position === 'repeated')
-                            <div
-                                x-show="showWatermark"
-                                :style="repeatedWatermarkStyle"
-                                class="pointer-events-none absolute"
-                            ></div>
-                        @else
-                            <img
-                                x-show="showWatermark"
-                                :style="watermarkStyle"
-                                class="pointer-events-none absolute"
-                                x-ref="watermarkImg"
-                                @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
-                                src="{{ $photo->gallery->team->brand_watermark_url }}"
-                                alt=""
-                                :width="Math.min(watermarkWidth, containerWidth)"
-                                :height="Math.min(watermarkHeight, containerHeight)"
-                            />
+                            "
+                            x-on:error="errored = true"
+                            @click="if (!isMobile()) zoom = true"
+                            @contextmenu.prevent
+                            :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                            class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
+                            alt="{{ $photo->name }}"
+                        />
+                        <img
+                            src="{{ $photo->url }}"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="if ($el.complete) loaded = true"
+                            x-show="!zoom && pinchZooming"
+                            x-on:load="loaded = true"
+                            x-on:error="errored = true"
+                            @click="if (!isMobile()) zoom = true"
+                            :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                            class="mx-auto h-full w-full max-w-full object-contain"
+                            alt="{{ $photo->name }}"
+                            loading="lazy"
+                            x-cloak
+                        />
+                        <img
+                            src="{{ $photo->url }}"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="if ($el.complete) loaded = true"
+                            x-show="zoom"
+                            x-on:load="loaded = true"
+                            x-on:error="errored = true"
+                            @click="zoom = false"
+                            @contextmenu.prevent
+                            class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
+                            loading="lazy"
+                            alt="{{ $photo->name }}"
+                            x-cloak
+                        />
+                        @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+                            @if ($photo->gallery->team->brand_watermark_position === 'repeated')
+                                <div
+                                    x-show="showWatermark"
+                                    :style="repeatedWatermarkStyle"
+                                    class="pointer-events-none absolute"
+                                ></div>
+                            @else
+                                <img
+                                    x-show="showWatermark"
+                                    :style="watermarkStyle"
+                                    class="pointer-events-none absolute"
+                                    x-ref="watermarkImg"
+                                    @load="watermarkWidth = $event.target.naturalWidth; watermarkHeight = $event.target.naturalHeight"
+                                    src="{{ $photo->gallery->team->brand_watermark_url }}"
+                                    alt=""
+                                    :width="Math.min(watermarkWidth, containerWidth)"
+                                    :height="Math.min(watermarkHeight, containerHeight)"
+                                />
+                            @endif
                         @endif
+                    @elseif ($photo->isVideo())
+                        <video
+                            class="mx-auto h-full w-full max-w-full bg-black/60 object-contain dark:bg-white/60"
+                            controls
+                            autoplay
+                            muted
+                            playsinline
+                        >
+                            <source
+                                src="{{ $photo->url }}"
+                                type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                    @else
+                        <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
                     @endif
                 </div>
                 <div
