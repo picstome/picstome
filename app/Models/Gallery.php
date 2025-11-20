@@ -183,11 +183,12 @@ class Gallery extends Model
             'name' => $photo->getClientOriginalName(),
             'size' => $photoSize,
             'path' => FileUploadConfiguration::isUsingS3()
-                ? tap($this->storage_path . '/' . $photo->getFilename(), function ($path) use ($photo) {
+                ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
                     Storage::disk('s3')->move($photo->getRealPath(), $path);
                 })
                 : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
             'disk' => 's3',
+            'status' => 'pending',
         ]);
 
         return $photoModel;

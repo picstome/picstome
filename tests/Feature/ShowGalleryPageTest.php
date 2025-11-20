@@ -84,6 +84,7 @@ describe('Photo Upload', function () {
             expect($photo->url)->not()->toBeNull();
             expect($photo->size)->not()->toBeNull();
             expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+            expect($photo->status)->toBe('pending');
             Event::assertDispatched(PhotoAdded::class);
         });
         tap($gallery->fresh()->photos[1], function ($photo) {
@@ -92,6 +93,7 @@ describe('Photo Upload', function () {
             expect($photo->url)->not()->toBeNull();
             expect($photo->size)->not()->toBeNull();
             expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+            expect($photo->status)->toBe('pending');
             Event::assertDispatched(PhotoAdded::class);
         });
     });

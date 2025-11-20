@@ -21,6 +21,7 @@ class Photo extends Model
         return [
             'size' => 'integer',
             'favorited_at' => 'datetime',
+            'status' => 'string',
         ];
     }
 
@@ -122,13 +123,13 @@ class Photo extends Model
 
             $disk = $this->diskOrDefault();
             $diskConfig = config("filesystems.disks.$disk");
-            $baseUrl = ($diskConfig['origin'] ?? null) . '/' . ($diskConfig['bucket'] ?? null);
+            $baseUrl = ($diskConfig['origin'] ?? null).'/'.($diskConfig['bucket'] ?? null);
 
             if ($baseUrl) {
                 $baseUrl = rtrim($baseUrl, '/');
                 $path = ltrim($this->path, '/');
 
-                return $baseUrl . '/' . $path;
+                return $baseUrl.'/'.$path;
             }
 
             return Storage::disk($disk)->url($this->path);

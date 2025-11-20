@@ -25,6 +25,7 @@ it('resizes an added photo', function () {
     expect($width)->toBe(128);
     expect($height)->toBe(128);
     expect($photo->disk)->toBe('s3');
+    expect($photo->status)->toBe('processed');
 });
 
 it('does not resize photo when keep original size is enabled', function () {
@@ -44,6 +45,7 @@ it('does not resize photo when keep original size is enabled', function () {
     expect($width)->toBe(129);
     expect($height)->toBe(129);
     expect($photo->disk)->toBe('s3');
+    expect($photo->status)->toBe('processed');
 });
 
 it('deletes the original photo from public disk after processing', function () {
@@ -93,4 +95,5 @@ it('does not process photo if extension is not allowed', function () {
     $photo->refresh();
 
     expect(Storage::disk('s3')->exists($originalPath))->toBeTrue();
+    expect($photo->status)->toBe('skipped');
 });

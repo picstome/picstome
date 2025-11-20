@@ -31,6 +31,8 @@ class ProcessPhoto implements ShouldQueue
     public function handle(): void
     {
         if (! $this->shouldProcess()) {
+            $this->photo->update(['status' => 'skipped']);
+
             return;
         }
 
@@ -94,6 +96,7 @@ class ProcessPhoto implements ShouldQueue
             'path' => $newPath,
             'size' => $fileSize,
             'disk' => 's3',
+            'status' => 'processed',
         ]);
 
         if ($previousPath) {
