@@ -333,11 +333,6 @@ new class extends Component
                                 }
                             }"
                             x-init="
-                                if ($el.complete) {
-                                    loaded = true
-                                    updateDimensions()
-                                    preloadAdjacentImages()
-                                }
                                 $el.addEventListener('loadedmetadata', restorePosition)
                                 $el.addEventListener('timeupdate', savePosition)
                                 $el.addEventListener('ended', clearPosition)
@@ -348,7 +343,7 @@ new class extends Component
                             muted
                             playsinline
                             x-ref="photoImg"
-                            x-on:load="
+                            x-on:loadeddata="
                                 loaded = true
                                 updateDimensions()
                                 preloadAdjacentImages()
