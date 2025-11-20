@@ -80,9 +80,7 @@ new class extends Component
 
         $uploadedPhoto = $this->photos[$index];
 
-        defer(function () use ($uploadedPhoto) {
-            $this->addPhotoToGallery($uploadedPhoto);
-        });
+        $this->addPhotoToGallery($uploadedPhoto);
 
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
