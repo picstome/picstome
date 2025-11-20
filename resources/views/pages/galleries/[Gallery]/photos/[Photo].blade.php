@@ -120,8 +120,6 @@ new class extends Component
                 swipe: '',
                 zoom: false,
                 pinchZooming: false,
-                thumbnailUrl: '{{ $photo->thumbnail_url }}',
-                photoUrl: '{{ $photo->url }}',
                 navigating: false,
                 isMobile() {
                     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -147,50 +145,68 @@ new class extends Component
             class="flex h-screen flex-col"
         >
             <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
-                <img
-                    src="{{ $photo->thumbnail_url }}"
-                    srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
-                    sizes="(max-width: 640px) 100vw, 80vw"
-                    x-data="{ loaded: false, errored: false }"
-                    x-init="if ($el.complete) loaded = true"
-                    x-show="!zoom && !pinchZooming"
-                    x-on:load="loaded = true"
-                    x-on:error="errored = true"
-                    @click="if (!isMobile()) zoom = true"
-                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                    class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
-                    alt="{{ $photo->name }}"
-                />
+                @if ($photo->isImage())
+                    <img
+                        src="{{ $photo->thumbnail_url }}"
+                        srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                        sizes="(max-width: 640px) 100vw, 80vw"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="!zoom && !pinchZooming"
+                        x-on:load="loaded = true"
+                        x-on:error="errored = true"
+                        @click="if (!isMobile()) zoom = true"
+                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                        class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
+                        alt="{{ $photo->name }}"
+                    />
 
-                <img
-                    src="{{ $photo->url }}"
-                    x-data="{ loaded: false, errored: false }"
-                    x-init="if ($el.complete) loaded = true"
-                    x-show="!zoom && pinchZooming"
-                    x-on:load="loaded = true"
-                    x-on:error="errored = true"
-                    @click="if (!isMobile()) zoom = true"
-                    class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
-                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                    loading="lazy"
-                    alt="{{ $photo->name }}"
-                    x-cloak
-                />
+                    <img
+                        src="{{ $photo->url }}"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="!zoom && pinchZooming"
+                        x-on:load="loaded = true"
+                        x-on:error="errored = true"
+                        @click="if (!isMobile()) zoom = true"
+                        class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
+                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                        loading="lazy"
+                        alt="{{ $photo->name }}"
+                        x-cloak
+                    />
 
-                <img
-                    src="{{ $photo->url }}"
-                    x-data="{ loaded: false, errored: false }"
-                    x-init="if ($el.complete) loaded = true"
-                    x-show="zoom"
-                    x-on:load="loaded = true"
-                    x-on:error="errored = true"
-                    @click="zoom = false"
-                    class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
-                    :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                    loading="lazy"
-                    alt="{{ $photo->name }}"
-                    x-cloak
-                />
+                    <img
+                        src="{{ $photo->url }}"
+                        x-data="{ loaded: false, errored: false }"
+                        x-init="if ($el.complete) loaded = true"
+                        x-show="zoom"
+                        x-on:load="loaded = true"
+                        x-on:error="errored = true"
+                        @click="zoom = false"
+                        class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
+                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
+                        loading="lazy"
+                        alt="{{ $photo->name }}"
+                        x-cloak
+                    />
+                @elseif ($photo->isVideo())
+                    <video
+                        class="mx-auto h-full w-full max-w-full bg-black/60 object-contain dark:bg-white/60"
+                        controls
+                        autoplay
+                        muted
+                        playsinline
+                    >
+                        <source
+                            src="{{ $photo->url }}"
+                            type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}"
+                        />
+                        Your browser does not support the video tag.
+                    </video>
+                @else
+                    <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+                @endif
 
                 <div
                     class="absolute top-0 bottom-0 left-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"

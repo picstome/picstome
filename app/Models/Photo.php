@@ -102,27 +102,35 @@ class Photo extends Model
     protected function url(): Attribute
     {
         return Attribute::get(function () {
-            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
-            $height = config('picstome.photo_resize', 2048);
-            $width = config('picstome.photo_resize', 2048);
+            if ($this->isImage()) {
+                $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+                $height = config('picstome.photo_resize', 2048);
+                $width = config('picstome.photo_resize', 2048);
 
-            if ($this->gallery->keep_original_size) {
-                $height = $height * 2;
-                $width = $width * 2;
+                if ($this->gallery->keep_original_size) {
+                    $height = $height * 2;
+                    $width = $width * 2;
+                }
+
+                return $this->generateCdnUrl($originalUrl, [
+                    'h' => $height,
+                    'w' => $width,
+                    'q' => 93,
+                    'output' => 'webp',
+                ]);
             }
 
-            return $this->generateCdnUrl($originalUrl, [
-                'h' => $height,
-                'w' => $width,
-                'q' => 93,
-                'output' => 'webp',
-            ]);
+            return Storage::disk($this->diskOrDefault())->url($this->path);
         });
     }
 
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
+            if (! $this->isImage()) {
+                return null;
+            }
+
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $height = config('picstome.photo_thumb_resize', 1000);
             $width = config('picstome.photo_thumb_resize', 1000);
@@ -142,6 +150,10 @@ class Photo extends Model
     protected function largeThumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
+            if (! $this->isImage()) {
+                return null;
+            }
+
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $size = config('picstome.photo_resize', 2048);
 
@@ -160,7 +172,7 @@ class Photo extends Model
     protected function smallThumbnailUrl(): Attribute
     {
         return Attribute::get(function () {
-            if ($this->diskOrDefault() !== 's3') {
+            if (! $this->isImage()) {
                 return null;
             }
 
@@ -246,5 +258,25 @@ class Photo extends Model
     public function comments()
     {
         return $this->hasMany(PhotoComment::class);
+    }
+
+    /**
+     * Determine if the photo is an image (jpg, jpeg, png, tiff)
+     */
+    public function isImage(): bool
+    {
+        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff']);
+    }
+
+    /**
+     * Determine if the photo is a video (mp4, mkv, avi)
+     */
+    public function isVideo(): bool
+    {
+        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($ext, ['mp4', 'mkv', 'avi']);
     }
 }

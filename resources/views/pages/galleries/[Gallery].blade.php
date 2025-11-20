@@ -37,8 +37,6 @@ new class extends Component
 
     public Collection $commentedPhotos;
 
-    public Collection $allPhotos;
-
     public array $existingPhotoNames = [];
 
     public ?Collection $photoshoots;
@@ -46,8 +44,6 @@ new class extends Component
     #[Url]
     public $activeTab = 'all';
 
-    #[Validate('required')]
-    #[Validate(['photos.*' => 'image|max:51200'])]
     public $photos = [];
 
     public function mount(Gallery $gallery)
@@ -55,7 +51,6 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
-        $this->getAllPhotos();
         $this->getCommentedPhotos();
         $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
@@ -69,8 +64,6 @@ new class extends Component
 
         $this->validate([
             "photos.{$index}" => [
-                'image',
-                'max:51200', // max. 50MB
                 function ($attribute, $value, $fail) use ($index) {
                     $uploadedPhoto = $this->photos[$index];
 
@@ -81,19 +74,6 @@ new class extends Component
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
-
-                    if ($this->gallery->keep_original_size) {
-                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
-
-                        $maxPixels = config('picstome.max_photo_pixels');
-
-                        if ($width * $height >= $maxPixels) {
-                            $fail(__('Image :name exceeds :max pixels.', [
-                                'name' => $uploadedPhoto->getClientOriginalName(),
-                                'max' => number_format($maxPixels / 1000000, 0).'M',
-                            ]));
-                        }
-                    }
                 },
             ],
         ]);
@@ -102,7 +82,6 @@ new class extends Component
 
         $this->addPhotoToGallery($uploadedPhoto);
 
-        $this->getAllPhotos();
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
@@ -138,8 +117,6 @@ new class extends Component
 
         $this->gallery = $this->gallery->fresh();
 
-        $this->getAllPhotos();
-
         $this->dispatch('gallery-sharing-changed');
     }
 
@@ -164,7 +141,6 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
-        $this->getAllPhotos();
 
         $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
@@ -174,7 +150,6 @@ new class extends Component
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
-        $this->getAllPhotos();
 
         $this->modal('edit')->close();
     }
@@ -205,11 +180,14 @@ new class extends Component
         $this->commentedPhotos = $commented->naturalSortBy('name');
     }
 
-    public function getAllPhotos()
+    #[Computed]
+    public function allPhotos()
     {
-        $photos = $this->gallery->photos()->with('gallery')->withCount('comments')->get();
-
-        $this->allPhotos = $photos->naturalSortBy('name');
+        return $this->gallery->photos()
+            ->with('gallery')
+            ->withCount('comments')
+            ->get()
+            ->naturalSortBy('name');
     }
 
     #[Computed]
@@ -258,9 +236,9 @@ new class extends Component
                                 &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                         @endif
                     </x-subheading>
-                    @if ($allPhotos->isNotEmpty())
+                    @if ($this->allPhotos?->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
-                            {{ $allPhotos->count() }} {{ $allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                            {{ $this->allPhotos->count() }} {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
                             {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                         </div>
                     @endif
@@ -332,7 +310,7 @@ new class extends Component
                 </div>
             </div>
 
-            @if ($allPhotos->isNotEmpty())
+            @if ($this->allPhotos?->isNotEmpty())
                 <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
                         <flux:navbar.item
@@ -363,7 +341,7 @@ new class extends Component
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
                         <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                            @foreach ($allPhotos as $photo)
+                            @foreach ($this->allPhotos as $photo)
                                 <livewire:photo-item
                                     :$photo
                                     :key="'photo-'.$photo->id"
@@ -455,7 +433,7 @@ new class extends Component
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
-                            accept=".jpg, .jpeg, .png, .tiff"
+                            accept=".jpg, .jpeg, .png, .tiff, .mp4"
                             multiple
                         />
                         <flux:description class="mt-2 max-sm:hidden">

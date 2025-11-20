@@ -6,7 +6,6 @@ use App\Models\Photo;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Image\Image;
@@ -24,7 +23,37 @@ class ProcessPhoto implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Photo $photo)
+    public function __construct(public Photo $photo) {}
+
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        if (! $this->shouldProcess()) {
+            return;
+        }
+
+        $this->prepareTemporaryPhoto();
+
+        if ($this->deleteIfOversizedAndOriginal()) {
+            return;
+        }
+
+        $this->resizePhoto();
+
+        @unlink($this->temporaryPhotoPath);
+    }
+
+    protected function shouldProcess(): bool
+    {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
+        $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
+
+        return in_array($extension, $allowedExtensions, true);
+    }
+
+    protected function prepareTemporaryPhoto()
     {
         $tempDir = 'photo-processing-temp';
         $ulid = Str::ulid()->toBase32();
@@ -37,41 +66,10 @@ class ProcessPhoto implements ShouldQueue
 
         file_put_contents(
             $this->temporaryPhotoPath,
-            Storage::disk('public')->get($this->photo->path)
+            Storage::disk('s3')->get($this->photo->path)
         );
 
         $this->temporaryPhotoRelativePath = $tempFileRelativePath;
-    }
-
-    /**
-     * Execute the job.
-     */
-    public function handle(): void
-    {
-        $this->resizePhoto();
-
-        $this->generateThumbnail();
-
-        if ($this->photo->getOriginal('disk') === null || $this->photo->getOriginal('disk') === 'public') {
-            Storage::disk('public')->delete($this->photo->getOriginal('path'));
-        }
-
-        $this->triggerWsrvCache($this->photo);
-
-        @unlink($this->temporaryPhotoPath);
-    }
-
-    /**
-     * Fire-and-forget request to wsrv.nl to trigger caching
-     */
-    protected function triggerWsrvCache(Photo $photo): void
-    {
-        if (app()->environment('production')) {
-            Http::async()->get($photo->url);
-            Http::async()->get($photo->thumbnail_url);
-            Http::async()->get($photo->large_thumbnail_url);
-            Http::async()->get($photo->small_thumbnail_url);
-        }
     }
 
     protected function resizePhoto()
@@ -99,26 +97,27 @@ class ProcessPhoto implements ShouldQueue
         ]);
 
         if ($previousPath) {
-            Storage::disk('public')->delete($previousPath);
+            Storage::disk('s3')->delete($previousPath);
         }
     }
 
-    protected function generateThumbnail()
+    protected function deleteIfOversizedAndOriginal(): bool
     {
-        Image::load($this->temporaryPhotoPath)
-            ->width(config('picstome.photo_thumb_resize'))
-            ->height(config('picstome.photo_thumb_resize'))
-            ->save();
+        if (! $this->photo->gallery->keep_original_size) {
+            return false;
+        }
 
-        $newThumbPath = Storage::disk('s3')->putFile(
-            path: $this->photo->gallery->storage_path,
-            file: new File($this->temporaryPhotoPath),
-            options: 'public',
-        );
+        $maxPixels = config('picstome.max_photo_pixels');
+        [$width, $height] = getimagesize($this->temporaryPhotoPath);
 
-        $this->photo->update([
-            'thumb_path' => $newThumbPath,
-            'disk' => 's3',
-        ]);
+        if ($width * $height <= $maxPixels) {
+            return false;
+        }
+
+        $this->photo->deleteFromDisk()->delete();
+
+        @unlink($this->temporaryPhotoPath);
+
+        return true;
     }
 }

@@ -64,7 +64,7 @@ return [
     */
 
     'temporary_file_upload' => [
-        'disk' => null,        // Example: 'local', 's3'              | Default: 'default'
+        'disk' => env('LIVEWIRE_TEMP_UPLOAD_DISK', null), // Set via .env (e.g. LIVEWIRE_TEMP_UPLOAD_DISK=s3) | Default: 'default'
         'rules' => 'file|max:51200',       // Example: ['file', 'mimes:png,jpg']  | Default: ['required', 'file', 'max:12288'] (12MB)
         'directory' => null,   // Example: 'tmp'                      | Default: 'livewire-tmp'
         'middleware' => 'throttle:180,1',  // Example: 'throttle:5,1'             | Default: 'throttle:60,1'

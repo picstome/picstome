@@ -15,6 +15,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use ZipStream\ZipStream;
 
@@ -171,6 +172,7 @@ class Gallery extends Model
     public function addPhoto(UploadedFile $photo)
     {
         $team = $this->team;
+
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
@@ -180,10 +182,12 @@ class Gallery extends Model
         $photoModel = $this->photos()->create([
             'name' => $photo->getClientOriginalName(),
             'size' => $photoSize,
-            'path' => $photo->store(
-                path: $this->storage_path,
-                options: ['disk' => 'public']
-            ),
+            'path' => FileUploadConfiguration::isUsingS3()
+                ? tap($this->storage_path . '/' . $photo->getFilename(), function ($path) use ($photo) {
+                    Storage::disk('s3')->move($photo->getRealPath(), $path);
+                })
+                : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
+            'disk' => 's3',
         ]);
 
         return $photoModel;
