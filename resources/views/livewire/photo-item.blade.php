@@ -88,7 +88,7 @@ new class extends Component
         @elseif ($photo->isVideo())
             <video
                 class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
-                controls
+                muted
             >
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                 Your browser does not support the video tag.

@@ -120,7 +120,18 @@ class Photo extends Model
                 ]);
             }
 
-            return Storage::disk($this->diskOrDefault())->url($this->path);
+            $disk = $this->diskOrDefault();
+            $diskConfig = config("filesystems.disks.$disk");
+            $baseUrl = ($diskConfig['origin'] ?? null) . '/' . ($diskConfig['bucket'] ?? null);
+
+            if ($baseUrl) {
+                $baseUrl = rtrim($baseUrl, '/');
+                $path = ltrim($this->path, '/');
+
+                return $baseUrl . '/' . $path;
+            }
+
+            return Storage::disk($disk)->url($this->path);
         });
     }
 
@@ -277,6 +288,6 @@ class Photo extends Model
     {
         $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
 
-        return in_array($ext, ['mp4', 'mkv', 'avi']);
+        return in_array($ext, ['mp4', 'webm', 'ogg']);
     }
 }
