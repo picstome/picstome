@@ -238,7 +238,8 @@ new class extends Component
                     </x-subheading>
                     @if ($this->allPhotos?->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
-                            {{ $this->allPhotos->count() }} {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                            {{ $this->allPhotos->count() }}
+                            {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
                             {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                         </div>
                     @endif
@@ -395,8 +396,10 @@ new class extends Component
             <flux:modal name="add-photos" class="w-full sm:max-w-lg">
                 <form class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Add photos') }}</flux:heading>
-                        <flux:subheading>{{ __('Select photos for your gallery.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Add Photos or Videos') }}</flux:heading>
+                        <flux:subheading>
+                            {{ __('Upload images or videos to your gallery.') }}
+                        </flux:subheading>
                     </div>
 
                     @if (auth()->user()?->currentTeam->storage_used_percent > 95)
@@ -437,7 +440,7 @@ new class extends Component
                             multiple
                         />
                         <flux:description class="mt-2 max-sm:hidden">
-                            {{ __('Drag and drop files here, or click on choose files.') }}
+                            {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG.') }}
                         </flux:description>
 
                         <flux:error name="photos" />
