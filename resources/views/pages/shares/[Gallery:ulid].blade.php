@@ -56,6 +56,16 @@ new class extends Component
         $this->commentedPhotos = $commented->naturalSortBy('name');
     }
 
+    #[Computed]
+    public function coverImage()
+    {
+        if ($this->gallery->coverPhoto && $this->gallery->coverPhoto->isImage()) {
+            return $this->gallery->coverPhoto;
+        }
+
+        return $this->gallery->firstImage();
+    }
+
     public function with()
     {
         $photos = $this->gallery->photos()->with('gallery')->withCount('comments')->get();
@@ -63,6 +73,7 @@ new class extends Component
         return [
             'allPhotos' => $photos->naturalSortBy('name'),
             'commentedPhotos' => $this->commentedPhotos ?? collect(),
+            'coverImage' => $this->coverImage(),
         ];
     }
 }; ?>
@@ -85,10 +96,7 @@ new class extends Component
                 </div>
 
                 <div class="relative mt-4 h-[164px] overflow-hidden max-sm:-mx-6 md:h-[240px] lg:mt-8">
-                    <img
-                        src="{{ ($gallery->coverPhoto ?? $allPhotos->first())->large_thumbnail_url }}"
-                        class="h-full w-full object-cover"
-                    />
+                    <img src="{{ $coverImage?->large_thumbnail_url }}" class="h-full w-full object-cover" />
                 </div>
             @else
                 <div>

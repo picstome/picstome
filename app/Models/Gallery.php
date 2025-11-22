@@ -309,4 +309,14 @@ class Gallery extends Model
 
         $this->update(['portfolio_order' => $newOrder]);
     }
+
+    /**
+     * Get the first image (not video) in the gallery
+     */
+    public function firstImage()
+    {
+        $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
+
+        return $photos->first(fn ($photo) => $photo->isImage());
+    }
 }
