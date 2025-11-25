@@ -198,7 +198,7 @@
                                         {{ __('Black Friday Offer! 🎉') }}
                                     </flux:text>
                                 </flux:callout.heading>
-                                <flux:callout.text variant="strong">
+                                <flux:callout.text class="font-medium">
                                     <flux:text variant="strong">
                                         {!! __('Get Pro Plan for just :amount first month with code :code', ['amount' => '€1', 'code' => '<strong class="uppercase">blackfriday25</strong>']) !!}
                                     </flux:text>
