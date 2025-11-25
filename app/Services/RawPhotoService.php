@@ -80,8 +80,6 @@ class RawPhotoService
             $timeout = config('picstome.exiftool_timeout', 30);
             $command = "exiftool -PreviewImage -b {$rawFilePath} > {$outputPath}";
 
-            Log::info($command);
-
             $result = Process::timeout($timeout)->run($command);
 
             return $result->successful() && file_exists($outputPath);

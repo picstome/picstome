@@ -106,6 +106,11 @@ class ProcessPhoto implements ShouldQueue
             $this->temporaryPhotoPath = $jpgPath;
         }
 
+        // Fix image orientation based on EXIF data (after conversion to JPG)
+        Image::load($this->temporaryPhotoPath)
+            ->orientation()
+            ->save();
+
         return true;
     }
 
