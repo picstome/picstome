@@ -178,23 +178,43 @@
 
         @unless ($fullScreen)
             @unless (auth()->user()->currentTeam->subscribed())
-                <flux:header container class="block! border-white/10 bg-zinc-800 py-2 dark:border-b">
-                    <div class="w-full">
-                        <flux:callout icon="gift" color="teal" inline>
-                            <flux:callout.heading>
-                                {{ __('Black Friday Offer! 🎉') }}
-                                <flux:text variant="strong">
-                                    {!! __('Get Pro Plan for just :amount first month with code :code', ['amount' => '€1', 'code' => '<strong class="uppercase">blackfriday25</strong>']) !!}
-                                </flux:text>
-                            </flux:callout.heading>
-                            <x-slot name="actions">
-                                <flux:button variant="primary" href="/subscribe" color="teal">
-                                    {{ __('Upgrade Now') }}
-                                </flux:button>
-                            </x-slot>
-                        </flux:callout>
-                    </div>
-                </flux:header>
+                {{-- dismissable --}}
+                <div
+                    x-data="{
+                        visible: localStorage.getItem('upgradeCalloutDismissed') !== 'true',
+                        dismiss() {
+                            this.visible = false
+                            localStorage.setItem('upgradeCalloutDismissed', 'true')
+                        },
+                    }"
+                    x-show="visible"
+                    x-transition
+                >
+                    <flux:header container class="block! border-white/10 bg-zinc-800 py-5 lg:py-3 dark:border-b">
+                        <div class="w-full">
+                            <flux:callout icon="gift" color="teal" inline>
+                                <flux:callout.heading>
+                                    <flux:text variant="strong">
+                                        {{ __('Black Friday Offer! 🎉') }}
+                                    </flux:text>
+                                </flux:callout.heading>
+                                <flux:callout.text variant="strong">
+                                    <flux:text variant="strong">
+                                        {!! __('Get Pro Plan for just :amount first month with code :code', ['amount' => '€1', 'code' => '<strong class="uppercase">blackfriday25</strong>']) !!}
+                                    </flux:text>
+                                </flux:callout.text>
+                                <x-slot name="actions">
+                                    <flux:button variant="primary" href="/subscribe" color="teal">
+                                        {{ __('Upgrade Now') }}
+                                    </flux:button>
+                                </x-slot>
+                                <x-slot name="controls">
+                                    <flux:button icon="x-mark" variant="ghost" x-on:click="dismiss" />
+                                </x-slot>
+                            </flux:callout>
+                        </div>
+                    </flux:header>
+                </div>
             @endunless
         @endunless
 
