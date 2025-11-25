@@ -176,6 +176,28 @@
             </flux:header>
         @endunless
 
+        @unless ($fullScreen)
+            @unless (auth()->user()->currentTeam->subscribed())
+                <flux:header container class="block! border-white/10 bg-zinc-800 py-2 dark:border-b">
+                    <div class="w-full">
+                        <flux:callout icon="gift" color="teal" inline>
+                            <flux:callout.heading>
+                                {{ __('Black Friday Offer! 🎉') }}
+                                <flux:text variant="strong">
+                                    {!! __('Get Pro Plan for just :amount first month with code :code', ['amount' => '€1', 'code' => '<strong class="uppercase">blackfriday25</strong>']) !!}
+                                </flux:text>
+                            </flux:callout.heading>
+                            <x-slot name="actions">
+                                <flux:button variant="primary" href="/subscribe" color="teal">
+                                    {{ __('Upgrade Now') }}
+                                </flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    </div>
+                </flux:header>
+            @endunless
+        @endunless
+
         <flux:main :container="!$fullScreen && !$isTool" @class(['p-0!' => $fullScreen || $isTool])>
             {{ $slot }}
         </flux:main>
