@@ -190,7 +190,7 @@
                     x-bind:class="{ 'block! border-white/10 bg-zinc-800 py-5 lg:py-3 dark:border-b': visible, 'hidden': !visible }"
                     container
                 >
-                    <div class="w-full">
+                    <div class="w-full dark">
                         <flux:callout icon="gift" color="teal" inline>
                             <flux:callout.heading>
                                 <flux:text variant="strong">
