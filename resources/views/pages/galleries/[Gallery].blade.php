@@ -231,7 +231,7 @@ new class extends Component
                         </div>
                     </div>
                     <x-subheading class="mt-2">
-                        {{ __('View, upload, and manage your gallery photos.') }}
+                        {{ __('View, upload, and manage your gallery media.') }}
                         @if ($gallery->expiration_date)
                                 &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                         @endif
@@ -306,7 +306,7 @@ new class extends Component
                     @endif
 
                     <flux:modal.trigger name="add-photos">
-                        <flux:button variant="primary">{{ __('Add photos') }}</flux:button>
+                        <flux:button variant="primary">{{ __('Add media') }}</flux:button>
                     </flux:modal.trigger>
                 </div>
             </div>
@@ -387,7 +387,7 @@ new class extends Component
                     </flux:subheading>
                     <flux:modal.trigger name="add-photos">
                         <flux:button variant="primary">
-                            {{ __('Add photos') }}
+                            {{ __('Add media') }}
                         </flux:button>
                     </flux:modal.trigger>
                 </div>
@@ -396,7 +396,7 @@ new class extends Component
             <flux:modal name="add-photos" class="w-full sm:max-w-lg">
                 <form class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Add Photos or Videos') }}</flux:heading>
+                        <flux:heading size="lg">{{ __('Add media') }}</flux:heading>
                         <flux:subheading>
                             {{ __('Upload images or videos to your gallery.') }}
                         </flux:subheading>
