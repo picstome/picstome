@@ -112,6 +112,7 @@ it('processes canon cr2 raw files by extracting jpg preview', function () {
     RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
     RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
@@ -175,6 +176,7 @@ it('resizes extracted jpg from raw files according to gallery settings', functio
     RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
     RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
@@ -197,6 +199,7 @@ it('keeps original size of extracted jpg when gallery setting is enabled', funct
     RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
     RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
@@ -219,6 +222,7 @@ it('deletes oversized extracted jpg when keep_original_size is enabled', functio
     RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
     RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
@@ -239,6 +243,7 @@ it('cleans up temporary files after raw processing', function () {
     RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
     RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();

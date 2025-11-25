@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
 class RawPhotoService
@@ -137,6 +136,52 @@ class RawPhotoService
     public function getSupportedExtensions(): array
     {
         return $this->rawExtensions;
+    }
+
+    /**
+     * Get EXIF orientation from a RAW file.
+     */
+    public function getExifOrientation(string $rawFilePath): ?int
+    {
+        if (! $this->isExifToolAvailable()) {
+            return null;
+        }
+
+        try {
+            $timeout = config('picstome.exiftool_timeout', 30);
+            $command = "exiftool -Orientation -n {$rawFilePath}";
+
+            $result = Process::timeout($timeout)->run($command);
+
+            if (! $result->successful()) {
+                return null;
+            }
+
+            $output = trim($result->output());
+
+            // Extract the orientation value from the output
+            if (preg_match('/Orientation\s*:\s*(\d+)/', $output, $matches)) {
+                return (int) $matches[1];
+            }
+
+            return null;
+        } catch (Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Get Spatie Image Orientation enum from EXIF orientation value.
+     */
+    public function getOrientationEnum(int $orientation): ?\Spatie\Image\Enums\Orientation
+    {
+        return match ($orientation) {
+            1 => \Spatie\Image\Enums\Orientation::Rotate0,
+            3 => \Spatie\Image\Enums\Orientation::Rotate180,
+            6 => \Spatie\Image\Enums\Orientation::Rotate90,
+            8 => \Spatie\Image\Enums\Orientation::Rotate270,
+            default => null,
+        };
     }
 
     /**
