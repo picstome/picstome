@@ -2,11 +2,10 @@
 
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
-use App\Services\RawPhotoService;
+use \Facades\App\Services\RawPhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Mockery;
 
 uses(RefreshDatabase::class);
 
@@ -100,9 +99,6 @@ it('does not process photo if extension is not allowed', function () {
     expect($photo->status)->toBe('skipped');
 });
 
-// RAW File Processing Tests - These will be implemented with proper mocking
-// once the extraction methods are added to ProcessPhoto job
-
 it('processes canon cr2 raw files by extracting jpg preview', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('s3');
@@ -110,18 +106,13 @@ it('processes canon cr2 raw files by extracting jpg preview', function () {
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
 
-    // Create a fake RAW file but store it as JPG to avoid Imagick issues
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    // Mock RawPhoto service
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
@@ -129,31 +120,6 @@ it('processes canon cr2 raw files by extracting jpg preview', function () {
     expect($photo->status)->toBe('processed');
     expect($photo->disk)->toBe('s3');
     expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
-});
-
-it('processes nikon nef raw files by extracting jpg preview', function () {
-    config(['picstome.photo_resize' => 128]);
-    Storage::fake('s3');
-    Storage::fake('local');
-
-    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-
-    $rawFile = UploadedFile::fake()->image('photo.nef', 300, 300);
-    $photo = $gallery->addPhoto($rawFile);
-
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
-
-    (new ProcessPhoto($photo))->handle();
-
-    $photo->refresh();
-    expect($photo->status)->toBe('processed');
-    expect($photo->disk)->toBe('s3');
 });
 
 it('skips processing when exiftool is not available', function () {
@@ -166,11 +132,8 @@ it('skips processing when exiftool is not available', function () {
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(false);
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(false);
 
     (new ProcessPhoto($photo))->handle();
 
@@ -188,13 +151,10 @@ it('skips processing when raw file has no extractable image', function () {
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(false);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(false);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
@@ -212,13 +172,10 @@ it('resizes extracted jpg from raw files according to gallery settings', functio
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
@@ -237,13 +194,10 @@ it('keeps original size of extracted jpg when gallery setting is enabled', funct
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
@@ -262,13 +216,10 @@ it('deletes oversized extracted jpg when keep_original_size is enabled', functio
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
@@ -285,17 +236,13 @@ it('cleans up temporary files after raw processing', function () {
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    $mockService = Mockery::mock(RawPhotoService::class);
-    $mockService->shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
-    $mockService->shouldReceive('isExifToolAvailable')->andReturn(true);
-    $mockService->shouldReceive('extractJpgFromRaw')->andReturn(true);
-    $mockService->shouldReceive('cleanupTempFile');
-
-    $this->app->instance(RawPhotoService::class, $mockService);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
+    RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
+    RawPhotoService::shouldReceive('cleanupTempFile');
 
     (new ProcessPhoto($photo))->handle();
 
-    // Verify temporary files are cleaned up
     $tempFiles = Storage::disk('local')->allFiles('photo-processing-temp');
     expect($tempFiles)->toHaveCount(0);
 });

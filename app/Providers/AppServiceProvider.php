@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Models\Team;
-use App\Services\RawPhotoService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(RawPhotoService::class);
+        //
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Photo;
-use App\Services\Facades\RawPhoto;
+use \Facades\App\Services\RawPhotoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
@@ -39,7 +39,7 @@ class ProcessPhoto implements ShouldQueue
         }
 
         // Handle RAW files by extracting JPG first
-        if (RawPhoto::isRawFile($this->photo->path)) {
+        if (RawPhotoService::isRawFile($this->photo->path)) {
             if (! $this->processRawFile()) {
                 $this->photo->update(['status' => 'skipped']);
 
@@ -63,12 +63,12 @@ class ProcessPhoto implements ShouldQueue
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
         $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
 
-        return in_array($extension, $allowedExtensions, true) || RawPhoto::isRawFile($this->photo->path);
+        return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($this->photo->path);
     }
 
     protected function processRawFile(): bool
     {
-        if (! RawPhoto::isExifToolAvailable()) {
+        if (! RawPhotoService::isExifToolAvailable()) {
             return false;
         }
 
@@ -76,8 +76,8 @@ class ProcessPhoto implements ShouldQueue
 
         $extractedJpgPath = $this->temporaryPhotoPath.'_extracted.jpg';
 
-        if (! RawPhoto::extractJpgFromRaw($this->temporaryPhotoPath, $extractedJpgPath)) {
-            RawPhoto::cleanupTempFile($extractedJpgPath);
+        if (! RawPhotoService::extractJpgFromRaw($this->temporaryPhotoPath, $extractedJpgPath)) {
+            RawPhotoService::cleanupTempFile($extractedJpgPath);
 
             return false;
         }
