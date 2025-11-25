@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 
 class RawPhotoService
@@ -77,7 +78,9 @@ class RawPhotoService
     {
         try {
             $timeout = config('picstome.exiftool_timeout', 30);
-            $command = "exiftool -PreviewImage -b -w {$outputPath} {$rawFilePath}";
+            $command = "exiftool -PreviewImage -b {$rawFilePath} > {$outputPath}";
+
+            Log::info($command);
 
             $result = Process::timeout($timeout)->run($command);
 
@@ -94,7 +97,7 @@ class RawPhotoService
     {
         try {
             $timeout = config('picstome.exiftool_timeout', 30);
-            $command = "exiftool -ThumbnailImage -b -w {$outputPath} {$rawFilePath}";
+            $command = "exiftool -ThumbnailImage -b {$rawFilePath} > {$outputPath}";
 
             $result = Process::timeout($timeout)->run($command);
 
