@@ -558,5 +558,5 @@
     "total storage": "almacenamiento total",
     "Add Photos or Videos": "Agregar fotos o videos",
     "Upload images or videos to your gallery.": "Sube imágenes o videos a tu galería.",
-    "Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG.": "Arrastra y suelta archivos aquí, o haz clic en elegir archivos. Formatos soportados: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG."
+    "Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).": "Arrastra y suelta archivos aquí, o haz clic en elegir archivos. Formatos soportados: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG y archivos RAW (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR)."
 }

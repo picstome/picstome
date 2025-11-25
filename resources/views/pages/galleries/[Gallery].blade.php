@@ -436,11 +436,11 @@ new class extends Component
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
-                            accept=".jpg, .jpeg, .png, .tiff, .mp4, .webm, .ogg, .cr3"
+                            accept=".jpg, .jpeg, .png, .tiff, .mp4, .webm, .ogg, .cr2, .cr3, .nef, .arw, .dng, .orf, .rw2, .pef, .srw, .mos, .mrw, .3fr"
                             multiple
                         />
                         <flux:description class="mt-2 max-sm:hidden">
-                            {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG.') }}
+                            {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
                         </flux:description>
 
                         <flux:error name="photos" />
