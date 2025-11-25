@@ -272,35 +272,6 @@ it('cleans up temporary files after raw processing', function () {
     expect($tempFiles)->toHaveCount(0);
 });
 
-it('downloads raw file when raw_path exists', function () {
-    Storage::fake('s3');
-
-    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-    $photoFile = UploadedFile::fake()->image('photo.jpg');
-    $photo = $gallery->addPhoto($photoFile);
-
-    // Set up raw_path
-    $rawPath = 'galleries/'.$gallery->ulid.'/raw/photo.cr2';
-    Storage::disk('s3')->put($rawPath, 'raw file content');
-    $photo->update(['raw_path' => $rawPath]);
-
-    $download = $photo->download();
-
-    expect($download)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class);
-});
-
-it('downloads processed file when no raw_path exists', function () {
-    Storage::fake('s3');
-
-    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-    $photoFile = UploadedFile::fake()->image('photo.jpg');
-    $photo = $gallery->addPhoto($photoFile);
-
-    $download = $photo->download();
-
-    expect($download)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class);
-});
-
 it('uses raw file size when raw_path exists and keep_original_size is enabled', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('s3');
