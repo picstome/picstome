@@ -174,12 +174,18 @@ class ProcessPhoto implements ShouldQueue
             file: new File($this->temporaryPhotoPath),
         );
 
-        $this->photo->update([
+        $updateData = [
             'path' => $newPath,
             'size' => $fileSize,
             'disk' => 's3',
             'status' => 'processed',
-        ]);
+        ];
+
+        if (RawPhotoService::isRawFile($previousPath) && ! $this->photo->gallery->keep_original_size) {
+            $updateData['name'] = pathinfo($this->photo->name, PATHINFO_FILENAME).'.jpg';
+        }
+
+        $this->photo->update($updateData);
 
         if (! $previousPath) {
             return;
