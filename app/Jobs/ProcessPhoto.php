@@ -8,8 +8,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Spatie\Image\Enums\Orientation;
 use Spatie\Image\Image;
 
 class ProcessPhoto implements ShouldQueue
@@ -75,6 +77,7 @@ class ProcessPhoto implements ShouldQueue
 
         $this->prepareTemporaryPhoto();
 
+        $originalRawPath = $this->temporaryPhotoPath;
         $extractedJpgPath = $this->temporaryPhotoPath.'_extracted.jpg';
 
         if (! RawPhotoService::extractJpgFromRaw($this->temporaryPhotoPath, $extractedJpgPath)) {
@@ -82,6 +85,9 @@ class ProcessPhoto implements ShouldQueue
 
             return false;
         }
+
+        // Rotate the extracted JPG based on EXIF orientation from the original RAW file
+        $this->rotateImageIfNeeded($extractedJpgPath, $originalRawPath);
 
         // Replace the temporary RAW file with the extracted JPG
         if (file_exists($extractedJpgPath)) {
@@ -107,6 +113,63 @@ class ProcessPhoto implements ShouldQueue
         }
 
         return true;
+    }
+
+    protected function rotateImageIfNeeded(string $imagePath, string $originalRawPath): void
+    {
+        $orientation = $this->getExifOrientation($originalRawPath);
+
+        if (! $orientation || $orientation === 1) {
+            return; // No rotation needed
+        }
+
+        $orientationEnum = $this->getOrientationEnum($orientation);
+
+        if ($orientationEnum) {
+            Image::load($imagePath)
+                ->orientation($orientationEnum)
+                ->save();
+        }
+    }
+
+    protected function getExifOrientation(string $rawFilePath): ?int
+    {
+        if (! RawPhotoService::isExifToolAvailable()) {
+            return null;
+        }
+
+        try {
+            $timeout = config('picstome.exiftool_timeout', 30);
+            $command = "exiftool -Orientation -n {$rawFilePath}";
+
+            $result = \Illuminate\Support\Facades\Process::timeout($timeout)->run($command);
+
+            if (! $result->successful()) {
+                return null;
+            }
+
+            $output = trim($result->output());
+
+            // Extract the orientation value from the output
+            if (preg_match('/Orientation\s*:\s*(\d+)/', $output, $matches)) {
+                return (int) $matches[1];
+            }
+
+            return null;
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    protected function getOrientationEnum(int $orientation): ?\Spatie\Image\Enums\Orientation
+    {
+        return match ($orientation) {
+            1 => \Spatie\Image\Enums\Orientation::Rotate0,
+            3 => \Spatie\Image\Enums\Orientation::Rotate180,
+            6 => \Spatie\Image\Enums\Orientation::Rotate90,
+            8 => \Spatie\Image\Enums\Orientation::Rotate270,
+            default => null,
+        };
     }
 
     protected function prepareTemporaryPhoto()
