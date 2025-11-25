@@ -84,9 +84,12 @@ class ProcessPhoto implements ShouldQueue
             return false;
         }
 
+        if ($this->photo->gallery->keep_original_size) {
+            $this->photo->update(['raw_path' => $this->photo->path]);
+        }
+
         // Replace the temporary RAW file with the extracted JPG
         if (file_exists($extractedJpgPath)) {
-            // Rotate the extracted JPG based on EXIF orientation from the original RAW file
             $this->rotateImageIfNeeded($extractedJpgPath, $originalRawPath);
 
             @unlink($this->temporaryPhotoPath);
@@ -118,7 +121,7 @@ class ProcessPhoto implements ShouldQueue
         $orientation = RawPhotoService::getExifOrientation($originalRawPath);
 
         if (! $orientation || $orientation === 1) {
-            return; // No rotation needed
+            return;
         }
 
         $orientationEnum = RawPhotoService::getOrientationEnum($orientation);
@@ -162,6 +165,10 @@ class ProcessPhoto implements ShouldQueue
 
         $fileSize = filesize($this->temporaryPhotoPath);
 
+        if ($this->photo->gallery->keep_original_size && $this->photo->raw_path) {
+            $fileSize = $this->photo->size;
+        }
+
         $newPath = Storage::disk('s3')->putFile(
             path: $this->photo->gallery->storage_path,
             file: new File($this->temporaryPhotoPath),
@@ -175,6 +182,10 @@ class ProcessPhoto implements ShouldQueue
         ]);
 
         if (! $previousPath) {
+            return;
+        }
+
+        if ($this->photo->raw_path) {
             return;
         }
 
@@ -192,6 +203,12 @@ class ProcessPhoto implements ShouldQueue
 
         if ($width * $height <= $maxPixels) {
             return false;
+        }
+
+        if ($this->photo->raw_path) {
+            @unlink($this->temporaryPhotoPath);
+
+            return true;
         }
 
         $this->photo->deleteFromDisk()->delete();
