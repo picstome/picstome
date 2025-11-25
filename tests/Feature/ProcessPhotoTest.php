@@ -2,7 +2,7 @@
 
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
-use \Facades\App\Services\RawPhotoService;
+use Facades\App\Services\RawPhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

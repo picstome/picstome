@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Photo;
-use \Facades\App\Services\RawPhotoService;
+use Facades\App\Services\RawPhotoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
@@ -38,15 +38,12 @@ class ProcessPhoto implements ShouldQueue
             return;
         }
 
-        // Handle RAW files by extracting JPG first
-        if (RawPhotoService::isRawFile($this->photo->path)) {
-            if (! $this->processRawFile()) {
-                $this->photo->update(['status' => 'skipped']);
-
-                return;
-            }
-        } else {
+        if (! RawPhotoService::isRawFile($this->photo->path)) {
             $this->prepareTemporaryPhoto();
+        } elseif (! $this->processRawFile()) {
+            $this->photo->update(['status' => 'skipped']);
+
+            return;
         }
 
         if ($this->deleteIfOversizedAndOriginal()) {
@@ -63,7 +60,11 @@ class ProcessPhoto implements ShouldQueue
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
         $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
 
-        return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($this->photo->path);
+        if (! in_array($extension, $allowedExtensions, true) && ! RawPhotoService::isRawFile($this->photo->path)) {
+            return false;
+        }
+
+        return true;
     }
 
     protected function processRawFile(): bool
@@ -152,9 +153,11 @@ class ProcessPhoto implements ShouldQueue
             'status' => 'processed',
         ]);
 
-        if ($previousPath) {
-            Storage::disk('s3')->delete($previousPath);
+        if (! $previousPath) {
+            return;
         }
+
+        Storage::disk('s3')->delete($previousPath);
     }
 
     protected function deleteIfOversizedAndOriginal(): bool
@@ -171,7 +174,6 @@ class ProcessPhoto implements ShouldQueue
         }
 
         $this->photo->deleteFromDisk()->delete();
-
         @unlink($this->temporaryPhotoPath);
 
         return true;
