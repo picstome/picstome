@@ -210,18 +210,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                                                    left: ${(containerWidth - renderedWidth) / 2}px;
-                                                                    top: ${(containerHeight - renderedHeight) / 2}px;
-                                                                    width: ${renderedWidth}px;
-                                                                    height: ${renderedHeight}px;
-                                                                    max-width: ${renderedWidth}px;
-                                                                    max-height: ${renderedHeight}px;
-                                                                    background-image: url('${url}');
-                                                                    background-repeat: repeat;
-                                                                    opacity: ${this.watermarkTransparency};
-                                                                    pointer-events: none;
-                                                                    position: absolute;
-                                                                `
+                                                                                left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                                top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                                width: ${renderedWidth}px;
+                                                                                height: ${renderedHeight}px;
+                                                                                max-width: ${renderedWidth}px;
+                                                                                max-height: ${renderedHeight}px;
+                                                                                background-image: url('${url}');
+                                                                                background-repeat: repeat;
+                                                                                opacity: ${this.watermarkTransparency};
+                                                                                pointer-events: none;
+                                                                                position: absolute;
+                                                                            `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -442,13 +442,33 @@ new class extends Component
                         @endif
 
                         @if ($this->photo->gallery->is_share_downloadable)
-                            <flux:button
-                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                                icon="cloud-arrow-down"
-                                icon:variant="mini"
-                                size="sm"
-                                square
-                            />
+                            @if ($photo->path && $photo->raw_path)
+                                <flux:dropdown>
+                                    <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                                            icon="cloud-arrow-down"
+                                        >
+                                            {{ __('Download JPG') }}
+                                        </flux:menu.item>
+                                        <flux:menu.item
+                                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                                            icon="cloud-arrow-down"
+                                        >
+                                            {{ __('Download Raw') }}
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            @else
+                                <flux:button
+                                    :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                                    icon="cloud-arrow-down"
+                                    icon:variant="mini"
+                                    size="sm"
+                                    square
+                                />
+                            @endif
                         @endif
 
                         @if ($this->photo->gallery->is_share_selectable)
@@ -477,14 +497,14 @@ new class extends Component
                                 @foreach ($this->comments as $comment)
                                     <div
                                         @class([
-                                            'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
-                                            'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                        'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                         ])
                                     >
                                         <div
                                             @class([
-                                                'mb-1 flex items-center gap-2',
-                                                'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            'mb-1 flex items-center gap-2',
+                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                             ])
                                         >
                                             @if ($comment->user)

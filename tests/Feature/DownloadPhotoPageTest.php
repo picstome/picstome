@@ -66,5 +66,9 @@ test('can download a photo with raw_path when available', function () {
 
     $response = actingAs($this->user)->get('galleries/1/photos/1/download');
 
+    $response->assertDownload('photo1.jpg');
+
+    $response = actingAs($this->user)->get('galleries/1/photos/1/download?type=raw');
+
     $response->assertDownload('photo1.cr2');
 });

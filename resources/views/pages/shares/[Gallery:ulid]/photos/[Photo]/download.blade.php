@@ -18,5 +18,11 @@ render(function (View $view, Photo $photo) {
 
     abort_unless($photo->gallery->is_share_downloadable, 401);
 
+    $type = request('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
     return $photo->download();
 }); ?>

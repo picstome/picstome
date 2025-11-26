@@ -155,8 +155,28 @@ class Gallery extends Model
         $zip = new ZipStream(outputName: $zipName);
 
         $photos->each(function ($photo) use ($zip) {
-            $stream = Storage::disk($photo->disk)->readStream($photo->path);
+            if ($photo->raw_path) {
+                $pathInfo = pathinfo($photo->name);
+                $jpgFilename = $pathInfo['filename'].'.jpg';
 
+                $jpgStream = Storage::disk($photo->disk)->readStream($photo->path);
+                $zip->addFileFromStream($jpgFilename, $jpgStream);
+
+                if (is_resource($jpgStream)) {
+                    fclose($jpgStream);
+                }
+
+                $rawStream = Storage::disk($photo->disk)->readStream($photo->raw_path);
+                $zip->addFileFromStream($photo->name, $rawStream);
+
+                if (is_resource($rawStream)) {
+                    fclose($rawStream);
+                }
+
+                return;
+            }
+
+            $stream = Storage::disk($photo->disk)->readStream($photo->path);
             $zip->addFileFromStream($photo->name, $stream);
 
             if (is_resource($stream)) {

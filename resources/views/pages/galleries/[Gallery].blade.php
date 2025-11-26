@@ -731,13 +731,7 @@ new class extends Component
 
                     handleFileSelect(event) {
                         const selectedFiles = Array.from(event.target.files);
-                        selectedFiles.forEach((file) => {
-                            this.files.push({
-                                file: file,
-                                progress: 0,
-                                status: 'pending',
-                            });
-                        });
+                        this.processFiles(selectedFiles);
                         this.processUploadQueue();
                     },
 
@@ -745,13 +739,7 @@ new class extends Component
                         this.dragActive = false;
                         const dt = event.dataTransfer;
                         if (dt && dt.files && dt.files.length > 0) {
-                            Array.from(dt.files).forEach((file) => {
-                                this.files.push({
-                                    file: file,
-                                    progress: 0,
-                                    status: 'pending',
-                                });
-                            });
+                            this.processFiles(Array.from(dt.files));
                             this.processUploadQueue();
                         }
                     },
@@ -846,6 +834,82 @@ new class extends Component
                                 fileObj.progress = Math.round((event.loaded / event.total) * 100);
                             },
                         );
+                    },
+
+                    processFiles(files) {
+                        const rawExtensions = [
+                            'cr2',
+                            'cr3',
+                            'nef',
+                            'arw',
+                            'dng',
+                            'orf',
+                            'rw2',
+                            'pef',
+                            'srw',
+                            'mos',
+                            'mrw',
+                            '3fr',
+                        ];
+                        const jpgExtensions = ['jpg', 'jpeg'];
+                        const keepOriginalSize = {{ Js::from($gallery->keep_original_size) }};
+
+                        // Group files by base name (without extension)
+                        const fileGroups = {};
+                        files.forEach((file) => {
+                            const name = file.name;
+                            const lastDot = name.lastIndexOf('.');
+                            const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
+                            const extension = lastDot !== -1 ? name.substring(lastDot + 1).toLowerCase() : '';
+
+                            if (!fileGroups[baseName]) {
+                                fileGroups[baseName] = [];
+                            }
+                            fileGroups[baseName].push({ file, extension });
+                        });
+
+                        // Process each group
+                        Object.values(fileGroups).forEach((group) => {
+                            const hasJpg = group.some((item) => jpgExtensions.includes(item.extension));
+                            const hasRaw = group.some((item) => rawExtensions.includes(item.extension));
+
+                            // If no conflict, add all files
+                            if (!hasJpg || !hasRaw) {
+                                group.forEach((item) => {
+                                    this.files.push({
+                                        file: item.file,
+                                        progress: 0,
+                                        status: 'pending',
+                                    });
+                                });
+                                return;
+                            }
+
+                            // Both formats present, decide which to keep
+                            if (keepOriginalSize) {
+                                // Skip JPG files, keep RAW files
+                                group
+                                    .filter((item) => rawExtensions.includes(item.extension))
+                                    .forEach((item) => {
+                                        this.files.push({
+                                            file: item.file,
+                                            progress: 0,
+                                            status: 'pending',
+                                        });
+                                    });
+                            } else {
+                                // Skip RAW files, keep JPG files
+                                group
+                                    .filter((item) => jpgExtensions.includes(item.extension))
+                                    .forEach((item) => {
+                                        this.files.push({
+                                            file: item.file,
+                                            progress: 0,
+                                            status: 'pending',
+                                        });
+                                    });
+                            }
+                        });
                     },
 
                     retryUpload(index) {

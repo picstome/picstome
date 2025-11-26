@@ -321,13 +321,33 @@ new class extends Component
                             </flux:button>
                         </flux:modal.trigger>
 
-                        <flux:button
-                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                            icon="cloud-arrow-down"
-                            icon:variant="mini"
-                            size="sm"
-                            square
-                        />
+                        @if ($photo->path && $photo->raw_path)
+                            <flux:dropdown>
+                                <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                                <flux:menu>
+                                    <flux:menu.item
+                                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                                        icon="cloud-arrow-down"
+                                    >
+                                        {{ __('Download JPG') }}
+                                    </flux:menu.item>
+                                    <flux:menu.item
+                                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                                        icon="cloud-arrow-down"
+                                    >
+                                        {{ __('Download Raw') }}
+                                    </flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        @else
+                            <flux:button
+                                :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                                icon="cloud-arrow-down"
+                                icon:variant="mini"
+                                size="sm"
+                                square
+                            />
+                        @endif
                         <flux:button
                             wire:click="favorite"
                             icon="heart"
@@ -353,14 +373,14 @@ new class extends Component
                                 @foreach ($this->comments as $comment)
                                     <div
                                         @class([
-                                            'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
-                                            'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                        'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                         ])
                                     >
                                         <div
                                             @class([
-                                                'mb-1 flex items-center gap-2',
-                                                'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            'mb-1 flex items-center gap-2',
+                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
                                             ])
                                         >
                                             @if ($comment->user)
