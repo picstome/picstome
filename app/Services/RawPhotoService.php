@@ -40,9 +40,7 @@ class RawPhotoService
     public function isExifToolAvailable(): bool
     {
         try {
-            $result = Process::run('which exiftool');
-
-            return $result->successful();
+            return Process::run('which exiftool')->successful();
         } catch (Exception) {
             return false;
         }
@@ -75,16 +73,7 @@ class RawPhotoService
      */
     protected function extractPreviewImage(string $rawFilePath, string $outputPath): bool
     {
-        try {
-            $timeout = config('picstome.exiftool_timeout', 30);
-            $command = "exiftool -PreviewImage -b {$rawFilePath} > {$outputPath}";
-
-            $result = Process::timeout($timeout)->run($command);
-
-            return $result->successful() && file_exists($outputPath);
-        } catch (Exception) {
-            return false;
-        }
+        return $this->runExifToolCommand("-PreviewImage -b {$rawFilePath} > {$outputPath}", $outputPath);
     }
 
     /**
@@ -92,11 +81,19 @@ class RawPhotoService
      */
     protected function extractThumbnailImage(string $rawFilePath, string $outputPath): bool
     {
+        return $this->runExifToolCommand("-ThumbnailImage -b {$rawFilePath} > {$outputPath}", $outputPath);
+    }
+
+    /**
+     * Run an ExifTool command with timeout and error handling.
+     */
+    protected function runExifToolCommand(string $command, string $outputPath): bool
+    {
         try {
             $timeout = config('picstome.exiftool_timeout', 30);
-            $command = "exiftool -ThumbnailImage -b {$rawFilePath} > {$outputPath}";
+            $fullCommand = "exiftool {$command}";
 
-            $result = Process::timeout($timeout)->run($command);
+            $result = Process::timeout($timeout)->run($fullCommand);
 
             return $result->successful() && file_exists($outputPath);
         } catch (Exception) {
@@ -118,16 +115,12 @@ class RawPhotoService
             return false;
         }
 
-        // Check if it's a valid image file
         $imageInfo = @getimagesize($imagePath);
         if ($imageInfo === false) {
             return false;
         }
 
-        // Check if it's a JPEG
-        $allowedMimeTypes = ['image/jpeg', 'image/jpg'];
-
-        return in_array($imageInfo['mime'], $allowedMimeTypes, true);
+        return in_array($imageInfo['mime'], ['image/jpeg', 'image/jpg'], true);
     }
 
     /**
@@ -159,12 +152,9 @@ class RawPhotoService
 
             $output = trim($result->output());
 
-            // Extract the orientation value from the output
-            if (preg_match('/Orientation\s*:\s*(\d+)/', $output, $matches)) {
-                return (int) $matches[1];
-            }
+            preg_match('/Orientation\s*:\s*(\d+)/', $output, $matches);
 
-            return null;
+            return $matches[1] ?? null;
         } catch (Exception) {
             return null;
         }
@@ -189,8 +179,6 @@ class RawPhotoService
      */
     public function cleanupTempFile(string $filePath): void
     {
-        if (file_exists($filePath)) {
-            @unlink($filePath);
-        }
+        @unlink($filePath);
     }
 }

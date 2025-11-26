@@ -57,14 +57,10 @@ class ProcessPhoto implements ShouldQueue
 
     protected function shouldProcess(): bool
     {
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
         $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
 
-        if (! in_array($extension, $allowedExtensions, true) && ! RawPhotoService::isRawFile($this->photo->path)) {
-            return false;
-        }
-
-        return true;
+        return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($this->photo->path);
     }
 
     protected function processRawFile(): bool
@@ -95,7 +91,7 @@ class ProcessPhoto implements ShouldQueue
             @unlink($this->temporaryPhotoPath);
             rename($extractedJpgPath, $this->temporaryPhotoPath);
         } else {
-            // For testing, create a fake extracted JPG if the mock returns true
+            // Handle case where mock returns true but no file exists (testing scenario)
             if (app()->environment('testing')) {
                 $fakeJpg = UploadedFile::fake()->image('extracted.jpg', 300, 300);
                 file_put_contents($extractedJpgPath, $fakeJpg->getContent());
@@ -108,7 +104,7 @@ class ProcessPhoto implements ShouldQueue
 
         // Update the temporary photo path to have a .jpg extension for processing
         $jpgPath = preg_replace('/\.[^.]+$/', '.jpg', $this->temporaryPhotoPath);
-        if ($jpgPath !== $this->temporaryPhotoPath && file_exists($this->temporaryPhotoPath)) {
+        if ($jpgPath !== $this->temporaryPhotoPath) {
             rename($this->temporaryPhotoPath, $jpgPath);
             $this->temporaryPhotoPath = $jpgPath;
         }
@@ -187,20 +183,18 @@ class ProcessPhoto implements ShouldQueue
 
         $this->photo->update($updateData);
 
-        if (! $previousPath) {
-            return;
+        if ($previousPath && ! $this->photo->raw_path) {
+            Storage::disk('s3')->delete($previousPath);
         }
-
-        if ($this->photo->raw_path) {
-            return;
-        }
-
-        Storage::disk('s3')->delete($previousPath);
     }
 
     protected function deleteIfOversizedAndOriginal(): bool
     {
         if (! $this->photo->gallery->keep_original_size) {
+            return false;
+        }
+
+        if (! file_exists($this->temporaryPhotoPath)) {
             return false;
         }
 
