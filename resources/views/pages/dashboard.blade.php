@@ -297,14 +297,20 @@ new class extends Component
             <flux:spacer class="my-6" />
 
             @if (! $this->team->subscribed())
-                <flux:callout icon="shield-check">
-                    <flux:callout.heading>{{ __('Get More With Picstome Pro') }}</flux:callout.heading>
+                <flux:callout icon="gift" color="teal" inline>
+                    <flux:callout.heading>
+                        <flux:text variant="strong">
+                            {{ __('Black Friday Offer! 🎉') }}
+                        </flux:text>
+                    </flux:callout.heading>
                     <flux:callout.text>
-                        {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
+                        <flux:text variant="strong" class="font-medium">
+                            {!! __('Get Pro Plan for just :amount first month with code :code', ['amount' => '€1', 'code' => '<strong class="uppercase">blackfriday25</strong>']) !!}
+                        </flux:text>
                     </flux:callout.text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
-                            {{ __('Upgrade to Pro') }}
+                        <flux:button variant="primary" href="/subscribe" color="teal">
+                            {{ __('Upgrade Now') }}
                         </flux:button>
                     </x-slot>
                 </flux:callout>
