@@ -92,12 +92,18 @@ class Photo extends Model
             DeleteFromDisk::dispatch($this->thumb_path, $this->diskOrDefault());
         }
 
+        if ($this->raw_path) {
+            DeleteFromDisk::dispatch($this->raw_path, $this->diskOrDefault());
+        }
+
         return $this;
     }
 
     public function download()
     {
-        return Storage::disk($this->diskOrDefault())->download($this->path, $this->name);
+        $downloadPath = $this->raw_path ?? $this->path;
+
+        return Storage::disk($this->diskOrDefault())->download($downloadPath, $this->name);
     }
 
     protected function url(): Attribute

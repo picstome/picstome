@@ -7,17 +7,6 @@
       "enabled": true
     }
   },
-  "lsp": {
-    "intelephense": {
-      "command": [
-        "intelephense",
-        "--stdio"
-      ],
-      "extensions": [
-        ".php"
-      ]
-    }
-  },
   "formatter": {
     "php": {
       "command": ["./.opencode/format.sh", "$FILE"],
