@@ -89,5 +89,9 @@ test('can download a shared photo with raw_path when available', function () {
 
     $response = get('/shares/0123ABC/photos/1/download');
 
+    $response->assertDownload('photo1.jpg');
+
+    $response = get('/shares/0123ABC/photos/1/download?type=raw');
+
     $response->assertDownload('photo1.cr2');
 });
