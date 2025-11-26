@@ -101,9 +101,19 @@ class Photo extends Model
 
     public function download()
     {
-        $downloadPath = $this->raw_path ?? $this->path;
+        $filename = $this->name;
 
-        return Storage::disk($this->diskOrDefault())->download($downloadPath, $this->name);
+        if ($this->raw_path) {
+            $pathInfo = pathinfo($this->name);
+            $filename = $pathInfo['filename'].'.jpg';
+        }
+
+        return Storage::disk($this->diskOrDefault())->download($this->path, $filename);
+    }
+
+    public function downloadRaw()
+    {
+        return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->name);
     }
 
     protected function url(): Attribute

@@ -13,5 +13,11 @@ name('galleries.photos.download');
 middleware(['auth', 'verified', 'can:view,photo']);
 
 render(function (View $view, Photo $photo) {
+    $type = request('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
     return $photo->download();
 }); ?>

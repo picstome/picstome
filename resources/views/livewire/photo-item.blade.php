@@ -59,9 +59,13 @@ new class extends Component
 
 <div
     class="group relative flex aspect-square overflow-hidden bg-zinc-100 dark:bg-white/10"
-    x-data="{ showActions: false, moreActionsOpen: false }"
+    x-data="{
+        showActions: false,
+        moreActionsOpen: false,
+        downloadOptionsOpen: false,
+    }"
     @mouseenter="showActions = true"
-    @mouseleave="if (!moreActionsOpen) showActions = false"
+    @mouseleave="if (!moreActionsOpen && !downloadOptionsOpen) showActions = false"
     @if ($photo->status === 'pending') wire:poll.visible.5s @endif
 >
     <a
@@ -87,10 +91,7 @@ new class extends Component
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
         @elseif ($photo->isVideo())
-            <video
-                class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
-                muted
-            >
+            <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted>
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                 Your browser does not support the video tag.
             </video>
@@ -114,12 +115,32 @@ new class extends Component
                 <flux:icon.heart class="size-5" />
             @endif
         </flux:button>
-        <flux:button
-            :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-            icon="arrow-down-tray"
-            square
-            size="sm"
-        />
+        @if ($photo->path && $photo->raw_path)
+            <flux:dropdown x-model="downloadOptionsOpen">
+                <flux:button icon="arrow-down-tray" square size="sm" />
+                <flux:menu>
+                    <flux:menu.item
+                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                        icon="arrow-down-tray"
+                    >
+                        {{ __('Download JPG') }}
+                    </flux:menu.item>
+                    <flux:menu.item
+                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
+                        icon="arrow-down-tray"
+                    >
+                        {{ __('Download Raw') }}
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        @else
+            <flux:button
+                :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
+                icon="arrow-down-tray"
+                square
+                size="sm"
+            />
+        @endif
         <flux:dropdown x-model="moreActionsOpen">
             <flux:button icon="ellipsis-vertical" square size="sm" />
             <flux:menu>
