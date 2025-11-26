@@ -55,7 +55,12 @@ class RawPhotoService
             return false;
         }
 
-        // Try to extract preview image first (higher quality)
+        // Try to extract embedded JPG first (highest quality)
+        if ($this->extractJpgFromRawTag($rawFilePath, $outputPath)) {
+            return $this->validateExtractedImage($outputPath);
+        }
+
+        // Try to extract preview image next (higher quality)
         if ($this->extractPreviewImage($rawFilePath, $outputPath)) {
             return $this->validateExtractedImage($outputPath);
         }
@@ -66,6 +71,14 @@ class RawPhotoService
         }
 
         return false;
+    }
+
+    /**
+     * Extract embedded JPG from RAW file.
+     */
+    protected function extractJpgFromRawTag(string $rawFilePath, string $outputPath): bool
+    {
+        return $this->runExifToolCommand("-JpgFromRaw -b {$rawFilePath} > {$outputPath}", $outputPath);
     }
 
     /**
