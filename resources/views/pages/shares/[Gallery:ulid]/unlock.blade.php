@@ -32,7 +32,7 @@ new class extends Component
 
         session()->put('unlocked_gallery_ulid', $this->gallery->ulid);
 
-        return $this->redirect("/shares/{$this->gallery->ulid}");
+        return $this->redirect("/shares/{$this->gallery->ulid}/{$this->gallery->slug}");
     }
 }; ?>
 
