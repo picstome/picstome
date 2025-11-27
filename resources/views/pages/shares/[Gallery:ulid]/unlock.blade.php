@@ -12,7 +12,7 @@ name('shares.unlock');
 
 render(function (Gallery $gallery) {
     if (! $gallery->share_password) {
-        return to_route('shares.show', ['gallery' => $gallery]);
+        return to_route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
     }
 });
 

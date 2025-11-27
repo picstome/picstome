@@ -339,4 +339,10 @@ class Gallery extends Model
 
         return $photos->first(fn ($photo) => $photo->isImage());
     }
+
+    #[Attribute]
+    protected function slug(): Attribute
+    {
+        return Attribute::get(fn () => Str::slug($this->name));
+    }
 }

@@ -69,7 +69,7 @@ new class extends Component
     #[Computed]
     public function galleryUrl()
     {
-        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery]))
+        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery, 'slug' => $this->photo->gallery->slug]))
             ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
             ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
             ->append('#')
@@ -210,18 +210,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                                                                left: ${(containerWidth - renderedWidth) / 2}px;
-                                                                                top: ${(containerHeight - renderedHeight) / 2}px;
-                                                                                width: ${renderedWidth}px;
-                                                                                height: ${renderedHeight}px;
-                                                                                max-width: ${renderedWidth}px;
-                                                                                max-height: ${renderedHeight}px;
-                                                                                background-image: url('${url}');
-                                                                                background-repeat: repeat;
-                                                                                opacity: ${this.watermarkTransparency};
-                                                                                pointer-events: none;
-                                                                                position: absolute;
-                                                                            `
+                                                                                            left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                                            top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                                            width: ${renderedWidth}px;
+                                                                                            height: ${renderedHeight}px;
+                                                                                            max-width: ${renderedWidth}px;
+                                                                                            max-height: ${renderedHeight}px;
+                                                                                            background-image: url('${url}');
+                                                                                            background-repeat: repeat;
+                                                                                            opacity: ${this.watermarkTransparency};
+                                                                                            pointer-events: none;
+                                                                                            position: absolute;
+                                                                                        `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true

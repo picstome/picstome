@@ -618,7 +618,7 @@ new class extends Component
 
                     <flux:input
                         icon="link"
-                        :value="route('shares.show', ['gallery' => $gallery])"
+                        :value="route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug])"
                         :label="__('Share URL')"
                         readonly
                         copyable
