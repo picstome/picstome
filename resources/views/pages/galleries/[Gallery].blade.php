@@ -328,7 +328,7 @@ new class extends Component
                         </flux:navbar.item>
                         @if ($favorites->isNotEmpty())
                             <flux:modal.trigger name="favorite-list">
-                                <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
+                                <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
                             </flux:modal.trigger>
                         @endif
 
@@ -676,22 +676,85 @@ new class extends Component
                 </form>
             </flux:modal>
 
-            <flux:modal name="favorite-list" class="w-full sm:max-w-lg">
+            <flux:modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Favorite list') }}</flux:heading>
-                        <flux:subheading>{{ __('List of favorite photo names.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
+                        <flux:subheading>
+                            {{ __(':count medias in your favorite list.', ['count' => $favorites->count()]) }}
+                        </flux:subheading>
                     </div>
 
-                    <flux:input value="{{ implode(', ', $favorites->pluck('name')->toArray()) }}" readonly copyable />
+                    <flux:tab.group x-data="{ tab: 'lightroom' }">
+                        <flux:tabs size="sm" variant="segmented" class="w-full">
+                            <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
+                            <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
+                            <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
+                        </flux:tabs>
 
-                    @if ($favorites->isNotEmpty())
-                        <ul class="ml-6 list-disc">
-                            @foreach ($favorites as $favorite)
-                                <li><flux:text>{{ $favorite->name }}</flux:text></li>
-                            @endforeach
-                        </ul>
-                    @endif
+                        <flux:tab.panel name="lightroom" class="pt-4!">
+                            <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(', ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('lightroom-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="captureone" class="pt-4!">
+                            <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(' ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('captureone-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="finder" class="pt-4!">
+                            <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(' OR ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('finder-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+                    </flux:tab.group>
                 </div>
             </flux:modal>
         </div>
@@ -709,6 +772,27 @@ new class extends Component
                         }, 500);
                     }
                 });
+
+                Alpine.data('copyToClipboard', () => ({
+                    copy(refName) {
+                        const textarea = this.$refs[refName];
+                        const button = this.$el;
+                        const originalText = button.textContent;
+
+                        if (textarea) {
+                            textarea.select();
+                            document.execCommand('copy');
+
+                            // Change button text temporarily
+                            button.textContent = '{{ __("Copied!") }}';
+
+                            // Revert after 2 seconds
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                            }, 2000);
+                        }
+                    },
+                }));
 
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
