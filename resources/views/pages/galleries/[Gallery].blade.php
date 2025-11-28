@@ -328,7 +328,7 @@ new class extends Component
                         </flux:navbar.item>
                         @if ($favorites->isNotEmpty())
                             <flux:modal.trigger name="favorite-list">
-                                <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
+                                <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
                             </flux:modal.trigger>
                         @endif
 
