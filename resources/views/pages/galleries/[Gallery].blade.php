@@ -694,10 +694,17 @@ new class extends Component
 
                         <flux:tab.panel name="lightroom" class="pt-4!">
                             <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
-                                {{ implode(', ', $favorites->pluck('name')->toArray()) }}
+                                {{
+                                    implode(', ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
                             </flux:textarea>
 
-                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
 
                             <div class="mt-6 flex justify-end">
                                 <flux:button variant="primary" size="sm" x-on:click="copy('lightroom-textarea')">
@@ -708,10 +715,17 @@ new class extends Component
 
                         <flux:tab.panel name="captureone" class="pt-4!">
                             <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
-                                {{ implode(' ', $favorites->pluck('name')->toArray()) }}
+                                {{
+                                    implode(' ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
                             </flux:textarea>
 
-                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
 
                             <div class="mt-6 flex justify-end">
                                 <flux:button variant="primary" size="sm" x-on:click="copy('captureone-textarea')">
@@ -722,10 +736,17 @@ new class extends Component
 
                         <flux:tab.panel name="finder" class="pt-4!">
                             <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
-                                {{ implode(' OR ', $favorites->pluck('name')->toArray()) }}
+                                {{
+                                    implode(' OR ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
                             </flux:textarea>
 
-                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
 
                             <div class="mt-6 flex justify-end">
                                 <flux:button variant="primary" size="sm" x-on:click="copy('finder-textarea')">
