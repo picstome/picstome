@@ -676,7 +676,7 @@ new class extends Component
                 </form>
             </flux:modal>
 
-            <flux:modal name="favorite-list" class="w-full sm:max-w-lg">
+            <flux:modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
                 <div class="space-y-6">
                     <div>
                         <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
@@ -686,43 +686,49 @@ new class extends Component
                     </div>
 
                     <flux:tab.group x-data="{ tab: 'lightroom' }">
-                        <flux:tabs size="sm" variant="segmented">
+                        <flux:tabs size="sm" variant="segmented" class="w-full">
                             <flux:tab name="lightroom">Lightroom</flux:tab>
                             <flux:tab name="captureone">Capture One</flux:tab>
                             <flux:tab name="finder">Finder/Explorer</flux:tab>
                         </flux:tabs>
 
-                        <flux:tab.panel name="lightroom">
-                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                        <flux:tab.panel name="lightroom" class="pt-4!">
+                            <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
                                 {{ implode(', ', $favorites->pluck('name')->toArray()) }}
                             </flux:textarea>
 
+                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+
                             <div class="mt-6 flex justify-end">
-                                <flux:button variant="primary" size="sm">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('lightroom-textarea')">
                                     {{ __('Copy') }}
                                 </flux:button>
                             </div>
                         </flux:tab.panel>
 
-                        <flux:tab.panel name="captureone">
-                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                        <flux:tab.panel name="captureone" class="pt-4!">
+                            <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
                                 {{ implode(' ', $favorites->pluck('name')->toArray()) }}
                             </flux:textarea>
 
+                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+
                             <div class="mt-6 flex justify-end">
-                                <flux:button variant="primary" size="sm">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('captureone-textarea')">
                                     {{ __('Copy') }}
                                 </flux:button>
                             </div>
                         </flux:tab.panel>
 
-                        <flux:tab.panel name="finder">
-                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                        <flux:tab.panel name="finder" class="pt-4!">
+                            <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
                                 {{ implode(' OR ', $favorites->pluck('name')->toArray()) }}
                             </flux:textarea>
 
+                            <flux:text class="mt-2">{{ __('Paste this filter text to the tool of your choice.') }}</flux:text>
+
                             <div class="mt-6 flex justify-end">
-                                <flux:button variant="primary" size="sm">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('finder-textarea')">
                                     {{ __('Copy') }}
                                 </flux:button>
                             </div>
@@ -745,6 +751,27 @@ new class extends Component
                         }, 500);
                     }
                 });
+
+                Alpine.data('copyToClipboard', () => ({
+                    copy(refName) {
+                        const textarea = this.$refs[refName];
+                        const button = this.$el;
+                        const originalText = button.textContent;
+
+                        if (textarea) {
+                            textarea.select();
+                            document.execCommand('copy');
+
+                            // Change button text temporarily
+                            button.textContent = '{{ __("Copied!") }}';
+
+                            // Revert after 2 seconds
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                            }, 2000);
+                        }
+                    },
+                }));
 
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
