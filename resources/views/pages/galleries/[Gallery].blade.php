@@ -679,19 +679,55 @@ new class extends Component
             <flux:modal name="favorite-list" class="w-full sm:max-w-lg">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Favorite list') }}</flux:heading>
-                        <flux:subheading>{{ __('List of favorite photo names.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
+                        <flux:subheading>
+                            {{ $favorites->count() }} {{ __('medias in your favorite list.') }}
+                        </flux:subheading>
                     </div>
 
-                    <flux:input value="{{ implode(', ', $favorites->pluck('name')->toArray()) }}" readonly copyable />
+                    <flux:tab.group x-data="{ tab: 'lightroom' }">
+                        <flux:tabs size="sm" variant="segmented">
+                            <flux:tab name="lightroom">Lightroom</flux:tab>
+                            <flux:tab name="captureone">Capture One</flux:tab>
+                            <flux:tab name="finder">Finder/Explorer</flux:tab>
+                        </flux:tabs>
 
-                    @if ($favorites->isNotEmpty())
-                        <ul class="ml-6 list-disc">
-                            @foreach ($favorites as $favorite)
-                                <li><flux:text>{{ $favorite->name }}</flux:text></li>
-                            @endforeach
-                        </ul>
-                    @endif
+                        <flux:tab.panel name="lightroom">
+                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                                {{ implode(', ', $favorites->pluck('name')->toArray()) }}
+                            </flux:textarea>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="captureone">
+                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                                {{ implode(' ', $favorites->pluck('name')->toArray()) }}
+                            </flux:textarea>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="finder">
+                            <flux:textarea readonly rows="4" class="font-mono text-sm">
+                                {{ implode(' OR ', $favorites->pluck('name')->toArray()) }}
+                            </flux:textarea>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+                    </flux:tab.group>
                 </div>
             </flux:modal>
         </div>
