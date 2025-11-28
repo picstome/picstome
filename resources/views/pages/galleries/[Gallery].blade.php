@@ -681,15 +681,15 @@ new class extends Component
                     <div>
                         <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
                         <flux:subheading>
-                            {{ $favorites->count() }} {{ __('medias in your favorite list.') }}
+                            {{ __(':count medias in your favorite list.', ['count' => $favorites->count()]) }}
                         </flux:subheading>
                     </div>
 
                     <flux:tab.group x-data="{ tab: 'lightroom' }">
                         <flux:tabs size="sm" variant="segmented" class="w-full">
-                            <flux:tab name="lightroom">Lightroom</flux:tab>
-                            <flux:tab name="captureone">Capture One</flux:tab>
-                            <flux:tab name="finder">Finder/Explorer</flux:tab>
+                            <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
+                            <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
+                            <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
                         </flux:tabs>
 
                         <flux:tab.panel name="lightroom" class="pt-4!">
