@@ -686,7 +686,7 @@ new class extends Component
                     </div>
 
                     <flux:tab.group x-data="{ tab: 'lightroom' }">
-                        <flux:tabs size="sm" variant="segmented" class="w-full" scrollable scrollable:fade>
+                        <flux:tabs size="sm" class="w-full" scrollable scrollable:fade>
                             <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
                             <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
                             <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
