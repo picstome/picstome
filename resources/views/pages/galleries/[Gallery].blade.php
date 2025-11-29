@@ -686,10 +686,11 @@ new class extends Component
                     </div>
 
                     <flux:tab.group x-data="{ tab: 'lightroom' }">
-                        <flux:tabs size="sm" variant="segmented" class="w-full">
+                        <flux:tabs size="sm" variant="segmented" class="w-full" scrollable scrollable:fade>
                             <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
                             <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
                             <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
+                            <flux:tab name="list">{{ __('List') }}</flux:tab>
                         </flux:tabs>
 
                         <flux:tab.panel name="lightroom" class="pt-4!">
@@ -753,6 +754,16 @@ new class extends Component
                                     {{ __('Copy') }}
                                 </flux:button>
                             </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="list" class="pt-4!">
+                            <ul class="max-h-96 space-y-1 overflow-y-auto">
+                                @foreach ($favorites as $photo)
+                                    <li>
+                                        <flux:text variant="strong">{{ $photo->name }}</flux:text>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </flux:tab.panel>
                     </flux:tab.group>
                 </div>
