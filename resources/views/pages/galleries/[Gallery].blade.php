@@ -700,7 +700,6 @@ new class extends Component
                                     return pathinfo($name, PATHINFO_FILENAME);
                                     })->toArray())
                                 }}
-                                
                             </flux:textarea>
 
                             <flux:text class="mt-2">
@@ -757,13 +756,19 @@ new class extends Component
                         </flux:tab.panel>
 
                         <flux:tab.panel name="list" class="pt-4!">
-                            <ul class="max-h-96 space-y-1 overflow-y-auto">
-                                @foreach ($favorites as $photo)
-                                    <li>
-                                        <flux:text variant="strong">{{ $photo->name }}</flux:text>
-                                    </li>
-                                @endforeach
-                            </ul>
+                            <flux:textarea x-ref="list-textarea" readonly rows="auto" class="text-sm min-h-26 max-h-96">
+                                {{ implode(PHP_EOL, $favorites->pluck('name')->toArray()) }}
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('list-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
                         </flux:tab.panel>
                     </flux:tab.group>
                 </div>
