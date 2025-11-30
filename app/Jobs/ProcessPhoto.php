@@ -32,6 +32,12 @@ class ProcessPhoto implements ShouldQueue
      */
     public function handle(): void
     {
+        if (! $this->photo->gallery) {
+            $this->photo->deleteFromDisk()->delete();
+
+            return;
+        }
+
         if (! $this->shouldProcess()) {
             $this->photo->update(['status' => 'skipped']);
 
