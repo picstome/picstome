@@ -335,9 +335,15 @@ class Gallery extends Model
      */
     public function firstImage()
     {
-        $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
-
-        return $photos->first(fn ($photo) => $photo->isImage());
+        return $this->photos()
+            ->where(function ($query) {
+                $query->where('path', 'LIKE', '%.jpg')
+                      ->orWhere('path', 'LIKE', '%.jpeg')
+                      ->orWhere('path', 'LIKE', '%.png')
+                      ->orWhere('path', 'LIKE', '%.tiff');
+            })
+            ->orderBy('created_at')
+            ->first();
     }
 
     #[Attribute]
