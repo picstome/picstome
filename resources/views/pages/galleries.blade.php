@@ -43,13 +43,11 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return Cache::remember("team_{$this->team->id}_galleries_page_{$this->getPage()}", now()->addMinutes(5), function () {
-            return $this->team->galleries()
-                ->with(['coverPhoto', 'photos'])
-                ->withCount('photos')
-                ->latest()
-                ->paginate(24);
-        });
+        return $this->team->galleries()
+            ->with(['coverPhoto', 'photos'])
+            ->withCount('photos')
+            ->latest()
+            ->paginate(24);
     }
 }; ?>
 
