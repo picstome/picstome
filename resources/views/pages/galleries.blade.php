@@ -44,8 +44,7 @@ new class extends Component
     public function galleries()
     {
         return $this->team->galleries()
-            ->with(['coverPhoto', 'photos'])
-            ->withCount('photos')
+            ->with(['coverPhoto'])
             ->latest()
             ->paginate(24);
     }
@@ -109,7 +108,7 @@ new class extends Component
 
                                         <div class="flex items-center justify-between">
                                             <flux:text variant="subtle" size="sm">
-                                                {{ $gallery->photos_count }} {{ __('photos') }}
+                                                {{ $gallery->photosCount() }} {{ __('photos') }}
                                             </flux:text>
 
                                             @if ($gallery->created_at)

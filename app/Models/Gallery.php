@@ -343,6 +343,16 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * Get the cached photo count for the gallery
+     */
+    public function photosCount()
+    {
+        return Cache::remember("gallery:{$this->id}:photos_count", now()->addHours(24), function () {
+            return $this->photos()->count();
+        });
+    }
+
     #[Attribute]
     protected function slug(): Attribute
     {

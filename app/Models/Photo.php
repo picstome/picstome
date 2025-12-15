@@ -30,10 +30,12 @@ class Photo extends Model
     {
         static::created(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
+            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
         });
 
         static::deleted(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
+            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
         });
     }
 
