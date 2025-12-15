@@ -43,9 +43,13 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return $this->team?->galleries()
-            ->latest()
-            ->paginate(24);
+        return Cache::remember("team_{$this->team->id}_galleries_page_{$this->getPage()}", now()->addMinutes(5), function () {
+            return $this->team->galleries()
+                ->with(['coverPhoto', 'photos'])
+                ->withCount('photos')
+                ->latest()
+                ->paginate(24);
+        });
     }
 }; ?>
 
@@ -78,13 +82,19 @@ new class extends Component
                                         <img
                                             src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105 lazyload"
+                                            loading="lazy"
+                                            width="400"
+                                            height="267"
                                         />
                                     @elseif ($gallery->firstImage())
                                         <img
                                             src="{{ $gallery->firstImage()->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105 lazyload"
+                                            loading="lazy"
+                                            width="400"
+                                            height="267"
                                         />
                                     @else
                                         <div
@@ -101,7 +111,7 @@ new class extends Component
 
                                         <div class="flex items-center justify-between">
                                             <flux:text variant="subtle" size="sm">
-                                                {{ $gallery->photos()->count() }} {{ __('photos') }}
+                                                {{ $gallery->photos_count }} {{ __('photos') }}
                                             </flux:text>
 
                                             @if ($gallery->created_at)
