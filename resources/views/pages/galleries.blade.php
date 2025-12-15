@@ -80,7 +80,7 @@ new class extends Component
                                         <img
                                             src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105 lazyload"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
                                             loading="lazy"
                                             width="400"
                                             height="267"
@@ -89,7 +89,7 @@ new class extends Component
                                         <img
                                             src="{{ $gallery->firstImage()->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105 lazyload"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
                                             loading="lazy"
                                             width="400"
                                             height="267"
