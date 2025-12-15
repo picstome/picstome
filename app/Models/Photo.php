@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
@@ -23,6 +24,17 @@ class Photo extends Model
             'favorited_at' => 'datetime',
             'status' => 'string',
         ];
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($photo) {
+            Cache::forget("gallery:{$photo->gallery_id}:first_image");
+        });
+
+        static::deleted(function ($photo) {
+            Cache::forget("gallery:{$photo->gallery_id}:first_image");
+        });
     }
 
     public function gallery()

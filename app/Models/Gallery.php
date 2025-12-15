@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -335,9 +336,11 @@ class Gallery extends Model
      */
     public function firstImage()
     {
-        $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
+        return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
+            $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
 
-        return $photos->first(fn ($photo) => $photo->isImage());
+            return $photos->first(fn ($photo) => $photo->isImage());
+        });
     }
 
     #[Attribute]
