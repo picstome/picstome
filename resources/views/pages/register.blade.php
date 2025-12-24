@@ -20,6 +20,12 @@ new class extends Component {
     public $password = '';
     public $password_confirmation = '';
     public $terms = false;
+    public $referral_code = '';
+
+    public function mount()
+    {
+        $this->referral_code = request()->get('referral', '');
+    }
 
     public function register()
     {
@@ -31,6 +37,10 @@ new class extends Component {
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+
+        if (!empty($this->referral_code)) {
+            $validated['referral_code'] = strtoupper($this->referral_code);
+        }
 
         event(new Registered($user = User::create($validated)));
 
@@ -55,8 +65,8 @@ new class extends Component {
         <div class="flex min-h-full items-center">
             <form wire:submit="register" class="mx-auto w-80 max-w-80 space-y-6">
                 <div class="mb-10 flex justify-center">
-                    <img src="/app-logo.png" class="h-26 dark:hidden" alt="Picstome">
-                    <img src="/app-logo-dark.png" class="h-26 hidden dark:block" alt="Picstome">
+                    <img src="/app-logo.png" class="h-26 dark:hidden" alt="Picstome" />
+                    <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
                 </div>
 
                 <flux:input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
@@ -81,14 +91,22 @@ new class extends Component {
                     <flux:checkbox wire:model="terms" />
                     <flux:label>
                         <div class="flex items-center gap-1">
-                            @if(app()->getLocale() === 'es')
+                            @if (app()->getLocale() === 'es')
                                 {{ __('I accept the terms and conditions') }}
-                                <flux:link href="https://picstome.com/es/terminos-y-condiciones/" target="_blank" variant="subtle">
+                                <flux:link
+                                    href="https://picstome.com/es/terminos-y-condiciones/"
+                                    target="_blank"
+                                    variant="subtle"
+                                >
                                     <flux:icon.arrow-top-right-on-square variant="micro" />
                                 </flux:link>
                             @else
                                 {{ __('I accept the terms and conditions') }}
-                                <flux:link href="https://picstome.com/terms-and-conditions/" target="_blank" variant="subtle">
+                                <flux:link
+                                    href="https://picstome.com/terms-and-conditions/"
+                                    target="_blank"
+                                    variant="subtle"
+                                >
                                     <flux:icon.arrow-top-right-on-square variant="micro" />
                                 </flux:link>
                             @endif

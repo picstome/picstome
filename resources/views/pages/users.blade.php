@@ -28,6 +28,8 @@ new class extends Component
 
     public string $filter = 'all';
 
+    public string $referralFilter = '';
+
     public UserForm $userForm;
 
     #[Computed]
@@ -96,6 +98,10 @@ new class extends Component
             });
         }
 
+        if (! empty($this->referralFilter)) {
+            $query->where('referral_code', 'like', '%'.$this->referralFilter.'%');
+        }
+
         match ($this->filter) {
             'subscribed' => $query->whereHas('ownedTeams', function ($q) {
                 $q->where('personal_team', true)
@@ -145,7 +151,7 @@ new class extends Component
         <div>
             <flux:heading size="xl">{{ __('Users') }}</flux:heading>
 
-            <div class="mt-4 flex flex-wrap gap-4 items-end">
+            <div class="mt-4 flex flex-wrap items-end gap-4">
                 <div class="flex-1">
                     <flux:input
                         wire:model.live="search"
@@ -162,11 +168,16 @@ new class extends Component
                         <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
                     </flux:select>
                 </div>
+                <div class="w-full md:w-48">
+                    <flux:input
+                        wire:model.live="referralFilter"
+                        :label="__('Referral Code')"
+                        :placeholder="__('Filter by referral code')"
+                        clearable
+                    />
+                </div>
                 <div>
-                    <flux:button
-                        wire:click="exportCsv"
-                        icon="arrow-down-tray"
-                    >
+                    <flux:button wire:click="exportCsv" icon="arrow-down-tray">
                         {{ __('Export CSV') }}
                     </flux:button>
                 </div>
@@ -189,6 +200,7 @@ new class extends Component
                 <flux:table id="table" :paginate="$this->users" class="mt-6">
                     <flux:table.columns>
                         <flux:table.column>{{ __('User') }}</flux:table.column>
+                        <flux:table.column class="max-sm:hidden">{{ __('Referral Code') }}</flux:table.column>
                         <flux:table.column
                             sortable
                             :sorted="$sortBy === 'created_at'"
@@ -230,6 +242,12 @@ new class extends Component
                                             <flux:text class="max-sm:hidden">{{ $user->email }}</flux:text>
                                         </div>
                                     </div>
+                                </flux:table.cell>
+
+                                <flux:table.cell class="whitespace-nowrap max-sm:hidden">
+                                    @if ($user->referral_code)
+                                        <flux:badge size="sm">{{ $user->referral_code }}</flux:badge>
+                                    @endif
                                 </flux:table.cell>
 
                                 <flux:table.cell class="whitespace-nowrap">
@@ -287,6 +305,10 @@ new class extends Component
                         <flux:input :value="$userForm->user->name" :label="__('Name')" readonly />
 
                         <flux:input :value="$userForm->user->email" :label="__('Email')" readonly />
+
+                        @if ($userForm->user->referral_code)
+                            <flux:input :value="$userForm->user->referral_code" :label="__('Referral Code')" readonly />
+                        @endif
 
                         <flux:switch
                             wire:model="userForm.lifetime"
