@@ -47,6 +47,11 @@ class Photoshoot extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function moodboards()
+    {
+        return $this->hasMany(Moodboard::class);
+    }
+
     public function deleteGalleries()
     {
         $this->galleries()->cursor()->each(

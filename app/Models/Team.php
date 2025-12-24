@@ -122,6 +122,11 @@ class Team extends Model
         return $this->hasMany(BioLink::class)->orderBy('order');
     }
 
+    public function moodboards()
+    {
+        return $this->hasMany(Moodboard::class);
+    }
+
     public function updateBrandLogo(UploadedFile $image)
     {
         tap($this->brand_logo_path, function ($previous) use ($image) {

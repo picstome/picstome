@@ -84,7 +84,7 @@ new class extends Component
                 'desc' => __('Upload your studio logos and visual identity.'),
                 'action' => __('Configure branding'),
                 'route' => route('branding.logos'),
-                'icon' => 'paint-brush',
+                'icon' => 'sparkles',
                 'complete' => $this->isBrandingConfigured(),
             ],
             [
@@ -419,7 +419,9 @@ new class extends Component
                     <x-table>
                         <x-table.rows>
                             @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                                <x-table.row :class="!empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''">
+                                <x-table.row
+                                    :class="! empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''"
+                                >
                                     <x-table.cell variant="strong" class="relative w-full">
                                         <a
                                             href="{{ $event['link'] }}"
@@ -428,23 +430,38 @@ new class extends Component
                                         ></a>
                                         <div class="flex flex-wrap items-center gap-2">
                                             {{ $event['label'] }}
-@if ($event['type'] === 'birthday')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}" inset="top bottom" icon="cake" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
-    </flux:badge>
-@elseif ($event['type'] === 'photoshoot')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}" inset="top bottom" icon="camera" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
-    </flux:badge>
-@elseif ($event['type'] === 'gallery')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}" inset="top bottom" icon="clock" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
-    </flux:badge>
-@elseif ($event['type'] === 'contract')
-    <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
-        {{ __('Awaiting signature') }}
-    </flux:badge>
-@endif
+                                            @if ($event['type'] === 'birthday')
+                                                <flux:badge
+                                                    color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}"
+                                                    inset="top bottom"
+                                                    icon="cake"
+                                                    size="sm"
+                                                >
+                                                    {{ ! empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
+                                                </flux:badge>
+                                            @elseif ($event['type'] === 'photoshoot')
+                                                <flux:badge
+                                                    color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}"
+                                                    inset="top bottom"
+                                                    icon="camera"
+                                                    size="sm"
+                                                >
+                                                    {{ ! empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
+                                                </flux:badge>
+                                            @elseif ($event['type'] === 'gallery')
+                                                <flux:badge
+                                                    color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}"
+                                                    inset="top bottom"
+                                                    icon="clock"
+                                                    size="sm"
+                                                >
+                                                    {{ ! empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
+                                                </flux:badge>
+                                            @elseif ($event['type'] === 'contract')
+                                                <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
+                                                    {{ __('Awaiting signature') }}
+                                                </flux:badge>
+                                            @endif
                                         </div>
                                     </x-table.cell>
                                     <x-table.cell class="relative" align="end">

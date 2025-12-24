@@ -191,7 +191,9 @@ new class extends Component
                         {{ __('Customer') }}
                     </x-description.term>
                     <x-description.details>
-                        <flux:link href="/customers/{{ $photoshoot->customer->id }}">{{ $photoshoot->customer?->name }}</flux:link>
+                        <flux:link href="/customers/{{ $photoshoot->customer->id }}">
+                            {{ $photoshoot->customer?->name }}
+                        </flux:link>
                     </x-description.details>
 
                     <x-description.term>
@@ -306,6 +308,59 @@ new class extends Component
                             {{ __('Create gallery') }}
                         </flux:button>
                     </flux:modal.trigger>
+                </div>
+            @endif
+
+            <div class="mt-12">
+                <flux:heading level="2">{{ __('Moodboards') }}</flux:heading>
+                <flux:separator class="mt-4" />
+            </div>
+
+            @if ($photoshoot->moodboards?->isNotEmpty())
+                <div class="mt-12">
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        @foreach ($photoshoot->moodboards as $moodboard)
+                            <div
+                                class="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/10"
+                            >
+                                <a class="block" href="/moodboards/{{ $moodboard->id }}">
+                                    @if ($moodboard->photos->first()?->isImage())
+                                        <img
+                                            src="{{ $moodboard->photos->first()->small_thumbnail_url }}"
+                                            alt=""
+                                            class="aspect-3/2 w-full object-cover"
+                                        />
+                                    @else
+                                        <div
+                                            class="flex aspect-3/2 w-full items-center justify-center bg-zinc-200 dark:bg-zinc-700"
+                                        >
+                                            <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                        </div>
+                                    @endif
+                                </a>
+                                <div
+                                    class="border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
+                                >
+                                    <flux:heading>{{ $moodboard->name }}</flux:heading>
+                                    <flux:text>
+                                        {{ $moodboard->photos->count() }} {{ __('images') }} •
+                                        {{ $moodboard->created_at->format('M j, Y') }}
+                                    </flux:text>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+                    <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                    <flux:heading size="lg" level="2">{{ __('No moodboards') }}</flux:heading>
+                    <flux:subheading class="mb-6 max-w-72 text-center">
+                        {{ __('We couldn’t find any moodboards. Create one to get started.') }}
+                    </flux:subheading>
+                    <flux:button :href="route('moodboards')" variant="primary">
+                        {{ __('Create moodboard') }}
+                    </flux:button>
                 </div>
             @endif
 
