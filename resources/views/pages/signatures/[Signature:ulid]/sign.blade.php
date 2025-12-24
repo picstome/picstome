@@ -59,18 +59,23 @@ new class extends Component
             'document_number' => $this->documentNumber,
             'nationality' => $this->nationality,
             'birthday' => $this->birthday,
-            'email' => $this->email,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
 
-        $customer = $this->signature->contract->team
-            ->customers()
-            ->where('email', $this->email)
-            ->first();
+        tap($this->signature->contract->team->customers()->where('email', $this->email)->first(), function ($customer) {
+            $customer?->update(['birthdate' => $this->birthday]);
+        });
 
-        if ($customer) {
-            $customer->update(['birthdate' => $this->birthday]);
+        if ($this->email !== $this->signature->contract->team->owner->email && $this->signature->contract->signatures()->count() === 2) {
+            $photoshootCustomer = $this->signature->contract->photoshoot?->customer;
+
+            if ($photoshootCustomer) {
+                $photoshootCustomer->update([
+                    'email' => $this->email,
+                    'birthdate' => $this->birthday,
+                ]);
+            }
         }
 
         $this->signature->updateSignatureImage($this->signature_image);
@@ -135,7 +140,9 @@ new class extends Component
                     <x-description.details>{{ $signature->contract->location }}</x-description.details>
 
                     <x-description.term>{{ __('Shooting date') }}</x-description.term>
-                    <x-description.details>{{ $signature->contract->formatted_shooting_date }}</x-description.details>
+                    <x-description.details>
+                        {{ $signature->contract->formatted_shooting_date }}
+                    </x-description.details>
 
                     <x-description.term>{{ __('Contract terms') }}</x-description.term>
                     <x-description.details>
@@ -181,7 +188,7 @@ new class extends Component
 
                             <div
                                 data-flux-control
-                                class="block touch-none w-full overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
+                                class="block w-full touch-none overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
                             >
                                 <canvas x-ref="canvas"></canvas>
                             </div>
