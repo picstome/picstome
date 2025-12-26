@@ -81,8 +81,6 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
 
         $this->addPhotoToGallery($uploadedPhoto);
-
-        $this->clearPhotoCaches();
     }
 
     protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
@@ -141,15 +139,6 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
-
-        $this->clearPhotoCaches();
-    }
-
-    protected function clearPhotoCaches()
-    {
-        Cache::forget("gallery:{$this->gallery->id}:photos");
-        Cache::forget("gallery:{$this->gallery->id}:favorites");
-        Cache::forget("gallery:{$this->gallery->id}:commented");
     }
 
     public function update()

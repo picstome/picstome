@@ -16,11 +16,13 @@ class PhotoComment extends Model
     protected static function booted()
     {
         static::created(function ($comment) {
+            $comment->load('photo');
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented");
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented:nav");
         });
 
         static::deleted(function ($comment) {
+            $comment->load('photo');
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented");
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented:nav");
         });
