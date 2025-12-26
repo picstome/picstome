@@ -34,8 +34,8 @@ new class extends Component
             $this->next = $this->photo->nextFavorite();
             $this->previous = $this->photo->previousFavorite();
         } elseif ($this->navigateCommented) {
-            $this->next = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->get($this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->search(fn ($photo) => $photo->id === $this->photo->id) + 1);
-            $this->previous = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->get($this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name')->search(fn ($photo) => $photo->id === $this->photo->id) - 1);
+            $this->next = $this->photo->nextCommented();
+            $this->previous = $this->photo->previousCommented();
         } else {
             $this->next = $this->photo->next();
             $this->previous = $this->photo->previous();

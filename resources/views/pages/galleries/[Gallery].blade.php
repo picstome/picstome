@@ -9,6 +9,7 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -52,7 +53,6 @@ new class extends Component
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
         $this->getCommentedPhotos();
-        $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
 
@@ -82,7 +82,7 @@ new class extends Component
 
         $this->addPhotoToGallery($uploadedPhoto);
 
-        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
+        $this->clearPhotoCaches();
     }
 
     protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
@@ -142,7 +142,14 @@ new class extends Component
 
         $this->getFavorites();
 
-        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
+        $this->clearPhotoCaches();
+    }
+
+    protected function clearPhotoCaches()
+    {
+        Cache::forget("gallery:{$this->gallery->id}:photos");
+        Cache::forget("gallery:{$this->gallery->id}:favorites");
+        Cache::forget("gallery:{$this->gallery->id}:commented");
     }
 
     public function update()
@@ -164,30 +171,41 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->withCount('comments')->get();
+        $cacheKey = "gallery:{$this->gallery->id}:favorites";
 
-        $this->favorites = $favorites->naturalSortBy('name');
+        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->favorited()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
     public function getCommentedPhotos()
     {
-        $commented = $this->gallery->photos()
-            ->whereHas('comments')
-            ->with('gallery')
-            ->withCount('comments')
-            ->get();
+        $cacheKey = "gallery:{$this->gallery->id}:commented";
 
-        $this->commentedPhotos = $commented->naturalSortBy('name');
+        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->whereHas('comments')
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
     #[Computed]
     public function allPhotos()
     {
-        return $this->gallery->photos()
-            ->with('gallery')
-            ->withCount('comments')
-            ->get()
-            ->naturalSortBy('name');
+        $cacheKey = "gallery:{$this->gallery->id}:photos";
+
+        return Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
     #[Computed]
@@ -700,6 +718,7 @@ new class extends Component
                                     return pathinfo($name, PATHINFO_FILENAME);
                                     })->toArray())
                                 }}
+                                
                             </flux:textarea>
 
                             <flux:text class="mt-2">
@@ -756,7 +775,7 @@ new class extends Component
                         </flux:tab.panel>
 
                         <flux:tab.panel name="list" class="pt-4!">
-                            <flux:textarea x-ref="list-textarea" readonly rows="auto" class="text-sm min-h-26 max-h-96">
+                            <flux:textarea x-ref="list-textarea" readonly rows="auto" class="max-h-96 min-h-26 text-sm">
                                 {{ implode(PHP_EOL, $favorites->pluck('name')->toArray()) }}
                             </flux:textarea>
 
@@ -889,18 +908,6 @@ new class extends Component
                     },
 
                     uploadFile(fileObj, index) {
-                        // Check for duplicate photo name
-                        if ($wire.existingPhotoNames.includes(fileObj.file.name)) {
-                            fileObj.status = 'duplicated';
-                            this.activeUploads--;
-
-                            setTimeout(() => {
-                                this.processUploadQueue();
-                            }, 10000); // Wait 10 seconds before continuing
-
-                            return;
-                        }
-
                         this.activeUploads++;
                         this.uploadTimestamps.push(Date.now());
                         fileObj.status = 'uploading';
@@ -912,15 +919,25 @@ new class extends Component
                             fileObj.file,
                             () => {
                                 // Success callback
-                                $wire.save(index);
-                                fileObj.status = 'completed';
-                                fileObj.progress = 100;
-                                this.activeUploads--;
-                                this.processUploadQueue();
+                                $wire.save(index).then((result) => {
+                                    if (result && result.errors && result.errors['photos.' + index]) {
+                                        // Validation error (e.g., duplicate photo)
+                                        fileObj.status = 'duplicated';
+                                        this.activeUploads--;
+                                        setTimeout(() => {
+                                            this.processUploadQueue();
+                                        }, 10000); // Wait 10 seconds before continuing
+                                    } else {
+                                        fileObj.status = 'completed';
+                                        fileObj.progress = 100;
+                                        this.activeUploads--;
+                                        this.processUploadQueue();
 
-                                if (this.checkAllUploadsComplete()) {
-                                    $flux.modals('add-photos').close();
-                                }
+                                        if (this.checkAllUploadsComplete()) {
+                                            $flux.modals('add-photos').close();
+                                        }
+                                    }
+                                });
                             },
                             (error) => {
                                 // Error callback

@@ -45,10 +45,8 @@ new class extends Component
             $this->next = $this->photo->nextFavorite();
             $this->previous = $this->photo->previousFavorite();
         } elseif ($this->navigateCommented) {
-            $commented = $this->photo->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
-            $index = $commented->search(fn ($photo) => $photo->id === $this->photo->id);
-            $this->next = $commented->get($index + 1);
-            $this->previous = $commented->get($index - 1);
+            $this->next = $this->photo->nextCommented();
+            $this->previous = $this->photo->previousCommented();
         } else {
             $this->next = $this->photo->next();
             $this->previous = $this->photo->previous();
@@ -210,18 +208,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                                                                                            left: ${(containerWidth - renderedWidth) / 2}px;
-                                                                                            top: ${(containerHeight - renderedHeight) / 2}px;
-                                                                                            width: ${renderedWidth}px;
-                                                                                            height: ${renderedHeight}px;
-                                                                                            max-width: ${renderedWidth}px;
-                                                                                            max-height: ${renderedHeight}px;
-                                                                                            background-image: url('${url}');
-                                                                                            background-repeat: repeat;
-                                                                                            opacity: ${this.watermarkTransparency};
-                                                                                            pointer-events: none;
-                                                                                            position: absolute;
-                                                                                        `
+                                                                                                        left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                                                        top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                                                        width: ${renderedWidth}px;
+                                                                                                        height: ${renderedHeight}px;
+                                                                                                        max-width: ${renderedWidth}px;
+                                                                                                        max-height: ${renderedHeight}px;
+                                                                                                        background-image: url('${url}');
+                                                                                                        background-repeat: repeat;
+                                                                                                        opacity: ${this.watermarkTransparency};
+                                                                                                        pointer-events: none;
+                                                                                                        position: absolute;
+                                                                                                    `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true

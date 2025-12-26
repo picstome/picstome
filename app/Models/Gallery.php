@@ -52,6 +52,16 @@ class Gallery extends Model
                 $gallery->ulid = Str::ulid();
             }
         });
+
+        static::deleted(function (Gallery $gallery) {
+            Cache::forget("gallery:{$gallery->id}:first_image");
+            Cache::forget("gallery:{$gallery->id}:photos_count");
+            Cache::forget("gallery:{$gallery->id}:photos");
+            Cache::forget("gallery:{$gallery->id}:favorites");
+            Cache::forget("gallery:{$gallery->id}:favorites:nav");
+            Cache::forget("gallery:{$gallery->id}:commented");
+            Cache::forget("gallery:{$gallery->id}:commented:nav");
+        });
     }
 
     public function team()

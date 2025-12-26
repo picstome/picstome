@@ -3,7 +3,9 @@
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Gallery;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -41,20 +43,28 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->withCount('comments')->get();
+        $cacheKey = "gallery:{$this->gallery->id}:favorites";
 
-        $this->favorites = $favorites->naturalSortBy('name');
+        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->favorited()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
     public function getCommentedPhotos()
     {
-        $commented = $this->gallery->photos()
-            ->whereHas('comments')
-            ->with('gallery')
-            ->withCount('comments')
-            ->get();
+        $cacheKey = "gallery:{$this->gallery->id}:commented";
 
-        $this->commentedPhotos = $commented->naturalSortBy('name');
+        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->whereHas('comments')
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
     #[Computed]
@@ -69,10 +79,17 @@ new class extends Component
 
     public function with()
     {
-        $photos = $this->gallery->photos()->with('gallery')->withCount('comments')->get();
+        $cacheKey = "gallery:{$this->gallery->id}:photos";
+
+        $photos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
 
         return [
-            'allPhotos' => $photos->naturalSortBy('name'),
+            'allPhotos' => $photos,
             'commentedPhotos' => $this->commentedPhotos ?? collect(),
             'coverImage' => $this->coverImage(),
         ];

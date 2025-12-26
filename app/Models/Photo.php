@@ -31,11 +31,21 @@ class Photo extends Model
         static::created(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
+            Cache::forget("gallery:{$photo->gallery_id}:photos");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
+            Cache::forget("gallery:{$photo->gallery_id}:commented");
+            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
         });
 
         static::deleted(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
+            Cache::forget("gallery:{$photo->gallery_id}:photos");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
+            Cache::forget("gallery:{$photo->gallery_id}:commented");
+            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
         });
     }
 
@@ -57,6 +67,9 @@ class Photo extends Model
     public function toggleFavorite()
     {
         $this->update(['favorited_at' => $this->favorited_at ? null : Carbon::now()]);
+
+        Cache::forget("gallery:{$this->gallery_id}:favorites");
+        Cache::forget("gallery:{$this->gallery_id}:favorites:nav");
     }
 
     public function isFavorited()
@@ -66,7 +79,12 @@ class Photo extends Model
 
     public function next()
     {
-        $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
+        $cacheKey = "gallery:{$this->gallery_id}:photos";
+
+        $photos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->get()->naturalSortBy('name');
+        });
+
         $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex + 1);
@@ -74,7 +92,12 @@ class Photo extends Model
 
     public function previous()
     {
-        $photos = $this->gallery->photos()->with('gallery')->get()->naturalSortBy('name');
+        $cacheKey = "gallery:{$this->gallery_id}:photos";
+
+        $photos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->get()->naturalSortBy('name');
+        });
+
         $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
 
         return $photos->get($currentIndex - 1);
@@ -82,7 +105,12 @@ class Photo extends Model
 
     public function nextFavorite()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
+        $cacheKey = "gallery:{$this->gallery_id}:favorites:nav";
+
+        $favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->favorited()->get()->naturalSortBy('name');
+        });
+
         $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex + 1);
@@ -90,10 +118,41 @@ class Photo extends Model
 
     public function previousFavorite()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get()->naturalSortBy('name');
+        $cacheKey = "gallery:{$this->gallery_id}:favorites:nav";
+
+        $favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->favorited()->get()->naturalSortBy('name');
+        });
+
         $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
 
         return $favorites->get($currentIndex - 1);
+    }
+
+    public function nextCommented()
+    {
+        $cacheKey = "gallery:{$this->gallery_id}:commented:nav";
+
+        $commented = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
+        });
+
+        $currentIndex = $commented->search(fn ($photo) => $photo->id === $this->id);
+
+        return $commented->get($currentIndex + 1);
+    }
+
+    public function previousCommented()
+    {
+        $cacheKey = "gallery:{$this->gallery_id}:commented:nav";
+
+        $commented = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
+        });
+
+        $currentIndex = $commented->search(fn ($photo) => $photo->id === $this->id);
+
+        return $commented->get($currentIndex - 1);
     }
 
     public function deleteFromDisk()
