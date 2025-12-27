@@ -43,7 +43,8 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return $this->team?->galleries()
+        return $this->team->galleries()
+            ->with(['coverPhoto'])
             ->latest()
             ->paginate(24);
     }
@@ -64,31 +65,38 @@ new class extends Component
 
             @if ($this->galleries?->isNotEmpty())
                 <div class="mt-12">
-                    <div
-                        id="grid"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-                    >
+                    <div id="grid" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                         @foreach ($this->galleries as $gallery)
-                            <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
+                            <flux:card
+                                class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                            >
                                 <a
                                     href="{{ route('galleries.show', ['gallery' => $gallery]) }}"
                                     class="block"
                                     wire:navigate
                                 >
-                                    @if($gallery->coverPhoto)
+                                    @if ($gallery->coverPhoto && $gallery->coverPhoto->isImage())
                                         <img
                                             src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="w-full aspect-3/2 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                            loading="lazy"
+                                            width="400"
+                                            height="267"
                                         />
-                                    @elseif($gallery->photos()->count())
+                                    @elseif ($gallery->firstImage())
                                         <img
-                                            src="{{ optional($gallery->photos()->first())->small_thumbnail_url }}"
+                                            src="{{ $gallery->firstImage()->small_thumbnail_url }}"
                                             alt="{{ $gallery->name }}"
-                                            class="w-full aspect-3/2 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                            class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                            loading="lazy"
+                                            width="400"
+                                            height="267"
                                         />
                                     @else
-                                        <div class="w-full aspect-3/2 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
+                                        <div
+                                            class="flex aspect-3/2 w-full items-center justify-center rounded-t-lg bg-zinc-200 dark:bg-zinc-700"
+                                        >
                                             <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
                                         </div>
                                     @endif
@@ -100,10 +108,10 @@ new class extends Component
 
                                         <div class="flex items-center justify-between">
                                             <flux:text variant="subtle" size="sm">
-                                                {{ $gallery->photos()->count() }} {{ __('photos') }}
+                                                {{ $gallery->photosCount() }} {{ __('photos') }}
                                             </flux:text>
 
-                                            @if($gallery->created_at)
+                                            @if ($gallery->created_at)
                                                 <flux:text variant="subtle" size="sm">
                                                     {{ $gallery->created_at->format('M j, Y') }}
                                                 </flux:text>
@@ -115,17 +123,20 @@ new class extends Component
                         @endforeach
                     </div>
 
-                    <div x-data
+                    <div
+                        x-data
                         x-on:click="
-                            let el = $event.target;
+                            let el = $event.target
                             while (el && el !== $el) {
                                 if (el.hasAttribute('wire:click')) {
-                                    document.getElementById('grid')?.scrollIntoView({ behavior: 'smooth' });
-                                    break;
+                                    document.getElementById('grid')?.scrollIntoView({ behavior: 'smooth' })
+                                    break
                                 }
-                                el = el.parentElement;
-                            }"
-                        class="mt-6">
+                                el = el.parentElement
+                            }
+                        "
+                        class="mt-6"
+                    >
                         <flux:pagination :paginator="$this->galleries" />
                     </div>
                 </div>
@@ -153,16 +164,24 @@ new class extends Component
 
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="$this->team?->subscribed() ? __('Optional') : null" type="date" :clearable="$this->team?->subscribed()" />
+                    <flux:input
+                        wire:model="form.expirationDate"
+                        :label="__('Expiration date')"
+                        :badge="$this->team?->subscribed() ? __('Optional') : null"
+                        type="date"
+                        :clearable="$this->team?->subscribed()"
+                    />
 
-                    @if (!$this->team?->subscribed())
+                    @if (! $this->team?->subscribed())
                         <flux:callout icon="bolt" variant="secondary">
                             <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
                             <flux:callout.text>
                                 {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
                             </flux:callout.text>
                             <x-slot name="actions">
-                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Subscribe') }}</flux:button>
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Subscribe') }}
+                                </flux:button>
                             </x-slot>
                         </flux:callout>
                     @endif

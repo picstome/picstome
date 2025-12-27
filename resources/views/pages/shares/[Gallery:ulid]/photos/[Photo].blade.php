@@ -2,6 +2,9 @@
 
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
+use App\Notifications\GuestPhotoCommented;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -31,15 +34,23 @@ new class extends Component
     #[Url]
     public $navigateFavorites = false;
 
+    #[Url]
+    public $navigateCommented = false;
+
+    public $commentText = '';
+
     public function mount()
     {
-        $this->next = $this->navigateFavorites
-            ? $this->photo->nextFavorite()
-            : $this->photo->next();
-
-        $this->previous = $this->navigateFavorites
-            ? $this->photo->previousFavorite()
-            : $this->photo->previous();
+        if ($this->navigateFavorites) {
+            $this->next = $this->photo->nextFavorite();
+            $this->previous = $this->photo->previousFavorite();
+        } elseif ($this->navigateCommented) {
+            $this->next = $this->photo->nextCommented();
+            $this->previous = $this->photo->previousCommented();
+        } else {
+            $this->next = $this->photo->next();
+            $this->previous = $this->photo->previous();
+        }
     }
 
     public function favorite()
@@ -56,11 +67,54 @@ new class extends Component
     #[Computed]
     public function galleryUrl()
     {
-        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery]))
+        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery, 'slug' => $this->photo->gallery->slug]))
             ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
+            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
             ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : 'photo-')
+            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
             ->append($this->photo->id);
+    }
+
+    public function addComment()
+    {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
+        $this->validate([
+            'commentText' => 'required|string|max:1000',
+        ]);
+
+        abort_if(Auth::check() && ! $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment = $this->photo->comments()->create([
+            'user_id' => Auth::id() ?: null,
+            'comment' => $this->commentText,
+        ]);
+
+        if (Auth::guest()) {
+            $this->photo
+                ->gallery
+                ->team
+                ->owner->notify(new GuestPhotoCommented($this->photo, $comment));
+        }
+
+        $this->commentText = '';
+    }
+
+    public function deleteComment(PhotoComment $comment)
+    {
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
+        abort_unless($comment->photo->is($this->photo), 404);
+
+        abort_unless(Auth::check() && $this->photo->gallery->team->owner->is(Auth::user()), 403);
+
+        $comment->delete();
+    }
+
+    #[Computed]
+    public function comments()
+    {
+        return $this->photo->comments()->latest()->with('user')->get();
     }
 }; ?>
 
@@ -154,18 +208,18 @@ new class extends Component
                             // Tile watermark as background
                             const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                             this.repeatedWatermarkStyle = `
-                left: ${(containerWidth - renderedWidth) / 2}px;
-                top: ${(containerHeight - renderedHeight) / 2}px;
-                width: ${renderedWidth}px;
-                height: ${renderedHeight}px;
-                max-width: ${renderedWidth}px;
-                max-height: ${renderedHeight}px;
-                background-image: url('${url}');
-                background-repeat: repeat;
-                opacity: ${this.watermarkTransparency};
-                pointer-events: none;
-                position: absolute;
-            `
+                                                                                                        left: ${(containerWidth - renderedWidth) / 2}px;
+                                                                                                        top: ${(containerHeight - renderedHeight) / 2}px;
+                                                                                                        width: ${renderedWidth}px;
+                                                                                                        height: ${renderedHeight}px;
+                                                                                                        max-width: ${renderedWidth}px;
+                                                                                                        max-height: ${renderedHeight}px;
+                                                                                                        background-image: url('${url}');
+                                                                                                        background-repeat: repeat;
+                                                                                                        opacity: ${this.watermarkTransparency};
+                                                                                                        pointer-events: none;
+                                                                                                        position: absolute;
+                                                                                                    `
                         }
                         this.watermarkStyle = style
                         this.showWatermark = true
@@ -200,60 +254,109 @@ new class extends Component
                     class="relative flex w-full items-center justify-center"
                     :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'"
                 >
-                    <img
-                        src="{{ $photo->thumbnail_url }}"
-                        srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
-                        sizes="(max-width: 640px) 100vw, 80vw"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="
-                            if ($el.complete) {
+                    @if ($photo->isImage())
+                        <img
+                            src="{{ $photo->thumbnail_url }}"
+                            srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                            sizes="(max-width: 640px) 100vw, 80vw"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="
+                                if ($el.complete) {
+                                    loaded = true
+                                    updateDimensions()
+                                    preloadAdjacentImages()
+                                }
+                            "
+                            x-show="!zoom && !pinchZooming"
+                            x-ref="photoImg"
+                            x-on:load="
                                 loaded = true
                                 updateDimensions()
                                 preloadAdjacentImages()
-                            }
-                        "
-                        x-show="!zoom && !pinchZooming"
-                        x-ref="photoImg"
-                        x-on:load="
-                            loaded = true
-                            updateDimensions()
-                            preloadAdjacentImages()
-                        "
-                        x-on:error="errored = true"
-                        @click="if (!isMobile()) zoom = true"
-                        @contextmenu.prevent
-                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                        class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
-                        alt="{{ $photo->name }}"
-                    />
-                    <img
-                        src="{{ $photo->url }}"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="if ($el.complete) loaded = true"
-                        x-show="!zoom && pinchZooming"
-                        x-on:load="loaded = true"
-                        x-on:error="errored = true"
-                        @click="if (!isMobile()) zoom = true"
-                        :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                        class="mx-auto h-full w-full max-w-full object-contain"
-                        alt="{{ $photo->name }}"
-                        loading="lazy"
-                        x-cloak
-                    />
-                    <img
-                        src="{{ $photo->url }}"
-                        x-data="{ loaded: false, errored: false }"
-                        x-init="if ($el.complete) loaded = true"
-                        x-show="zoom"
-                        x-on:load="loaded = true"
-                        x-on:error="errored = true"
-                        @click="zoom = false"
-                        @contextmenu.prevent
-                        class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
-                        loading="lazy"
-                        alt="{{ $photo->name }}"
-                        x-cloak
-                    />
+                            "
+                            x-on:error="errored = true"
+                            @click="if (!isMobile()) zoom = true"
+                            @contextmenu.prevent
+                            :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                            class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
+                            alt="{{ $photo->name }}"
+                        />
+                        <img
+                            src="{{ $photo->url }}"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="if ($el.complete) loaded = true"
+                            x-show="!zoom && pinchZooming"
+                            x-on:load="loaded = true"
+                            x-on:error="errored = true"
+                            @click="if (!isMobile()) zoom = true"
+                            :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
+                            class="mx-auto h-full w-full max-w-full object-contain"
+                            alt="{{ $photo->name }}"
+                            loading="lazy"
+                            x-cloak
+                        />
+                        <img
+                            src="{{ $photo->url }}"
+                            x-data="{ loaded: false, errored: false }"
+                            x-init="if ($el.complete) loaded = true"
+                            x-show="zoom"
+                            x-on:load="loaded = true"
+                            x-on:error="errored = true"
+                            @click="zoom = false"
+                            @contextmenu.prevent
+                            class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
+                            loading="lazy"
+                            alt="{{ $photo->name }}"
+                            x-cloak
+                        />
+                    @elseif ($photo->isVideo())
+                        <video
+                            x-data="{
+                                loaded: false,
+                                errored: false,
+                                key: 'video-pos-{{ $photo->id }}',
+                                savePosition(e) {
+                                    if (!e.target.seeking && !e.target.paused) {
+                                        localStorage.setItem(this.key, e.target.currentTime);
+                                    }
+                                },
+                                restorePosition(e) {
+                                    const saved = localStorage.getItem(this.key);
+                                    if (saved && !isNaN(saved) && saved > 0 && saved < e.target.duration - 2) {
+                                        e.target.currentTime = parseFloat(saved);
+                                    }
+                                },
+                                clearPosition() {
+                                    localStorage.removeItem(this.key);
+                                }
+                            }"
+                            x-init="
+                                $el.addEventListener('loadedmetadata', restorePosition)
+                                $el.addEventListener('timeupdate', savePosition)
+                                $el.addEventListener('ended', clearPosition)
+                            "
+                            class="mx-auto h-full w-full max-w-full bg-black/60 object-contain dark:bg-white/60"
+                            controls
+                            autoplay
+                            muted
+                            playsinline
+                            x-ref="photoImg"
+                            x-on:loadeddata="
+                                loaded = true
+                                updateDimensions()
+                                preloadAdjacentImages()
+                            "
+                            x-on:error="errored = true"
+                        >
+                            <source
+                                src="{{ $photo->url }}"
+                                type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}"
+                            />
+                            Your browser does not support the video tag.
+                        </video>
+                    @else
+                        <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+                    @endif
                     @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
                         @if ($photo->gallery->team->brand_watermark_position === 'repeated')
                             <div
@@ -282,7 +385,7 @@ new class extends Component
                 >
                     @if ($previous)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="previous"
                             icon="chevron-left"
@@ -298,7 +401,7 @@ new class extends Component
                 >
                     @if ($next)
                         <flux:button
-                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
+                            href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                             wire:navigate.hover
                             x-ref="next"
                             icon="chevron-right"
@@ -324,14 +427,46 @@ new class extends Component
                         </flux:button>
                     </div>
                     <div class="flex gap-3">
+                        @if ($photo->gallery->are_comments_enabled)
+                            <flux:modal.trigger name="add-comment">
+                                <flux:button icon="chat-bubble-left-ellipsis" size="sm">
+                                    @if ($this->comments->isEmpty())
+                                        {{ __('Add comment') }}
+                                    @else
+                                        {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
+                                    @endif
+                                </flux:button>
+                            </flux:modal.trigger>
+                        @endif
+
                         @if ($this->photo->gallery->is_share_downloadable)
-                            <flux:button
-                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                                icon="cloud-arrow-down"
-                                icon:variant="mini"
-                                size="sm"
-                                square
-                            />
+                            @if ($photo->path && $photo->raw_path)
+                                <flux:dropdown>
+                                    <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                                            icon="cloud-arrow-down"
+                                        >
+                                            {{ __('Download JPG') }}
+                                        </flux:menu.item>
+                                        <flux:menu.item
+                                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                                            icon="cloud-arrow-down"
+                                        >
+                                            {{ __('Download Raw') }}
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            @else
+                                <flux:button
+                                    :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                                    icon="cloud-arrow-down"
+                                    icon:variant="mini"
+                                    size="sm"
+                                    square
+                                />
+                            @endif
                         @endif
 
                         @if ($this->photo->gallery->is_share_selectable)
@@ -348,6 +483,69 @@ new class extends Component
                     </div>
                 </div>
             </div>
+            @if ($photo->gallery->are_comments_enabled)
+                <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+                    <div class="space-y-6">
+                        <div>
+                            <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
+                            <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
+                        </div>
+                        @if ($this->comments->isNotEmpty())
+                            <div class="max-h-64 space-y-4 overflow-y-auto">
+                                @foreach ($this->comments as $comment)
+                                    <div
+                                        @class([
+                                        'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
+                                        'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                        ])
+                                    >
+                                        <div
+                                            @class([
+                                            'mb-1 flex items-center gap-2',
+                                            'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
+                                            ])
+                                        >
+                                            @if ($comment->user)
+                                                <flux:text variant="strong" class="text-sm font-semibold">
+                                                    {{ $comment->user->name }}
+                                                </flux:text>
+                                                <flux:text>&middot;</flux:text>
+                                            @endif
+
+                                            <flux:text class="text-xs">
+                                                {{ $comment->created_at->diffForHumans() }}
+                                            </flux:text>
+                                            @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
+                                                <flux:button
+                                                    wire:click="deleteComment({{ $comment->id }})"
+                                                    wire:confirm="{{ __('Are you sure?') }}"
+                                                    icon="x-mark"
+                                                    variant="subtle"
+                                                    size="xs"
+                                                    inset="right"
+                                                    square
+                                                />
+                                            @endif
+                                        </div>
+                                        <flux:text variant="strong">
+                                            {{ $comment->comment }}
+                                        </flux:text>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <form wire:submit="addComment" class="space-y-4 pt-2">
+                            <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+                            <flux:error name="commentText" />
+                            <div class="flex">
+                                <flux:spacer />
+                                <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                            </div>
+                        </form>
+                    </div>
+                </flux:modal>
+            @endif
 
             @unlesssubscribed($photo->gallery->team)
                 <div class="py-3">

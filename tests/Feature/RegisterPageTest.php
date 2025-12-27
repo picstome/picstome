@@ -116,3 +116,32 @@ it('generates unique handles when registering users with similar names', functio
     expect($user1->currentTeam->handle)->toBe('testuser');
     expect($user2->currentTeam->handle)->toBe('testuser1');
 });
+
+it('stores referral code when provided during registration', function () {
+    Volt::test('pages.register')
+        ->set('name', 'Referral User')
+        ->set('email', 'referral@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    $user = User::where('email', 'referral@example.com')->first();
+
+    expect($user->referral_code)->toBeNull();
+});
+
+it('stores referral code from query parameter', function () {
+    Volt::test('pages.register')
+        ->set('referral_code', 'CHEMA')
+        ->set('name', 'Referral User 2')
+        ->set('email', 'referral2@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    $user = User::where('email', 'referral2@example.com')->first();
+
+    expect($user->referral_code)->toBe('CHEMA');
+});

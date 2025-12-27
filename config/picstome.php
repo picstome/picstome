@@ -46,4 +46,9 @@ return [
      * Switch this to change the CDN provider for image delivery and resizing.
      */
     'photo_cdn_domain' => env('PICSTOME_PHOTO_CDN_DOMAIN', 'wsrv.nl'),
+
+    /**
+     * Timeout in seconds for ExifTool operations when extracting JPG from RAW files.
+     */
+    'exiftool_timeout' => env('PICSTOME_EXIFTOOL_TIMEOUT', 30),
 ];

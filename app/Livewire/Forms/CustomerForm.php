@@ -80,7 +80,7 @@ class CustomerForm extends Form
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'birthdate' => $this->birthdate,
+            'birthdate' => empty($this->birthdate) ? null : $this->birthdate,
             'notes' => $this->notes,
         ]);
     }

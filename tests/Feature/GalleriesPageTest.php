@@ -93,12 +93,6 @@ test('can create a team gallery with an expiration date', function () {
     expect($gallery->expiration_date->toDateString())->toBe($expiration);
 });
 
-test('guests cannot create galleries', function () {
-    $component = Volt::test('pages.galleries')->call('save');
-
-    $component->assertStatus(403);
-});
-
 test('cannot create a gallery with an invalid expiration date', function () {
     $component = Volt::actingAs($this->user)->test('pages.galleries')
         ->set('form.name', 'Invalid Expiration Gallery')

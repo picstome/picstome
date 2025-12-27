@@ -20,7 +20,7 @@ beforeEach(function () {
 test('shared gallery can be viewed', function () {
     $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
 
-    $response = get('/shares/0123ABC');
+    $response = get('/shares/0123ABC/'.$gallery->slug);
 
     $response->assertStatus(200);
 });
@@ -31,8 +31,8 @@ test('visitors can view a shared gallery', function () {
     $photoB = Photo::factory()->for(Gallery::factory())->create();
     $photoC = Photo::factory()->for($gallery)->create();
 
-    $response = get('/shares/0123ABC');
-    $component = Volt::test('pages.shares.show', ['gallery' => $gallery]);
+    $response = get('/shares/0123ABC/'.$gallery->slug);
+    $component = Volt::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $response->assertStatus(200);
     $response->assertViewHas('gallery');
@@ -47,7 +47,7 @@ test('visitors can view a shared gallery', function () {
 test('unshared gallery can not be viewed', function () {
     $gallery = Gallery::factory()->unshared()->create(['ulid' => '0123ABC']);
 
-    $response = get('/shares/0123ABC');
+    $response = get('/shares/0123ABC/'.$gallery->slug);
 
     $response->assertStatus(404);
 });
@@ -55,7 +55,7 @@ test('unshared gallery can not be viewed', function () {
 test('unauthenticated visitors to a password-protected gallery are redirected to the unlock page', function () {
     $gallery = Gallery::factory()->shared()->protected()->create(['ulid' => '0123ABC']);
 
-    $response = get('/shares/0123ABC');
+    $response = get('/shares/0123ABC/'.$gallery->slug);
 
     $response->assertRedirect('/shares/0123ABC/unlock');
 });
@@ -64,7 +64,7 @@ test('visitors with unlocked gallery can view the password-protected gallery', f
     $gallery = Gallery::factory()->shared()->protected()->create(['ulid' => '0123ABC']);
     session()->put('unlocked_gallery_ulid', '0123ABC');
 
-    $response = get('/shares/0123ABC');
+    $response = get('/shares/0123ABC/'.$gallery->slug);
 
     $response->assertStatus(200);
 });
@@ -73,31 +73,31 @@ test('visitors can view shared gallery favorites', function () {
     $gallery = Gallery::factory()->shared()->create();
     $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-    $component = Volt::test('pages.shares.show', ['gallery' => $gallery]);
+    $component = Volt::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     expect($component->favorites->contains($favorite))->toBeTrue();
 });
 
 test('shared gallery displays description when present', function () {
     $gallery = Gallery::factory()->shared()->create([
-        'share_description' => 'This is a beautiful wedding gallery showcasing our special day'
+        'share_description' => 'This is a beautiful wedding gallery showcasing our special day',
     ]);
 
-    $response = get('/shares/' . $gallery->ulid);
+    $response = get('/shares/'.$gallery->ulid.'/'.$gallery->slug);
 
     $response->assertStatus(200)
-             ->assertSee('This is a beautiful wedding gallery showcasing our special day');
+        ->assertSee('This is a beautiful wedding gallery showcasing our special day');
 });
 
 test('shared gallery does not display description when empty', function () {
     $gallery = Gallery::factory()->shared()->create([
-        'share_description' => null
+        'share_description' => null,
     ]);
 
-    $response = get('/shares/' . $gallery->ulid);
+    $response = get('/shares/'.$gallery->ulid.'/'.$gallery->slug);
 
     $response->assertStatus(200)
-             ->assertDontSee('<x-subheading');
+        ->assertDontSee('<x-subheading');
 });
 
 test('visitors can favorite a photo', function () {
@@ -142,6 +142,7 @@ test('team owner is notified when selection limit is reached', function () {
 
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($teamOwner) {
         $mailData = $notification->toMail($teamOwner);
+
         return str_contains($mailData->subject, 'Selection Limit Reached') &&
                str_contains($mailData->render(), 'customer may have changed pictures');
     });

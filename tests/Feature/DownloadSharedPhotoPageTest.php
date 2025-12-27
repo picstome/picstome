@@ -72,3 +72,26 @@ test('visitors with unlocked gallery can download the password-protected gallery
 
     $response->assertStatus(200);
 });
+
+test('can download a shared photo with raw_path when available', function () {
+    Storage::fake('s3');
+
+    Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC']))->create([
+        'name' => 'photo1.cr2',
+        'disk' => 's3',
+        'path' => UploadedFile::fake()
+            ->image('photo1.jpg')
+            ->store('photo1.jpg', 's3'),
+        'raw_path' => UploadedFile::fake()
+            ->create('photo1.cr2')
+            ->store('photo1.cr2', 's3'),
+    ]);
+
+    $response = get('/shares/0123ABC/photos/1/download');
+
+    $response->assertDownload('photo1.jpg');
+
+    $response = get('/shares/0123ABC/photos/1/download?type=raw');
+
+    $response->assertDownload('photo1.cr2');
+});

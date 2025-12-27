@@ -9,6 +9,8 @@ use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
@@ -34,7 +36,7 @@ new class extends Component
 
     public Collection $favorites;
 
-    public Collection $allPhotos;
+    public Collection $commentedPhotos;
 
     public array $existingPhotoNames = [];
 
@@ -43,8 +45,6 @@ new class extends Component
     #[Url]
     public $activeTab = 'all';
 
-    #[Validate('required')]
-    #[Validate(['photos.*' => 'image|max:51200'])]
     public $photos = [];
 
     public function mount(Gallery $gallery)
@@ -52,8 +52,7 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->getFavorites();
-        $this->getAllPhotos();
-        $this->existingPhotoNames = $gallery->photos()->pluck('name')->toArray();
+        $this->getCommentedPhotos();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
 
@@ -65,8 +64,6 @@ new class extends Component
 
         $this->validate([
             "photos.{$index}" => [
-                'image',
-                'max:51200', // max. 50MB
                 function ($attribute, $value, $fail) use ($index) {
                     $uploadedPhoto = $this->photos[$index];
 
@@ -77,19 +74,6 @@ new class extends Component
                     if (! $this->hasSufficientStorage($uploadedPhoto)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
-
-                    if ($this->gallery->keep_original_size) {
-                        [$width, $height] = getimagesize($uploadedPhoto->getRealPath());
-
-                        $maxPixels = config('picstome.max_photo_pixels');
-
-                        if ($width * $height >= $maxPixels) {
-                            $fail(__('Image :name exceeds :max pixels.', [
-                                'name' => $uploadedPhoto->getClientOriginalName(),
-                                'max' => number_format($maxPixels / 1000000, 0).'M',
-                            ]));
-                        }
-                    }
                 },
             ],
         ]);
@@ -97,9 +81,6 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
 
         $this->addPhotoToGallery($uploadedPhoto);
-
-        $this->getAllPhotos();
-        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
     protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
@@ -118,20 +99,21 @@ new class extends Component
 
     public function share()
     {
-        tap($this->shareForm->gallery->is_shared, function ($previouslyShared) {
-            $this->shareForm->gallery->is_shared = true;
+        $this->shareForm->gallery->is_shared = true;
 
-            $this->shareForm->update();
+        if (! $this->team->subscribed()) {
+            $this->shareForm->passwordProtected = false;
+            $this->shareForm->descriptionEnabled = false;
+            $this->shareForm->commentsEnabled = false;
+        }
 
-            Flux::modal('share')->close();
+        $this->shareForm->update();
 
-            if (! $previouslyShared) {
-                Flux::modal('share-link')->show();
-            }
-        });
+        Flux::modal('share')->close();
+
+        Flux::modal('share-link')->show();
 
         $this->gallery = $this->gallery->fresh();
-        $this->getAllPhotos();
 
         $this->dispatch('gallery-sharing-changed');
     }
@@ -157,9 +139,6 @@ new class extends Component
         $photo->deleteFromDisk()->delete();
 
         $this->getFavorites();
-        $this->getAllPhotos();
-
-        $this->existingPhotoNames = $this->gallery->photos()->pluck('name')->toArray();
     }
 
     public function update()
@@ -167,7 +146,6 @@ new class extends Component
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
-        $this->getAllPhotos();
 
         $this->modal('edit')->close();
     }
@@ -182,16 +160,47 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $favorites = $this->gallery->photos()->favorited()->with('gallery')->get();
+        $cacheKey = "gallery:{$this->gallery->id}:favorites";
 
-        $this->favorites = $favorites->naturalSortBy('name');
+        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->favorited()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
     }
 
-    public function getAllPhotos()
+    public function getCommentedPhotos()
     {
-        $photos = $this->gallery->photos()->with('gallery')->get();
+        $cacheKey = "gallery:{$this->gallery->id}:commented";
 
-        $this->allPhotos = $photos->naturalSortBy('name');
+        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->whereHas('comments')
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
+    }
+
+    #[Computed]
+    public function allPhotos()
+    {
+        $cacheKey = "gallery:{$this->gallery->id}:photos";
+
+        return Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
+    }
+
+    #[Computed]
+    public function team()
+    {
+        return Auth::user()?->currentTeam;
     }
 }; ?>
 
@@ -212,13 +221,16 @@ new class extends Component
                             @if ($gallery->is_shared)
                                 <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
                             @endif
+
                             @if ($gallery->is_public)
                                 <div class="flex items-center gap-1">
                                     <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
                                     <flux:tooltip toggleable>
                                         <flux:button icon="information-circle" size="xs" variant="subtle" />
                                         <flux:tooltip.content class="max-w-[20rem]">
-                                            <p>{{ __('This gallery is public and visible in your portfolio section.') }}</p>
+                                            <p>
+                                                {{ __('This gallery is public and visible in your portfolio section.') }}
+                                            </p>
                                         </flux:tooltip.content>
                                     </flux:tooltip>
                                 </div>
@@ -226,14 +238,16 @@ new class extends Component
                         </div>
                     </div>
                     <x-subheading class="mt-2">
-                        {{ __('View, upload, and manage your gallery photos.') }}
+                        {{ __('View, upload, and manage your gallery media.') }}
                         @if ($gallery->expiration_date)
-                            &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
+                                &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                         @endif
                     </x-subheading>
-                    @if ($allPhotos->isNotEmpty())
+                    @if ($this->allPhotos?->isNotEmpty())
                         <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
-                            {{ $allPhotos->count() }} {{ $allPhotos->count() === 1 ? __('photo') : __('photos') }} • {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
+                            {{ $this->allPhotos->count() }}
+                            {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                            {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                         </div>
                     @endif
                 </div>
@@ -249,7 +263,7 @@ new class extends Component
                                 {{ __('Download') }}
                             </flux:menu.item>
 
-                            @if($favorites->isNotEmpty())
+                            @if ($favorites->isNotEmpty())
                                 <flux:modal.trigger name="favorite-list">
                                     <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
                                 </flux:modal.trigger>
@@ -259,10 +273,7 @@ new class extends Component
                                 <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
                             </flux:modal.trigger>
 
-                            <flux:menu.item
-                                wire:click="togglePublic"
-                                :icon="$gallery->is_public ? 'eye-slash' : 'eye'"
-                            >
+                            <flux:menu.item wire:click="togglePublic" :icon="$gallery->is_public ? 'eye-slash' : 'eye'">
                                 {{ $gallery->is_public ? __('Make private') : __('Make public') }}
                             </flux:menu.item>
 
@@ -302,12 +313,12 @@ new class extends Component
                     @endif
 
                     <flux:modal.trigger name="add-photos">
-                        <flux:button variant="primary">{{ __('Add photos') }}</flux:button>
+                        <flux:button variant="primary">{{ __('Add media') }}</flux:button>
                     </flux:modal.trigger>
                 </div>
             </div>
 
-            @if ($allPhotos->isNotEmpty())
+            @if ($this->allPhotos?->isNotEmpty())
                 <div class="mt-8 max-sm:-mx-5">
                     <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
                         <flux:navbar.item
@@ -322,29 +333,54 @@ new class extends Component
                         >
                             {{ __('Favorited') }}
                         </flux:navbar.item>
-                        @if($favorites->isNotEmpty())
+                        @if ($favorites->isNotEmpty())
                             <flux:modal.trigger name="favorite-list">
-                                <flux:badge size="sm" as="button">{{ __('As list') }}</flux:badge>
+                                <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
                             </flux:modal.trigger>
                         @endif
+
+                        <flux:navbar.item
+                            @click="$wire.activeTab = 'commented'"
+                            x-bind:data-current="$wire.activeTab === 'commented'"
+                        >
+                            {{ __('Commented') }}
+                        </flux:navbar.item>
                     </flux:navbar>
 
                     <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
-                            @foreach ($allPhotos as $photo)
-                                <livewire:photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                            @foreach ($this->allPhotos as $photo)
+                                <livewire:photo-item
+                                    :$photo
+                                    :key="'photo-'.$photo->id"
+                                    :html-id="'photo-'.$photo->id"
+                                />
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                            @foreach ($commentedPhotos as $photo)
+                                <livewire:photo-item
+                                    :$photo
+                                    :asCommented="true"
+                                    :key="'commented-'.$photo->id"
+                                    :html-id="'commented-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
 
                     <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                        <div
-                            class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                        >
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                             @foreach ($favorites as $photo)
-                                <livewire:photo-item :$photo :asFavorite="true" :key="'favorite-'.$photo->id" :html-id="'favorite-'.$photo->id" />
+                                <livewire:photo-item
+                                    :$photo
+                                    :asFavorite="true"
+                                    :key="'favorite-'.$photo->id"
+                                    :html-id="'favorite-'.$photo->id"
+                                />
                             @endforeach
                         </div>
                     </div>
@@ -358,7 +394,7 @@ new class extends Component
                     </flux:subheading>
                     <flux:modal.trigger name="add-photos">
                         <flux:button variant="primary">
-                            {{ __('Add photos') }}
+                            {{ __('Add media') }}
                         </flux:button>
                     </flux:modal.trigger>
                 </div>
@@ -367,8 +403,10 @@ new class extends Component
             <flux:modal name="add-photos" class="w-full sm:max-w-lg">
                 <form class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Add photos') }}</flux:heading>
-                        <flux:subheading>{{ __('Select photos for your gallery.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Add media') }}</flux:heading>
+                        <flux:subheading>
+                            {{ __('Upload images or videos to your gallery.') }}
+                        </flux:subheading>
                     </div>
 
                     @if (auth()->user()?->currentTeam->storage_used_percent > 95)
@@ -378,7 +416,9 @@ new class extends Component
                                 {{ __('You have less than 5% storage remaining. ') }}
                             </flux:callout.text>
                             <x-slot name="actions">
-                                <flux:button :href="route('subscribe')" variant="primary">{{ __('Upgrade') }}</flux:button>
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Upgrade') }}
+                                </flux:button>
                             </x-slot>
                         </flux:callout>
                     @endif
@@ -387,40 +427,50 @@ new class extends Component
                         <flux:callout icon="information-circle" variant="secondary" class="mb-4">
                             <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
                             <flux:callout.text>
-                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels')/1000000, 0) . 'M']) }}
+                                {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels') / 1000000, 0).'M']) }}
                             </flux:callout.text>
                         </flux:callout>
                     @endif
 
-                    <div x-data="multiFileUploader"
+                    <div
+                        x-data="multiFileUploader"
                         x-on:dragover.prevent="dragActive = true"
                         x-on:dragleave.prevent="dragActive = false"
                         x-on:drop.prevent="handleDrop($event)"
-                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}">
+                        :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}"
+                    >
                         <!-- File Input -->
                         <flux:input
                             @change="handleFileSelect($event)"
                             type="file"
-                            accept=".jpg, .jpeg, .png, .tiff"
+                            accept=".jpg, .jpeg, .png, .tiff, .mp4, .webm, .ogg, .cr2, .cr3, .nef, .arw, .dng, .orf, .rw2, .pef, .srw, .mos, .mrw, .3fr"
                             multiple
                         />
-                        <flux:description class="max-sm:hidden mt-2">
-                            {{ __('Drag and drop files here, or click on choose files.') }}
+                        <flux:description class="mt-2 max-sm:hidden">
+                            {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
                         </flux:description>
 
                         <flux:error name="photos" />
 
                         <div
                             x-show="
-                                files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
-                                    .length > 0
+                                files.filter(
+                                    (file) =>
+                                        file.status === 'pending' ||
+                                        file.status === 'queued' ||
+                                        file.status === 'uploading',
+                                ).length > 0
                             "
-                            class="text-sm font-medium text-zinc-800 dark:text-white mt-4"
+                            class="mt-4 text-sm font-medium text-zinc-800 dark:text-white"
                         >
                             <span
                                 x-text="
-                                    files.filter((file) => file.status === 'pending' || file.status === 'queued' || file.status === 'uploading')
-                                        .length
+                                    files.filter(
+                                        (file) =>
+                                            file.status === 'pending' ||
+                                            file.status === 'queued' ||
+                                            file.status === 'uploading',
+                                    ).length
                                 "
                             ></span>
                             {{ __('remaining files.') }}
@@ -438,11 +488,14 @@ new class extends Component
                                             x-text="fileObj.file.name"
                                             class="flex-1 text-sm font-medium text-zinc-800 dark:text-white"
                                         ></div>
-                                        <div class="text-sm text-zinc-500 dark:text-white/70" x-show="fileObj.status !== 'duplicated'">
+                                        <div
+                                            class="text-sm text-zinc-500 dark:text-white/70"
+                                            x-show="fileObj.status !== 'duplicated'"
+                                        >
                                             <span x-text="fileObj.progress + '%'"></span>
                                         </div>
                                         <flux:badge
-                                            x-show="!['failed', 'duplicated'].includes(fileObj.status)"
+                                            x-show="! ['failed', 'duplicated'].includes(fileObj.status)"
                                             x-text="fileObj.status"
                                             size="sm"
                                             color="zinc"
@@ -482,9 +535,17 @@ new class extends Component
                         <flux:subheading>{{ __('Customize your shared gallery.') }}</flux:subheading>
                     </div>
 
-                    <flux:switch wire:model="shareForm.watermarked" :label="__('Watermark photos')" @click="$wire.shareForm.downloadable = false" />
+                    <flux:switch
+                        wire:model="shareForm.watermarked"
+                        :label="__('Watermark photos')"
+                        @click="$wire.shareForm.downloadable = false"
+                    />
 
-                    <flux:switch wire:model="shareForm.downloadable" :label="__('Visitors can download photos')" x-bind:disabled="$wire.shareForm.watermarked" />
+                    <flux:switch
+                        wire:model="shareForm.downloadable"
+                        :label="__('Visitors can download photos')"
+                        x-bind:disabled="$wire.shareForm.watermarked"
+                    />
 
                     <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 
@@ -500,17 +561,55 @@ new class extends Component
                         />
                     </div>
 
-                     <flux:switch wire:model="shareForm.passwordProtected" :label="__('Protect with a password')" />
+                    @if (! $this->team->subscribed())
+                        <flux:callout icon="bolt" variant="secondary" class="mb-4">
+                            <flux:callout.heading>{{ __('Unlock more sharing features') }}</flux:callout.heading>
+                            <flux:callout.text>
+                                {{ __('Subscribe to enable password protection, gallery descriptions, and photo comments for shared galleries.') }}
+                            </flux:callout.text>
+                            <x-slot name="actions">
+                                <flux:button :href="route('subscribe')" variant="primary">
+                                    {{ __('Subscribe') }}
+                                </flux:button>
+                            </x-slot>
+                        </flux:callout>
+                    @endif
 
-                     <div x-show="$wire.shareForm.passwordProtected">
-                         <flux:input wire:model="shareForm.password" type="password" :label="__('Password')" />
-                     </div>
+                    <flux:switch
+                        wire:model="shareForm.passwordProtected"
+                        :label="__('Protect with a password')"
+                        :disabled="!$this->team->subscribed()"
+                    />
 
-                     <flux:switch wire:model="shareForm.descriptionEnabled" :label="__('Add description')" />
+                    <div x-show="$wire.shareForm.passwordProtected">
+                        <flux:input
+                            wire:model="shareForm.password"
+                            type="password"
+                            :label="__('Password')"
+                            :disabled="!$this->team->subscribed()"
+                        />
+                    </div>
 
-                     <div x-show="$wire.shareForm.descriptionEnabled">
-                         <flux:textarea wire:model="shareForm.description" :label="__('Description')" :placeholder="__('Add a description for your shared gallery...')" rows="3" />
-                     </div>
+                    <flux:switch
+                        wire:model="shareForm.descriptionEnabled"
+                        :label="__('Add description')"
+                        :disabled="!$this->team->subscribed()"
+                    />
+
+                    <flux:switch
+                        wire:model="shareForm.commentsEnabled"
+                        :label="__('Enable photo comments')"
+                        :disabled="!$this->team->subscribed()"
+                    />
+
+                    <div x-show="$wire.shareForm.descriptionEnabled">
+                        <flux:textarea
+                            wire:model="shareForm.description"
+                            :label="__('Description')"
+                            :placeholder="__('Add a description for your shared gallery...')"
+                            rows="3"
+                        />
+                    </div>
 
                     <div class="flex">
                         <flux:spacer />
@@ -526,7 +625,7 @@ new class extends Component
 
                     <flux:input
                         icon="link"
-                        :value="route('shares.show', ['gallery' => $gallery])"
+                        :value="route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug])"
                         :label="__('Share URL')"
                         readonly
                         copyable
@@ -544,7 +643,11 @@ new class extends Component
                     <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
                     @if ($photoshoots)
-                        <flux:select wire:model="form.photoshoot_id" :label="__('Photoshoot')" :placeholder="__('Choose photoshoot...')">
+                        <flux:select
+                            wire:model="form.photoshoot_id"
+                            :label="__('Photoshoot')"
+                            :placeholder="__('Choose photoshoot...')"
+                        >
                             <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
                             <hr />
                             @foreach ($photoshoots as $photoshoot)
@@ -555,7 +658,14 @@ new class extends Component
                         </flux:select>
                     @endif
 
-                    <flux:input wire:model="form.expirationDate" :label="__('Expiration date')" :badge="__('Optional')" type="date" clearable :disabled="$gallery->is_public" />
+                    <flux:input
+                        wire:model="form.expirationDate"
+                        :label="__('Expiration date')"
+                        :badge="__('Optional')"
+                        type="date"
+                        clearable
+                        :disabled="$gallery->is_public"
+                    />
 
                     @if ($gallery->is_public)
                         <flux:callout variant="secondary" icon="information-circle" class="mt-2">
@@ -573,22 +683,102 @@ new class extends Component
                 </form>
             </flux:modal>
 
-            <flux:modal name="favorite-list" class="w-full sm:max-w-lg">
+            <flux:modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Favorite list') }}</flux:heading>
-                        <flux:subheading>{{ __('List of favorite photo names.') }}</flux:subheading>
+                        <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
+                        <flux:subheading>
+                            {{ __(':count medias in your favorite list.', ['count' => $favorites->count()]) }}
+                        </flux:subheading>
                     </div>
 
-                    <flux:input value="{{ implode(', ', $favorites->pluck('name')->toArray()) }}" readonly copyable />
+                    <flux:tab.group x-data="{ tab: 'lightroom' }">
+                        <flux:tabs size="sm" class="w-full" scrollable scrollable:fade>
+                            <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
+                            <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
+                            <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
+                            <flux:tab name="list">{{ __('List') }}</flux:tab>
+                        </flux:tabs>
 
-                    @if ($favorites->isNotEmpty())
-                        <ul class="ml-6 list-disc">
-                            @foreach ($favorites as $favorite)
-                                <li><flux:text>{{ $favorite->name }}</flux:text></li>
-                            @endforeach
-                        </ul>
-                    @endif
+                        <flux:tab.panel name="lightroom" class="pt-4!">
+                            <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(', ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('lightroom-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="captureone" class="pt-4!">
+                            <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(' ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('captureone-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="finder" class="pt-4!">
+                            <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
+                                {{
+                                    implode(' OR ', $favorites->pluck('name')->map(function($name) {
+                                    return pathinfo($name, PATHINFO_FILENAME);
+                                    })->toArray())
+                                }}
+                                
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('finder-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+
+                        <flux:tab.panel name="list" class="pt-4!">
+                            <flux:textarea x-ref="list-textarea" readonly rows="auto" class="max-h-96 min-h-26 text-sm">
+                                {{ implode(PHP_EOL, $favorites->pluck('name')->toArray()) }}
+                            </flux:textarea>
+
+                            <flux:text class="mt-2">
+                                {{ __('Paste this filter text to the tool of your choice.') }}
+                            </flux:text>
+
+                            <div class="mt-6 flex justify-end">
+                                <flux:button variant="primary" size="sm" x-on:click="copy('list-textarea')">
+                                    {{ __('Copy') }}
+                                </flux:button>
+                            </div>
+                        </flux:tab.panel>
+                    </flux:tab.group>
                 </div>
             </flux:modal>
         </div>
@@ -606,6 +796,27 @@ new class extends Component
                         }, 500);
                     }
                 });
+
+                Alpine.data('copyToClipboard', () => ({
+                    copy(refName) {
+                        const textarea = this.$refs[refName];
+                        const button = this.$el;
+                        const originalText = button.textContent;
+
+                        if (textarea) {
+                            textarea.select();
+                            document.execCommand('copy');
+
+                            // Change button text temporarily
+                            button.textContent = '{{ __("Copied!") }}';
+
+                            // Revert after 2 seconds
+                            setTimeout(() => {
+                                button.textContent = originalText;
+                            }, 2000);
+                        }
+                    },
+                }));
 
                 Alpine.data('multiFileUploader', () => ({
                     files: [],
@@ -628,13 +839,7 @@ new class extends Component
 
                     handleFileSelect(event) {
                         const selectedFiles = Array.from(event.target.files);
-                        selectedFiles.forEach((file) => {
-                            this.files.push({
-                                file: file,
-                                progress: 0,
-                                status: 'pending',
-                            });
-                        });
+                        this.processFiles(selectedFiles);
                         this.processUploadQueue();
                     },
 
@@ -642,13 +847,7 @@ new class extends Component
                         this.dragActive = false;
                         const dt = event.dataTransfer;
                         if (dt && dt.files && dt.files.length > 0) {
-                            Array.from(dt.files).forEach((file) => {
-                                this.files.push({
-                                    file: file,
-                                    progress: 0,
-                                    status: 'pending',
-                                });
-                            });
+                            this.processFiles(Array.from(dt.files));
                             this.processUploadQueue();
                         }
                     },
@@ -698,18 +897,6 @@ new class extends Component
                     },
 
                     uploadFile(fileObj, index) {
-                        // Check for duplicate photo name
-                        if ($wire.existingPhotoNames.includes(fileObj.file.name)) {
-                            fileObj.status = 'duplicated';
-                            this.activeUploads--;
-
-                            setTimeout(() => {
-                                this.processUploadQueue();
-                            }, 10000); // Wait 10 seconds before continuing
-
-                            return;
-                        }
-
                         this.activeUploads++;
                         this.uploadTimestamps.push(Date.now());
                         fileObj.status = 'uploading';
@@ -721,15 +908,25 @@ new class extends Component
                             fileObj.file,
                             () => {
                                 // Success callback
-                                $wire.save(index);
-                                fileObj.status = 'completed';
-                                fileObj.progress = 100;
-                                this.activeUploads--;
-                                this.processUploadQueue();
+                                $wire.save(index).then((result) => {
+                                    if (result && result.errors && result.errors['photos.' + index]) {
+                                        // Validation error (e.g., duplicate photo)
+                                        fileObj.status = 'duplicated';
+                                        this.activeUploads--;
+                                        setTimeout(() => {
+                                            this.processUploadQueue();
+                                        }, 10000); // Wait 10 seconds before continuing
+                                    } else {
+                                        fileObj.status = 'completed';
+                                        fileObj.progress = 100;
+                                        this.activeUploads--;
+                                        this.processUploadQueue();
 
-                                if (this.checkAllUploadsComplete()) {
-                                    $flux.modals('add-photos').close();
-                                }
+                                        if (this.checkAllUploadsComplete()) {
+                                            $flux.modals('add-photos').close();
+                                        }
+                                    }
+                                });
                             },
                             (error) => {
                                 // Error callback
@@ -743,6 +940,82 @@ new class extends Component
                                 fileObj.progress = Math.round((event.loaded / event.total) * 100);
                             },
                         );
+                    },
+
+                    processFiles(files) {
+                        const rawExtensions = [
+                            'cr2',
+                            'cr3',
+                            'nef',
+                            'arw',
+                            'dng',
+                            'orf',
+                            'rw2',
+                            'pef',
+                            'srw',
+                            'mos',
+                            'mrw',
+                            '3fr',
+                        ];
+                        const jpgExtensions = ['jpg', 'jpeg'];
+                        const keepOriginalSize = {{ Js::from($gallery->keep_original_size) }};
+
+                        // Group files by base name (without extension)
+                        const fileGroups = {};
+                        files.forEach((file) => {
+                            const name = file.name;
+                            const lastDot = name.lastIndexOf('.');
+                            const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
+                            const extension = lastDot !== -1 ? name.substring(lastDot + 1).toLowerCase() : '';
+
+                            if (!fileGroups[baseName]) {
+                                fileGroups[baseName] = [];
+                            }
+                            fileGroups[baseName].push({ file, extension });
+                        });
+
+                        // Process each group
+                        Object.values(fileGroups).forEach((group) => {
+                            const hasJpg = group.some((item) => jpgExtensions.includes(item.extension));
+                            const hasRaw = group.some((item) => rawExtensions.includes(item.extension));
+
+                            // If no conflict, add all files
+                            if (!hasJpg || !hasRaw) {
+                                group.forEach((item) => {
+                                    this.files.push({
+                                        file: item.file,
+                                        progress: 0,
+                                        status: 'pending',
+                                    });
+                                });
+                                return;
+                            }
+
+                            // Both formats present, decide which to keep
+                            if (keepOriginalSize) {
+                                // Skip JPG files, keep RAW files
+                                group
+                                    .filter((item) => rawExtensions.includes(item.extension))
+                                    .forEach((item) => {
+                                        this.files.push({
+                                            file: item.file,
+                                            progress: 0,
+                                            status: 'pending',
+                                        });
+                                    });
+                            } else {
+                                // Skip RAW files, keep JPG files
+                                group
+                                    .filter((item) => jpgExtensions.includes(item.extension))
+                                    .forEach((item) => {
+                                        this.files.push({
+                                            file: item.file,
+                                            progress: 0,
+                                            status: 'pending',
+                                        });
+                                    });
+                            }
+                        });
                     },
 
                     retryUpload(index) {

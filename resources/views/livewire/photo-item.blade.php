@@ -15,6 +15,8 @@ new class extends Component
 
     public $asFavorite = false;
 
+    public $asCommented = false;
+
     public function mount()
     {
         $this->gallery = $this->photo->gallery;
@@ -55,33 +57,57 @@ new class extends Component
     }
 }; ?>
 
-<div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10"
-    x-data="{ showActions: false, moreActionsOpen: false }"
-    @mouseenter="showActions = true" @mouseleave="if (!moreActionsOpen) showActions = false"
-    @if (!$photo->small_thumbnail_url) wire:poll.visible.5s @endif
+<div
+    class="group relative flex aspect-square overflow-hidden bg-zinc-100 dark:bg-white/10"
+    x-data="{
+        showActions: false,
+        moreActionsOpen: false,
+        downloadOptionsOpen: false,
+    }"
+    @mouseenter="showActions = true"
+    @mouseleave="if (!moreActionsOpen && !downloadOptionsOpen) showActions = false"
+    @if ($photo->status === 'pending') wire:poll.visible.5s @endif
 >
     <a
         id="{{ $htmlId }}"
-        href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asFavorite ? '?navigateFavorites=true' : null }}"
+        href="/galleries/{{ $gallery->id }}/photos/{{ $photo->id }}{{ $asCommented ? '?navigateCommented=true' : ($asFavorite ? '?navigateFavorites=true' : null) }}"
         wire:navigate
         class="mx-auto flex w-full"
     >
-        @if ($photo->small_thumbnail_url)
-            <img
-                x-data="{ loaded: false, errored: false }"
-                x-init="if ($el.complete) loaded = true"
-                src="{{ $photo->small_thumbnail_url }}"
-                alt=""
-                x-on:load="loaded = true"
-                x-on:error="errored = true"
-                class="h-full w-full bg-zinc-300 dark:bg-white/10 object-cover"
-                :class="loaded || errored ? '' : 'animate-pulse '"
-                loading="lazy" />
+        @if ($photo->isImage())
+            @if ($photo->small_thumbnail_url)
+                <img
+                    x-data="{ loaded: false, errored: false }"
+                    x-init="if ($el.complete) loaded = true"
+                    src="{{ $photo->small_thumbnail_url }}"
+                    alt=""
+                    x-on:load="loaded = true"
+                    x-on:error="errored = true"
+                    class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
+                    :class="loaded || errored ? '' : 'animate-pulse '"
+                    loading="lazy"
+                />
+            @else
+                <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+            @endif
+        @elseif ($photo->isVideo())
+            <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted>
+                <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
+                Your browser does not support the video tag.
+            </video>
         @else
-            <div class="w-full h-full bg-zinc-300 dark:bg-white/10 animate-pulse"></div>
+            <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
         @endif
     </a>
-    <div class="absolute right-1.5 bottom-1.5 gap-2 flex flex-row-reverse" :class="showActions ? 'flex' : 'hidden'">
+    @if (($photo->comments_count ?? 0) > 0)
+        <div class="absolute top-1.5 left-1.5 z-10 flex" :class="showActions ? 'flex' : 'hidden'">
+            <flux:badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
+                {{ $photo->comments_count }}
+            </flux:badge>
+        </div>
+    @endif
+
+    <div class="absolute right-1.5 bottom-1.5 flex flex-row-reverse gap-2" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
             @if ($photo->isFavorited())
                 <flux:icon.heart class="size-5 text-red-500" variant="solid" />
@@ -89,27 +115,41 @@ new class extends Component
                 <flux:icon.heart class="size-5" />
             @endif
         </flux:button>
-        <flux:button
-            :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-            icon="arrow-down-tray"
-            square
-            size="sm"
-        />
+        @if ($photo->path && $photo->raw_path)
+            <flux:dropdown x-model="downloadOptionsOpen">
+                <flux:button icon="arrow-down-tray" square size="sm" />
+                <flux:menu>
+                    <flux:menu.item
+                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                        icon="arrow-down-tray"
+                    >
+                        {{ __('Download JPG') }}
+                    </flux:menu.item>
+                    <flux:menu.item
+                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
+                        icon="arrow-down-tray"
+                    >
+                        {{ __('Download Raw') }}
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        @else
+            <flux:button
+                :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
+                icon="arrow-down-tray"
+                square
+                size="sm"
+            />
+        @endif
         <flux:dropdown x-model="moreActionsOpen">
             <flux:button icon="ellipsis-vertical" square size="sm" />
             <flux:menu>
                 @if ($gallery->coverPhoto?->is($this->photo))
-                    <flux:menu.item
-                        wire:click="removeAsCover"
-                        icon="x-mark"
-                    >
+                    <flux:menu.item wire:click="removeAsCover" icon="x-mark">
                         {{ __('Remove as Cover') }}
                     </flux:menu.item>
                 @else
-                    <flux:menu.item
-                        wire:click="setAsCover"
-                        icon="star"
-                    >
+                    <flux:menu.item wire:click="setAsCover" icon="star">
                         {{ __('Set as Cover') }}
                     </flux:menu.item>
                 @endif

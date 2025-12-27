@@ -175,3 +175,100 @@ test('signing a contract updates the customer birthdate if customer exists for t
 
     expect($customer->fresh()->birthdate->toDateString())->toBe($newBirthdate);
 });
+
+test('signing updates photoshoot customer email and birthdate when not team owner and contract has two signatures', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $team = Team::factory()->create();
+    $photoshootCustomer = Customer::factory()->for($team)->create([
+        'email' => 'old-email@example.com',
+        'birthdate' => '1990-01-01',
+    ]);
+    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+        'customer_id' => $photoshootCustomer->id,
+    ]);
+    $contract = Contract::factory()->for($team)->for($photoshoot)->create();
+    $contract->addSignatures(2);
+
+    $newEmail = 'new-email@example.com';
+    $newBirthdate = '2000-12-12';
+
+    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+        ->set('role', 'Model')
+        ->set('legalName', 'John Doe')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', $newBirthdate)
+        ->set('email', $newEmail)
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($photoshootCustomer->fresh()->email)->toBe($newEmail);
+    expect($photoshootCustomer->fresh()->birthdate->toDateString())->toBe($newBirthdate);
+});
+
+test('signing does not update photoshoot customer when signer is team owner', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $owner = User::factory()->create(['email' => 'owner@example.com']);
+    $team = Team::factory()->create(['user_id' => $owner->id]);
+    $photoshootCustomer = Customer::factory()->for($team)->create([
+        'email' => 'old-email@example.com',
+        'birthdate' => '1990-01-01',
+    ]);
+    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+        'customer_id' => $photoshootCustomer->id,
+    ]);
+    $contract = Contract::factory()->for($team)->for($photoshoot)->create();
+    $contract->addSignatures(2);
+
+    $newBirthdate = '2000-12-12';
+
+    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+        ->set('role', 'Model')
+        ->set('legalName', 'John Doe')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', $newBirthdate)
+        ->set('email', 'owner@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($photoshootCustomer->fresh()->email)->toBe('old-email@example.com');
+    expect($photoshootCustomer->fresh()->birthdate->toDateString())->toBe('1990-01-01');
+});
+
+test('signing does not update photoshoot customer when contract has only one signature', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $owner = User::factory()->create(['email' => 'owner@example.com']);
+    $team = Team::factory()->create(['user_id' => $owner->id]);
+    $photoshootCustomer = Customer::factory()->for($team)->create([
+        'email' => 'old-email@example.com',
+        'birthdate' => '1990-01-01',
+    ]);
+    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+        'customer_id' => $photoshootCustomer->id,
+    ]);
+    $contract = Contract::factory()->for($team)->for($photoshoot)->create();
+    $contract->addSignatures(1);
+
+    $newEmail = 'new-email@example.com';
+    $newBirthdate = '2000-12-12';
+
+    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+        ->set('role', 'Model')
+        ->set('legalName', 'John Doe')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', $newBirthdate)
+        ->set('email', $newEmail)
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($photoshootCustomer->fresh()->email)->toBe('old-email@example.com');
+    expect($photoshootCustomer->fresh()->birthdate->toDateString())->toBe('1990-01-01');
+});

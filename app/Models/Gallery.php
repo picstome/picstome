@@ -6,15 +6,17 @@ use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
 use App\Traits\FormatsFileSize;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use ZipStream\ZipStream;
 
@@ -39,6 +41,7 @@ class Gallery extends Model
             'expiration_date' => 'date',
             'selection_limit_notification_sent_at' => 'datetime',
             'portfolio_order' => 'integer',
+            'are_comments_enabled' => 'boolean',
         ];
     }
 
@@ -48,6 +51,16 @@ class Gallery extends Model
             if (empty($gallery->ulid)) {
                 $gallery->ulid = Str::ulid();
             }
+        });
+
+        static::deleted(function (Gallery $gallery) {
+            Cache::forget("gallery:{$gallery->id}:first_image");
+            Cache::forget("gallery:{$gallery->id}:photos_count");
+            Cache::forget("gallery:{$gallery->id}:photos");
+            Cache::forget("gallery:{$gallery->id}:favorites");
+            Cache::forget("gallery:{$gallery->id}:favorites:nav");
+            Cache::forget("gallery:{$gallery->id}:commented");
+            Cache::forget("gallery:{$gallery->id}:commented:nav");
         });
     }
 
@@ -88,7 +101,7 @@ class Gallery extends Model
     {
         $threshold = now()->addDays($days);
         $query->whereNotNull('expiration_date')
-              ->where('expiration_date', '<=', $threshold);
+            ->where('expiration_date', '<=', $threshold);
     }
 
     #[Scope]
@@ -125,7 +138,7 @@ class Gallery extends Model
 
     public function notifyOwnerWhenSelectionLimitReached(): void
     {
-        if ($this->isSelectionLimitReached() && !$this->selection_limit_notification_sent_at) {
+        if ($this->isSelectionLimitReached() && ! $this->selection_limit_notification_sent_at) {
             Notification::send($this->team->owner, new SelectionLimitReached($this));
 
             $this->update(['selection_limit_notification_sent_at' => now()]);
@@ -153,8 +166,28 @@ class Gallery extends Model
         $zip = new ZipStream(outputName: $zipName);
 
         $photos->each(function ($photo) use ($zip) {
-            $stream = Storage::disk($photo->disk)->readStream($photo->path);
+            if ($photo->raw_path) {
+                $pathInfo = pathinfo($photo->name);
+                $jpgFilename = $pathInfo['filename'].'.jpg';
 
+                $jpgStream = Storage::disk($photo->disk)->readStream($photo->path);
+                $zip->addFileFromStream($jpgFilename, $jpgStream);
+
+                if (is_resource($jpgStream)) {
+                    fclose($jpgStream);
+                }
+
+                $rawStream = Storage::disk($photo->disk)->readStream($photo->raw_path);
+                $zip->addFileFromStream($photo->name, $rawStream);
+
+                if (is_resource($rawStream)) {
+                    fclose($rawStream);
+                }
+
+                return;
+            }
+
+            $stream = Storage::disk($photo->disk)->readStream($photo->path);
             $zip->addFileFromStream($photo->name, $stream);
 
             if (is_resource($stream)) {
@@ -170,6 +203,7 @@ class Gallery extends Model
     public function addPhoto(UploadedFile $photo)
     {
         $team = $this->team;
+
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
@@ -179,10 +213,13 @@ class Gallery extends Model
         $photoModel = $this->photos()->create([
             'name' => $photo->getClientOriginalName(),
             'size' => $photoSize,
-            'path' => $photo->store(
-                path: $this->storage_path,
-                options: ['disk' => 'public']
-            ),
+            'path' => FileUploadConfiguration::isUsingS3()
+                ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
+                    Storage::disk('s3')->move($photo->getRealPath(), $path);
+                })
+                : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
+            'disk' => 's3',
+            'status' => 'pending',
         ]);
 
         return $photoModel;
@@ -216,7 +253,7 @@ class Gallery extends Model
 
     public function setCoverPhoto(Photo $photo)
     {
-        if (!$this->is($photo->gallery)) {
+        if (! $this->is($photo->gallery)) {
             throw new \Exception('Photo does not belong to this gallery');
         }
 
@@ -231,7 +268,7 @@ class Gallery extends Model
 
     public function togglePublic()
     {
-        if (!$this->is_public) {
+        if (! $this->is_public) {
             $this->makePublic();
 
             return;
@@ -302,5 +339,33 @@ class Gallery extends Model
         }
 
         $this->update(['portfolio_order' => $newOrder]);
+    }
+
+    /**
+     * Get the first image (not video) in the gallery
+     */
+    public function firstImage()
+    {
+        return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
+            $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
+
+            return $photos->first(fn ($photo) => $photo->isImage());
+        });
+    }
+
+    /**
+     * Get the cached photo count for the gallery
+     */
+    public function photosCount()
+    {
+        return Cache::remember("gallery:{$this->id}:photos_count", now()->addHours(24), function () {
+            return $this->photos()->count();
+        });
+    }
+
+    #[Attribute]
+    protected function slug(): Attribute
+    {
+        return Attribute::get(fn () => Str::slug($this->name));
     }
 }

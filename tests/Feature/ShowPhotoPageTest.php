@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -126,4 +127,62 @@ test('prevents setting cover photo from another team', function () {
 
     $component->assertStatus(403);
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});
+
+test('authenticated user can add a comment to a photo', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->set('commentText', 'This is a test comment!')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->count())->toBe(1);
+    $comment = $photo->comments()->first();
+    expect($comment->comment)->toBe('This is a test comment!');
+    expect($comment->user_id)->toBe($user->id);
+});
+
+test('comment is required when adding a comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->set('commentText', '')
+        ->call('addComment')
+        ->assertHasErrors(['commentText' => 'required']);
+
+    expect($photo->comments()->count())->toBe(0);
+});
+
+test('user can delete their own comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+    $comment = PhotoComment::factory()->for($photo)->create([
+        'user_id' => $user->id,
+    ]);
+
+    Volt::actingAs($user)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->find($comment->id))->toBeNull();
+});
+
+test('user cannot delete another user\'s comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $user = $this->user;
+    $otherUser = User::factory()->create();
+    $comment = PhotoComment::factory()->for($photo)->create();
+
+    Volt::actingAs($otherUser)
+        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertStatus(403);
+
+    expect($photo->comments()->find($comment->id))->not()->toBeNull();
 });

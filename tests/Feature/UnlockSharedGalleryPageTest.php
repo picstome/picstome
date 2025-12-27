@@ -13,7 +13,7 @@ beforeEach(function () {
     $this->user = User::factory()->withPersonalTeam()->create();
 });
 
-test('visitors can view the unlock shared gallery page when the gallery is protected', function () {
+test('visitors can view unlock shared gallery page when gallery is protected', function () {
     $gallery = Gallery::factory()->shared()->protected()->create(['ulid' => '0123ABC']);
 
     $response = get('/shares/0123ABC/unlock');
@@ -21,17 +21,17 @@ test('visitors can view the unlock shared gallery page when the gallery is prote
     $response->assertStatus(200);
 });
 
-test('protected gallery can be unlocked with the correct password', function () {
+test('protected gallery can be unlocked with correct password', function () {
     $gallery = Gallery::factory()->shared()->protected(password: 'secret')->create(['ulid' => '0123ABC']);
-    get('shares/0123ABC')->assertRedirect('/shares/0123ABC/unlock');
+    get('shares/0123ABC/'.$gallery->slug)->assertRedirect('/shares/0123ABC/unlock');
 
     $component = Volt::test('pages.shares.unlock', ['gallery' => $gallery])
         ->set('password', 'secret')
         ->call('unlock');
 
     expect(session()->get('unlocked_gallery_ulid'))->toBe('0123ABC');
-    $component->assertRedirect('/shares/0123ABC');
-    get('shares/0123ABC')->assertStatus(200);
+    $component->assertRedirect('/shares/0123ABC/'.$gallery->slug);
+    get('shares/0123ABC/'.$gallery->slug)->assertStatus(200);
 });
 
 test('protected gallery remains locked with incorrect password', function () {
@@ -42,13 +42,13 @@ test('protected gallery remains locked with incorrect password', function () {
         ->call('unlock');
 
     expect(session()->get('unlocked_gallery_id'))->toBeNull();
-    get('shares/0123ABC')->assertRedirect('/shares/0123ABC/unlock');
+    get('shares/0123ABC/'.$gallery->slug)->assertRedirect('/shares/0123ABC/unlock');
 });
 
-test('visitor is redirected to the shared gallery when it\'s not password protected', function () {
+test('visitor is redirected to shared gallery when it\'s not password protected', function () {
     $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
 
     $response = get('/shares/0123ABC/unlock');
 
-    $response->assertRedirect('/shares/0123ABC');
+    $response->assertRedirect('/shares/0123ABC/'.$gallery->slug);
 });

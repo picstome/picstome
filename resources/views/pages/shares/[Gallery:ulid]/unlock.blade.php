@@ -12,7 +12,7 @@ name('shares.unlock');
 
 render(function (Gallery $gallery) {
     if (! $gallery->share_password) {
-        return to_route('shares.show', ['gallery' => $gallery]);
+        return to_route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
     }
 });
 
@@ -32,7 +32,7 @@ new class extends Component
 
         session()->put('unlocked_gallery_ulid', $this->gallery->ulid);
 
-        return $this->redirect("/shares/{$this->gallery->ulid}");
+        return $this->redirect("/shares/{$this->gallery->ulid}/{$this->gallery->slug}");
     }
 }; ?>
 

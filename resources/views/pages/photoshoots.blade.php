@@ -81,10 +81,6 @@ new class extends Component
                                     <p>{{ $photoshoot->name }}</p>
                                     <flux:text>
                                         {{ $photoshoot->customer?->name }}
-
-                                        @if ($photoshoot->customer?->email)
-                                            ({{ $photoshoot->customer->email }})
-                                        @endif
                                     </flux:text>
                                 </x-table.cell>
                                 <x-table.cell class="relative">
@@ -92,7 +88,7 @@ new class extends Component
                                         href="/photoshoots/{{ $photoshoot->id }}"
                                         class="absolute inset-0 focus:outline-hidden"
                                     ></a>
-                                    <p>{{ $photoshoot->formatted_date }}, {{ $photoshoot->location }}</p>
+                                    <p>{{ $photoshoot->formatted_date }}{{ $photoshoot->location ? ', ' . $photoshoot->location : '' }}</p>
                                 </x-table.cell>
                             </x-table.row>
                         @endforeach

@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Team;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
