@@ -175,6 +175,14 @@ new class extends Component
                     </x-description.details>
                     <x-description.term>{{ __('Birthdate') }}</x-description.term>
                     <x-description.details>{{ $customer->formatted_birthdate }}</x-description.details>
+                    <x-description.term>{{ __('Age') }}</x-description.term>
+                    <x-description.details>
+                        @if ($customer->age !== null)
+                            {{ $customer->age }}
+                        @else
+                            &mdash;
+                        @endif
+                    </x-description.details>
                     <x-description.term>{{ __('Notes') }}</x-description.term>
                     <x-description.details>
                         @if ($editingNotes)

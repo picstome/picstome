@@ -89,9 +89,16 @@ new class extends Component
                                         ></a>
                                         <div class="flex items-center gap-2">
                                             {{ $customer->name }}
-                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
-                                                {{ __('Birthday soon') }}
-                                            </flux:badge>
+
+                                            @if ($customer->age !== null)
+                                                <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                    {{ __('Birthday soon') }} ({{ $customer->age + 1 }})
+                                                </flux:badge>
+                                            @else
+                                                <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                    {{ __('Birthday soon') }}
+                                                </flux:badge>
+                                            @endif
                                         </div>
                                     </x-table.cell>
                                     <x-table.cell class="relative" align="end">
@@ -145,11 +152,16 @@ new class extends Component
                                     ></a>
                                     <div class="flex items-center gap-2">
                                         {{ $customer->name }}
-                                        @if ($customer->isBirthdaySoon())
-                                                <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
-                                                    {{ __('Birthday soon') }}
-                                                </flux:badge>
-                                            @endif
+
+                                        @if ($customer->age !== null)
+                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                {{ __('Birthday soon') }} ({{ $customer->age + 1 }})
+                                            </flux:badge>
+                                        @else
+                                            <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                                {{ __('Birthday soon') }}
+                                            </flux:badge>
+                                        @endif
                                     </div>
                                 </x-table.cell>
                                 <x-table.cell class="relative">
