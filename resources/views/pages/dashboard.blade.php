@@ -204,12 +204,16 @@ new class extends Component
                 $birthday->addYear();
             }
 
+            $isToday = $this->isToday($birthday);
+            $age = $isToday ? $customer->age : $customer->age + 1;
+
             $events->push([
                 'type' => 'birthday',
                 'label' => $customer->name,
                 'date' => $birthday,
                 'link' => "/customers/{$customer->id}",
-                'is_today' => $this->isToday($birthday),
+                'is_today' => $isToday,
+                'age' => $age,
             ]);
         }
 
@@ -430,7 +434,7 @@ new class extends Component
                                             {{ $event['label'] }}
 @if ($event['type'] === 'birthday')
     <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}" inset="top bottom" icon="cake" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
+        {{ !empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }} ({{ $event['age'] }})
     </flux:badge>
 @elseif ($event['type'] === 'photoshoot')
     <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}" inset="top bottom" icon="camera" size="sm">
