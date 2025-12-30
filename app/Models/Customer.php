@@ -44,7 +44,7 @@ class Customer extends Model
                 return null;
             }
 
-            return $this->birthdate->diffInYears(now());
+            return (int) $this->birthdate->diffInYears(now());
         });
     }
 
