@@ -37,6 +37,17 @@ class Customer extends Model
         });
     }
 
+    protected function age(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->birthdate) {
+                return null;
+            }
+
+            return $this->birthdate->diffInYears(now());
+        });
+    }
+
     public function isBirthdaySoon(): bool
     {
         if (! $this->birthdate) {

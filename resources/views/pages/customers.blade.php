@@ -78,6 +78,13 @@ new class extends Component
                     <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
                     <flux:separator class="mt-3" />
                     <x-table>
+                        <x-table.columns>
+                            <x-table.column>{{ __('Name') }}</x-table.column>
+                            <x-table.column>{{ __('Email') }}</x-table.column>
+                            <x-table.column>{{ __('Phone') }}</x-table.column>
+                            <x-table.column>{{ __('Birthdate') }}</x-table.column>
+                            <x-table.column>{{ __('Age') }}</x-table.column>
+                        </x-table.columns>
                         <x-table.rows>
                             @foreach ($this->birthdaySoonCustomers as $customer)
                                 <x-table.row>
@@ -117,6 +124,21 @@ new class extends Component
                                             class="absolute inset-0 focus:outline-hidden"
                                         ></a>
                                         {{ $customer->formatted_birthdate }}
+                                    </x-table.cell>
+                                    <x-table.cell class="relative" align="end">
+                                        <a
+                                            href="/customers/{{ $customer->id }}"
+                                            wire:navigate
+                                            class="absolute inset-0 focus:outline-hidden"
+                                        ></a>
+                                        @if ($customer->age !== null)
+                                            {{ $customer->age }}
+                                            @if ($customer->isBirthdaySoon())
+                                                ({{ $customer->age + 1 }})
+                                            @endif
+                                        @else
+                                            &mdash;
+                                        @endif
                                     </x-table.cell>
                                 </x-table.row>
                             @endforeach
