@@ -37,6 +37,7 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
         'currency' => 'eur',
         'customer_details' => [
             'email' => 'client@example.com',
+            'name' => 'John Doe',
         ],
     ];
 
@@ -47,10 +48,16 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
     Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_123'])
         ->assertOk();
 
+    $customer = $this->team->customers()->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->email)->toBe('client@example.com');
+    expect($customer->name)->toBe('John Doe');
+
     $photoshoot = $this->team->photoshoots()->first();
     expect($photoshoot)->not->toBeNull();
     expect($photoshoot->name)->toContain('Test Session');
     expect($photoshoot->date->toDateString())->toBe('2025-10-21');
+    expect($photoshoot->customer_id)->toBe($customer->id);
 
     $payment = $this->team->payments()->first();
     expect($payment)->not->toBeNull();
@@ -89,7 +96,8 @@ it('does not create a photoshoot if booking is not enabled', function () {
         'amount_total' => 10000,
         'currency' => 'eur',
         'customer_details' => [
-            'email' => 'client@example.com',
+            'email' => 'client2@example.com',
+            'name' => 'Jane Doe',
         ],
     ];
 
@@ -99,6 +107,11 @@ it('does not create a photoshoot if booking is not enabled', function () {
 
     Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_456'])
         ->assertOk();
+
+    $customer = $this->team->customers()->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->email)->toBe('client2@example.com');
+    expect($customer->name)->toBe('Jane Doe');
 
     expect($this->team->photoshoots()->count())->toBe(0);
     $payment = $this->team->payments()->first();
@@ -127,7 +140,8 @@ it('does not create a photoshoot if photoshoot_id is present', function () {
         'amount_total' => 10000,
         'currency' => 'eur',
         'customer_details' => [
-            'email' => 'client@example.com',
+            'email' => 'client3@example.com',
+            'name' => 'Bob Smith',
         ],
     ];
 
@@ -137,6 +151,11 @@ it('does not create a photoshoot if photoshoot_id is present', function () {
 
     Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_789'])
         ->assertOk();
+
+    $customer = $this->team->customers()->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->email)->toBe('client3@example.com');
+    expect($customer->name)->toBe('Bob Smith');
 
     // Only the existing photoshoot should exist
     expect($this->team->photoshoots()->count())->toBe(1);

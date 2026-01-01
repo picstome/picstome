@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Models\Team;
@@ -49,8 +50,10 @@ class extends Component
 
         abort_if($payment, 404);
 
+        $customer = $this->createCustomerFromPayment();
+
         if ($this->isBookingWithoutPhotoshootId($metadata)) {
-            $this->photoshoot = $this->createPhotoshootFromBooking($metadata);
+            $this->photoshoot = $this->createPhotoshootFromBooking($metadata, $customer);
         }
 
         $payment = $this->team->payments()->create([
@@ -81,7 +84,7 @@ class extends Component
         Notification::route('mail', $payerEmail)->notify(new BookingCreated($this->photoshoot, $date, $startTime, $endTime, $payment, $tz));
     }
 
-    private function createPhotoshootFromBooking(array $metadata)
+    private function createPhotoshootFromBooking(array $metadata, Customer $customer)
     {
         $tz = $metadata['timezone'];
         $date = Carbon::parse($metadata['booking_date'], $tz)->format('Y-m-d');
@@ -92,6 +95,25 @@ class extends Component
             'date' => $date,
             'customer_name' => $this->checkoutSession['customer_details']['email'] ?? null,
             'comment' => $timeRange,
+            'customer_id' => $customer->id,
+        ]);
+    }
+
+    private function createCustomerFromPayment()
+    {
+        $customerDetails = $this->checkoutSession['customer_details'] ?? [];
+        $email = $customerDetails['email'] ?? null;
+        $name = $customerDetails['name'] ?? $email ?? __('Customer');
+
+        if ($email) {
+            return $this->team->customers()->firstOrCreate(
+                ['email' => $email],
+                ['name' => $name]
+            );
+        }
+
+        return $this->team->customers()->create([
+            'name' => $name,
         ]);
     }
 
