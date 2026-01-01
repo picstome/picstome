@@ -187,12 +187,16 @@ new class extends Component
                 <flux:heading level="2">{{ __('Summary') }}</flux:heading>
                 <flux:separator class="mt-4" />
                 <x-description.list>
-                    <x-description.term>
-                        {{ __('Customer') }}
-                    </x-description.term>
-                    <x-description.details>
-                        <flux:link href="/customers/{{ $photoshoot->customer->id }}">{{ $photoshoot->customer?->name }}</flux:link>
-                    </x-description.details>
+                    @if ($photoshoot->customer)
+                        <x-description.term>
+                            {{ __('Customer') }}
+                        </x-description.term>
+                        <x-description.details>
+                            <flux:link href="/customers/{{ $photoshoot->customer->id }}">
+                                {{ $photoshoot->customer->name }}
+                            </flux:link>
+                        </x-description.details>
+                    @endif
 
                     <x-description.term>
                         {{ __('Date') }}
