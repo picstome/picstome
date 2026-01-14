@@ -29,29 +29,55 @@ class Photo extends Model
     protected static function booted()
     {
         static::created(function ($photo) {
-            Cache::forget("gallery:{$photo->gallery_id}:first_image");
-            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
-            Cache::forget("gallery:{$photo->gallery_id}:commented");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            if ($photo->gallery_id) {
+                Cache::forget("gallery:{$photo->gallery_id}:first_image");
+                Cache::forget("gallery:{$photo->gallery_id}:photos_count");
+                Cache::forget("gallery:{$photo->gallery_id}:photos");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
+                Cache::forget("gallery:{$photo->gallery_id}:commented");
+                Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            }
+
+            if ($photo->moodboard_id) {
+                Cache::forget("moodboard:{$photo->moodboard_id}:first_image");
+                Cache::forget("moodboard:{$photo->moodboard_id}:photos_count");
+                Cache::forget("moodboard:{$photo->moodboard_id}:photos");
+            }
         });
 
         static::deleted(function ($photo) {
-            Cache::forget("gallery:{$photo->gallery_id}:first_image");
-            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
-            Cache::forget("gallery:{$photo->gallery_id}:commented");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            if ($photo->gallery_id) {
+                Cache::forget("gallery:{$photo->gallery_id}:first_image");
+                Cache::forget("gallery:{$photo->gallery_id}:photos_count");
+                Cache::forget("gallery:{$photo->gallery_id}:photos");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
+                Cache::forget("gallery:{$photo->gallery_id}:commented");
+                Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            }
+
+            if ($photo->moodboard_id) {
+                Cache::forget("moodboard:{$photo->moodboard_id}:first_image");
+                Cache::forget("moodboard:{$photo->moodboard_id}:photos_count");
+                Cache::forget("moodboard:{$photo->moodboard_id}:photos");
+            }
         });
     }
 
     public function gallery()
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    public function moodboard()
+    {
+        return $this->belongsTo(Moodboard::class);
+    }
+
+    public function getGalleryOrMoodboard()
+    {
+        return $this->moodboard ?? $this->gallery;
     }
 
     public function scopeFavorited($query)
@@ -68,8 +94,14 @@ class Photo extends Model
     {
         $this->update(['favorited_at' => $this->favorited_at ? null : Carbon::now()]);
 
-        Cache::forget("gallery:{$this->gallery_id}:favorites");
-        Cache::forget("gallery:{$this->gallery_id}:favorites:nav");
+        if ($this->gallery_id) {
+            Cache::forget("gallery:{$this->gallery_id}:favorites");
+            Cache::forget("gallery:{$this->gallery_id}:favorites:nav");
+        }
+
+        if ($this->moodboard_id) {
+            Cache::forget("moodboard:{$this->moodboard_id}:favorites");
+        }
     }
 
     public function isFavorited()
