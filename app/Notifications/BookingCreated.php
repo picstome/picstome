@@ -58,8 +58,8 @@ class BookingCreated extends Notification
 
     private function googleCalendarUrl($customer, $name): string
     {
-        $start = $this->startTime->format('Ymd\THis');
-        $end = $this->endTime->format('Ymd\THis');
+        $start = $this->startTime->clone()->setDateFrom($this->date)->format('Ymd\THis');
+        $end = $this->endTime->clone()->setDateFrom($this->date)->format('Ymd\THis');
 
         return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
             .'&dates='.$start.'%2F'.$end
