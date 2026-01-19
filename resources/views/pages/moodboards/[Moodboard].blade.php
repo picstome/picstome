@@ -94,8 +94,6 @@ new class extends Component
         $this->authorize('delete', $photo);
 
         $photo->deleteFromDisk()->delete();
-
-        $this->getPhotos();
     }
 
     public function delete()
@@ -107,14 +105,10 @@ new class extends Component
         return $this->redirect(route('moodboards'));
     }
 
-    #[On('moodboard-photo-deleted')]
-    public function getPhotos()
+    #[Computed]
+    public function allPhotos()
     {
-        $cacheKey = "moodboard:{$this->moodboard->id}:photos";
-
-        return Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->moodboard->photos()->get()->naturalSortBy('name');
-        });
+        return $this->moodboard->photos()->get()->naturalSortBy('name');
     }
 
     #[Computed]
@@ -188,12 +182,12 @@ new class extends Component
                     </div>
                 </div>
 
-                @if ($this->getPhotos()->isNotEmpty())
+                @if ($this->allPhotos->isNotEmpty())
                     <div class="mt-8 max-sm:-mx-5">
                         <div class="mb-4 flex items-center justify-between">
                             <div class="text-sm text-zinc-500 dark:text-white/70">
-                                {{ $this->getPhotos()->count() }}
-                                {{ $this->getPhotos()->count() === 1 ? __('photo') : __('photos') }} •
+                                {{ $this->allPhotos->count() }}
+                                {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
                                 {{ $moodboard->getFormattedStorageSize() }} {{ __('total storage') }}
                             </div>
                             <flux:modal.trigger name="add-photos">
@@ -204,7 +198,7 @@ new class extends Component
                         </div>
 
                         <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                            @foreach ($this->getPhotos() as $photo)
+                            @foreach ($this->allPhotos as $photo)
                                 <livewire:moodboard-photo-item
                                     :$photo
                                     :key="'photo-'.$photo->id"
