@@ -107,6 +107,11 @@ class Team extends Model
         return $this->hasMany(Gallery::class);
     }
 
+    public function moodboards()
+    {
+        return $this->hasMany(Moodboard::class);
+    }
+
     public function contracts()
     {
         return $this->hasMany(Contract::class);
