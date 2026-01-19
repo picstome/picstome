@@ -96,7 +96,7 @@ describe('Moodboard Editing', function () {
         $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('form.title', 'Edited Moodboard')
             ->set('form.description', 'Updated description')
-            ->call('save');
+            ->call('update');
 
         expect($moodboard->fresh()->title)->toBe('Edited Moodboard');
         expect($moodboard->fresh()->description)->toBe('Updated description');
@@ -107,7 +107,7 @@ describe('Moodboard Editing', function () {
 
         $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('form.title', 'New Title')
-            ->call('save');
+            ->call('update');
 
         expect($moodboard->fresh()->title)->toBe('New Title');
     });

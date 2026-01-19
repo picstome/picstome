@@ -28,8 +28,6 @@ new class extends Component
 
     public MoodboardForm $form;
 
-    public bool $isEditing = false;
-
     public $photos = [];
 
     public function mount(Moodboard $moodboard)
@@ -38,15 +36,15 @@ new class extends Component
         $this->form->setMoodboard($moodboard);
     }
 
-    public function save()
+    public function update()
     {
         $this->authorize('update', $this->moodboard);
 
         $this->form->update();
 
-        $this->isEditing = false;
+        $this->moodboard = $this->moodboard->fresh();
 
-        Flux::toast(__('Moodboard updated successfully.'));
+        Flux::modal('edit')->close();
     }
 
     public function savePhoto($index)
@@ -121,131 +119,94 @@ new class extends Component
 <x-app-layout>
     @volt('pages.moodboards.show')
         <div>
-            <div class="mb-6">
-                <flux:button
-                    href="{{ route('moodboards') }}"
-                    variant="ghost"
-                    size="sm"
-                    icon="arrow-left"
-                    wire:navigate
-                >
-                    {{ __('Back to moodboards') }}
+            <div class="max-lg:hidden">
+                <flux:button :href="route('moodboards')" icon="chevron-left" variant="subtle" inset>
+                    {{ __('Moodboards') }}
                 </flux:button>
             </div>
 
-            @if ($isEditing)
-                <div class="mb-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div class="mb-4">
-                        <flux:heading size="lg">{{ __('Edit moodboard') }}</flux:heading>
-                        <flux:subheading>{{ __('Update your moodboard details.') }}</flux:subheading>
-                    </div>
-
-                    <form wire:submit="save" class="space-y-6">
-                        <flux:input wire:model="form.title" :label="__('Title')" type="text" />
-
-                        <flux:textarea wire:model="form.description" :label="__('Description')" rows="4" />
-
-                        <div class="flex items-center gap-2">
-                            <flux:button type="submit" variant="primary">
-                                {{ __('Save changes') }}
-                            </flux:button>
-
-                            <flux:button wire:click="$set('isEditing', false)" variant="ghost">
-                                {{ __('Cancel') }}
-                            </flux:button>
+            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
+                <div class="max-sm:w-full sm:flex-1">
+                    <x-heading level="1" size="xl">{{ $moodboard->title }}</x-heading>
+                    <x-subheading class="mt-2">
+                        @if ($moodboard->description)
+                            {{ $moodboard->description }}
+                        @else
+                            {{ __('Manage your moodboard media and collections.') }}
+                        @endif
+                    </x-subheading>
+                    @if ($this->allPhotos?->isNotEmpty())
+                        <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
+                            {{ $this->allPhotos->count() }}
+                            {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                            {{ $moodboard->getFormattedStorageSize() }} {{ __('total storage') }}
                         </div>
-                    </form>
+                    @endif
+                </div>
+                <div class="flex gap-4">
+                    <flux:dropdown>
+                        <flux:button icon="ellipsis-horizontal" variant="subtle" />
+                        <flux:menu>
+                            <flux:modal.trigger name="edit">
+                                <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
+                            </flux:modal.trigger>
+                            <flux:menu.item
+                                wire:click="delete"
+                                wire:confirm="{{ __('Are you sure?') }}"
+                                variant="danger"
+                                icon="trash"
+                            >
+                                {{ __('Delete') }}
+                            </flux:menu.item>
+                        </flux:menu>
+                    </flux:dropdown>
+
+                    <flux:modal.trigger name="add-photos">
+                        <flux:button variant="primary">{{ __('Add media') }}</flux:button>
+                    </flux:modal.trigger>
+                </div>
+            </div>
+
+            @if ($this->allPhotos->isNotEmpty())
+                <div class="mt-8 max-sm:-mx-5">
+                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($this->allPhotos as $photo)
+                            <livewire:moodboard-photo-item
+                                :$photo
+                                :key="'photo-'.$photo->id"
+                                :html-id="'photo-'.$photo->id"
+                            />
+                        @endforeach
+                    </div>
                 </div>
             @else
-                <div class="mb-6 flex items-center justify-between">
-                    <div>
-                        <x-heading level="1" size="xl">
-                            {{ $moodboard->title }}
-                        </x-heading>
-                        @if ($moodboard->description)
-                            <flux:text variant="subtle" class="mt-2">
-                                {{ $moodboard->description }}
-                            </flux:text>
-                        @endif
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <flux:button wire:click="$set('isEditing', true)" variant="ghost" icon="pencil">
-                            {{ __('Edit') }}
+                <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+                    <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                    <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
+                    <flux:subheading class="mb-6 max-w-72 text-center">
+                        {{ __('We couldn\'t find any photos. Add one to get started.') }}
+                    </flux:subheading>
+                    <flux:modal.trigger name="add-photos">
+                        <flux:button variant="primary">
+                            {{ __('Add media') }}
                         </flux:button>
-
-                        <flux:modal.trigger name="delete-moodboard">
-                            <flux:button variant="ghost" icon="trash" color="danger">
-                                {{ __('Delete') }}
-                            </flux:button>
-                        </flux:modal.trigger>
-                    </div>
+                    </flux:modal.trigger>
                 </div>
-
-                @if ($this->allPhotos->isNotEmpty())
-                    <div class="mt-8 max-sm:-mx-5">
-                        <div class="mb-4 flex items-center justify-between">
-                            <div class="text-sm text-zinc-500 dark:text-white/70">
-                                {{ $this->allPhotos->count() }}
-                                {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
-                                {{ $moodboard->getFormattedStorageSize() }} {{ __('total storage') }}
-                            </div>
-                            <flux:modal.trigger name="add-photos">
-                                <flux:button variant="primary" size="sm">
-                                    {{ __('Add media') }}
-                                </flux:button>
-                            </flux:modal.trigger>
-                        </div>
-
-                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                            @foreach ($this->allPhotos as $photo)
-                                <livewire:moodboard-photo-item
-                                    :$photo
-                                    :key="'photo-'.$photo->id"
-                                    :html-id="'photo-'.$photo->id"
-                                />
-                            @endforeach
-                        </div>
-                    </div>
-                @else
-                    <div
-                        class="mt-14 flex flex-1 flex-col items-center justify-center pb-32"
-                    >
-                        <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-                        <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
-                        <flux:subheading class="mb-6 max-w-72 text-center">
-                            {{ __('We couldn\'t find any photos. Add one to get started.') }}
-                        </flux:subheading>
-                        <flux:modal.trigger name="add-photos">
-                            <flux:button variant="primary">
-                                {{ __('Add media') }}
-                            </flux:button>
-                        </flux:modal.trigger>
-                    </div>
-                @endif
             @endif
 
-            <flux:modal name="delete-moodboard" class="w-full sm:max-w-md">
-                <div class="space-y-6">
+            <flux:modal name="edit" class="w-full sm:max-w-lg">
+                <form wire:submit="update" class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Delete moodboard') }}</flux:heading>
-                        <flux:subheading>
-                            {{ __('Are you sure you want to delete this moodboard? This action cannot be undone.') }}
-                        </flux:subheading>
+                        <flux:heading size="lg">{{ __('Edit moodboard') }}</flux:heading>
+                        <flux:subheading>{{ __('Enter your moodboard details.') }}</flux:subheading>
                     </div>
-
-                    <div class="flex items-center justify-end gap-2">
-                        <flux:modal.close>
-                            <flux:button variant="ghost">
-                                {{ __('Cancel') }}
-                            </flux:button>
-                        </flux:modal.close>
-
-                        <flux:button wire:click="delete" variant="danger">
-                            {{ __('Delete') }}
-                        </flux:button>
+                    <flux:input wire:model="form.title" :label="__('Title')" type="text" />
+                    <flux:textarea wire:model="form.description" :label="__('Description')" rows="4" />
+                    <div class="flex">
+                        <flux:spacer />
+                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
                     </div>
-                </div>
+                </form>
             </flux:modal>
 
             <flux:modal name="add-photos" class="w-full sm:max-w-lg">
