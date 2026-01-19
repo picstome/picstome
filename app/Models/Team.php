@@ -107,6 +107,11 @@ class Team extends Model
         return $this->hasMany(Gallery::class);
     }
 
+    public function moodboards()
+    {
+        return $this->hasMany(Moodboard::class);
+    }
+
     public function contracts()
     {
         return $this->hasMany(Contract::class);
@@ -301,16 +306,23 @@ class Team extends Model
     }
 
     /**
-     * Dynamically calculate total storage used by all galleries/photos for this team.
+     * Dynamically calculate total storage used by all galleries/photos and moodboard photos for this team.
      *
      * @return int Total bytes used
      */
     public function calculateStorageUsed(): int
     {
-        return DB::table('photos')
+        $galleryStorage = DB::table('photos')
             ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
             ->where('galleries.team_id', $this->id)
             ->sum('photos.size');
+
+        $moodboardStorage = DB::table('moodboard_photos')
+            ->join('moodboards', 'moodboard_photos.moodboard_id', '=', 'moodboards.id')
+            ->where('moodboards.team_id', $this->id)
+            ->sum('moodboard_photos.size');
+
+        return $galleryStorage + $moodboardStorage;
     }
 
     /**
