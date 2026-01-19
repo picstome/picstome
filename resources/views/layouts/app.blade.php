@@ -79,9 +79,11 @@
                             {{ __('Galleries') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('moodboards')" icon="sparkles" wire:navigate>
-                            {{ __('Moodboards') }}
-                        </flux:navlist.item>
+                        @if (auth()->user()?->is_admin)
+                            <flux:navlist.item :href="route('moodboards')" icon="sparkles" wire:navigate>
+                                {{ __('Moodboards') }}
+                            </flux:navlist.item>
+                        @endif
 
                         <flux:navlist.item :href="route('photoshoots')" icon="camera" wire:navigate>
                             {{ __('Photoshoots') }}
