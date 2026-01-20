@@ -22,6 +22,7 @@ class Moodboard extends Model
         return [
             'title' => 'string',
             'description' => 'string',
+            'is_shared' => 'boolean',
         ];
     }
 
@@ -92,5 +93,11 @@ class Moodboard extends Model
     public function getFormattedStorageSize()
     {
         return $this->formatFileSize($this->getTotalStorageSize());
+    }
+
+    #[Attribute]
+    protected function slug(): Attribute
+    {
+        return Attribute::get(fn () => Str::slug($this->title));
     }
 }

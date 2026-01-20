@@ -103,6 +103,24 @@ new class extends Component
         return $this->redirect(route('moodboards'));
     }
 
+    public function share()
+    {
+        $this->authorize('update', $this->moodboard);
+
+        $this->moodboard->update(['is_shared' => true]);
+
+        Flux::modal('share-link')->show();
+
+        $this->moodboard = $this->moodboard->fresh();
+    }
+
+    public function disableSharing()
+    {
+        $this->authorize('update', $this->moodboard);
+
+        $this->moodboard->update(['is_shared' => false]);
+    }
+
     #[Computed]
     public function allPhotos()
     {
@@ -127,7 +145,12 @@ new class extends Component
 
             <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
                 <div class="max-sm:w-full sm:flex-1">
-                    <x-heading level="1" size="xl">{{ $moodboard->title }}</x-heading>
+                    <div class="flex items-center gap-4">
+                        <x-heading level="1" size="xl">{{ $moodboard->title }}</x-heading>
+                        @if ($moodboard->is_shared)
+                            <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
+                        @endif
+                    </div>
                     <x-subheading class="mt-2">
                         @if ($moodboard->description)
                             {{ $moodboard->description }}
@@ -160,6 +183,23 @@ new class extends Component
                             </flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
+
+                    @if ($moodboard->is_shared)
+                        <flux:button.group>
+                            <flux:button wire:click="disableSharing">{{ __('Stop sharing') }}</flux:button>
+                            <flux:dropdown align="end">
+                                <flux:button icon="chevron-down" />
+
+                                <flux:menu>
+                                    <flux:modal.trigger name="share-link">
+                                        <flux:menu.item icon="link">{{ __('Get share link') }}</flux:menu.item>
+                                    </flux:modal.trigger>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:button.group>
+                    @else
+                        <flux:button wire:click="share">{{ __('Share') }}</flux:button>
+                    @endif
 
                     <flux:modal.trigger name="add-photos">
                         <flux:button variant="primary">{{ __('Add media') }}</flux:button>
@@ -318,6 +358,20 @@ new class extends Component
                         </div>
                     </div>
                 </form>
+            </flux:modal>
+
+            <flux:modal name="share-link" class="w-full sm:max-w-lg">
+                <div class="space-y-6">
+                    <flux:heading size="lg">{{ __('Moodboard shared') }}</flux:heading>
+
+                    <flux:input
+                        icon="link"
+                        :value="route('shared-moodboards.show', ['moodboard' => $moodboard, 'slug' => $moodboard->slug])"
+                        :label="__('Share URL')"
+                        readonly
+                        copyable
+                    />
+                </div>
             </flux:modal>
         </div>
 
