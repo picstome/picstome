@@ -26,3 +26,15 @@ Route::get('/shared-moodboards/{moodboard:ulid}', function (\App\Models\Moodboar
 })->name('shared-moodboards.redirect');
 
 Volt::route('/shared-moodboards/{moodboard:ulid}/{slug}', 'pages.shared-moodboards.show')->name('shared-moodboards.show');
+
+Volt::route('/branding', 'pages.branding')->name('branding')->middleware('auth');
+
+Volt::route('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');
+
+Volt::route('/branding/logos', 'pages.branding.logos')->name('branding.logos')->middleware('auth');
+
+Volt::route('/branding/payments', 'pages.branding.payments')->name('branding.payments')->middleware(['auth', 'verified']);
+
+Volt::route('/branding/styling', 'pages.branding.styling')->name('branding.styling')->middleware('auth');
+
+Volt::route('/branding/watermark', 'pages.branding.watermark')->name('branding.watermark')->middleware('auth');
