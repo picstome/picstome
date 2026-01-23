@@ -18,3 +18,5 @@ Volt::route('/@{handle}/portfolio/{gallery:ulid}', 'pages.portfolio.show')->wher
 Volt::route('/@{handle}/portfolio/{gallery:ulid}/photos/{photo}', 'pages.portfolio.photos.show')->name('portfolio.photos.show');
 
 Volt::route('/moodboards', 'pages.moodboards')->name('moodboards')->middleware(['auth', 'verified']);
+
+Volt::route('/moodboards/{moodboard}', 'pages.moodboards.show')->name('moodboards.show')->middleware(['auth', 'verified']);
