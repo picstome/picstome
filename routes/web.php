@@ -31,6 +31,10 @@ Volt::route('/contract-templates', 'pages.contract-templates')->name('contract-t
 
 Volt::route('/contract-templates/{contractTemplate}', 'pages.contract-templates.show')->name('contract-templates.show')->middleware(['auth', 'verified']);
 
+Volt::route('/contracts', 'pages.contracts')->name('contracts')->middleware(['auth', 'verified']);
+
+Volt::route('/contracts/{contract}', 'pages.contracts.show')->name('contracts.show')->middleware(['auth', 'verified']);
+
 Volt::route('/branding', 'pages.branding')->name('branding')->middleware('auth');
 
 Volt::route('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');

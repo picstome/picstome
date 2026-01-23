@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Contract;
+use App\Models\Photoshoot;
 use App\Models\Signature;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Photoshoot;
 use App\Notifications\ContractExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -25,11 +25,10 @@ beforeEach(function () {
 test('users can view their team contract', function () {
     $contract = Contract::factory()->for($this->team)->create();
 
-    $response = actingAs($this->user)->get('/contracts/1');
+    $component = Volt::test('pages.contracts.show', ['contract' => $contract]);
 
-    $response->assertStatus(200);
-    $response->assertViewHas('contract');
-    expect($response['contract']->is($contract))->toBeTrue();
+    $component->assertStatus(200);
+    expect($component->contract->is($contract))->toBeTrue();
 });
 
 test('guests cannot view any contracts', function () {
