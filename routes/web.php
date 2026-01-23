@@ -19,4 +19,10 @@ Volt::route('/@{handle}/portfolio/{gallery:ulid}/photos/{photo}', 'pages.portfol
 
 Volt::route('/moodboards', 'pages.moodboards')->name('moodboards')->middleware(['auth', 'verified']);
 
-Volt::route('/moodboards/{moodboard}', 'pages.moodboards.show')->name('moodboards.show')->middleware(['auth', 'verified']);
+Volt::route('/moodboards/{moodboard:ulid}', 'pages.moodboards.show')->name('moodboards.show')->middleware(['auth', 'verified']);
+
+Route::get('/shared-moodboards/{moodboard:ulid}', function (\App\Models\Moodboard $moodboard) {
+    return redirect()->route('shared-moodboards.show', ['moodboard' => $moodboard, 'slug' => $moodboard->slug]);
+})->name('shared-moodboards.redirect');
+
+Volt::route('/shared-moodboards/{moodboard:ulid}/{slug}', 'pages.shared-moodboards.show')->name('shared-moodboards.show');
