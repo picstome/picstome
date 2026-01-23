@@ -20,7 +20,7 @@
         @stack('head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
-        @unless ($fullScreen)
+        @unless ($fullScreen ?? false)
             <flux:sidebar
                 sticky
                 stashable
@@ -182,7 +182,7 @@
             </flux:header>
         @endunless
 
-        <flux:main :container="!$fullScreen && !$isTool" @class(['p-0!' => $fullScreen || $isTool])>
+        <flux:main :container="!($fullScreen ?? false) && !($isTool ?? false)" @class(['p-0!' => ($fullScreen ?? false) || ($isTool ?? false)])>
             {{ $slot }}
         </flux:main>
 
