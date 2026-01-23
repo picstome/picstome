@@ -95,7 +95,7 @@ test('contract is not executed if there are remaining signatures to sign', funct
     expect($contract->signaturesRemaining())->toBe(2);
     $signature = $contract->signatures()->unsigned()->first();
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Volt::actingAs($contract->team->owner)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
 
     $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')

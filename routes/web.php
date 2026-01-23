@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Gallery;
+use App\Models\Photo;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -50,3 +53,19 @@ Volt::route('/branding/watermark', 'pages.branding.watermark')->name('branding.w
 Volt::route('/customers', 'pages.customers')->name('customers')->middleware(['auth', 'verified']);
 
 Volt::route('/customers/{customer}', 'pages.customers.show')->name('customers.show')->middleware(['auth', 'verified']);
+
+Volt::route('/galleries', 'pages.galleries')->name('galleries')->middleware(['auth', 'verified']);
+Volt::route('/galleries/{gallery}', 'pages.galleries.show')->name('galleries.show')->middleware(['auth', 'verified']);
+Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
+    return $gallery->download();
+})->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
+Volt::route('/galleries/{gallery}/photos/{photo}', 'pages.galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
+Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
+    $type = request('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
+    return $photo->download();
+})->name('galleries.photos.download')->middleware(['auth', 'verified', 'can:view,photo']);

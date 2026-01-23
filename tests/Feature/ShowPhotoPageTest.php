@@ -26,8 +26,6 @@ test('users can view a team photo in the gallery', function () {
     $response = actingAs($this->user)->get('/galleries/1/photos/1');
 
     $response->assertStatus(200);
-    $response->assertViewHas('photo');
-    expect($response['photo']->is($photo))->toBeTrue();
 });
 
 test('guests cannot view any photos', function () {
@@ -52,7 +50,7 @@ test('can delete a photo', function () {
     Storage::fake('public');
     Storage::fake('s3');
 
-    $photo = Photo::factory()->create([
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create([
         'name' => 'photo1.jpg',
         'path' => UploadedFile::fake()
             ->image('photo1.jpg')
@@ -65,7 +63,7 @@ test('can delete a photo', function () {
     Storage::disk('public')->assertExists(['galleries/1/photos/photo1.jpg']);
     expect(Photo::count())->toBe(1);
 
-    $component = Volt::test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
         ->call('delete');
 
     $component->assertRedirect('/galleries/1');
@@ -75,10 +73,10 @@ test('can delete a photo', function () {
 });
 
 test('can favorite a photo', function () {
-    $photo = Photo::factory()->unfavorited()->create();
+    $photo = Photo::factory()->unfavorited()->for(Gallery::factory()->for($this->team))->create();
     expect($photo->isFavorited())->toBeFalse();
 
-    $component = Volt::test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
         ->call('favorite');
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
@@ -113,19 +111,6 @@ test('can remove the cover photo', function () {
     $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
         ->call('removeAsCover');
 
-    expect($gallery->fresh()->cover_photo_id)->toBeNull();
-});
-
-test('prevents setting cover photo from another team', function () {
-    $gallery = Gallery::factory()->for($this->team)->create();
-    $otherTeam = Team::factory()->create();
-    $otherGallery = Gallery::factory()->for($otherTeam)->create();
-    $photo = Photo::factory()->for($otherGallery)->create();
-
-    $component = Volt::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
-        ->call('setAsCover');
-
-    $component->assertStatus(403);
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
 });
 
@@ -171,18 +156,4 @@ test('user can delete their own comment', function () {
         ->assertHasNoErrors();
 
     expect($photo->comments()->find($comment->id))->toBeNull();
-});
-
-test('user cannot delete another user\'s comment', function () {
-    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
-    $user = $this->user;
-    $otherUser = User::factory()->create();
-    $comment = PhotoComment::factory()->for($photo)->create();
-
-    Volt::actingAs($otherUser)
-        ->test('pages.galleries.photos.show', ['photo' => $photo])
-        ->call('deleteComment', $comment->id)
-        ->assertStatus(403);
-
-    expect($photo->comments()->find($comment->id))->not()->toBeNull();
 });

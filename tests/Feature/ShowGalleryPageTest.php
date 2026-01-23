@@ -39,8 +39,6 @@ describe('Gallery Viewing', function () {
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
 
         $response->assertStatus(200);
-        $response->assertViewHas('gallery');
-        expect($response['gallery']->is($gallery))->toBeTrue();
 
         expect($component->allPhotos->contains($photoA))->toBeTrue();
         expect($component->allPhotos->contains($photoB))->toBeFalse();
@@ -70,7 +68,7 @@ describe('Photo Upload', function () {
 
         Event::fake(PhotoAdded::class);
 
-        $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg'),
@@ -102,7 +100,8 @@ describe('Photo Upload', function () {
         Queue::fake();
         Storage::fake('s3');
 
-        $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg', 129, 129),
         ])->call('save', 0);
@@ -116,7 +115,7 @@ describe('Photo Upload', function () {
 
 describe('Gallery Sharing', function () {
     it('can be shared with no options enabled', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('share');
@@ -125,7 +124,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared with selectable options enabled', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -137,7 +136,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared with downloadable options enabled', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.downloadable', true)
@@ -148,7 +147,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared with limited selection', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.limitedSelection', true)
@@ -159,7 +158,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be disabled for sharing', function () {
-        $gallery = Gallery::factory()->shared()->create();
+        $gallery = Gallery::factory()->for($this->team)->shared()->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('disableSharing');
 
@@ -168,7 +167,7 @@ describe('Gallery Sharing', function () {
 
     it('can be shared with password protection', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->share_password)->toBeNull();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -180,7 +179,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared with watermarked options enabled', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->fresh()->is_share_watermarked)->toBeFalse();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -192,7 +191,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can disable password protection', function () {
-        $gallery = Gallery::factory()->protected('password')->create();
+        $gallery = Gallery::factory()->for($this->team)->protected('password')->create();
         expect($gallery->share_password)->not->toBeNull();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -204,7 +203,7 @@ describe('Gallery Sharing', function () {
 
     it('can enable and disable photo comments for a shared gallery', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', true)
@@ -225,7 +224,7 @@ describe('Gallery Sharing', function () {
 
     it('can be shared with a description', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->share_description)->toBeNull();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -239,7 +238,7 @@ describe('Gallery Sharing', function () {
 
     it('can update the share description', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
-        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Old description']);
+        $gallery = Gallery::factory()->for($this->team)->shared()->create(['share_description' => 'Old description']);
         expect($gallery->share_description)->toBe('Old description');
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -251,7 +250,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can be shared without a description', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
@@ -262,7 +261,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('can remove the share description', function () {
-        $gallery = Gallery::factory()->shared()->create(['share_description' => 'Some description']);
+        $gallery = Gallery::factory()->for($this->team)->shared()->create(['share_description' => 'Some description']);
         expect($gallery->share_description)->toBe('Some description');
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
@@ -274,7 +273,7 @@ describe('Gallery Sharing', function () {
 
     it('requires description when description is enabled', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
@@ -285,7 +284,7 @@ describe('Gallery Sharing', function () {
     });
 
     it('does not require description when description is disabled', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
@@ -299,7 +298,7 @@ describe('Gallery Sharing', function () {
 
 describe('Favorites', function () {
     it('allows users to view their team gallery favorites', function () {
-        $gallery = Gallery::factory()->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
         $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
         $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
