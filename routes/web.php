@@ -27,6 +27,10 @@ Route::get('/shared-moodboards/{moodboard:ulid}', function (\App\Models\Moodboar
 
 Volt::route('/shared-moodboards/{moodboard:ulid}/{slug}', 'pages.shared-moodboards.show')->name('shared-moodboards.show');
 
+Volt::route('/contract-templates', 'pages.contract-templates')->name('contract-templates')->middleware(['auth', 'verified']);
+
+Volt::route('/contract-templates/{contractTemplate}', 'pages.contract-templates.show')->name('contract-templates.show')->middleware(['auth', 'verified']);
+
 Volt::route('/branding', 'pages.branding')->name('branding')->middleware('auth');
 
 Volt::route('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');
