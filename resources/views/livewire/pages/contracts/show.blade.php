@@ -4,7 +4,6 @@ use App\Models\Contract;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -19,7 +18,7 @@ new #[Layout('layouts.app')] class extends Component
 
     public function mount()
     {
-        Gate::authorize('view', $this->contract);
+        $this->authorize('view', $this->contract);
 
         $this->photoshoots = Auth::user()?->currentTeam->photoshoots()->latest()->get();
         $this->photoshoot_id = $this->contract->photoshoot_id;
