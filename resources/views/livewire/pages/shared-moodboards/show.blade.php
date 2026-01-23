@@ -5,13 +5,9 @@ use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.shared-guest')] class extends Component
+new #[Layout('layouts.guest')] class extends Component
 {
     public Moodboard $moodboard;
-
-    public ?string $font;
-
-    public ?string $color;
 
     public function mount(Moodboard $moodboard, string $slug)
     {
@@ -32,6 +28,8 @@ new #[Layout('layouts.shared-guest')] class extends Component
 
         return [
             'allPhotos' => $photos,
+            'font' => $this->moodboard->team->brand_font,
+            'color' => $this->moodboard->team->brand_color,
         ];
     }
 }; ?>
