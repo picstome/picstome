@@ -46,3 +46,7 @@ Volt::route('/branding/payments', 'pages.branding.payments')->name('branding.pay
 Volt::route('/branding/styling', 'pages.branding.styling')->name('branding.styling')->middleware('auth');
 
 Volt::route('/branding/watermark', 'pages.branding.watermark')->name('branding.watermark')->middleware('auth');
+
+Volt::route('/customers', 'pages.customers')->name('customers')->middleware(['auth', 'verified']);
+
+Volt::route('/customers/{customer}', 'pages.customers.show')->name('customers.show')->middleware(['auth', 'verified']);
