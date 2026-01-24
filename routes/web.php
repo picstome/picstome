@@ -1,8 +1,9 @@
 <?php
 
+use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Gallery;
+use App\Models\Moodboard;
 use App\Models\Photo;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -24,11 +25,43 @@ Volt::route('/moodboards', 'pages.moodboards')->name('moodboards')->middleware([
 
 Volt::route('/moodboards/{moodboard}', 'pages.moodboards.show')->name('moodboards.show')->middleware(['auth', 'verified']);
 
-Route::get('/shared-moodboards/{moodboard:ulid}', function (\App\Models\Moodboard $moodboard) {
+Route::get('/shared-moodboards/{moodboard:ulid}', function (Moodboard $moodboard) {
     return redirect()->route('shared-moodboards.show', ['moodboard' => $moodboard, 'slug' => $moodboard->slug]);
 })->name('shared-moodboards.redirect');
 
 Volt::route('/shared-moodboards/{moodboard:ulid}/{slug}', 'pages.shared-moodboards.show')->name('shared-moodboards.show');
+
+Volt::route('/shares/{gallery:ulid}/unlock', 'pages.shares.unlock')->name('shares.unlock');
+
+Route::get('/shares/{gallery:ulid}/download', function (Gallery $gallery) {
+    abort_unless($gallery->is_shared, 404);
+
+    abort_unless($gallery->is_share_downloadable, 401);
+
+    return $gallery->download((bool) request()->input('favorites'));
+})->name('shares.download')->middleware([PasswordProtectGallery::class]);
+
+Volt::route('/shares/{gallery:ulid}/photos/{photo}', 'pages.shares.photos.show')->name('shares.photos.show')->middleware([PasswordProtectGallery::class]);
+
+Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
+    abort_unless($photo->gallery->is_shared, 404);
+
+    abort_unless($photo->gallery->is_share_downloadable, 401);
+
+    $type = request()->input('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
+    return $photo->download();
+})->name('shares.photos.download')->middleware([PasswordProtectGallery::class]);
+
+Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
+    return redirect('/shares/'.$gallery.'/'.$gallery->slug);
+})->name('shares.redirect');
+
+Volt::route('/shares/{gallery:ulid}/{slug}', 'pages.shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);
 
 Volt::route('/contract-templates', 'pages.contract-templates')->name('contract-templates')->middleware(['auth', 'verified']);
 
