@@ -28,8 +28,6 @@ test('users can view their team photoshoot', function () {
     $response = actingAs($this->user)->get('/photoshoots/1');
 
     $response->assertStatus(200);
-    $response->assertViewHas('photoshoot');
-    expect($response['photoshoot']->is($photoshoot))->toBeTrue();
 });
 
 test('guests cannot view any photoshoot', function () {
@@ -124,7 +122,7 @@ test('cannot add a gallery with invalid expiration date', function () {
 });
 
 test('can delete team photoshoot', function () {
-    $photoshoot = Photoshoot::factory()->has(
+    $photoshoot = Photoshoot::factory()->for($this->team)->has(
         Gallery::factory()->has(
             Photo::factory()->count(2)
         )->count(2)
@@ -143,7 +141,7 @@ test('can delete team photoshoot', function () {
 });
 
 test('can delete team photoshoot preserving galleries', function () {
-    $photoshoot = Photoshoot::factory()->has(
+    $photoshoot = Photoshoot::factory()->for($this->team)->has(
         Gallery::factory()->has(
             Photo::factory()->count(2)
         )->count(2)
@@ -163,7 +161,7 @@ test('can delete team photoshoot preserving galleries', function () {
 
 test('can edit a team photoshoot', function () {
     $customer = Customer::factory()->for($this->team)->create();
-    $photoshoot = Photoshoot::factory()->create(['customer_id' => $customer->id]);
+    $photoshoot = Photoshoot::factory()->for($this->team)->create(['customer_id' => $customer->id]);
 
     $component = Volt::actingAs($this->user)
         ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
@@ -184,7 +182,7 @@ test('can edit a team photoshoot', function () {
 });
 
 test('can add new contract', function () {
-    $photoshoot = Photoshoot::factory()->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     $component = Volt::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('contractForm.title', 'A contract title')

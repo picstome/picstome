@@ -93,6 +93,9 @@ Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
     return $gallery->download();
 })->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
 Volt::route('/galleries/{gallery}/photos/{photo}', 'pages.galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
+
+Volt::route('/photoshoots', 'pages.photoshoots')->name('photoshoots')->middleware(['auth', 'verified']);
+Volt::route('/photoshoots/{photoshoot}', 'pages.photoshoots.show')->name('photoshoots.show')->middleware(['auth', 'verified']);
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');
 
