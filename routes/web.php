@@ -4,6 +4,8 @@ use App\Http\Middleware\PasswordProtectGallery;
 use App\Models\Gallery;
 use App\Models\Moodboard;
 use App\Models\Photo;
+use Facades\App\Services\StripeConnectService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -108,6 +110,17 @@ Volt::route('/settings/profile', 'pages.settings.profile')->name('settings.profi
 Volt::route('/tools/calculator', 'pages.tools.calculator')->name('tools.calculator')->middleware(['auth', 'verified']);
 
 Volt::route('/tools/invoice-generator', 'pages.tools.invoice-generator')->name('tools.invoice-generator')->middleware(['auth', 'verified']);
+
+Volt::route('/stripe-connect', 'pages.stripe-connect.index')->name('stripe.connect')->middleware(['auth', 'verified']);
+
+Volt::route('/stripe-connect/return', 'pages.stripe-connect.return')->name('stripe.connect.return')->middleware(['auth', 'verified']);
+
+Route::get('/stripe-connect/refresh', function () {
+    $team = Auth::user()->currentTeam;
+    $onboardingUrl = StripeConnectService::createOnboardingLink($team);
+
+    return redirect($onboardingUrl);
+})->name('stripe.connect.refresh')->middleware(['auth', 'verified']);
 
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');
