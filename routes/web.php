@@ -99,6 +99,12 @@ Volt::route('/photoshoots/{photoshoot}', 'pages.photoshoots.show')->name('photos
 
 Volt::route('/signatures/{signature}/sign', 'pages.signatures.sign')->name('signatures.sign');
 
+Volt::route('/settings/appearance', 'pages.settings.appearance')->name('settings.appearance')->middleware('auth');
+
+Volt::route('/settings/password', 'pages.settings.password')->name('settings.password')->middleware('auth');
+
+Volt::route('/settings/profile', 'pages.settings.profile')->name('settings.profile')->middleware('auth');
+
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');
 
