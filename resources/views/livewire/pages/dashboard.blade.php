@@ -1,20 +1,13 @@
 <?php
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-use function Laravel\Folio\middleware;
-use function Laravel\Folio\name;
-
-name('dashboard');
-
-middleware(['auth', 'verified']);
-
-use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Computed;
-
-new class extends Component
+new #[Layout('layouts.app')] class extends Component
 {
     #[Computed]
     public function birthdaySoonCustomers()
@@ -285,153 +278,151 @@ new class extends Component
     }
 } ?>
 
-<x-app-layout>
-    @volt('pages.dashboard')
-        <div>
-            <flux:heading size="xl" level="1">
-                {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
+<div>
+    <flux:heading size="xl" level="1">
+        {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
+    </flux:heading>
+
+    <flux:spacer class="my-6" />
+
+    <flux:modal.trigger name="search" shortcut="cmd.k">
+        <flux:input as="button" :placeholder="__('Search...')" icon="magnifying-glass" kbd="⌘K" />
+    </flux:modal.trigger>
+
+    <flux:spacer class="my-6" />
+
+    @if (! $this->team->subscribed())
+        <flux:callout icon="shield-check" color="teal" inline>
+            <flux:callout.heading>
+                <flux:text variant="strong">
+                    {{ __('Get More With Picstome Pro') }}
+                </flux:text>
+            </flux:callout.heading>
+            <flux:callout.text>
+                <flux:text variant="strong" class="font-medium">
+                    {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
+                </flux:text>
+            </flux:callout.text>
+            <x-slot name="actions">
+                <flux:button :href="route('subscribe')" variant="primary" color="teal">
+                    {{ __('Upgrade to Pro') }}
+                </flux:button>
+            </x-slot>
+        </flux:callout>
+    @endif
+
+    <flux:spacer class="my-6" />
+
+    @if ($this->incompleteSteps->count())
+        <section>
+            <flux:heading size="lg">
+                {{ __('Complete Your Account Setup') }}
             </flux:heading>
+            <flux:spacer class="my-4" />
+            <div class="space-y-2">
+                @foreach ($this->incompleteSteps as $step)
+                    @if (! $step['complete'])
+                        <flux:callout
+                            wire:key="{{ $step['key'] }}"
+                            icon="{{ $step['icon'] }}"
+                            variant="secondary"
+                            inline
+                        >
+                            <flux:callout.heading>
+                                {{ $step['label'] }}
+                            </flux:callout.heading>
+                            <x-slot name="actions">
+                                <flux:button size="sm" :href="$step['route']">
+                                    {{ $step['action'] }}
+                                </flux:button>
+                            </x-slot>
+                            <x-slot name="controls">
+                                <flux:button
+                                    icon="x-mark"
+                                    variant="subtle"
+                                    wire:click="dismissStep('{{ $step['key'] }}')"
+                                    size="sm"
+                                />
+                            </x-slot>
+                        </flux:callout>
+                    @endif
+                @endforeach
+            </div>
+        </section>
 
-            <flux:spacer class="my-6" />
+        <flux:spacer class="my-6" />
+    @endif
 
-            <flux:modal.trigger name="search" shortcut="cmd.k">
-                <flux:input as="button" :placeholder="__('Search...')" icon="magnifying-glass" kbd="⌘K" />
-            </flux:modal.trigger>
-
-            <flux:spacer class="my-6" />
-
-            @if (! $this->team->subscribed())
-                <flux:callout icon="shield-check" color="teal" inline>
-                    <flux:callout.heading>
-                        <flux:text variant="strong">
-                            {{ __('Get More With Picstome Pro') }}
-                        </flux:text>
-                    </flux:callout.heading>
-                    <flux:callout.text>
-                        <flux:text variant="strong" class="font-medium">
-                            {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
-                        </flux:text>
-                    </flux:callout.text>
-                    <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary" color="teal">
-                            {{ __('Upgrade to Pro') }}
-                        </flux:button>
-                    </x-slot>
-                </flux:callout>
-            @endif
-
-            <flux:spacer class="my-6" />
-
-            @if ($this->incompleteSteps->count())
-                <section>
-                    <flux:heading size="lg">
-                        {{ __('Complete Your Account Setup') }}
-                    </flux:heading>
-                    <flux:spacer class="my-4" />
+    <section>
+        <div class="space-y-4">
+            <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <a
+                    href="{{ route('customers') }}"
+                    wire:navigate
+                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                >
+                    <flux:subheading>{{ __('Customers') }}</flux:subheading>
+                    <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
+                </a>
+                <a
+                    href="{{ route('galleries') }}"
+                    wire:navigate
+                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                >
+                    <flux:subheading>{{ __('Galleries') }}</flux:subheading>
+                    <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
+                </a>
+                <a
+                    href="{{ route('payments') }}"
+                    wire:navigate
+                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                >
+                    <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
+                    <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
+                </a>
+                <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
+                    <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
+                    <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
+                    <flux:spacer class="mt-2" />
                     <div class="space-y-2">
-                        @foreach ($this->incompleteSteps as $step)
-                            @if (! $step['complete'])
-                                <flux:callout
-                                    wire:key="{{ $step['key'] }}"
-                                    icon="{{ $step['icon'] }}"
-                                    variant="secondary"
-                                    inline
-                                >
-                                    <flux:callout.heading>
-                                        {{ $step['label'] }}
-                                    </flux:callout.heading>
-                                    <x-slot name="actions">
-                                        <flux:button size="sm" :href="$step['route']">
-                                            {{ $step['action'] }}
-                                        </flux:button>
-                                    </x-slot>
-                                    <x-slot name="controls">
-                                        <flux:button
-                                            icon="x-mark"
-                                            variant="subtle"
-                                            wire:click="dismissStep('{{ $step['key'] }}')"
-                                            size="sm"
-                                        />
-                                    </x-slot>
-                                </flux:callout>
-                            @endif
-                        @endforeach
-                    </div>
-                </section>
-
-                <flux:spacer class="my-6" />
-            @endif
-
-            <section>
-                <div class="space-y-4">
-                    <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <a
-                            href="{{ route('customers') }}"
-                            wire:navigate
-                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                        >
-                            <flux:subheading>{{ __('Customers') }}</flux:subheading>
-                            <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
-                        </a>
-                        <a
-                            href="{{ route('galleries') }}"
-                            wire:navigate
-                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                        >
-                            <flux:subheading>{{ __('Galleries') }}</flux:subheading>
-                            <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
-                        </a>
-                        <a
-                            href="{{ route('payments') }}"
-                            wire:navigate
-                            class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                        >
-                            <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
-                            <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
-                        </a>
-                        <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                            <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
-                            <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
-                            <flux:spacer class="mt-2" />
-                            <div class="space-y-2">
-                                @if (! $this->team->hasUnlimitedStorage)
-                                    <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                                        <div
-                                            class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
-                                            style="width: {{ min($this->usagePercent, 100) }}%"
-                                        ></div>
-                                    </div>
-                                    <flux:text class="mt-2 text-[11px]">
-                                        {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
-                                    </flux:text>
-                                @else
-                                    <flux:text class="text-[11px]">
-                                        {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
-                                    </flux:text>
-                                @endif
+                        @if (! $this->team->hasUnlimitedStorage)
+                            <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                <div
+                                    class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                    style="width: {{ min($this->usagePercent, 100) }}%"
+                                ></div>
                             </div>
-                        </div>
+                            <flux:text class="mt-2 text-[11px]">
+                                {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
+                            </flux:text>
+                        @else
+                            <flux:text class="text-[11px]">
+                                {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
+                            </flux:text>
+                        @endif
                     </div>
                 </div>
-            </section>
+            </div>
+        </div>
+    </section>
 
-            @if ($this->hasUpcomingEventsOrReminders())
-                <section class="mt-8 mb-8">
-                    <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
-                    <flux:separator class="mt-3" />
-                    <x-table>
-                        <x-table.rows>
-                            @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                                <x-table.row :class="!empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''">
-                                    <x-table.cell variant="strong" class="relative w-full">
-                                        <a
-                                            href="{{ $event['link'] }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            {{ $event['label'] }}
+    @if ($this->hasUpcomingEventsOrReminders())
+        <section class="mt-8 mb-8">
+            <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
+            <flux:separator class="mt-3" />
+            <x-table>
+                <x-table.rows>
+                    @foreach ($this->getUpcomingEventsAndReminders() as $event)
+                        <x-table.row :class="!empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''">
+                            <x-table.cell variant="strong" class="relative w-full">
+                                <a
+                                    href="{{ $event['link'] }}"
+                                    wire:navigate
+                                    class="absolute inset-0 focus:outline-hidden"
+                                ></a>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    {{ $event['label'] }}
 @if ($event['type'] === 'birthday')
     <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}" inset="top bottom" icon="cake" size="sm">
         {{ !empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }} ({{ $event['age'] }})
@@ -449,22 +440,20 @@ new class extends Component
         {{ __('Awaiting signature') }}
     </flux:badge>
 @endif
-                                        </div>
-                                    </x-table.cell>
-                                    <x-table.cell class="relative" align="end">
-                                        <a
-                                            href="{{ $event['link'] }}"
-                                            wire:navigate
-                                            class="absolute inset-0 focus:outline-hidden"
-                                        ></a>
-                                        {{ $this->formatEventDate($event['date']) }}
-                                    </x-table.cell>
-                                </x-table.row>
-                            @endforeach
-                        </x-table.rows>
-                    </x-table>
-                </section>
-            @endif
-        </div>
-    @endvolt
-</x-app-layout>
+                                </div>
+                            </x-table.cell>
+                            <x-table.cell class="relative" align="end">
+                                <a
+                                    href="{{ $event['link'] }}"
+                                    wire:navigate
+                                    class="absolute inset-0 focus:outline-hidden"
+                                ></a>
+                                {{ $this->formatEventDate($event['date']) }}
+                            </x-table.cell>
+                        </x-table.row>
+                    @endforeach
+                </x-table.rows>
+            </x-table>
+        </section>
+    @endif
+</div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
@@ -7,6 +8,7 @@ use App\Models\Moodboard;
 use App\Models\Photo;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -141,6 +143,53 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
 
     return redirect()->intended(route('galleries', absolute: false).'?verified=1');
 })->name('verification.verify')->middleware(['auth', 'signed', 'throttle:6,1']);
+
+Volt::route('/dashboard', 'pages.dashboard')->name('dashboard')->middleware(['auth', 'verified']);
+Volt::route('/forgot-password', 'pages.forgot-password')->name('password.request')->middleware('guest');
+Volt::route('/login', 'pages.login')->name('login')->middleware('guest');
+Volt::route('/payments', 'pages.payments')->name('payments')->middleware(['auth', 'verified']);
+Volt::route('/portfolio', 'pages.portfolio')->name('portfolio')->middleware(['auth', 'verified']);
+Volt::route('/public-profile', 'pages.public-profile')->name('public-profile')->middleware('auth');
+Volt::route('/register', 'pages.register')->name('register')->middleware('guest');
+Volt::route('/subscribe', 'pages.subscribe')->name('subscribe')->middleware(['auth', 'verified']);
+Volt::route('/users', 'pages.users')->name('users')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
+Volt::route('/verify-email', 'pages.verify-email')->name('verification.notice')->middleware('auth');
+
+Route::get('/billing-portal', function (Request $request) {
+    $team = $request->user()->currentTeam;
+    if (! $team->subscribed()) {
+        return redirect()->route('subscribe');
+    }
+
+    return $team->redirectToBillingPortal(route('dashboard'));
+})->name('billing-portal')->middleware(['auth', 'verified']);
+
+Route::get('/', function () {
+    return to_route('dashboard');
+})->name('home');
+
+Route::get('/product-checkout-success', function (Request $request) {
+    $sessionId = $request->get('session_id');
+    if (! $sessionId) {
+        return redirect()->route('subscribe');
+    }
+    $team = $request->user()->currentTeam;
+    $checkoutSession = $team->stripe()->checkout->sessions->retrieve($sessionId);
+    if ($checkoutSession->payment_status === 'paid') {
+        $team->update([
+            'lifetime' => true,
+            'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Payment successful!');
+    }
+
+    return redirect()->route('subscribe');
+})->name('product-checkout-success')->middleware(['auth', 'verified']);
+
+Route::get('/settings', function () {
+    return to_route('settings.profile');
+})->name('settings')->middleware('auth');
 
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');

@@ -6,16 +6,11 @@ use App\Models\Payment;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
-use function Laravel\Folio\middleware;
-use function Laravel\Folio\name;
-
-name('payments');
-middleware(['auth', 'verified']);
-
-new class extends Component
+new #[Layout('layouts.app')] class extends Component
 {
     use WithPagination;
 
@@ -111,7 +106,6 @@ new class extends Component
     }
 } ?>
 
-<x-app-layout>
     @volt('pages.payments')
         <div>
             @if (! $this->team?->subscribed())
@@ -359,5 +353,4 @@ new class extends Component
                 @endif
             @endif
         </div>
-    @endvolt
-</x-app-layout>
+
