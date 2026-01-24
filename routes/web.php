@@ -105,6 +105,10 @@ Volt::route('/settings/password', 'pages.settings.password')->name('settings.pas
 
 Volt::route('/settings/profile', 'pages.settings.profile')->name('settings.profile')->middleware('auth');
 
+Volt::route('/tools/calculator', 'pages.tools.calculator')->name('tools.calculator')->middleware(['auth', 'verified']);
+
+Volt::route('/tools/invoice-generator', 'pages.tools.invoice-generator')->name('tools.invoice-generator')->middleware(['auth', 'verified']);
+
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');
 
