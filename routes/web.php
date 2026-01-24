@@ -96,6 +96,9 @@ Volt::route('/galleries/{gallery}/photos/{photo}', 'pages.galleries.photos.show'
 
 Volt::route('/photoshoots', 'pages.photoshoots')->name('photoshoots')->middleware(['auth', 'verified']);
 Volt::route('/photoshoots/{photoshoot}', 'pages.photoshoots.show')->name('photoshoots.show')->middleware(['auth', 'verified']);
+
+Volt::route('/signatures/{signature}/sign', 'pages.signatures.sign')->name('signatures.sign');
+
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');
 
