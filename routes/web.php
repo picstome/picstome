@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Middleware\PasswordProtectGallery;
+use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
 use App\Models\Moodboard;
 use App\Models\Photo;
 use Facades\App\Services\StripeConnectService;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -121,6 +123,24 @@ Route::get('/stripe-connect/refresh', function () {
 
     return redirect($onboardingUrl);
 })->name('stripe.connect.refresh')->middleware(['auth', 'verified']);
+
+Volt::route('/reset-password/{token}', 'pages.reset-password.token')->name('password.reset')->middleware('guest');
+
+Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $request) {
+    if ($request->user()->hasVerifiedEmail()) {
+        return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+    }
+
+    $request->fulfill();
+
+    $listId = app()->getLocale() === 'es'
+        ? config('services.acumbamail.list_id_es')
+        : config('services.acumbamail.list_id');
+
+    AddToAcumbamailList::dispatch($request->user()->email, $request->user()->name, $listId);
+
+    return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+})->name('verification.verify')->middleware(['auth', 'signed', 'throttle:6,1']);
 
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
     $type = request('type', 'processed');

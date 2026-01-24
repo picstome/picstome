@@ -56,7 +56,7 @@ it('resets the password with a valid token', function () {
         ->call('sendPasswordResetLink');
 
     Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-        $response = Volt::test('pages.reset-password', ['token' => $notification->token])
+        $response = Volt::test('pages.reset-password.token', ['token' => $notification->token])
             ->set('email', $user->email)
             ->set('password', 'password')
             ->set('password_confirmation', 'password')
