@@ -25,7 +25,7 @@ test('guests can sign a contract', function () {
 
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
 
-    $response = get('/signatures/0123ABC');
+    $response = get('/signatures/0123ABC/sign');
     $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
