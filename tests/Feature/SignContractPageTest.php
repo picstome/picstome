@@ -176,6 +176,31 @@ test('signing a contract updates the customer birthdate if customer exists for t
     expect($customer->fresh()->birthdate->toDateString())->toBe($newBirthdate);
 });
 
+test('signing a contract creates a new customer if one does not exist for the team', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $team = Team::factory()->create();
+    $contract = Contract::factory()->for($team)->create();
+    $signature = Signature::factory()->for($contract)->unsigned()->create();
+
+    Volt::test('pages.signatures.sign', ['signature' => $signature])
+        ->set('role', 'Model')
+        ->set('legalName', 'Jane Smith')
+        ->set('documentNumber', 'XYZ9876')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', '2000-12-12')
+        ->set('email', 'jane@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    $customer = $team->customers()->where('email', 'jane@example.com')->first();
+    expect($customer)->not->toBeNull();
+    expect($customer->name)->toBe('Jane Smith');
+    expect($customer->email)->toBe('jane@example.com');
+    expect($customer->birthdate->toDateString())->toBe('2000-12-12');
+});
+
 test('signing updates photoshoot customer email and birthdate when not team owner and contract has two signatures', function () {
     Storage::fake('s3');
     Queue::fake();

@@ -60,9 +60,19 @@ new #[Layout('layouts.guest')] class extends Component
             'user_agent' => request()->userAgent(),
         ]);
 
-        tap($this->signature->contract->team->customers()->where('email', $this->email)->first(), function ($customer) {
-            $customer?->update(['birthdate' => $this->birthday]);
-        });
+        $customer = $this->signature->contract->team->customers()->where('email', $this->email)->first();
+
+        if ($customer) {
+            if (empty($customer->birthdate)) {
+                $customer->update(['birthdate' => $this->birthday]);
+            }
+        } else {
+            $this->signature->contract->team->customers()->create([
+                'name' => $this->legalName,
+                'email' => $this->email,
+                'birthdate' => $this->birthday,
+            ]);
+        }
 
         if ($this->email !== $this->signature->contract->team->owner->email && $this->signature->contract->signatures()->count() === 2) {
             $photoshootCustomer = $this->signature->contract->photoshoot?->customer;
