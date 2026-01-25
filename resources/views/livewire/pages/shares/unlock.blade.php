@@ -33,19 +33,16 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<x-guest-layout>
-    <div class="mx-auto mt-4 w-full md:w-96 lg:mt-8">
-        <form wire:submit="unlock" class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ __('Protected gallery') }}</flux:heading>
-                <flux:subheading>{{ __('Enter the gallery password to unlock it.') }}</flux:subheading>
-            </div>
-            <flux:input wire:model="password" :label="__('Password')" type="text" />
-            <div class="flex">
-                <flux:spacer />
-
-                <flux:button type="submit" variant="primary">{{ __('Unlock') }}</flux:button>
-            </div>
-        </form>
-    </div>
-</x-guest-layout>
+<div class="mx-auto mt-4 w-full md:w-96 lg:mt-8">
+    <form wire:submit="unlock" class="space-y-6">
+        <div>
+            <flux:heading size="lg">{{ __('Protected gallery') }}</flux:heading>
+            <flux:subheading>{{ __('Enter the gallery password to unlock it.') }}</flux:subheading>
+        </div>
+        <flux:input wire:model="password" :label="__('Password')" type="text" />
+        <div class="flex">
+            <flux:spacer />
+         <flux:button type="submit" variant="primary">{{ __('Unlock') }}</flux:button>
+        </div>
+    </form>
+</div>

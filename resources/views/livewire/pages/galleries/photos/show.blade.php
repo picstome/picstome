@@ -9,11 +9,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 
-new class extends Component
+new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 {
-    #[Layout('layouts.app')]
-    public bool $fullScreen = true;
-
     public Photo $photo;
 
     public ?Photo $next;
@@ -33,8 +30,6 @@ new class extends Component
         $this->photo = $photo;
 
         $this->authorize('view', $this->photo);
-
-        $this->fullScreen = true;
 
         if ($this->navigateFavorites) {
             $this->next = $this->photo->nextFavorite();
@@ -119,7 +114,7 @@ new class extends Component
     }
 }; ?>
 
-<div>
+<div
     x-data="{
         swipe: '',
         zoom: false,
@@ -311,18 +306,16 @@ new class extends Component
                     </flux:menu>
                 </flux:dropdown>
 
-                @php
-                    $comments = $photo->comments()->latest()->with('user')->get();
-                @endphp
-
                 <flux:modal.trigger name="add-comment">
-                    <flux:button icon="chat-bubble-left-ellipsis" size="sm">
-                        @if ($comments->isEmpty())
+                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden">
+                        @if ($this->comments->isEmpty())
                             {{ __('Add comment') }}
                         @else
-                            {{ __('Comments (:count)', ['count' => $comments->count()]) }}
+                            {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
                         @endif
                     </flux:button>
+
+                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" square />
                 </flux:modal.trigger>
 
                 @if ($photo->path && $photo->raw_path)
