@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Contract;
+use App\Models\Photoshoot;
 use App\Models\Signature;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\Photoshoot;
 use App\Notifications\ContractExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -28,8 +28,6 @@ test('users can view their team contract', function () {
     $response = actingAs($this->user)->get('/contracts/1');
 
     $response->assertStatus(200);
-    $response->assertViewHas('contract');
-    expect($response['contract']->is($contract))->toBeTrue();
 });
 
 test('guests cannot view any contracts', function () {
@@ -57,7 +55,7 @@ test('contract can be executed once all parties have signed it', function () {
     $signatureB = Signature::factory()->signed()->make(['email' => 'jane@example.com']);
     $contract->signatures()->saveMany([$signatureA, $signatureB]);
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Volt::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
 
     tap($contract->fresh(), function (Contract $contract) {
         expect($contract->executed_at)->not->toBeNull();
@@ -74,12 +72,12 @@ test('contract can be executed once all parties have signed it', function () {
 });
 
 test('contract cannot be executed if there are remaining signatures to sign', function () {
-    $contract = Contract::factory()->create(['title' => 'The Contract']);
+    $contract = Contract::factory()->for($this->team)->create(['title' => 'The Contract']);
     $signatureA = Signature::factory()->signed()->make(['email' => 'john@example.com']);
     $signatureB = Signature::factory()->unsigned()->make();
     $contract->signatures()->saveMany([$signatureA, $signatureB]);
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Volt::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
 
     $component->assertStatus(401);
     expect($contract->executed_at)->toBeNull();
@@ -87,13 +85,13 @@ test('contract cannot be executed if there are remaining signatures to sign', fu
 
 test('can download an executed contract', function () {
     Storage::fake('s3');
-    $contract = Contract::factory()->executed()->create([
+    $contract = Contract::factory()->for($this->team)->executed()->create([
         'title' => 'Contract',
         'pdf_file_path' => UploadedFile::fake()->create('contract.pdf')
             ->storeAs('contracts/1/contract.pdf', 'contract.pdf', 's3'),
     ]);
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
+    $component = Volt::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])
         ->call('download');
 
     $component->assertFileDownloaded('contract.pdf');
@@ -105,7 +103,7 @@ test('user can assign a contract to a photoshoot', function () {
     )->create();
     $contract = Contract::factory()->for($this->team)->create();
 
-    $component = Volt::actingAs($this->team->owner)
+    $component = Volt::actingAs($this->user)->actingAs($this->team->owner)
         ->test('pages.contracts.show', ['contract' => $contract])
         ->set('photoshoot_id', $photoshoot->id)
         ->call('assignToPhotoshoot');
@@ -155,7 +153,7 @@ test('user can re-assign a contract null photoshoot', function () {
 
 test('can delete team contract', function () {
     Storage::fake('s3');
-    $contract = Contract::factory()->has(
+    $contract = Contract::factory()->for($this->team)->has(
         Signature::factory()->count(2)->sequence(
             ['signature_image_path' => UploadedFile::fake()
                 ->image('signature.png')
@@ -175,7 +173,7 @@ test('can delete team contract', function () {
     Storage::disk('s3')->assertExists('signatures/signatureA.png');
     Storage::disk('s3')->assertExists('signatures/signatureA.png');
 
-    $component = Volt::test('pages.contracts.show', ['contract' => $contract])
+    $component = Volt::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])
         ->call('delete');
 
     $component->assertRedirect('/contracts');

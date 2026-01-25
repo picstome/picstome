@@ -22,8 +22,10 @@ test('users can view their team template', function () {
     $response = actingAs($this->user)->get('/contract-templates/1');
 
     $response->assertStatus(200);
-    $response->assertViewHas('contractTemplate');
-    expect($response['contractTemplate']->is($template))->toBeTrue();
+
+    $component = Volt::actingAs($this->user)->test('pages.contract-templates.show', ['contractTemplate' => $template]);
+
+    expect($component->contractTemplate->is($template))->toBeTrue();
 });
 
 test('guests cannot view any templates', function () {

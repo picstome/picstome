@@ -26,7 +26,7 @@ test('photo cannot be viewed unless the gallery is shared', function () {
 });
 
 test('favorite photo when gallery is selectable', function () {
-    $gallery = Gallery::factory()->selectable()->has(Photo::factory()->unfavorited())->create();
+    $gallery = Gallery::factory()->shared()->selectable()->has(Photo::factory()->unfavorited())->create();
 
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
 
@@ -37,7 +37,7 @@ test('favorite photo when gallery is selectable', function () {
 });
 
 test('photo cannot be favorited when the gallery is not selectable', function () {
-    $gallery = Gallery::factory()->unselectable()->has(Photo::factory()->unfavorited())->create();
+    $gallery = Gallery::factory()->shared()->unselectable()->has(Photo::factory()->unfavorited())->create();
 
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
 

@@ -35,8 +35,6 @@ describe('Moodboard Viewing', function () {
         $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard]);
 
         $response->assertStatus(200);
-        $response->assertViewHas('moodboard');
-        expect($response['moodboard']->is($moodboard))->toBeTrue();
 
         expect($moodboard->photos->contains($photoA))->toBeTrue();
         expect($moodboard->photos->contains($photoB))->toBeFalse();

@@ -1,5 +1,15 @@
 <?php
 
+use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\PasswordProtectGallery;
+use App\Jobs\AddToAcumbamailList;
+use App\Models\Gallery;
+use App\Models\Moodboard;
+use App\Models\Photo;
+use Facades\App\Services\StripeConnectService;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -16,3 +26,177 @@ Volt::route('/@{handle}/pay/cancel', 'pages.pay.cancel')->where('handle', '[a-zA
 Volt::route('/@{handle}/portfolio', 'pages.portfolio.index')->where('handle', '[a-zA-Z0-9_]+')->name('portfolio.index');
 Volt::route('/@{handle}/portfolio/{gallery:ulid}', 'pages.portfolio.show')->where('handle', '[a-zA-Z0-9_]+')->name('portfolio.show');
 Volt::route('/@{handle}/portfolio/{gallery:ulid}/photos/{photo}', 'pages.portfolio.photos.show')->name('portfolio.photos.show');
+
+Volt::route('/moodboards', 'pages.moodboards')->name('moodboards')->middleware(['auth', 'verified']);
+
+Volt::route('/moodboards/{moodboard}', 'pages.moodboards.show')->name('moodboards.show')->middleware(['auth', 'verified']);
+
+Route::get('/shared-moodboards/{moodboard:ulid}', function (Moodboard $moodboard) {
+    return redirect()->route('shared-moodboards.show', ['moodboard' => $moodboard, 'slug' => $moodboard->slug]);
+})->name('shared-moodboards.redirect');
+
+Volt::route('/shared-moodboards/{moodboard:ulid}/{slug}', 'pages.shared-moodboards.show')->name('shared-moodboards.show');
+
+Volt::route('/shares/{gallery:ulid}/unlock', 'pages.shares.unlock')->name('shares.unlock');
+
+Route::get('/shares/{gallery:ulid}/download', function (Gallery $gallery) {
+    abort_unless($gallery->is_shared, 404);
+
+    abort_unless($gallery->is_share_downloadable, 401);
+
+    return $gallery->download((bool) request()->input('favorites'));
+})->name('shares.download')->middleware([PasswordProtectGallery::class]);
+
+Volt::route('/shares/{gallery:ulid}/photos/{photo}', 'pages.shares.photos.show')->name('shares.photos.show')->middleware([PasswordProtectGallery::class]);
+
+Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
+    abort_unless($photo->gallery->is_shared, 404);
+
+    abort_unless($photo->gallery->is_share_downloadable, 401);
+
+    $type = request()->input('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
+    return $photo->download();
+})->name('shares.photos.download')->middleware([PasswordProtectGallery::class]);
+
+Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
+    return redirect('/shares/'.$gallery.'/'.$gallery->slug);
+})->name('shares.redirect');
+
+Volt::route('/shares/{gallery:ulid}/{slug}', 'pages.shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);
+
+Volt::route('/contract-templates', 'pages.contract-templates')->name('contract-templates')->middleware(['auth', 'verified']);
+
+Volt::route('/contract-templates/{contractTemplate}', 'pages.contract-templates.show')->name('contract-templates.show')->middleware(['auth', 'verified']);
+
+Volt::route('/contracts', 'pages.contracts')->name('contracts')->middleware(['auth', 'verified']);
+
+Volt::route('/contracts/{contract}', 'pages.contracts.show')->name('contracts.show')->middleware(['auth', 'verified']);
+
+Volt::route('/branding', 'pages.branding')->name('branding')->middleware('auth');
+
+Volt::route('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');
+
+Volt::route('/branding/logos', 'pages.branding.logos')->name('branding.logos')->middleware('auth');
+
+Volt::route('/branding/payments', 'pages.branding.payments')->name('branding.payments')->middleware(['auth', 'verified']);
+
+Volt::route('/branding/styling', 'pages.branding.styling')->name('branding.styling')->middleware('auth');
+
+Volt::route('/branding/watermark', 'pages.branding.watermark')->name('branding.watermark')->middleware('auth');
+
+Volt::route('/customers', 'pages.customers')->name('customers')->middleware(['auth', 'verified']);
+
+Volt::route('/customers/{customer}', 'pages.customers.show')->name('customers.show')->middleware(['auth', 'verified']);
+
+Volt::route('/galleries', 'pages.galleries')->name('galleries')->middleware(['auth', 'verified']);
+Volt::route('/galleries/{gallery}', 'pages.galleries.show')->name('galleries.show')->middleware(['auth', 'verified']);
+Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
+    return $gallery->download();
+})->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
+Volt::route('/galleries/{gallery}/photos/{photo}', 'pages.galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
+
+Volt::route('/photoshoots', 'pages.photoshoots')->name('photoshoots')->middleware(['auth', 'verified']);
+Volt::route('/photoshoots/{photoshoot}', 'pages.photoshoots.show')->name('photoshoots.show')->middleware(['auth', 'verified']);
+
+Volt::route('/signatures/{signature}/sign', 'pages.signatures.sign')->name('signatures.sign');
+
+Volt::route('/settings/appearance', 'pages.settings.appearance')->name('settings.appearance')->middleware('auth');
+
+Volt::route('/settings/password', 'pages.settings.password')->name('settings.password')->middleware('auth');
+
+Volt::route('/settings/profile', 'pages.settings.profile')->name('settings.profile')->middleware('auth');
+
+Volt::route('/tools/calculator', 'pages.tools.calculator')->name('tools.calculator')->middleware(['auth', 'verified']);
+
+Volt::route('/tools/invoice-generator', 'pages.tools.invoice-generator')->name('tools.invoice-generator')->middleware(['auth', 'verified']);
+
+Volt::route('/stripe-connect', 'pages.stripe-connect.index')->name('stripe.connect')->middleware(['auth', 'verified']);
+
+Volt::route('/stripe-connect/return', 'pages.stripe-connect.return')->name('stripe.connect.return')->middleware(['auth', 'verified']);
+
+Route::get('/stripe-connect/refresh', function () {
+    $team = Auth::user()->currentTeam;
+    $onboardingUrl = StripeConnectService::createOnboardingLink($team);
+
+    return redirect($onboardingUrl);
+})->name('stripe.connect.refresh')->middleware(['auth', 'verified']);
+
+Volt::route('/reset-password/{token}', 'pages.reset-password.token')->name('password.reset')->middleware('guest');
+
+Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $request) {
+    if ($request->user()->hasVerifiedEmail()) {
+        return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+    }
+
+    $request->fulfill();
+
+    $listId = app()->getLocale() === 'es'
+        ? config('services.acumbamail.list_id_es')
+        : config('services.acumbamail.list_id');
+
+    AddToAcumbamailList::dispatch($request->user()->email, $request->user()->name, $listId);
+
+    return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+})->name('verification.verify')->middleware(['auth', 'signed', 'throttle:6,1']);
+
+Volt::route('/dashboard', 'pages.dashboard')->name('dashboard')->middleware(['auth', 'verified']);
+Volt::route('/forgot-password', 'pages.forgot-password')->name('password.request')->middleware('guest');
+Volt::route('/login', 'pages.login')->name('login')->middleware('guest');
+Volt::route('/payments', 'pages.payments')->name('payments')->middleware(['auth', 'verified']);
+Volt::route('/portfolio', 'pages.portfolio')->name('portfolio')->middleware(['auth', 'verified']);
+Volt::route('/public-profile', 'pages.public-profile')->name('public-profile')->middleware('auth');
+Volt::route('/register', 'pages.register')->name('register')->middleware('guest');
+Volt::route('/subscribe', 'pages.subscribe')->name('subscribe')->middleware(['auth', 'verified']);
+Volt::route('/users', 'pages.users')->name('users')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
+Volt::route('/verify-email', 'pages.verify-email')->name('verification.notice')->middleware('auth');
+
+Route::get('/billing-portal', function (Request $request) {
+    $team = $request->user()->currentTeam;
+    if (! $team->subscribed()) {
+        return redirect()->route('subscribe');
+    }
+
+    return $team->redirectToBillingPortal(route('dashboard'));
+})->name('billing-portal')->middleware(['auth', 'verified']);
+
+Route::get('/', function () {
+    return to_route('dashboard');
+})->name('home');
+
+Route::get('/product-checkout-success', function (Request $request) {
+    $sessionId = $request->get('session_id');
+    if (! $sessionId) {
+        return redirect()->route('subscribe');
+    }
+    $team = $request->user()->currentTeam;
+    $checkoutSession = $team->stripe()->checkout->sessions->retrieve($sessionId);
+    if ($checkoutSession->payment_status === 'paid') {
+        $team->update([
+            'lifetime' => true,
+            'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Payment successful!');
+    }
+
+    return redirect()->route('subscribe');
+})->name('product-checkout-success')->middleware(['auth', 'verified']);
+
+Route::get('/settings', function () {
+    return to_route('settings.profile');
+})->name('settings')->middleware('auth');
+
+Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
+    $type = request('type', 'processed');
+
+    if ($type === 'raw') {
+        return $photo->downloadRaw();
+    }
+
+    return $photo->download();
+})->name('galleries.photos.download')->middleware(['auth', 'verified', 'can:view,photo']);

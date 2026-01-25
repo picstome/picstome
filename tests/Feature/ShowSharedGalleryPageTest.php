@@ -18,7 +18,7 @@ beforeEach(function () {
 });
 
 test('shared gallery can be viewed', function () {
-    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
 
@@ -26,26 +26,22 @@ test('shared gallery can be viewed', function () {
 });
 
 test('visitors can view a shared gallery', function () {
-    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
     $photoA = Photo::factory()->for($gallery)->create();
-    $photoB = Photo::factory()->for(Gallery::factory())->create();
+    $photoB = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $photoC = Photo::factory()->for($gallery)->create();
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
     $component = Volt::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $response->assertStatus(200);
-    $response->assertViewHas('gallery');
-    expect($response['gallery']->is($gallery))->toBeTrue();
-
-    $component->assertViewHas('allPhotos');
-    expect($component->viewData('allPhotos')->contains($photoA))->toBeTrue();
-    expect($component->viewData('allPhotos')->contains($photoB))->toBeFalse();
-    expect($component->viewData('allPhotos')->contains($photoC))->toBeTrue();
+    expect($component->allPhotos->contains($photoA))->toBeTrue();
+    expect($component->allPhotos->contains($photoB))->toBeFalse();
+    expect($component->allPhotos->contains($photoC))->toBeTrue();
 });
 
 test('unshared gallery can not be viewed', function () {
-    $gallery = Gallery::factory()->unshared()->create(['ulid' => '0123ABC']);
+    $gallery = Gallery::factory()->unshared()->for($this->team)->create(['ulid' => '0123ABC']);
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
 
@@ -53,7 +49,7 @@ test('unshared gallery can not be viewed', function () {
 });
 
 test('unauthenticated visitors to a password-protected gallery are redirected to the unlock page', function () {
-    $gallery = Gallery::factory()->shared()->protected()->create(['ulid' => '0123ABC']);
+    $gallery = Gallery::factory()->shared()->protected()->for($this->team)->create(['ulid' => '0123ABC']);
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
 
@@ -79,7 +75,7 @@ test('visitors can view shared gallery favorites', function () {
 });
 
 test('shared gallery displays description when present', function () {
-    $gallery = Gallery::factory()->shared()->create([
+    $gallery = Gallery::factory()->shared()->for($this->team)->create([
         'share_description' => 'This is a beautiful wedding gallery showcasing our special day',
     ]);
 
@@ -90,7 +86,7 @@ test('shared gallery displays description when present', function () {
 });
 
 test('shared gallery does not display description when empty', function () {
-    $gallery = Gallery::factory()->shared()->create([
+    $gallery = Gallery::factory()->shared()->for($this->team)->create([
         'share_description' => null,
     ]);
 
@@ -101,7 +97,7 @@ test('shared gallery does not display description when empty', function () {
 });
 
 test('visitors can favorite a photo', function () {
-    $photo = Photo::factory()->for(Gallery::factory()->selectable())->unfavorited()->create();
+    $photo = Photo::factory()->for(Gallery::factory()->selectable()->for($this->team))->unfavorited()->create();
     expect($photo->isFavorited())->toBeFalse();
 
     $component = Volt::test('shared-photo-item', ['photo' => $photo])
@@ -111,7 +107,7 @@ test('visitors can favorite a photo', function () {
 });
 
 test('visitors cannot favorite a photo when gallery is not selectable', function () {
-    $photo = Photo::factory()->for(Gallery::factory()->unselectable())->unfavorited()->create();
+    $photo = Photo::factory()->for(Gallery::factory()->unselectable()->for($this->team))->unfavorited()->create();
     expect($photo->isFavorited())->toBeFalse();
 
     $component = Volt::test('shared-photo-item', ['photo' => $photo])
@@ -123,7 +119,7 @@ test('visitors cannot favorite a photo when gallery is not selectable', function
 test('team owner is notified when selection limit is reached', function () {
     Notification::fake();
 
-    $gallery = Gallery::factory()->shared()->selectable()->create(['share_selection_limit' => 2]);
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create(['share_selection_limit' => 2]);
     $photo1 = Photo::factory()->for($gallery)->unfavorited()->create();
     $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
     $teamOwner = $gallery->team->owner;
@@ -151,7 +147,7 @@ test('team owner is notified when selection limit is reached', function () {
 test('notification is sent only once per gallery when selection limit is reached', function () {
     Notification::fake();
 
-    $gallery = Gallery::factory()->shared()->selectable()->create(['share_selection_limit' => 2]);
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create(['share_selection_limit' => 2]);
     $photo1 = Photo::factory()->for($gallery)->unfavorited()->create();
     $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
     $photo3 = Photo::factory()->for($gallery)->unfavorited()->create();
