@@ -2,7 +2,7 @@
 
 use App\Livewire\Forms\LoginForm;
 use Illuminate\Support\Facades\Session;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component
 {

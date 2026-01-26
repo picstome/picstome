@@ -76,7 +76,7 @@ Route::livewire('/contracts', 'pages.contracts')->name('contracts')->middleware(
 
 Route::livewire('/contracts/{contract}', 'pages.contracts.show')->name('contracts.show')->middleware(['auth', 'verified']);
 
-Route::livewire('/branding', 'pages.branding')->name('branding')->middleware('auth');
+Route::redirect('/branding', '/branding/general')->name('branding')->middleware('auth');
 
 Route::livewire('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');
 

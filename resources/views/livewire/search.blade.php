@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component
 {

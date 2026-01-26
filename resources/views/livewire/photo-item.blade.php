@@ -3,7 +3,7 @@
 use App\Models\Gallery;
 use App\Models\Photo;
 use Livewire\Attributes\On;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component
 {

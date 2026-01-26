@@ -2,7 +2,7 @@
 
 use App\Models\Moodboard;
 use App\Models\MoodboardPhoto;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new class extends Component
 {

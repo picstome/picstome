@@ -14,9 +14,7 @@ uses(RefreshDatabase::class);
 test('login screen can be rendered', function () {
     $response = get('/login');
 
-    $response
-        ->assertStatus(200)
-        ->assertSeeVolt('pages.login');
+    $response->assertStatus(200);
 });
 
 test('users can authenticate using the login screen', function () {
