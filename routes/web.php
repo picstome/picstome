@@ -78,15 +78,15 @@ Route::livewire('/contracts/{contract}', 'pages.contracts.show')->name('contract
 
 Route::redirect('/branding', '/branding/general')->name('branding')->middleware('auth');
 
-Route::livewire('/branding/general', 'pages.branding.general')->name('branding.general')->middleware('auth');
+Route::livewire('/branding/general', 'pages::branding.general')->name('branding.general')->middleware('auth');
 
-Route::livewire('/branding/logos', 'pages.branding.logos')->name('branding.logos')->middleware('auth');
+Route::livewire('/branding/logos', 'pages::branding.logos')->name('branding.logos')->middleware('auth');
 
-Route::livewire('/branding/payments', 'pages.branding.payments')->name('branding.payments')->middleware(['auth', 'verified']);
+Route::livewire('/branding/payments', 'pages::branding.payments')->name('branding.payments')->middleware(['auth', 'verified']);
 
-Route::livewire('/branding/styling', 'pages.branding.styling')->name('branding.styling')->middleware('auth');
+Route::livewire('/branding/styling', 'pages::branding.styling')->name('branding.styling')->middleware('auth');
 
-Route::livewire('/branding/watermark', 'pages.branding.watermark')->name('branding.watermark')->middleware('auth');
+Route::livewire('/branding/watermark', 'pages::branding.watermark')->name('branding.watermark')->middleware('auth');
 
 Route::livewire('/customers', 'pages.customers')->name('customers')->middleware(['auth', 'verified']);
 
@@ -148,7 +148,7 @@ Route::livewire('/forgot-password', 'pages.forgot-password')->name('password.req
 Route::livewire('/login', 'pages.login')->name('login')->middleware('guest');
 Route::livewire('/payments', 'pages.payments')->name('payments')->middleware(['auth', 'verified']);
 Route::livewire('/portfolio', 'pages.portfolio')->name('portfolio')->middleware(['auth', 'verified']);
-Route::livewire('/public-profile', 'pages.public-profile')->name('public-profile')->middleware('auth');
+Route::livewire('/public-profile', 'pages::public-profile')->name('public-profile')->middleware('auth');
 Route::livewire('/register', 'pages.register')->name('register')->middleware('guest');
 Route::livewire('/subscribe', 'pages.subscribe')->name('subscribe')->middleware(['auth', 'verified']);
 Route::livewire('/users', 'pages.users')->name('users')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);

@@ -11,7 +11,7 @@ it('updates stripe currency with valid value', function () {
     $team = $user->currentTeam;
     expect($team->stripe_currency)->not->toBe('mxn');
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.stripe_currency', 'mxn')
         ->call('save');
 
@@ -27,7 +27,7 @@ it('shows error for invalid stripe currency', function () {
     $team = $user->currentTeam;
     $invalidCurrency = 'xxx';
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.stripe_currency', $invalidCurrency)
         ->call('save')
         ->assertHasErrors(['form.stripe_currency' => 'in']);
@@ -42,7 +42,7 @@ it('can update the show_pay_button setting', function () {
     $team = $user->currentTeam;
     expect($team->show_pay_button)->toBeTrue();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.show_pay_button', false)
         ->call('save');
 
@@ -51,7 +51,7 @@ it('can update the show_pay_button setting', function () {
     $team->refresh();
     expect($team->show_pay_button)->toBeFalse();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.show_pay_button', true)
         ->call('save');
 
@@ -71,7 +71,7 @@ it('can disconnect the Stripe account', function () {
     expect($team->stripe_account_id)->not->toBeNull();
     expect($team->stripe_onboarded)->toBeTrue();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->call('disconnectStripe');
 
     $component->assertHasNoErrors();
@@ -93,7 +93,7 @@ it('can disconnect the Stripe test account when test mode is enabled', function 
     expect($team->stripe_test_account_id)->not->toBeNull();
     expect($team->stripe_test_onboarded)->toBeTrue();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->call('disconnectStripe');
 
     $component->assertHasNoErrors();
@@ -108,7 +108,7 @@ it('can toggle stripe_test_mode', function () {
     $team = $user->currentTeam;
     expect($team->stripe_test_mode)->toBeFalse();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.stripe_test_mode', true)
         ->call('save');
 
@@ -116,7 +116,7 @@ it('can toggle stripe_test_mode', function () {
     $team->refresh();
     expect($team->stripe_test_mode)->toBeTrue();
 
-    $component = Livewire::actingAs($user)->test('pages.branding.payments')
+    $component = Livewire::actingAs($user)->test('pages::branding.payments')
         ->set('form.stripe_test_mode', false)
         ->call('save');
 
