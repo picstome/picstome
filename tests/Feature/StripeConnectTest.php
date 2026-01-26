@@ -2,8 +2,8 @@
 
 use App\Models\User;
 use Facades\App\Services\StripeConnectService;
-use Livewire\Volt\Volt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -19,7 +19,7 @@ it('sets the onboarding url', function () {
         ->with($team)
         ->andReturn($mockedUrl);
 
-    $component = Volt::actingAs($user)->test('pages.stripe-connect.index')->assertOk();
+    $component = Livewire::actingAs($user)->test('pages.stripe-connect.index')->assertOk();
 
     expect($component->onboardingUrl)->toBe($mockedUrl);
 });
@@ -29,7 +29,7 @@ it('sets onboarding complete when team has completed onboarding', function () {
     $team = $user->currentTeam;
     $team->markOnboarded();
 
-    $component = Volt::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
+    $component = Livewire::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
 
     expect($component->onboardingComplete)->toBeTrue();
     expect($component->onboardingUrl)->toBeNull();
@@ -45,7 +45,7 @@ it('marks onboarding complete when onboarding is complete', function () {
         ->andReturn(true);
     StripeConnectService::shouldReceive('createOnboardingLink')->never();
 
-    $component = Volt::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
+    $component = Livewire::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
 
     expect($component->onboardingComplete)->toBeTrue();
     expect($component->onboardingUrl)->toBeNull();
@@ -65,7 +65,7 @@ it('sets onboarding not complete when onboarding is incomplete', function () {
         ->with($team)
         ->andReturn($mockedUrl);
 
-    $component = Volt::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
+    $component = Livewire::actingAs($user)->test('pages.stripe-connect.return')->assertOk();
 
     expect($component->onboardingComplete)->toBeFalse();
     expect($component->onboardingUrl)->toBe($mockedUrl);

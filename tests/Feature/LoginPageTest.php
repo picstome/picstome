@@ -3,7 +3,7 @@
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\assertAuthenticated;
 use function Pest\Laravel\assertGuest;
@@ -25,7 +25,7 @@ test('users can authenticate using the login screen', function () {
         'password' => Hash::make('password'),
     ]);
 
-    $component = Volt::test('pages.login')
+    $component = Livewire::test('pages.login')
         ->set('form.email', 'test@example.com')
         ->set('form.password', 'password');
 
@@ -44,7 +44,7 @@ test('users can not authenticate with invalid password', function () {
         'password' => Hash::make('password'),
     ]);
 
-    $component = Volt::test('pages.login')
+    $component = Livewire::test('pages.login')
         ->set('form.email', 'test@example.com')
         ->set('form.password', 'invalid-password');
 

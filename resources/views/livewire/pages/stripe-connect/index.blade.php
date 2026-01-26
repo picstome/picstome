@@ -2,7 +2,7 @@
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Layout('layouts.app')] class extends Component
 {

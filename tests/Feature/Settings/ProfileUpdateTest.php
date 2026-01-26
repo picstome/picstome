@@ -3,7 +3,7 @@
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -19,7 +19,7 @@ test('profile page is displayed', function () {
 test('profile information can be updated', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.settings.profile')
+    $response = Livewire::actingAs($user)->test('pages.settings.profile')
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
         ->call('updateProfileInformation');
@@ -38,7 +38,7 @@ test('users can upload an avatar', function () {
 
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.settings.profile')
+    $response = Livewire::actingAs($user)->test('pages.settings.profile')
         ->set('avatar', UploadedFile::fake()->image('avatar.jpg'))
         ->call('updateProfileInformation');
 
@@ -59,7 +59,7 @@ test('users can delete their avatar', function () {
 
     Storage::disk('s3')->assertCount('/avatars', 1);
 
-    $response = Volt::actingAs($user)->test('pages.settings.profile')
+    $response = Livewire::actingAs($user)->test('pages.settings.profile')
         ->call('deleteAvatar');
 
     Storage::disk('s3')->assertCount('/avatars', 0);

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 {

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Stripe\CustomerSession;
 use Stripe\Stripe;
 

@@ -4,7 +4,7 @@ use App\Models\Customer;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -21,7 +21,7 @@ it('shows only customers belonging to the users team', function () {
     $customerC = Customer::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/customers');
-    $component = Volt::test('pages.customers');
+    $component = Livewire::test('pages.customers');
 
     $response->assertStatus(200);
     expect($component->customers->count())->toBe(2);
@@ -31,7 +31,7 @@ it('shows only customers belonging to the users team', function () {
 });
 
 it('allows a user to create a customer', function () {
-    $component = Volt::actingAs($this->user)
+    $component = Livewire::actingAs($this->user)
         ->test('pages.customers')
         ->set('form.name', 'Jane Doe')
         ->set('form.email', 'jane@example.com')
@@ -41,7 +41,7 @@ it('allows a user to create a customer', function () {
 });
 
 it('allows a user to create a customer with optional fields', function () {
-    Volt::actingAs($this->user)
+    Livewire::actingAs($this->user)
         ->test('pages.customers')
         ->set('form.name', 'Jane Doe')
         ->set('form.email', 'jane@example.com')
@@ -59,7 +59,7 @@ it('allows a user to create a customer with optional fields', function () {
 it('enforces unique email per team', function () {
     Customer::factory()->for($this->team)->create(['email' => 'unique@example.com']);
 
-    Volt::actingAs($this->user)
+    Livewire::actingAs($this->user)
         ->test('pages.customers')
         ->set('form.name', 'Another')
         ->set('form.email', 'unique@example.com')
@@ -68,5 +68,5 @@ it('enforces unique email per team', function () {
 });
 
 it('forbids guests from creating customers', function () {
-    Volt::test('pages.customers')->call('save')->assertStatus(403);
+    Livewire::test('pages.customers')->call('save')->assertStatus(403);
 });

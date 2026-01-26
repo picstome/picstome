@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -32,7 +32,7 @@ describe('Moodboard Viewing', function () {
         $photoC = MoodboardPhoto::factory()->for($moodboard)->create();
 
         $response = actingAs($this->user)->get('/moodboards/1');
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard]);
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard]);
 
         $response->assertStatus(200);
 
@@ -64,7 +64,7 @@ describe('Photo Upload', function () {
 
         $moodboard = Moodboard::factory()->for($this->team)->create(['ulid' => '123ABC']);
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])->set([
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg'),
             'photos.1' => UploadedFile::fake()->image('photo2.jpg'),
         ])->call('savePhoto', 0)->call('savePhoto', 1);
@@ -91,7 +91,7 @@ describe('Moodboard Editing', function () {
     it('allows editing a team moodboard', function () {
         $moodboard = Moodboard::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('form.title', 'Edited Moodboard')
             ->set('form.description', 'Updated description')
             ->call('update');
@@ -103,7 +103,7 @@ describe('Moodboard Editing', function () {
     it('allows updating moodboard title only', function () {
         $moodboard = Moodboard::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('form.title', 'New Title')
             ->call('update');
 
@@ -129,7 +129,7 @@ describe('Photo Deletion', function () {
 
         Queue::fake();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->call('deletePhoto', $photo->id);
 
         expect($moodboard->photos()->count())->toBe(0);
@@ -140,7 +140,7 @@ describe('Photo Deletion', function () {
         $moodboard = Moodboard::factory()->for($this->team)->create();
         $photo = MoodboardPhoto::factory()->for(Moodboard::factory()->for(Team::factory()))->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->call('deletePhoto', $photo->id);
 
         $component->assertStatus(403);
@@ -161,7 +161,7 @@ describe('Moodboard Deletion', function () {
             $moodboard->addPhoto($photo);
         });
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])->call('delete');
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])->call('delete');
         $component->assertRedirect('/moodboards');
         expect(Moodboard::count())->toBe(0);
         expect(MoodboardPhoto::count())->toBe(0);
@@ -189,7 +189,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024);
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('photos.0', $photoFile)
             ->call('savePhoto', 0);
 
@@ -213,7 +213,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024);
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('photos.0', $photoFile)
             ->call('savePhoto', 0);
 
@@ -237,7 +237,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(2 * 1024);
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('photos.0', $photoFile)
             ->call('savePhoto', 0);
 
@@ -258,7 +258,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_delete.jpg', 1200, 800)->size(5 * 1024);
         $photoSize = $photoFile->getSize();
 
-        Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('photos.0', $photoFile)
             ->call('savePhoto', 0);
 
@@ -266,7 +266,7 @@ describe('Storage Limits', function () {
         expect($storageAfterUpload)->toBe($photoSize);
 
         $photo = $moodboard->fresh()->photos()->first();
-        Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->call('deletePhoto', $photo->id);
 
         expect($this->team->calculateStorageUsed())->toBe(0);
@@ -288,7 +288,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024);
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
+        $component = Livewire::actingAs($this->user)->test('pages.moodboards.show', ['moodboard' => $moodboard])
             ->set('photos.0', $photoFile)
             ->call('savePhoto', 0);
 

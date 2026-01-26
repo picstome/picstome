@@ -4,7 +4,7 @@ use App\Models\Moodboard;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -21,7 +21,7 @@ test('users can view their team moodboards', function () {
     $moodboardC = Moodboard::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/moodboards');
-    $component = Volt::test('pages.moodboards');
+    $component = Livewire::test('pages.moodboards');
 
     $response->assertStatus(200);
     expect($component->moodboards->count())->toBe(2);
@@ -31,7 +31,7 @@ test('users can view their team moodboards', function () {
 });
 
 test('can create a team moodboard', function () {
-    $component = Volt::actingAs($this->user)->test('pages.moodboards')
+    $component = Livewire::actingAs($this->user)->test('pages.moodboards')
         ->set('form.title', 'My Moodboard')
         ->call('save');
 
@@ -41,7 +41,7 @@ test('can create a team moodboard', function () {
 });
 
 test('can create a team moodboard with description', function () {
-    $component = Volt::actingAs($this->user)->test('pages.moodboards')
+    $component = Livewire::actingAs($this->user)->test('pages.moodboards')
         ->set('form.title', 'My Moodboard')
         ->set('form.description', 'This is a test moodboard')
         ->call('save');
@@ -53,7 +53,7 @@ test('can create a team moodboard with description', function () {
 });
 
 test('cannot create a moodboard without a title', function () {
-    $component = Volt::actingAs($this->user)->test('pages.moodboards')
+    $component = Livewire::actingAs($this->user)->test('pages.moodboards')
         ->set('form.title', '')
         ->call('save');
 

@@ -29,33 +29,86 @@ return [
     'view_path' => resource_path('views/livewire'),
 
     /*
-    |---------------------------------------------------------------------------
-    | Layout
-    |---------------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | Component Layout
+    |--------------------------------------------------------------------------
     | The view that will be used as the layout when rendering a single component
-    | as an entire page via `Route::get('/post/create', CreatePost::class);`.
+    | as an entire page via `Route::livewire('/post/create', CreatePost::class);`.
     | In this case, the view returned by CreatePost will render into $slot.
     |
     */
 
-    'layout' => 'components.layouts.app',
+    'component_layout' => 'layouts::app',
 
     /*
-    |---------------------------------------------------------------------------
-    | Lazy Loading Placeholder
-    |---------------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | Component Placeholder
+    |--------------------------------------------------------------------------
     | Livewire allows you to lazy load components that would otherwise slow down
     | the initial page load. Every component can have a custom placeholder or
     | you can define the default placeholder view for all components below.
     |
     */
 
-    'lazy_placeholder' => null,
+    'component_placeholder' => null,
 
     /*
-    |---------------------------------------------------------------------------
+    |--------------------------------------------------------------------------
+    | Component Locations
+    |--------------------------------------------------------------------------
+    |
+    | Define where Livewire looks for view-based component files.
+    |
+    */
+
+    'component_locations' => [
+        resource_path('views/components'),
+        resource_path('views/livewire'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Component Namespaces
+    |--------------------------------------------------------------------------
+    |
+    | Create custom namespaces for organizing view-based components.
+    |
+    */
+
+    'component_namespaces' => [
+        'layouts' => resource_path('views/layouts'),
+        'pages' => resource_path('views/pages'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Make Command Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Configure default behavior for make:livewire commands.
+    |
+    */
+
+    'make_command' => [
+        'type' => 'class',
+        'emoji' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | CSP Safe Mode
+    |--------------------------------------------------------------------------
+    |
+    | Enable Content Security Policy mode to avoid unsafe-eval violations.
+    |
+    */
+
+    'csp_safe' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Temporary File Uploads
-    |---------------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     |
     | Livewire handles file uploads by storing uploads in a temporary directory
     | before the file is stored permanently. All file uploads are directed to

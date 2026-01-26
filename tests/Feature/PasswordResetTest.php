@@ -4,7 +4,7 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
@@ -21,7 +21,7 @@ it('sends a reset password link when requested', function () {
 
     $user = User::factory()->create();
 
-    Volt::test('pages.forgot-password')
+    Livewire::test('pages.forgot-password')
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
@@ -33,7 +33,7 @@ it('renders the reset password screen with a valid token', function () {
 
     $user = User::factory()->create();
 
-    Volt::test('pages.forgot-password')
+    Livewire::test('pages.forgot-password')
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
@@ -51,12 +51,12 @@ it('resets the password with a valid token', function () {
 
     $user = User::factory()->create();
 
-    Volt::test('pages.forgot-password')
+    Livewire::test('pages.forgot-password')
         ->set('email', $user->email)
         ->call('sendPasswordResetLink');
 
     Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-        $response = Volt::test('pages.reset-password.token', ['token' => $notification->token])
+        $response = Livewire::test('pages.reset-password.token', ['token' => $notification->token])
             ->set('email', $user->email)
             ->set('password', 'password')
             ->set('password_confirmation', 'password')

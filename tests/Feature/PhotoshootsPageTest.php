@@ -5,7 +5,7 @@ use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -22,7 +22,7 @@ it('shows only photoshoots belonging to the users team', function () {
     $photoshootC = Photoshoot::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/photoshoots');
-    $component = Volt::test('pages.photoshoots');
+    $component = Livewire::test('pages.photoshoots');
 
     $response->assertStatus(200);
     expect($component->photoshoots->count())->toBe(2);
@@ -32,7 +32,7 @@ it('shows only photoshoots belonging to the users team', function () {
 });
 
 it('allows a user to create a photoshoot with a customer email', function () {
-    $component = Volt::actingAs($this->user)
+    $component = Livewire::actingAs($this->user)
         ->test('pages.photoshoots')
         ->set('form.name', 'John\'s Photoshoot')
         ->set('form.customerName', 'John Doe')
@@ -47,7 +47,7 @@ it('allows a user to create a photoshoot with a customer email', function () {
 it('allows a user to create a photoshoot with an existing customer', function () {
     $customer = Customer::factory()->for($this->team)->create();
 
-    $component = Volt::actingAs($this->user)
+    $component = Livewire::actingAs($this->user)
         ->test('pages.photoshoots')
         ->set('form.name', 'Jane Photoshoot')
         ->set('form.customer', $customer->id)

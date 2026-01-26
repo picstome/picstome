@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -36,7 +36,7 @@ describe('Gallery Viewing', function () {
         $photoC = Photo::factory()->for($gallery)->create();
 
         $response = actingAs($this->user)->get('/galleries/1');
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
 
         $response->assertStatus(200);
 
@@ -70,7 +70,7 @@ describe('Photo Upload', function () {
 
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg'),
             'photos.1' => UploadedFile::fake()->image('photo2.jpg'),
         ])->call('save', 0)->call('save', 1);
@@ -102,7 +102,7 @@ describe('Photo Upload', function () {
 
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->set([
             'photos.0' => UploadedFile::fake()->image('photo1.jpg', 129, 129),
         ])->call('save', 0);
 
@@ -117,7 +117,7 @@ describe('Gallery Sharing', function () {
     it('can be shared with no options enabled', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
@@ -127,7 +127,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.selectable', true)
             ->call('share');
 
@@ -138,7 +138,7 @@ describe('Gallery Sharing', function () {
     it('can be shared with downloadable options enabled', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.downloadable', true)
             ->call('share');
 
@@ -149,7 +149,7 @@ describe('Gallery Sharing', function () {
     it('can be shared with limited selection', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.limitedSelection', true)
             ->set('shareForm.selectionLimit', 10)
             ->call('share');
@@ -160,7 +160,7 @@ describe('Gallery Sharing', function () {
     it('can be disabled for sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->shared()->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('disableSharing');
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('disableSharing');
 
         expect($gallery->fresh()->is_shared)->toBeFalse();
     });
@@ -170,7 +170,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->share_password)->toBeNull();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.passwordProtected', true)
             ->set('shareForm.password', 'secret')
             ->call('share');
@@ -182,7 +182,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->fresh()->is_share_watermarked)->toBeFalse();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.watermarked', true)
             ->call('share');
 
@@ -194,7 +194,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->protected('password')->create();
         expect($gallery->share_password)->not->toBeNull();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.passwordProtected', false)
             ->call('share');
 
@@ -205,7 +205,7 @@ describe('Gallery Sharing', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', true)
             ->call('share');
 
@@ -213,7 +213,7 @@ describe('Gallery Sharing', function () {
 
         expect($gallery->are_comments_enabled)->toBeTrue();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', false)
             ->call('share');
 
@@ -227,7 +227,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->share_description)->toBeNull();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', 'This is a beautiful wedding gallery')
             ->call('share');
@@ -241,7 +241,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->shared()->create(['share_description' => 'Old description']);
         expect($gallery->share_description)->toBe('Old description');
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', 'Updated description')
             ->call('share');
@@ -252,7 +252,7 @@ describe('Gallery Sharing', function () {
     it('can be shared without a description', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
             ->call('share');
 
@@ -264,7 +264,7 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->shared()->create(['share_description' => 'Some description']);
         expect($gallery->share_description)->toBe('Some description');
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
             ->call('share');
 
@@ -275,7 +275,7 @@ describe('Gallery Sharing', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', true)
             ->set('shareForm.description', '')
             ->call('share');
@@ -286,7 +286,7 @@ describe('Gallery Sharing', function () {
     it('does not require description when description is disabled', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('shareForm.descriptionEnabled', false)
             ->set('shareForm.description', '')
             ->call('share');
@@ -301,7 +301,7 @@ describe('Favorites', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery]);
 
         expect($component->favorites->contains($favorite))->toBeTrue();
     });
@@ -310,7 +310,7 @@ describe('Favorites', function () {
         $photo = Photo::factory()->unfavorited()->create();
         expect($photo->isFavorited())->toBeFalse();
 
-        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
             ->call('favorite', $photo->id);
 
         $component->assertDispatched('photo-favorited');
@@ -334,7 +334,7 @@ describe('Photo Deletion', function () {
         expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeTrue();
         expect(Photo::count())->toBe(1);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('deletePhoto', $photo->id);
 
         expect($gallery->photos()->count())->toBe(0);
@@ -345,7 +345,7 @@ describe('Photo Deletion', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $photo = Photo::factory()->for(Gallery::factory()->for(Team::factory()))->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('deletePhoto', $photo->id);
 
         $component->assertStatus(403);
@@ -366,7 +366,7 @@ describe('Photo Deletion', function () {
             expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
         });
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])->call('delete');
         $component->assertRedirect('/galleries');
         expect(Gallery::count())->toBe(0);
         expect(Photo::count())->toBe(0);
@@ -381,7 +381,7 @@ describe('Gallery Photoshoot Association', function () {
         $photoshoot = Photoshoot::factory()->for($this->team)->create();
         $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshoot->id)
             ->call('update');
 
@@ -396,7 +396,7 @@ describe('Gallery Photoshoot Association', function () {
             'photoshoot_id' => $photoshootA->id,
         ]);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshootB->id)
             ->call('update');
 
@@ -409,7 +409,7 @@ describe('Gallery Photoshoot Association', function () {
         $photoshoot = Photoshoot::factory()->for($otherTeam)->create();
         $gallery = Gallery::factory()->for($this->team)->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', $photoshoot->id)
             ->call('update');
 
@@ -424,7 +424,7 @@ describe('Gallery Photoshoot Association', function () {
             'photoshoot_id' => $photoshoot->id,
         ]);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.photoshoot_id', null)
             ->call('update');
 
@@ -437,7 +437,7 @@ describe('Gallery Editing', function () {
     it('allows editing a team gallery', function () {
         $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.name', 'Edited Gallery')
             ->call('update');
 
@@ -448,7 +448,7 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $expirationDate = now()->addDays(10)->toDateString();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.expirationDate', $expirationDate)
             ->call('update');
         $gallery->refresh();
@@ -459,7 +459,7 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
         $newExpiration = now()->addDays(20)->toDateString();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.expirationDate', $newExpiration)
             ->call('update');
         $gallery->refresh();
@@ -470,7 +470,7 @@ describe('Gallery Editing', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.expirationDate', '')
             ->call('update');
         $gallery->refresh();
@@ -480,7 +480,7 @@ describe('Gallery Editing', function () {
     it('cannot remove the gallery expiration date when not subscribed', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.expirationDate', '')
             ->call('update');
 
@@ -493,7 +493,7 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->public()->create(['expiration_date' => now()->addDays(5)]);
         expect($gallery->is_public)->toBeTrue();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('form.expirationDate', '')
             ->call('update')
             ->assertHasNoErrors('form.expirationDate');
@@ -523,7 +523,7 @@ describe('Storage Limits', function () {
         $photoSize = $photoFile->getSize();
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -549,7 +549,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -576,7 +576,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -603,7 +603,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(2 * 1024); // 2 KB
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -625,7 +625,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_delete.jpg', 1200, 800)->size(5 * 1024); // 5 KB
         $photoSize = $photoFile->getSize();
 
-        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -633,7 +633,7 @@ describe('Storage Limits', function () {
         expect($storageAfterUpload)->toBe($photoSize);
 
         $photo = $gallery->fresh()->photos()->first();
-        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('deletePhoto', $photo->id);
 
         expect($this->team->calculateStorageUsed())->toBe(0);
@@ -656,7 +656,7 @@ describe('Storage Limits', function () {
         $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->set('photos.0', $photoFile)
             ->call('save', 0);
 
@@ -671,7 +671,7 @@ describe('Cover Photo', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $photo = Photo::factory()->for($gallery)->create();
 
-        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
             ->call('setAsCover');
 
         expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
@@ -683,7 +683,7 @@ describe('Cover Photo', function () {
         $photo2 = Photo::factory()->for($gallery)->create();
         $gallery->update(['cover_photo_id' => $photo1->id]);
 
-        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo2])
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo2])
             ->call('setAsCover');
 
         expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
@@ -694,7 +694,7 @@ describe('Cover Photo', function () {
         $photo = Photo::factory()->for($gallery)->create();
         $gallery->update(['cover_photo_id' => $photo->id]);
 
-        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
             ->call('removeAsCover');
 
         expect($gallery->fresh()->cover_photo_id)->toBeNull();
@@ -706,7 +706,7 @@ describe('Cover Photo', function () {
         $otherGallery = Gallery::factory()->for($otherTeam)->create();
         $photo = Photo::factory()->for($otherGallery)->create();
 
-        $component = Volt::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
             ->call('setAsCover');
 
         $component->assertStatus(403);
@@ -721,7 +721,7 @@ describe('Gallery Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
         $photos = Photo::factory()->for($gallery)->count(3)->create();
 
-        Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
 
         $gallery->refresh();
@@ -741,7 +741,7 @@ describe('Gallery Public Access', function () {
         expect($gallery->is_public)->toBeFalse();
         expect($gallery->expiration_date)->not->toBeNull();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
 
         $gallery->refresh();
@@ -753,7 +753,7 @@ describe('Gallery Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         expect($gallery->is_public)->toBeFalse();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
 
         expect($gallery->fresh()->is_public)->toBeTrue();
@@ -763,7 +763,7 @@ describe('Gallery Public Access', function () {
         $gallery = Gallery::factory()->for($this->team)->public()->create();
         expect($gallery->is_public)->toBeTrue();
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
 
         expect($gallery->fresh()->is_public)->toBeFalse();
@@ -774,7 +774,7 @@ describe('Gallery Public Access', function () {
             'expiration_date' => null,
         ]);
 
-        $component = Volt::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
+        $component = Livewire::actingAs($this->user)->test('pages.galleries.show', ['gallery' => $gallery])
             ->call('togglePublic');
 
         $gallery->refresh();

@@ -4,10 +4,9 @@ use App\Models\Contract;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\Photoshoot;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -18,7 +17,7 @@ it('renders the search component successfully', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search');
+    $component = Livewire::test('search');
 
     $component->assertOk();
 });
@@ -33,7 +32,7 @@ it('returns galleries that match the search query', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'Wedding');
 
     $component->assertSet('galleries', function ($galleries) {
@@ -51,7 +50,7 @@ it('returns photoshoots that match the search query', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'Wedding');
 
     $component->assertSet('photoshoots', function ($photoshoots) {
@@ -69,7 +68,7 @@ it('returns contracts that match the search query', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'Wedding');
 
     $component->assertSet('contracts', function ($contracts) {
@@ -90,7 +89,7 @@ it('returns photos that match the search query', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'wedding');
 
     $component->assertSet('photos', function ($photos) {
@@ -109,13 +108,13 @@ it('returns empty results when no items match the search query', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'wedding');
 
-    $component->assertSet('galleries', fn($g) => $g->isEmpty());
-    $component->assertSet('photoshoots', fn($p) => $p->isEmpty());
-    $component->assertSet('contracts', fn($c) => $c->isEmpty());
-    $component->assertSet('photos', fn($p) => $p->isEmpty());
+    $component->assertSet('galleries', fn ($g) => $g->isEmpty());
+    $component->assertSet('photoshoots', fn ($p) => $p->isEmpty());
+    $component->assertSet('contracts', fn ($c) => $c->isEmpty());
+    $component->assertSet('photos', fn ($p) => $p->isEmpty());
 });
 
 it('redirects to the correct gallery page when viewGallery is called', function () {
@@ -125,7 +124,7 @@ it('redirects to the correct gallery page when viewGallery is called', function 
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->call('viewGallery', $gallery->id);
 
     $component->assertRedirect("/galleries/{$gallery->id}");
@@ -138,7 +137,7 @@ it('redirects to the correct photoshoot page when viewPhotoshoot is called', fun
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->call('viewPhotoshoot', $photoshoot->id);
 
     $component->assertRedirect("/photoshoots/{$photoshoot->id}");
@@ -151,7 +150,7 @@ it('redirects to the correct contract page when viewContract is called', functio
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->call('viewContract', $contract->id);
 
     $component->assertRedirect("/contracts/{$contract->id}");
@@ -165,7 +164,7 @@ it('redirects to the correct photo page when viewPhoto is called', function () {
 
     actingAs($user);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->call('viewPhoto', $gallery->id, $photo->id);
 
     $component->assertRedirect("/galleries/{$gallery->id}/photos/{$photo->id}");
@@ -183,7 +182,7 @@ it('scopes search results to the current user\'s team only', function () {
 
     actingAs($user1);
 
-    $component = Volt::test('search')
+    $component = Livewire::test('search')
         ->set('search', 'Team1');
 
     $component->assertSet('galleries', function ($galleries) use ($team1) {

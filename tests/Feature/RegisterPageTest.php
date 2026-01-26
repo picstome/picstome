@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertAuthenticated;
@@ -15,7 +15,7 @@ it('allows guests to view the registration page', function () {
 });
 
 it('allows guests to register with valid data', function () {
-    $component = Volt::test('pages.register')
+    $component = Livewire::test('pages.register')
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
         ->set('password', 'password')
@@ -27,7 +27,7 @@ it('allows guests to register with valid data', function () {
 });
 
 it('authenticates the user after successful registration', function () {
-    $component = Volt::test('pages.register')
+    $component = Livewire::test('pages.register')
         ->set('name', 'Auth User')
         ->set('email', 'authuser@example.com')
         ->set('password', 'password123')
@@ -47,7 +47,7 @@ it('redirects authenticated users away from the registration page', function () 
 });
 
 it('creates a personal team for the user upon registration', function () {
-    $component = Volt::test('pages.register')
+    $component = Livewire::test('pages.register')
         ->set('name', 'Team User')
         ->set('email', 'teamuser@example.com')
         ->set('password', 'password123')
@@ -64,7 +64,7 @@ it('creates a personal team for the user upon registration', function () {
 });
 
 it('gives the personal team 1GB of storage upon creation', function () {
-    $component = Volt::test('pages.register')
+    $component = Livewire::test('pages.register')
         ->set('name', 'Storage User')
         ->set('email', 'storageuser@example.com')
         ->set('password', 'password123')
@@ -78,7 +78,7 @@ it('gives the personal team 1GB of storage upon creation', function () {
 });
 
 it('creates a personal team with a handle upon registration', function () {
-    $component = Volt::test('pages.register')
+    $component = Livewire::test('pages.register')
         ->set('name', 'Handle User')
         ->set('email', 'handleuser@example.com')
         ->set('password', 'password123')
@@ -94,7 +94,7 @@ it('creates a personal team with a handle upon registration', function () {
 });
 
 it('generates unique handles when registering users with similar names', function () {
-    Volt::test('pages.register')
+    Livewire::test('pages.register')
         ->set('name', 'Test User')
         ->set('email', 'testuser1@example.com')
         ->set('password', 'password123')
@@ -102,7 +102,7 @@ it('generates unique handles when registering users with similar names', functio
         ->set('terms', true)
         ->call('register');
 
-    Volt::test('pages.register')
+    Livewire::test('pages.register')
         ->set('name', 'Test User')
         ->set('email', 'testuser2@example.com')
         ->set('password', 'password123')
@@ -118,7 +118,7 @@ it('generates unique handles when registering users with similar names', functio
 });
 
 it('stores referral code when provided during registration', function () {
-    Volt::test('pages.register')
+    Livewire::test('pages.register')
         ->set('name', 'Referral User')
         ->set('email', 'referral@example.com')
         ->set('password', 'password123')
@@ -132,7 +132,7 @@ it('stores referral code when provided during registration', function () {
 });
 
 it('stores referral code from query parameter', function () {
-    Volt::test('pages.register')
+    Livewire::test('pages.register')
         ->set('referral_code', 'CHEMA')
         ->set('name', 'Referral User 2')
         ->set('email', 'referral2@example.com')

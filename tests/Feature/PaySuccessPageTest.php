@@ -6,7 +6,7 @@ use App\Notifications\BookingCreated;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -45,7 +45,7 @@ it('creates a photoshoot if booking is enabled and no photoshoot_id is present',
         ->once()
         ->andReturn($mockSession);
 
-    Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_123'])
+    Livewire::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_123'])
         ->assertOk();
 
     $customer = $this->team->customers()->first();
@@ -105,7 +105,7 @@ it('does not create a photoshoot if booking is not enabled', function () {
         ->once()
         ->andReturn($mockSession);
 
-    Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_456'])
+    Livewire::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_456'])
         ->assertOk();
 
     $customer = $this->team->customers()->first();
@@ -149,7 +149,7 @@ it('does not create a photoshoot if photoshoot_id is present', function () {
         ->once()
         ->andReturn($mockSession);
 
-    Volt::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_789'])
+    Livewire::test('pages.pay.success', ['handle' => $this->team->handle, 'session_id' => 'sess_789'])
         ->assertOk();
 
     $customer = $this->team->customers()->first();

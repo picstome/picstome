@@ -4,7 +4,7 @@ use App\Livewire\Forms\ContractTemplateForm;
 use App\Models\ContractTemplate;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new #[Layout('layouts.app')] class extends Component
 {

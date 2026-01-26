@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -18,7 +18,7 @@ test('appearance information can be updated', function () {
     $user = User::factory()->withPersonalTeam()->create();
     expect($user->language)->toBeNull();
 
-    $response = Volt::actingAs($user)->test('pages.settings.appearance')
+    $response = Livewire::actingAs($user)->test('pages.settings.appearance')
         ->set('form.language', 'es')
         ->call('save');
 

@@ -6,7 +6,7 @@ use Illuminate\View\View;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
 #[Layout('layouts.guest')]

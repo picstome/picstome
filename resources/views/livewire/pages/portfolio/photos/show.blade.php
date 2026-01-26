@@ -4,7 +4,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
 #[Layout('layouts.guest', ['fullScreen' => true])]

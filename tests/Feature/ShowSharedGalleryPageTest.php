@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Notifications\SelectionLimitReached;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
@@ -32,7 +32,7 @@ test('visitors can view a shared gallery', function () {
     $photoC = Photo::factory()->for($gallery)->create();
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
-    $component = Volt::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $response->assertStatus(200);
     expect($component->allPhotos->contains($photoA))->toBeTrue();
@@ -69,7 +69,7 @@ test('visitors can view shared gallery favorites', function () {
     $gallery = Gallery::factory()->shared()->create();
     $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-    $component = Volt::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     expect($component->favorites->contains($favorite))->toBeTrue();
 });
@@ -100,7 +100,7 @@ test('visitors can favorite a photo', function () {
     $photo = Photo::factory()->for(Gallery::factory()->selectable()->for($this->team))->unfavorited()->create();
     expect($photo->isFavorited())->toBeFalse();
 
-    $component = Volt::test('shared-photo-item', ['photo' => $photo])
+    $component = Livewire::test('shared-photo-item', ['photo' => $photo])
         ->call('favorite');
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
@@ -110,7 +110,7 @@ test('visitors cannot favorite a photo when gallery is not selectable', function
     $photo = Photo::factory()->for(Gallery::factory()->unselectable()->for($this->team))->unfavorited()->create();
     expect($photo->isFavorited())->toBeFalse();
 
-    $component = Volt::test('shared-photo-item', ['photo' => $photo])
+    $component = Livewire::test('shared-photo-item', ['photo' => $photo])
         ->call('favorite');
 
     $component->assertStatus(403);
@@ -124,12 +124,12 @@ test('team owner is notified when selection limit is reached', function () {
     $photo2 = Photo::factory()->for($gallery)->unfavorited()->create();
     $teamOwner = $gallery->team->owner;
 
-    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
+    Livewire::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
 
     expect($photo1->fresh()->isFavorited())->toBeTrue();
     Notification::assertNotSentTo($teamOwner, SelectionLimitReached::class);
 
-    Volt::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
+    Livewire::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
 
     expect($photo2->fresh()->isFavorited())->toBeTrue();
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, function ($notification) use ($gallery) {
@@ -154,18 +154,18 @@ test('notification is sent only once per gallery when selection limit is reached
     $teamOwner = $gallery->team->owner;
 
     // Favorite first two photos, reaching limit
-    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
-    Volt::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
+    Livewire::test('shared-photo-item', ['photo' => $photo1])->call('favorite');
+    Livewire::test('shared-photo-item', ['photo' => $photo2])->call('favorite');
 
     // Notification sent
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, 1);
 
     // Unfavorite one photo
-    Volt::test('shared-photo-item', ['photo' => $photo1])->call('favorite'); // toggle off
+    Livewire::test('shared-photo-item', ['photo' => $photo1])->call('favorite'); // toggle off
     expect($photo1->fresh()->isFavorited())->toBeFalse();
 
     // Favorite another photo, reaching limit again
-    Volt::test('shared-photo-item', ['photo' => $photo3])->call('favorite');
+    Livewire::test('shared-photo-item', ['photo' => $photo3])->call('favorite');
     expect($photo3->fresh()->isFavorited())->toBeTrue();
 
     // No additional notification sent

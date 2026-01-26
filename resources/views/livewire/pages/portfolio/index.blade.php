@@ -4,7 +4,7 @@ use App\Models\Team;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
-use Livewire\Volt\Component;
+use Livewire\Component;
 
 new
 #[Layout('layouts.guest')]

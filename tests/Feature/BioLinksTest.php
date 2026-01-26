@@ -4,7 +4,7 @@ use App\Models\BioLink;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -19,7 +19,7 @@ it('allows users to add a new bio link', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->set('addForm.title', 'Twitter')
         ->set('addForm.url', 'https://twitter.com/testuser')
         ->call('addLink');
@@ -41,7 +41,7 @@ it('allows users to update an existing bio link', function () {
         'url' => 'https://old-url.com',
     ]);
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->call('editLink', $bioLink->id)
         ->set('editForm.title', 'New Title')
         ->set('editForm.url', 'https://new-url.com')
@@ -67,7 +67,7 @@ it('prevents users from updating bio links for other teams', function () {
 
     get(route('public-profile'))->assertOk();
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->call('editLink', $otherBioLink->id);
 
     $response->assertForbidden();
@@ -79,7 +79,7 @@ it('allows users to delete a bio link', function () {
 
     $bioLink = BioLink::factory()->for($team)->create();
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->call('deleteLink', $bioLink->id);
 
     $response->assertHasNoErrors();
@@ -96,7 +96,7 @@ it('allows users to reorder bio links', function () {
     $link1 = BioLink::factory()->for($team)->create(['order' => 1]);
     $link2 = BioLink::factory()->for($team)->create(['order' => 2]);
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->call('reorderLink', $link2, 1);
 
     $response->assertHasNoErrors();
@@ -111,7 +111,7 @@ it('allows users to reorder bio links', function () {
 it('requires bio link title', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->set('addForm.title', '')
         ->set('addForm.url', 'https://example.com')
         ->call('addLink');
@@ -122,14 +122,14 @@ it('requires bio link title', function () {
 it('requires bio link url and validates format', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->set('addForm.title', 'Test Link')
         ->set('addForm.url', '')
         ->call('addLink');
 
     $response->assertHasErrors(['addForm.url' => 'required']);
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->set('addForm.title', 'Test Link')
         ->set('addForm.url', 'invalid-url')
         ->call('addLink');
@@ -140,7 +140,7 @@ it('requires bio link url and validates format', function () {
 it('validates bio link title maximum length', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->set('addForm.title', str_repeat('a', 256))
         ->set('addForm.url', 'https://example.com')
         ->call('addLink');
@@ -225,7 +225,7 @@ it('prevents users from managing bio links for other teams', function () {
         ->assertOk()
         ->assertDontSee($otherBioLink->title);
 
-    $response = Volt::actingAs($user)->test('pages.public-profile')
+    $response = Livewire::actingAs($user)->test('pages.public-profile')
         ->call('deleteLink', $otherBioLink);
 
     $response->assertForbidden();

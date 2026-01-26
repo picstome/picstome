@@ -13,7 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
@@ -26,7 +26,7 @@ test('guests can sign a contract', function () {
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
 
     $response = get('/signatures/0123ABC/sign');
-    $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
+    $component = Livewire::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -62,7 +62,7 @@ test('contract is executed once the final signature is submitted', function () {
     expect($contract->signaturesRemaining())->toBe(1);
     $lastUnsingedSignature = $contract->signatures()->unsigned()->first();
 
-    $component = Volt::test('pages.signatures.sign', ['signature' => $lastUnsingedSignature])
+    $component = Livewire::test('pages.signatures.sign', ['signature' => $lastUnsingedSignature])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -95,9 +95,9 @@ test('contract is not executed if there are remaining signatures to sign', funct
     expect($contract->signaturesRemaining())->toBe(2);
     $signature = $contract->signatures()->unsigned()->first();
 
-    $component = Volt::actingAs($contract->team->owner)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Livewire::actingAs($contract->team->owner)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
 
-    $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
+    $component = Livewire::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -124,7 +124,7 @@ test('sign form can be pre-filled when the user is logged in', function () {
 
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
 
-    $component = Volt::actingAs($user)->test('pages.signatures.sign', ['signature' => $signature]);
+    $component = Livewire::actingAs($user)->test('pages.signatures.sign', ['signature' => $signature]);
 
     expect($component->email)->toBe('test-user@example.com');
     expect($component->legalName)->toBe('::legal-name::');
@@ -139,7 +139,7 @@ test('sign form is not pre-filled when the user does not have a signed signature
 
     $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
 
-    $component = Volt::actingAs($user)->test('pages.signatures.sign', ['signature' => $signature]);
+    $component = Livewire::actingAs($user)->test('pages.signatures.sign', ['signature' => $signature]);
 
     expect($component->email)->toBeNull();
     expect($component->legalName)->toBeNull();
@@ -163,7 +163,7 @@ test('signing a contract updates the customer birthdate if customer exists for t
 
     $newBirthdate = '2000-12-12';
 
-    $component = Volt::test('pages.signatures.sign', ['signature' => $signature])
+    $component = Livewire::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -184,7 +184,7 @@ test('signing a contract creates a new customer if one does not exist for the te
     $contract = Contract::factory()->for($team)->create();
     $signature = Signature::factory()->for($contract)->unsigned()->create();
 
-    Volt::test('pages.signatures.sign', ['signature' => $signature])
+    Livewire::test('pages.signatures.sign', ['signature' => $signature])
         ->set('role', 'Model')
         ->set('legalName', 'Jane Smith')
         ->set('documentNumber', 'XYZ9876')
@@ -219,7 +219,7 @@ test('signing updates photoshoot customer email and birthdate when not team owne
     $newEmail = 'new-email@example.com';
     $newBirthdate = '2000-12-12';
 
-    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+    Livewire::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -251,7 +251,7 @@ test('signing does not update photoshoot customer when signer is team owner', fu
 
     $newBirthdate = '2000-12-12';
 
-    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+    Livewire::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')
@@ -284,7 +284,7 @@ test('signing does not update photoshoot customer when contract has only one sig
     $newEmail = 'new-email@example.com';
     $newBirthdate = '2000-12-12';
 
-    Volt::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+    Livewire::test('pages.signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
         ->set('role', 'Model')
         ->set('legalName', 'John Doe')
         ->set('documentNumber', 'ABC1234')

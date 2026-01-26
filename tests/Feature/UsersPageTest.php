@@ -4,7 +4,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -41,7 +41,7 @@ describe('Users Page', function () {
         ]);
         $user = User::factory()->withPersonalTeam()->create();
 
-        Volt::actingAs($admin)
+        Livewire::actingAs($admin)
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 12)
@@ -63,7 +63,7 @@ describe('Users Page', function () {
         $team->update(['custom_storage_limit' => 123456789]);
         expect($team->has_unlimited_storage)->toBeFalse();
 
-        Volt::actingAs($admin)
+        Livewire::actingAs($admin)
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', null)
@@ -83,7 +83,7 @@ describe('Users Page', function () {
         $team = $user->personalTeam();
         $team->update(['custom_storage_limit' => 123456789]);
 
-        Volt::actingAs($admin)
+        Livewire::actingAs($admin)
             ->test('pages.users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 0)

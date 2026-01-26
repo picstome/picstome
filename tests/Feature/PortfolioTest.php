@@ -7,7 +7,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -18,7 +18,7 @@ it('allows users to disable the public portfolio page for their team', function 
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('disablePortfolioPage');
 
     $response->assertHasNoErrors();
@@ -45,7 +45,7 @@ it('allows users to re-enable the public portfolio page for their team', functio
     $team->portfolio_public_disabled = true;
     $team->save();
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('enablePortfolioPage');
 
     $response->assertHasNoErrors();
@@ -64,7 +64,7 @@ it('allows users to add a gallery to portfolio', function () {
 
     $gallery = Gallery::factory()->for($team)->create(['is_public' => false]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('addToPortfolio', $gallery);
 
     $response->assertHasNoErrors();
@@ -80,7 +80,7 @@ it('allows users to remove a gallery from portfolio', function () {
 
     $gallery = Gallery::factory()->for($team)->create(['is_public' => true]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $gallery);
 
     $response->assertHasNoErrors();
@@ -101,7 +101,7 @@ it('prevents users from managing portfolio galleries for other teams', function 
 
     get(route('portfolio'))->assertOk();
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
@@ -114,7 +114,7 @@ it('allows users to reorder portfolio galleries', function () {
     $gallery1 = Gallery::factory()->for($team)->create(['is_public' => true, 'portfolio_order' => 1]);
     $gallery2 = Gallery::factory()->for($team)->create(['is_public' => true, 'portfolio_order' => 2]);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('reorderGallery', $gallery2, 1);
 
     $response->assertHasNoErrors();
@@ -138,7 +138,7 @@ it('prevents users from managing portfolio for other teams', function () {
         ->assertOk()
         ->assertDontSee($otherGallery->name);
 
-    $response = Volt::actingAs($user)->test('pages.portfolio')
+    $response = Livewire::actingAs($user)->test('pages.portfolio')
         ->call('removeFromPortfolio', $otherGallery);
 
     $response->assertForbidden();
@@ -152,7 +152,7 @@ it('disables keep_original_size and dispatches photo processing when adding gall
     $gallery = Gallery::factory()->for($team)->create(['is_public' => false, 'keep_original_size' => true]);
     $photos = Photo::factory()->for($gallery)->count(3)->create();
 
-    Volt::actingAs($user)->test('pages.portfolio')
+    Livewire::actingAs($user)->test('pages.portfolio')
         ->call('addToPortfolio', $gallery);
 
     $gallery->refresh();

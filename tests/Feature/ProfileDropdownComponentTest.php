@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Volt\Volt;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertGuest;
@@ -14,7 +14,7 @@ test('users can logout', function () {
 
     actingAs($user);
 
-    $component = Volt::test('profile-dropdown');
+    $component = Livewire::test('profile-dropdown');
 
     $component->call('logout');
 
