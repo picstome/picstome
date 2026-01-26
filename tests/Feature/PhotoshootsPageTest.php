@@ -22,7 +22,7 @@ it('shows only photoshoots belonging to the users team', function () {
     $photoshootC = Photoshoot::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/photoshoots');
-    $component = Livewire::test('pages.photoshoots');
+    $component = Livewire::test('pages::photoshoots');
 
     $response->assertStatus(200);
     expect($component->photoshoots->count())->toBe(2);
@@ -33,7 +33,7 @@ it('shows only photoshoots belonging to the users team', function () {
 
 it('allows a user to create a photoshoot with a customer email', function () {
     $component = Livewire::actingAs($this->user)
-        ->test('pages.photoshoots')
+        ->test('pages::photoshoots')
         ->set('form.name', 'John\'s Photoshoot')
         ->set('form.customerName', 'John Doe')
         ->set('form.customerEmail', 'john@example.com')
@@ -48,7 +48,7 @@ it('allows a user to create a photoshoot with an existing customer', function ()
     $customer = Customer::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)
-        ->test('pages.photoshoots')
+        ->test('pages::photoshoots')
         ->set('form.name', 'Jane Photoshoot')
         ->set('form.customer', $customer->id)
         ->call('save');

@@ -25,7 +25,7 @@ describe('Viewing contracts', function () {
         $contractC = Contract::factory()->for($this->team)->create();
 
         $response = actingAs($this->user)->get('/contracts');
-        $component = Livewire::test('pages.contracts');
+        $component = Livewire::test('pages::contracts');
 
         $response->assertStatus(200);
 
@@ -38,7 +38,7 @@ describe('Viewing contracts', function () {
 
 describe('Creating contracts', function () {
     it('allows a user to add a new contract with all required fields', function () {
-        $component = Livewire::actingAs($this->user)->test('pages.contracts')
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
             ->set('form.title', 'A contract title')
             ->set('form.description', 'A contract description')
             ->set('form.location', 'A location')
@@ -75,7 +75,7 @@ describe('Contract limits', function () {
 
         Contract::factory()->count(5)->for($this->team)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages.contracts')
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
             ->set('form.title', 'Contract 6')
             ->set('form.description', 'Desc')
             ->set('form.location', 'Loc')
@@ -99,7 +99,7 @@ describe('Contract limits', function () {
 
         Contract::factory()->count(4)->for($this->team)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages.contracts')
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
             ->set('form.title', 'Contract 5 this month')
             ->set('form.description', 'Desc')
             ->set('form.location', 'Loc')
@@ -119,7 +119,7 @@ describe('Contract limits', function () {
 
         Contract::factory()->count(6)->for($this->team)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages.contracts')
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
             ->set('form.title', 'Contract 7')
             ->set('form.description', 'Desc')
             ->set('form.location', 'Loc')
@@ -137,7 +137,7 @@ describe('Contract limits', function () {
         expect($this->user->currentTeam->subscribed())->toBeTrue();
         Contract::factory()->count(6)->for($this->team)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages.contracts')
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
             ->set('form.title', 'Contract 7')
             ->set('form.description', 'Desc')
             ->set('form.location', 'Loc')

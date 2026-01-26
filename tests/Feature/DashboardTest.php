@@ -12,7 +12,7 @@ it('allows users to dismiss a dashboard setup step', function () {
 
     expect($team->dismissed_setup_steps)->toBeNull();
 
-    $response = Livewire::actingAs($user)->test('pages.dashboard')
+    $response = Livewire::actingAs($user)->test('pages::dashboard')
         ->call('dismissStep', 'portfolio');
 
     $response->assertHasNoErrors();

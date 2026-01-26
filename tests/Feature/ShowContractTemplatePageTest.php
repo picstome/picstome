@@ -23,7 +23,7 @@ test('users can view their team template', function () {
 
     $response->assertStatus(200);
 
-    $component = Livewire::actingAs($this->user)->test('pages.contract-templates.show', ['contractTemplate' => $template]);
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template]);
 
     expect($component->contractTemplate->is($template))->toBeTrue();
 });
@@ -47,7 +47,7 @@ test('users cannot view the team templates of others', function () {
 test('user can edit a template', function () {
     $template = ContractTemplate::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.contract-templates.show', ['contractTemplate' => $template])
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
         ->set('form.title', 'New contract title')
         ->set('form.body', '<h3>New body in HTML</h3>')
         ->call('save');
@@ -62,7 +62,7 @@ test('user can edit a template', function () {
 test('user can delete a template', function () {
     $template = ContractTemplate::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.contract-templates.show', ['contractTemplate' => $template])
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
         ->call('delete');
 
     $component->assertRedirect('/contract-templates');

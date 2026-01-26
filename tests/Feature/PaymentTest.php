@@ -22,7 +22,7 @@ it('shows only payments belonging to the users team', function () {
     $paymentC = Payment::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/payments');
-    $component = Livewire::test('pages.payments');
+    $component = Livewire::test('pages::payments');
 
     $response->assertStatus(200);
     expect($component->payments->count())->toBe(2);
@@ -35,7 +35,7 @@ it('can edit a payment to assign a photoshoot', function () {
     $payment = Payment::factory()->for($this->team)->create();
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
         ->set('paymentForm.photoshoot_id', $photoshoot->id)
         ->call('savePayment');
@@ -50,7 +50,7 @@ it('can change or remove the assigned photoshoot', function () {
     $photoshootA = Photoshoot::factory()->for($this->team)->create();
     $photoshootB = Photoshoot::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
         ->set('paymentForm.photoshoot_id', $photoshootA->id)
         ->call('savePayment');
@@ -81,7 +81,7 @@ it('cannot assign a photoshoot from another team', function () {
     $otherTeam = Team::factory()->create();
     $otherPhotoshoot = Photoshoot::factory()->for($otherTeam)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
         ->set('paymentForm.photoshoot_id', $otherPhotoshoot->id)
         ->call('savePayment')
@@ -89,7 +89,7 @@ it('cannot assign a photoshoot from another team', function () {
 });
 
 it('generates payment link with valid data', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.amount', 1000)
         ->set('linkForm.description', 'Test payment')
         ->set('linkForm.booking', false)
@@ -104,14 +104,14 @@ it('generates payment link with valid data', function () {
 });
 
 it('fails validation if amount is missing', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.description', 'Test payment')
         ->call('generatePaymentLink')
         ->assertHasErrors(['linkForm.amount' => 'required']);
 });
 
 it('fails validation if amount is not integer or < 1', function () {
-    $component = Livewire::test('pages.payments')
+    $component = Livewire::test('pages::payments')
         ->set('linkForm.amount', 0)
         ->set('linkForm.description', 'Test payment')
         ->call('generatePaymentLink')
@@ -123,14 +123,14 @@ it('fails validation if amount is not integer or < 1', function () {
 });
 
 it('fails validation if description is missing', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.amount', 1000)
         ->call('generatePaymentLink')
         ->assertHasErrors(['linkForm.description' => 'required']);
 });
 
 it('fails validation if description is too long', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.amount', 1000)
         ->set('linkForm.description', str_repeat('a', 256))
         ->call('generatePaymentLink')
@@ -140,7 +140,7 @@ it('fails validation if description is too long', function () {
 it('can delete a payment', function () {
     $payment = Payment::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('deletePayment', $payment->id);
 
     expect($payment->fresh())->toBeNull();

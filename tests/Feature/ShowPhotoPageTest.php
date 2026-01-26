@@ -63,7 +63,7 @@ test('can delete a photo', function () {
     Storage::disk('public')->assertExists(['galleries/1/photos/photo1.jpg']);
     expect(Photo::count())->toBe(1);
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
         ->call('delete');
 
     $component->assertRedirect('/galleries/1');
@@ -76,7 +76,7 @@ test('can favorite a photo', function () {
     $photo = Photo::factory()->unfavorited()->for(Gallery::factory()->for($this->team))->create();
     expect($photo->isFavorited())->toBeFalse();
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
         ->call('favorite');
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
@@ -85,7 +85,7 @@ test('can favorite a photo', function () {
 test('can set a photo as the gallery cover', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
         ->call('setAsCover');
 
     expect($photo->gallery->fresh()->cover_photo_id)->toBe($photo->id);
@@ -97,7 +97,7 @@ test('can change the cover photo', function () {
     $photo2 = Photo::factory()->for($gallery)->create();
     $gallery->update(['cover_photo_id' => $photo1->id]);
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo2])
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo2])
         ->call('setAsCover');
 
     expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
@@ -108,7 +108,7 @@ test('can remove the cover photo', function () {
     $photo = Photo::factory()->for($gallery)->create();
     $gallery->update(['cover_photo_id' => $photo->id]);
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries.photos.show', ['photo' => $photo])
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
         ->call('removeAsCover');
 
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
@@ -119,7 +119,7 @@ test('authenticated user can add a comment to a photo', function () {
     $user = $this->user;
 
     Livewire::actingAs($user)
-        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
         ->set('commentText', 'This is a test comment!')
         ->call('addComment')
         ->assertHasNoErrors();
@@ -135,7 +135,7 @@ test('comment is required when adding a comment', function () {
     $user = $this->user;
 
     Livewire::actingAs($user)
-        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
         ->set('commentText', '')
         ->call('addComment')
         ->assertHasErrors(['commentText' => 'required']);
@@ -151,7 +151,7 @@ test('user can delete their own comment', function () {
     ]);
 
     Livewire::actingAs($user)
-        ->test('pages.galleries.photos.show', ['photo' => $photo])
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
         ->call('deleteComment', $comment->id)
         ->assertHasNoErrors();
 

@@ -23,7 +23,7 @@ test('users can authenticate using the login screen', function () {
         'password' => Hash::make('password'),
     ]);
 
-    $component = Livewire::test('pages.login')
+    $component = Livewire::test('pages::login')
         ->set('form.email', 'test@example.com')
         ->set('form.password', 'password');
 
@@ -42,7 +42,7 @@ test('users can not authenticate with invalid password', function () {
         'password' => Hash::make('password'),
     ]);
 
-    $component = Livewire::test('pages.login')
+    $component = Livewire::test('pages::login')
         ->set('form.email', 'test@example.com')
         ->set('form.password', 'invalid-password');
 

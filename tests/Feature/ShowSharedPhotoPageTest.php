@@ -30,7 +30,7 @@ test('favorite photo when gallery is selectable', function () {
 
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
 
-    $component = Livewire::test('pages.shares.photos.show', ['photo' => $gallery->photos()->first()])
+    $component = Livewire::test('pages::shares.photos.show', ['photo' => $gallery->photos()->first()])
         ->call('favorite');
 
     expect($gallery->photos()->first()->isFavorited())->toBeTrue();
@@ -41,7 +41,7 @@ test('photo cannot be favorited when the gallery is not selectable', function ()
 
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
 
-    $component = Livewire::test('pages.shares.photos.show', ['photo' => $gallery->photos()->first()])
+    $component = Livewire::test('pages::shares.photos.show', ['photo' => $gallery->photos()->first()])
         ->call('favorite');
 
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
@@ -53,7 +53,7 @@ test('favoriting a photo dispatches a selection limit reached event when the gal
 
     expect($gallery->photos()->favorited()->count())->toBe(5);
 
-    $component = Livewire::test('pages.shares.photos.show', ['photo' => $gallery->photos()->unfavorited()->first()])->call('favorite');
+    $component = Livewire::test('pages::shares.photos.show', ['photo' => $gallery->photos()->unfavorited()->first()])->call('favorite');
 
     $component->assertDispatched('selection-limit-reached');
 });
@@ -98,7 +98,7 @@ test('comment is required when adding a comment to a shared photo', function () 
     $user = $gallery->team->owner;
 
     Livewire::actingAs($user)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->set('commentText', '')
         ->call('addComment')
         ->assertHasErrors(['commentText' => 'required']);
@@ -119,7 +119,7 @@ test('user cannot delete another user\'s comment on a shared photo', function ()
     ]);
 
     Livewire::actingAs($otherUser)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->call('deleteComment', $comment->id)
         ->assertStatus(403);
 
@@ -132,7 +132,7 @@ test('guest can add a comment to a shared photo', function () {
     ]);
     $photo = $gallery->photos()->first();
 
-    Livewire::test('pages.shares.photos.show', ['photo' => $photo])
+    Livewire::test('pages::shares.photos.show', ['photo' => $photo])
         ->set('commentText', 'Guest comment')
         ->call('addComment')
         ->assertHasNoErrors();
@@ -147,7 +147,7 @@ test('comments are not allowed when comments are disabled', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create(['are_comments_enabled' => false]);
     $photo = $gallery->photos()->first();
 
-    $component = Livewire::test('pages.shares.photos.show', ['photo' => $photo])
+    $component = Livewire::test('pages::shares.photos.show', ['photo' => $photo])
         ->set('commentText', 'Should not work')
         ->call('addComment');
 
@@ -155,7 +155,7 @@ test('comments are not allowed when comments are disabled', function () {
 
     $comment = PhotoComment::factory()->for($photo)->create();
 
-    $component = Livewire::test('pages.shares.photos.show', ['photo' => $photo])
+    $component = Livewire::test('pages::shares.photos.show', ['photo' => $photo])
         ->call('deleteComment', $comment->id);
 
     $component->assertStatus(403);
@@ -169,7 +169,7 @@ test('only the team owner can add a comment as an authenticated user', function 
     $owner = $gallery->team->owner;
 
     Livewire::actingAs($owner)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->set('commentText', 'This is a shared photo comment!')
         ->call('addComment')
         ->assertHasNoErrors();
@@ -184,7 +184,7 @@ test('only the team owner can add a comment as an authenticated user', function 
     $otherUser = User::factory()->create();
 
     Livewire::actingAs($otherUser)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->set('commentText', 'Should not be allowed')
         ->call('addComment')
         ->assertStatus(403);
@@ -210,14 +210,14 @@ test('only the team owner can delete any comment', function () {
     ]);
 
     Livewire::actingAs($owner)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->call('deleteComment', $guestComment->id)
         ->assertHasNoErrors();
 
     expect($photo->comments()->find($guestComment->id))->toBeNull();
 
     Livewire::actingAs($owner)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->call('deleteComment', $userComment->id)
         ->assertHasNoErrors();
 
@@ -231,7 +231,7 @@ test('only the team owner can delete any comment', function () {
     ]);
 
     Livewire::actingAs($otherUser)
-        ->test('pages.shares.photos.show', ['photo' => $photo])
+        ->test('pages::shares.photos.show', ['photo' => $photo])
         ->call('deleteComment', $anotherComment->id)
         ->assertStatus(403);
 

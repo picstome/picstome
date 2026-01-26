@@ -57,7 +57,7 @@ it('can edit customer notes via Livewire', function () {
     $customer = Customer::factory()->for($this->team)->create(['notes' => 'Old notes']);
     actingAs($this->user);
 
-    Livewire::actingAs($this->user)->test('pages.customers.show', ['customer' => $customer])
+    Livewire::actingAs($this->user)->test('pages::customers.show', ['customer' => $customer])
         ->call('startEditingNotes')
         ->set('editedNotes', 'New notes with **markdown**')
         ->call('saveNotes')

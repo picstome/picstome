@@ -21,7 +21,7 @@ it('shows only customers belonging to the users team', function () {
     $customerC = Customer::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/customers');
-    $component = Livewire::test('pages.customers');
+    $component = Livewire::test('pages::customers');
 
     $response->assertStatus(200);
     expect($component->customers->count())->toBe(2);
@@ -32,7 +32,7 @@ it('shows only customers belonging to the users team', function () {
 
 it('allows a user to create a customer', function () {
     $component = Livewire::actingAs($this->user)
-        ->test('pages.customers')
+        ->test('pages::customers')
         ->set('form.name', 'Jane Doe')
         ->set('form.email', 'jane@example.com')
         ->call('save');
@@ -42,7 +42,7 @@ it('allows a user to create a customer', function () {
 
 it('allows a user to create a customer with optional fields', function () {
     Livewire::actingAs($this->user)
-        ->test('pages.customers')
+        ->test('pages::customers')
         ->set('form.name', 'Jane Doe')
         ->set('form.email', 'jane@example.com')
         ->set('form.phone', '1234567890')
@@ -60,7 +60,7 @@ it('enforces unique email per team', function () {
     Customer::factory()->for($this->team)->create(['email' => 'unique@example.com']);
 
     Livewire::actingAs($this->user)
-        ->test('pages.customers')
+        ->test('pages::customers')
         ->set('form.name', 'Another')
         ->set('form.email', 'unique@example.com')
         ->call('save')
@@ -68,5 +68,5 @@ it('enforces unique email per team', function () {
 });
 
 it('forbids guests from creating customers', function () {
-    Livewire::test('pages.customers')->call('save')->assertStatus(403);
+    Livewire::test('pages::customers')->call('save')->assertStatus(403);
 });

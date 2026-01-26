@@ -66,7 +66,7 @@ it('handles handle with special characters', function () {
 it('fails validation if amount is missing', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
-    Livewire::test('pages.handle.show', ['handle' => $team->handle])
+    Livewire::test('pages::handle.show', ['handle' => $team->handle])
         ->set('description', 'Test public payment')
         ->call('checkout')
         ->assertHasErrors(['amount' => 'required']);
@@ -75,7 +75,7 @@ it('fails validation if amount is missing', function () {
 it('fails validation if amount is not integer or < 1', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
-    $component = Livewire::test('pages.handle.show', ['handle' => $team->handle])
+    $component = Livewire::test('pages::handle.show', ['handle' => $team->handle])
         ->set('amount', 0)
         ->set('description', 'Test public payment')
         ->call('checkout')
@@ -89,7 +89,7 @@ it('fails validation if amount is not integer or < 1', function () {
 it('fails validation if description is missing', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
-    Livewire::test('pages.handle.show', ['handle' => $team->handle])
+    Livewire::test('pages::handle.show', ['handle' => $team->handle])
         ->set('amount', 1500)
         ->call('checkout')
         ->assertHasErrors(['description' => 'required']);
@@ -98,7 +98,7 @@ it('fails validation if description is missing', function () {
 it('fails validation if description is too long', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
-    Livewire::test('pages.handle.show', ['handle' => $team->handle])
+    Livewire::test('pages::handle.show', ['handle' => $team->handle])
         ->set('amount', 1500)
         ->set('description', str_repeat('a', 256))
         ->call('checkout')

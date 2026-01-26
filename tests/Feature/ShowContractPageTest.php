@@ -55,7 +55,7 @@ test('contract can be executed once all parties have signed it', function () {
     $signatureB = Signature::factory()->signed()->make(['email' => 'jane@example.com']);
     $contract->signatures()->saveMany([$signatureA, $signatureB]);
 
-    $component = Livewire::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Livewire::actingAs($this->user)->test('pages::contracts.show', ['contract' => $contract])->call('execute');
 
     tap($contract->fresh(), function (Contract $contract) {
         expect($contract->executed_at)->not->toBeNull();
@@ -77,7 +77,7 @@ test('contract cannot be executed if there are remaining signatures to sign', fu
     $signatureB = Signature::factory()->unsigned()->make();
     $contract->signatures()->saveMany([$signatureA, $signatureB]);
 
-    $component = Livewire::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])->call('execute');
+    $component = Livewire::actingAs($this->user)->test('pages::contracts.show', ['contract' => $contract])->call('execute');
 
     $component->assertStatus(401);
     expect($contract->executed_at)->toBeNull();
@@ -91,7 +91,7 @@ test('can download an executed contract', function () {
             ->storeAs('contracts/1/contract.pdf', 'contract.pdf', 's3'),
     ]);
 
-    $component = Livewire::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])
+    $component = Livewire::actingAs($this->user)->test('pages::contracts.show', ['contract' => $contract])
         ->call('download');
 
     $component->assertFileDownloaded('contract.pdf');
@@ -104,7 +104,7 @@ test('user can assign a contract to a photoshoot', function () {
     $contract = Contract::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)->actingAs($this->team->owner)
-        ->test('pages.contracts.show', ['contract' => $contract])
+        ->test('pages::contracts.show', ['contract' => $contract])
         ->set('photoshoot_id', $photoshoot->id)
         ->call('assignToPhotoshoot');
 
@@ -117,7 +117,7 @@ test('user cannot assign a contract to a photoshoot from another team', function
     $contract = Contract::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->team->owner)
-        ->test('pages.contracts.show', ['contract' => $contract])
+        ->test('pages::contracts.show', ['contract' => $contract])
         ->set('photoshoot_id', $photoshoot->id)
         ->call('assignToPhotoshoot')
         ->assertHasErrors(['photoshoot_id' => 'exists']);
@@ -131,7 +131,7 @@ test('user can re-assign a contract to a different photoshoot', function () {
     $contract = Contract::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
 
     $component = Livewire::actingAs($this->team->owner)
-        ->test('pages.contracts.show', ['contract' => $contract])
+        ->test('pages::contracts.show', ['contract' => $contract])
         ->set('photoshoot_id', $photoshootB->id)
         ->call('assignToPhotoshoot');
 
@@ -144,7 +144,7 @@ test('user can re-assign a contract null photoshoot', function () {
     $contract = Contract::factory()->for($this->team)->create(['photoshoot_id' => $photoshootA->id]);
 
     $component = Livewire::actingAs($this->team->owner)
-        ->test('pages.contracts.show', ['contract' => $contract])
+        ->test('pages::contracts.show', ['contract' => $contract])
         ->set('photoshoot_id', null)
         ->call('assignToPhotoshoot');
 
@@ -173,7 +173,7 @@ test('can delete team contract', function () {
     Storage::disk('s3')->assertExists('signatures/signatureA.png');
     Storage::disk('s3')->assertExists('signatures/signatureA.png');
 
-    $component = Livewire::actingAs($this->user)->test('pages.contracts.show', ['contract' => $contract])
+    $component = Livewire::actingAs($this->user)->test('pages::contracts.show', ['contract' => $contract])
         ->call('delete');
 
     $component->assertRedirect('/contracts');

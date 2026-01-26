@@ -42,7 +42,7 @@ describe('Users Page', function () {
         $user = User::factory()->withPersonalTeam()->create();
 
         Livewire::actingAs($admin)
-            ->test('pages.users')
+            ->test('pages::users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 12)
             ->set('userForm.monthly_contract_limit', 5)
@@ -64,7 +64,7 @@ describe('Users Page', function () {
         expect($team->has_unlimited_storage)->toBeFalse();
 
         Livewire::actingAs($admin)
-            ->test('pages.users')
+            ->test('pages::users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', null)
             ->set('userForm.monthly_contract_limit', null)
@@ -84,7 +84,7 @@ describe('Users Page', function () {
         $team->update(['custom_storage_limit' => 123456789]);
 
         Livewire::actingAs($admin)
-            ->test('pages.users')
+            ->test('pages::users')
             ->call('editUser', $user->id)
             ->set('userForm.custom_storage_limit', 0)
             ->set('userForm.monthly_contract_limit', 0)

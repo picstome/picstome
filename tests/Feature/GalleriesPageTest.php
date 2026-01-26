@@ -22,7 +22,7 @@ test('users can view their team galleries galleries', function () {
     $galleryC = Gallery::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/galleries');
-    $component = Livewire::test('pages.galleries');
+    $component = Livewire::test('pages::galleries');
 
     $response->assertStatus(200);
     expect($component->galleries->count())->toBe(2);
@@ -32,7 +32,7 @@ test('users can view their team galleries galleries', function () {
 });
 
 test('can create a team gallery', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Just a Photo Gallery')
         ->call('save');
 
@@ -43,7 +43,7 @@ test('can create a team gallery', function () {
 });
 
 test('can create a team gallery that keeps photos at their original size', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Just a Photo Gallery')
         ->set('form.keepOriginalSize', true)
         ->call('save');
@@ -56,7 +56,7 @@ test('can create a team gallery that keeps photos at their original size', funct
 test('can create a team gallery with no expiration date when subscribed', function () {
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'No Expiration Gallery')
         ->set('form.expirationDate', '')
         ->call('save');
@@ -69,7 +69,7 @@ test('can create a team gallery with no expiration date when subscribed', functi
 });
 
 test('cannot create a team gallery with no expiration date when not subscribed', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'No Expiration Gallery')
         ->set('form.expirationDate', '')
         ->call('save');
@@ -81,7 +81,7 @@ test('cannot create a team gallery with no expiration date when not subscribed',
 test('can create a team gallery with an expiration date', function () {
     $expiration = now()->addDays(7)->toDateString();
 
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Expiring Gallery')
         ->set('form.expirationDate', $expiration)
         ->call('save');
@@ -94,7 +94,7 @@ test('can create a team gallery with an expiration date', function () {
 });
 
 test('cannot create a gallery with an invalid expiration date', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Invalid Expiration Gallery')
         ->set('form.expirationDate', 'not-a-date')
         ->call('save');
@@ -103,7 +103,7 @@ test('cannot create a gallery with an invalid expiration date', function () {
     expect($this->team->galleries()->count())->toBe(0);
 
     $pastDate = now()->subDay()->toDateString();
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Past Expiration Gallery')
         ->set('form.expirationDate', $pastDate)
         ->call('save');
@@ -112,7 +112,7 @@ test('cannot create a gallery with an invalid expiration date', function () {
     expect($this->team->galleries()->count())->toBe(0);
 
     $futureDateOverOneYear = now()->addYear()->addDay()->toDateString();
-    $component = Livewire::actingAs($this->user)->test('pages.galleries')
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Too Far Future Gallery')
         ->set('form.expirationDate', $futureDateOverOneYear)
         ->call('save');

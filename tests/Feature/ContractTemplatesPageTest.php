@@ -21,7 +21,7 @@ test('users can view their team contract templates', function () {
     $templateC = ContractTemplate::factory()->for($this->team)->create();
 
     $response = actingAs($this->user)->get('/contract-templates');
-    $component = Livewire::test('pages.contract-templates');
+    $component = Livewire::test('pages::contract-templates');
 
     $response->assertStatus(200);
     expect($component->templates->count())->toBe(2);
@@ -31,7 +31,7 @@ test('users can view their team contract templates', function () {
 });
 
 test('can add new contract', function () {
-    $component = Livewire::actingAs($this->user)->test('pages.contract-templates')
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
         ->set('form.title', 'A contract title')
         ->set('form.body', '<h3>Body in HTML</h3>')
         ->call('save');
@@ -46,7 +46,7 @@ test('can add new contract', function () {
 });
 
 test('guests cannot create templates', function () {
-    $component = Livewire::test('pages.contract-templates')->call('save');
+    $component = Livewire::test('pages::contract-templates')->call('save');
 
     $component->assertStatus(403);
 });

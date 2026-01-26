@@ -18,7 +18,7 @@ test('appearance information can be updated', function () {
     $user = User::factory()->withPersonalTeam()->create();
     expect($user->language)->toBeNull();
 
-    $response = Livewire::actingAs($user)->test('pages.settings.appearance')
+    $response = Livewire::actingAs($user)->test('pages::settings.appearance')
         ->set('form.language', 'es')
         ->call('save');
 

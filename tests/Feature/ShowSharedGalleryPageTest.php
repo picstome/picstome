@@ -32,7 +32,7 @@ test('visitors can view a shared gallery', function () {
     $photoC = Photo::factory()->for($gallery)->create();
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
-    $component = Livewire::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $response->assertStatus(200);
     expect($component->allPhotos->contains($photoA))->toBeTrue();
@@ -69,7 +69,7 @@ test('visitors can view shared gallery favorites', function () {
     $gallery = Gallery::factory()->shared()->create();
     $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-    $component = Livewire::test('pages.shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     expect($component->favorites->contains($favorite))->toBeTrue();
 });

@@ -49,7 +49,7 @@ test('users cannot view the team photoshoot of others', function () {
 test('can add a gallery', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery for a photoshoot')
         ->call('addGallery');
 
@@ -64,7 +64,7 @@ test('can add a gallery with custom expiration date', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
     $expiration = now()->addDays(7)->toDateString();
 
-    Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery with custom expiration')
         ->set('galleryForm.expirationDate', $expiration)
         ->call('addGallery');
@@ -78,7 +78,7 @@ test('can add a gallery with no expiration date when subscribed', function () {
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery with no expiration')
         ->set('galleryForm.expirationDate', '')
         ->call('addGallery');
@@ -91,7 +91,7 @@ test('can add a gallery with no expiration date when subscribed', function () {
 test('cannot add a gallery with no expiration date when not subscribed', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery with no expiration')
         ->set('galleryForm.expirationDate', '')
         ->call('addGallery');
@@ -103,7 +103,7 @@ test('cannot add a gallery with no expiration date when not subscribed', functio
 test('cannot add a gallery with invalid expiration date', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery with invalid date')
         ->set('galleryForm.expirationDate', 'not-a-date')
         ->call('addGallery');
@@ -112,7 +112,7 @@ test('cannot add a gallery with invalid expiration date', function () {
     expect($photoshoot->galleries()->count())->toBe(0);
 
     $pastDate = now()->subDay()->toDateString();
-    $component = Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('galleryForm.name', 'Gallery with past date')
         ->set('galleryForm.expirationDate', $pastDate)
         ->call('addGallery');
@@ -131,7 +131,7 @@ test('can delete team photoshoot', function () {
     expect(Photo::count())->toBe(4);
 
     $component = Livewire::actingAs($this->user)
-        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->call('delete');
 
     $component->assertRedirect('/photoshoots');
@@ -150,7 +150,7 @@ test('can delete team photoshoot preserving galleries', function () {
     expect(Photo::count())->toBe(4);
 
     $component = Livewire::actingAs($this->user)
-        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->call('deletePreservingGalleries');
 
     $component->assertRedirect('/photoshoots');
@@ -164,7 +164,7 @@ test('can edit a team photoshoot', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create(['customer_id' => $customer->id]);
 
     $component = Livewire::actingAs($this->user)
-        ->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+        ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('form.name', 'Edited photoshoot')
         ->set('form.date', Carbon::parse('2025-12-12'))
         ->set('form.price', '400')
@@ -184,7 +184,7 @@ test('can edit a team photoshoot', function () {
 test('can add new contract', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
-    $component = Livewire::actingAs($this->user)->test('pages.photoshoots.show', ['photoshoot' => $photoshoot])
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
         ->set('contractForm.title', 'A contract title')
         ->set('contractForm.description', 'A contract description')
         ->set('contractForm.location', 'A location')
