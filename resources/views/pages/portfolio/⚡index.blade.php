@@ -11,6 +11,7 @@ new
 class extends Component
 {
     public Team $team;
+
     public ?Collection $galleries;
 
     public function mount(string $handle)
@@ -24,7 +25,7 @@ class extends Component
 
     public function rendering(View $view): void
     {
-        $view->title($this->team->name . ' - Portfolio');
+        $view->title($this->team->name.' - Portfolio');
     }
 }; ?>
 

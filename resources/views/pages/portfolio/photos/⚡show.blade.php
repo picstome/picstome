@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -27,7 +26,7 @@ class extends Component
 
     public function rendering(View $view): void
     {
-        $view->title($this->photo->gallery->name . ' - Photo');
+        $view->title($this->photo->gallery->name.' - Photo');
     }
 }; ?>
 

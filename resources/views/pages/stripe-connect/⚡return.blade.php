@@ -1,7 +1,6 @@
 <?php
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 new class extends Component

@@ -12,7 +12,9 @@ new
 class extends Component
 {
     public Team $team;
+
     public Gallery $gallery;
+
     public ?Collection $photos;
 
     public function mount(Gallery $gallery)

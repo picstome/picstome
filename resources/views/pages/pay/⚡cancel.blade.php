@@ -1,11 +1,8 @@
 <?php
 
 use App\Models\Team;
-use Facades\App\Services\StripeConnectService;
 use Illuminate\View\View;
-use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 new
@@ -21,7 +18,7 @@ class extends Component
 
     public function rendering(View $view): void
     {
-        $view->title($this->team->name . ' - Payment Cancelled');
+        $view->title($this->team->name.' - Payment Cancelled');
     }
 } ?>
 
