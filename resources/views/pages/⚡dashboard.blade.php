@@ -134,7 +134,6 @@ new class extends Component
     public function upcomingContractsAwaitingSignature()
     {
         return $this->team->contracts()
-            ->where('shooting_date', '>=', now()->copy()->startOfDay())
             ->whereNull('executed_at')
             ->orderBy('shooting_date')
             ->get();
