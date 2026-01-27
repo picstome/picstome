@@ -4,10 +4,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new #[Layout('layouts.app')] class extends Component
+new class extends Component
 {
     #[Computed]
     public function birthdaySoonCustomers()

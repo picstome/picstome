@@ -11,7 +11,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -21,7 +20,6 @@ new class extends Component
 {
     use WithFileUploads;
 
-    #[Layout('layouts.app')]
     public Gallery $gallery;
 
     public GalleryForm $form;

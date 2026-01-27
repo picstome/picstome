@@ -1,12 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Stripe\CustomerSession;
 use Stripe\Stripe;
 
-new #[Layout('layouts.app')] class extends Component
+new class extends Component
 {
     public $customerSessionClientSecret;
 

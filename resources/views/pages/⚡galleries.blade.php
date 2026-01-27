@@ -4,7 +4,6 @@ use App\Livewire\Forms\GalleryForm;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -12,7 +11,6 @@ new class extends Component
 {
     use WithPagination;
 
-    #[Layout('layouts.app')]
     public GalleryForm $form;
 
     public function mount()

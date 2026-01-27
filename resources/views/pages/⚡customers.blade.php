@@ -4,11 +4,10 @@ use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts.app')] class extends Component
+new class extends Component
 {
     use WithPagination;
 
