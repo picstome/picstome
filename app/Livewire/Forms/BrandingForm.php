@@ -46,7 +46,7 @@ class BrandingForm extends Form
                 'min:2',
                 'max:50',
                 'regex:/^[a-z0-9]+$/',
-                'unique:teams,handle,' . ($this->team->id ?? 'null'),
+                'unique:teams,handle,'.($this->team->id ?? 'null'),
             ],
         ];
     }

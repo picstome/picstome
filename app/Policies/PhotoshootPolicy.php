@@ -70,5 +70,4 @@ class PhotoshootPolicy
     {
         return $photoshoot->team->is($user->currentTeam);
     }
-
 }

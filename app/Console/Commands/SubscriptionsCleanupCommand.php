@@ -3,9 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Team;
-use App\Models\Gallery;
-use App\Notifications\SubscriptionExpiringSoon;
 use App\Notifications\SubscriptionExpiredWarning;
+use App\Notifications\SubscriptionExpiringSoon;
 use Illuminate\Console\Command;
 
 class SubscriptionsCleanupCommand extends Command

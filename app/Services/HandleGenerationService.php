@@ -19,7 +19,7 @@ class HandleGenerationService
         $counter = 1;
 
         while (Team::where('handle', $handle)->exists()) {
-            $handle = $baseHandle . $counter;
+            $handle = $baseHandle.$counter;
             $counter++;
         }
 

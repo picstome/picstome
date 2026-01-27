@@ -38,6 +38,7 @@ class ResendVerifyEmailCommand extends Command
 
         if ($users->isEmpty()) {
             $this->info('No users found with unverified emails.');
+
             return;
         }
 
@@ -48,6 +49,7 @@ class ResendVerifyEmailCommand extends Command
             $users->each(function ($user) {
                 $this->line("Would send verification email to: {$user->email}");
             });
+
             return;
         }
 

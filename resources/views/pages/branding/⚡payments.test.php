@@ -16,7 +16,6 @@ it('allows users to see the payments branding page', function () {
     $response->assertStatus(200);
 });
 
-
 it('updates stripe currency with valid value', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;

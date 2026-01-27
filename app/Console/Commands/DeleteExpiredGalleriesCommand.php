@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Gallery;
+use Illuminate\Console\Command;
 
 class DeleteExpiredGalleriesCommand extends Command
 {

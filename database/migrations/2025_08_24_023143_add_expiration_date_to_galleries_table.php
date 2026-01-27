@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-        public function up(): void
+    public function up(): void
     {
         Schema::table('galleries', function (Blueprint $table) {
             $table->date('expiration_date')->nullable();

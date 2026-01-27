@@ -4,7 +4,6 @@ namespace App\Livewire\Forms;
 
 use App\Models\BioLink;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class BioLinkForm extends Form

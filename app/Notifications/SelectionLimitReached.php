@@ -28,7 +28,7 @@ class SelectionLimitReached extends Notification implements ShouldQueue
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('Your customer has reached the selection limit of :limit photos for the gallery ":name".', [
                 'limit' => $this->gallery->share_selection_limit,
-                'name' => $this->gallery->name
+                'name' => $this->gallery->name,
             ]))
             ->line(__('You can now start working on the selected photos.'))
             ->line(__('Please note that the customer may have changed pictures in the meantime, so be sure to confirm with the customer before starting.'))

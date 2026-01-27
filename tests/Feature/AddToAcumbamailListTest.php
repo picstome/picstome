@@ -11,7 +11,7 @@ it('successfully adds subscriber to Acumbamail list', function () {
     config(['services.acumbamail.list_id' => '123']);
 
     Http::fake([
-        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 456], 200)
+        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 456], 200),
     ]);
 
     $job = new AddToAcumbamailList('john@example.com', 'John Doe', '123');
@@ -19,6 +19,7 @@ it('successfully adds subscriber to Acumbamail list', function () {
 
     Http::assertSent(function ($request) {
         $data = $request->data();
+
         return $request->url() === 'https://acumbamail.com/api/1/addSubscriber/' &&
                $request->method() === 'POST' &&
                $data['auth_token'] === 'test_token' &&
@@ -36,7 +37,7 @@ it('uses provided list ID when specified', function () {
     config(['services.acumbamail.list_id' => 'default_list']);
 
     Http::fake([
-        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 789], 200)
+        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 789], 200),
     ]);
 
     $job = new AddToAcumbamailList('jane@example.com', 'Jane Smith', 'custom_list_123');
@@ -44,6 +45,7 @@ it('uses provided list ID when specified', function () {
 
     Http::assertSent(function ($request) {
         $data = $request->data();
+
         return $data['list_id'] === 'custom_list_123'; // Should use provided list ID
     });
 });
@@ -53,7 +55,7 @@ it('falls back to config list ID when none provided', function () {
     config(['services.acumbamail.list_id' => 'fallback_list']);
 
     Http::fake([
-        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 101], 200)
+        'acumbamail.com/api/1/addSubscriber/' => Http::response(['subscriber_id' => 101], 200),
     ]);
 
     $job = new AddToAcumbamailList('bob@example.com', 'Bob Johnson'); // No listId provided
@@ -61,6 +63,7 @@ it('falls back to config list ID when none provided', function () {
 
     Http::assertSent(function ($request) {
         $data = $request->data();
+
         return $data['list_id'] === 'fallback_list'; // Should use config fallback
     });
 });
