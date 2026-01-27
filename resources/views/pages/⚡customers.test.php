@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-it('shows only customers belonging to the users team', function () {
+it('shows only customers belonging to users team', function () {
     $customerA = Customer::factory()->for($this->team)->create();
     $customerB = Customer::factory()->for(Team::factory())->create();
     $customerC = Customer::factory()->for($this->team)->create();

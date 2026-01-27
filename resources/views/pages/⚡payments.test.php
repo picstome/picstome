@@ -16,7 +16,7 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-it('shows only payments belonging to the users team', function () {
+it('shows only payments belonging to users team', function () {
     $paymentA = Payment::factory()->for($this->team)->create();
     $paymentB = Payment::factory()->for(Team::factory())->create();
     $paymentC = Payment::factory()->for($this->team)->create();
@@ -88,7 +88,7 @@ it('cannot assign a photoshoot from another team', function () {
         ->assertHasErrors(['paymentForm.photoshoot_id' => 'exists']);
 });
 
-it('generates payment link with valid data', function () {
+it('generates a payment link with valid data', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.amount', 1000)
         ->set('linkForm.description', 'Test payment')
@@ -111,7 +111,7 @@ it('fails validation if amount is missing', function () {
 });
 
 it('fails validation if amount is not integer or < 1', function () {
-    $component = Livewire::test('pages::payments')
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->set('linkForm.amount', 0)
         ->set('linkForm.description', 'Test payment')
         ->call('generatePaymentLink')

@@ -16,7 +16,7 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-it('shows only photoshoots belonging to the users team', function () {
+it('shows only photoshoots belonging to users team', function () {
     $photoshootA = Photoshoot::factory()->for($this->team)->create();
     $photoshootB = Photoshoot::factory()->for(Team::factory())->create();
     $photoshootC = Photoshoot::factory()->for($this->team)->create();

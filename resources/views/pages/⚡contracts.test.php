@@ -19,7 +19,7 @@ beforeEach(function () {
 });
 
 describe('Viewing contracts', function () {
-    it('shows only contracts belonging to the user’s team', function () {
+    it("shows only contracts belonging to user's team", function () {
         $contractA = Contract::factory()->for($this->team)->create();
         $contractB = Contract::factory()->for(Team::factory())->create();
         $contractC = Contract::factory()->for($this->team)->create();
