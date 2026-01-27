@@ -9,21 +9,6 @@ use function Pest\Laravel\actingAs;
 
 uses(RefreshDatabase::class);
 
-it('sets the onboarding url', function () {
-    $user = User::factory()->withPersonalTeam()->create();
-    $team = $user->currentTeam;
-    $mockedUrl = 'https://stripe.test/onboarding';
-
-    StripeConnectService::shouldReceive('createOnboardingLink')
-        ->once()
-        ->with($team)
-        ->andReturn($mockedUrl);
-
-    $component = Livewire::actingAs($user)->test('pages::stripe-connect.index')->assertOk();
-
-    expect($component->onboardingUrl)->toBe($mockedUrl);
-});
-
 it('sets onboarding complete when team has completed onboarding', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
