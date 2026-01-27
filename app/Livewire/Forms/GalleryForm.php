@@ -6,7 +6,6 @@ use App\Models\Gallery;
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class GalleryForm extends Form
@@ -30,7 +29,7 @@ class GalleryForm extends Form
         return [
             'photoshoot_id' => [
                 'nullable',
-                Rule::exists('photoshoots', 'id')->where(fn($query) => $query->where('team_id', $team->id)),
+                Rule::exists('photoshoots', 'id')->where(fn ($query) => $query->where('team_id', $team->id)),
             ],
             'name' => ['nullable', 'string'],
             'expirationDate' => $this->getExpirationRules($team),
@@ -84,17 +83,17 @@ class GalleryForm extends Form
                 'nullable',
                 'date',
                 'after_or_equal:today',
-                'before_or_equal:' . $maxExpirationDate,
+                'before_or_equal:'.$maxExpirationDate,
             ];
         }
 
         $rules = [
             'date',
             'after_or_equal:today',
-            'before_or_equal:' . $maxExpirationDate,
+            'before_or_equal:'.$maxExpirationDate,
         ];
 
-        if (!$team?->subscribed()) {
+        if (! $team?->subscribed()) {
             array_unshift($rules, 'required');
         } else {
             array_unshift($rules, 'nullable');

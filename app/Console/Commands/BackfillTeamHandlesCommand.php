@@ -34,10 +34,11 @@ class BackfillTeamHandlesCommand extends Command
         if ($teamsWithoutHandles->isEmpty()) {
             $this->info('No teams found that need handles');
             $this->info('Backfill completed successfully');
+
             return;
         }
 
-        $handleGenerator = new HandleGenerationService();
+        $handleGenerator = new HandleGenerationService;
         $processed = 0;
 
         foreach ($teamsWithoutHandles as $team) {

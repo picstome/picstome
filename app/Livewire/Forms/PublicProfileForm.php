@@ -10,15 +10,23 @@ class PublicProfileForm extends Form
     public Team $team;
 
     public $handle;
+
     public $bio;
 
     public $instagram;
+
     public $youtube;
+
     public $facebook;
+
     public $x;
+
     public $tiktok;
+
     public $twitch;
+
     public $website;
+
     public $other = ['label' => '', 'url' => ''];
 
     public function rules()
@@ -31,7 +39,7 @@ class PublicProfileForm extends Form
                 'min:2',
                 'max:50',
                 'regex:/^[a-z0-9]+$/',
-                'unique:teams,handle,' . ($this->team->id ?? 'null'),
+                'unique:teams,handle,'.($this->team->id ?? 'null'),
             ],
             'bio' => ['nullable', 'string', 'max:1000'],
             'instagram' => ['nullable', 'string', 'max:255'],
@@ -82,12 +90,12 @@ class PublicProfileForm extends Form
 
     private function extractHandle(?string $url, string $domain, bool $hasAt = false): ?string
     {
-        if (!$url) {
+        if (! $url) {
             return null;
         }
 
         $parsed = parse_url($url);
-        if (!$parsed || !isset($parsed['host']) || !str_contains($parsed['host'], $domain)) {
+        if (! $parsed || ! isset($parsed['host']) || ! str_contains($parsed['host'], $domain)) {
             return $url; // Return as-is if not matching domain
         }
 
@@ -103,6 +111,6 @@ class PublicProfileForm extends Form
 
     private function buildUrl(string $baseUrl, string $handle): string
     {
-        return rtrim($baseUrl, '/') . '/' . ltrim($handle, '/');
+        return rtrim($baseUrl, '/').'/'.ltrim($handle, '/');
     }
 }

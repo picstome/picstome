@@ -10,12 +10,19 @@ class SocialLinksForm extends Form
     public Team $team;
 
     public $instagram;
+
     public $youtube;
+
     public $facebook;
+
     public $x;
+
     public $tiktok;
+
     public $twitch;
+
     public $website;
+
     public $other = ['label' => '', 'url' => ''];
 
     public function rules()

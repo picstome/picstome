@@ -4,9 +4,8 @@ use App\Models\Gallery;
 use App\Models\Team;
 use App\Models\User;
 use App\Notifications\GalleryExpirationReminder;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 
 use function Pest\Laravel\artisan;
 
@@ -29,8 +28,8 @@ describe('SendGalleryExpirationReminderCommand', function () {
         Notification::assertSentTo(
             $this->team->owner,
             GalleryExpirationReminder::class,
-            function ($notification, $channels) use ($gallery) {
-                        return true;
+            function ($notification, $channels) {
+                return true;
             }
         );
     });

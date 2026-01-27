@@ -23,7 +23,7 @@ class AddToAcumbamailList implements ShouldQueue
     {
         $listId = $this->listId ?? config('services.acumbamail.list_id');
 
-        if (!config('services.acumbamail.auth_token') || !$listId) {
+        if (! config('services.acumbamail.auth_token') || ! $listId) {
             return;
         }
 

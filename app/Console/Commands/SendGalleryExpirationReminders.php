@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Gallery;
-use App\Notifications\GalleryExpirationReminder;
+use Illuminate\Console\Command;
 
 class SendGalleryExpirationReminders extends Command
 {

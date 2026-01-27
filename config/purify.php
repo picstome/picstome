@@ -1,6 +1,5 @@
 <?php
 
-use Stevebauman\Purify\Definitions\Html5Definition;
 use Stevebauman\Purify\Definitions\TrixDefinition;
 
 return [
