@@ -49,9 +49,11 @@ Route::get('/shares/{gallery:ulid}/download', function (Gallery $gallery) {
 Route::livewire('/shares/{gallery:ulid}/photos/{photo}', 'pages::shares.photos.show')->name('shares.photos.show')->middleware([PasswordProtectGallery::class]);
 
 Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
-    abort_unless($photo->gallery->is_shared, 404);
+    abort_unless($gallery->is_shared, 404);
 
-    abort_unless($photo->gallery->is_share_downloadable, 401);
+    abort_unless($photo->gallery_id === $gallery->id, 404);
+
+    abort_unless($gallery->is_share_downloadable, 401);
 
     $type = request()->input('type', 'processed');
 

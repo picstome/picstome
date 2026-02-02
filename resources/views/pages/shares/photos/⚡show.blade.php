@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Notifications\GuestPhotoCommented;
@@ -14,6 +15,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 {
     public Photo $photo;
 
+    public Gallery $gallery;
+
     public ?Photo $next;
 
     public ?Photo $previous;
@@ -26,9 +29,11 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
     public $commentText = '';
 
-    public function mount(Photo $photo)
+    public function mount()
     {
-        abort_unless($photo->gallery->is_shared, 404);
+        abort_unless($this->gallery->is_shared, 404);
+
+        abort_unless($this->photo->gallery_id === $this->gallery->id, 404);
 
         if ($this->navigateFavorites) {
             $this->next = $this->photo->nextFavorite();
