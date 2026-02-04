@@ -144,13 +144,9 @@ new class extends Component
                             <div class="flex items-center gap-2">
                                 {{ $customer->name }}
 
-                                @if ($customer->age !== null)
+                                @if ($customer->isBirthdaySoon())
                                     <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
                                         {{ __('Birthday soon') }} ({{ $customer->age + 1 }})
-                                    </flux:badge>
-                                @else
-                                    <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
-                                        {{ __('Birthday soon') }}
                                     </flux:badge>
                                 @endif
                             </div>
