@@ -345,7 +345,7 @@ new class extends Component
                             :$photo
                             :key="'photo-'.$photo->id"
                             :html-id="'photo-'.$photo->id"
-                            @if($loop->index > 50) lazy @endif
+                            :lazy="$loop->index > 50"
                         />
                     @endforeach
                 </div>
@@ -359,7 +359,7 @@ new class extends Component
                             :asCommented="true"
                             :key="'commented-'.$photo->id"
                             :html-id="'commented-'.$photo->id"
-                            @if($loop->index > 50) lazy @endif
+                            :lazy="$loop->index > 50"
                         />
                     @endforeach
                 </div>
@@ -373,7 +373,7 @@ new class extends Component
                             :asFavorite="true"
                             :key="'favorite-'.$photo->id"
                             :html-id="'favorite-'.$photo->id"
-                            @if($loop->index > 50) lazy @endif
+                            :lazy="$loop->index > 50"
                         />
                     @endforeach
                 </div>
