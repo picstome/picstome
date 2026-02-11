@@ -345,6 +345,7 @@ new class extends Component
                             :$photo
                             :key="'photo-'.$photo->id"
                             :html-id="'photo-'.$photo->id"
+                            lazy
                         />
                     @endforeach
                 </div>
@@ -358,6 +359,7 @@ new class extends Component
                             :asCommented="true"
                             :key="'commented-'.$photo->id"
                             :html-id="'commented-'.$photo->id"
+                            lazy
                         />
                     @endforeach
                 </div>
@@ -371,6 +373,7 @@ new class extends Component
                             :asFavorite="true"
                             :key="'favorite-'.$photo->id"
                             :html-id="'favorite-'.$photo->id"
+                            lazy
                         />
                     @endforeach
                 </div>
