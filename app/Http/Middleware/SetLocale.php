@@ -31,7 +31,7 @@ class SetLocale
         return $next($request);
     }
 
-    private function parseHttpLocale(Request $request): string
+    private function parseHttpLocale(Request $request): ?string
     {
         $list = explode(',', $request->server('HTTP_ACCEPT_LANGUAGE', ''));
 
@@ -55,6 +55,12 @@ class SetLocale
                 return $locale['factor'];
             });
 
-        return Str::of($locales->first()['locale'])->before('-');
+        $locale = Str::of($locales->first()['locale'] ?? '')->before('-');
+
+        if (empty($locale) || $locale === '*') {
+            return null;
+        }
+
+        return (string) $locale;
     }
 }
