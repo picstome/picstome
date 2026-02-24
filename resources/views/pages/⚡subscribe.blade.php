@@ -57,7 +57,6 @@ new class extends Component
 <div class="h-full flex flex-col items-center justify-center">
     <div class="w-full">
         <!-- Stripe Pricing Table -->
-        <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
         <stripe-pricing-table
             pricing-table-id="{{ $this->pricingTableId }}"
             publishable-key="{{ config('cashier.key') }}"
@@ -76,3 +75,7 @@ new class extends Component
         @endif
     </div>
 </div>
+
+@assets
+    <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
+@endassets
