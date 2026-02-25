@@ -385,4 +385,74 @@ class Team extends Model
             $this->update(['dismissed_setup_steps' => $steps]);
         }
     }
+
+    /**
+     * Delete all brand assets for this team.
+     */
+    public function deleteBrandAssets(): void
+    {
+        $disk = Storage::disk(config('picstome.disk'));
+
+        if ($this->brand_logo_path) {
+            $disk->delete($this->brand_logo_path);
+        }
+
+        if ($this->brand_logo_icon_path) {
+            $disk->delete($this->brand_logo_icon_path);
+        }
+
+        if ($this->brand_watermark_path) {
+            $disk->delete($this->brand_watermark_path);
+        }
+    }
+
+    /**
+     * Delete all contracts for this team including PDFs and signatures.
+     */
+    public function deleteContracts(): void
+    {
+        $this->contracts()->cursor()->each(
+            fn (Contract $contract) => $contract->deleteSignatures()->deleteFromDisk()->delete()
+        );
+    }
+
+    /**
+     * Delete all contract templates for this team.
+     */
+    public function deleteContractTemplates(): void
+    {
+        $this->contractTemplates()->delete();
+    }
+
+    /**
+     * Delete all moodboards for this team including photos.
+     */
+    public function deleteMoodboards(): void
+    {
+        $this->moodboards()->cursor()->each(
+            fn (Moodboard $moodboard) => $moodboard->deletePhotos()->delete()
+        );
+    }
+
+    /**
+     * Delete all resources for this team including storage directory.
+     */
+    public function deleteAllResources(): void
+    {
+        $this->deleteBrandAssets();
+        $this->deleteContracts();
+        $this->deleteContractTemplates();
+        $this->deleteMoodboards();
+
+        $this->photoshoots()->cursor()->each(
+            fn (Photoshoot $photoshoot) => $photoshoot->deleteGalleries()->delete()
+        );
+
+        $this->galleries()->cursor()->each(
+            fn (Gallery $gallery) => $gallery->deletePhotos()->delete()
+        );
+
+        $disk = Storage::disk(config('picstome.disk'));
+        $disk->deleteDirectory($this->storage_path);
+    }
 }

@@ -94,4 +94,18 @@ class User extends Authenticatable implements MustVerifyEmail
             return in_array($this->email, $adminEmails, true);
         });
     }
+
+    /**
+     * Delete the user account and all associated data.
+     */
+    public function deleteAccount(): void
+    {
+        $this->deleteAvatar();
+
+        $this->ownedTeams->each(
+            fn (Team $team) => $team->deleteAllResources()
+        );
+
+        $this->delete();
+    }
 }
