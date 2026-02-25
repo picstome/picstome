@@ -30,6 +30,8 @@ new class extends Component
         $this->form->body = $template->formatted_markdown_body;
 
         $this->modal('templates')->close();
+
+        $this->dispatch('template-selected');
     }
 
     #[Computed]
@@ -194,6 +196,7 @@ new class extends Component
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                     x-on:trix-change="$wire.form.body = $event.target.value"
+                    x-on:template-selected.window="element = document.querySelector('trix-editor'); element.editor.insertHTML($wire.form.body)"
                     input="trix"
                 ></trix-editor>
 
