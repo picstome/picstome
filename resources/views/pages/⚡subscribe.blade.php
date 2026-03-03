@@ -64,13 +64,30 @@ new class extends Component
         >
         </stripe-pricing-table>
 
-        @if (config('services.stripe.lifetime_price_id'))
-            <flux:separator variant="subtle" text="or" />
+        <flux:separator variant="subtle" :text="__('Features')" />
 
-            <div class="flex justify-center mt-8">
-                <flux:button wire:click="purchaseLifetime" variant="filled">
-                    {{ __('Purchase Lifetime Subscription') }}
-                </flux:button>
+        <div class="flex justify-center mt-8">
+            <ul class="space-y-2">
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong"><span class="font-semibold">{{ __('Extra storage') }}</span> {{ __('for photos or videos') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Professional human support by email') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong" class="font-semibold">{{ __('Accepts payments / POS') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Galleries expire when you want') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Password protect galleries') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Contratos ilimitados') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Comments on photos') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('White label') }}</flux:text></li>
+            </ul>
+        </div>
+
+        @if (config('services.stripe.lifetime_price_id'))
+            <div class="hidden">
+                <flux:separator variant="subtle" :text="__('or')" />
+
+                <div class="flex justify-center mt-8">
+                    <flux:button wire:click="purchaseLifetime" variant="filled">
+                        {{ __('Purchase Lifetime Subscription') }}
+                    </flux:button>
+                </div>
             </div>
         @endif
     </div>
