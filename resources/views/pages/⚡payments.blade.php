@@ -249,14 +249,14 @@ new class extends Component
                         required
                     />
 
-                    <flux:switch wire:model.live="linkForm.booking" label="Booking" />
+                    <flux:switch wire:model.live="linkForm.booking" :label="__('Booking')" />
 
                     @if ($linkForm->booking)
                         <div>
-                            <flux:date-picker wire:model="linkForm.booking_date" label="Date" />
+                            <flux:date-picker wire:model="linkForm.booking_date" :label="__('Date')" />
                             <div class="mt-4 grid grid-cols-2 gap-4">
-                                <flux:time-picker wire:model="linkForm.booking_start_time" label="Start Time" />
-                                <flux:time-picker wire:model="linkForm.booking_end_time" label="End Time" />
+                                <flux:time-picker wire:model="linkForm.booking_start_time" :label="__('Start Time')" />
+                                <flux:time-picker wire:model="linkForm.booking_end_time" :label="__('End Time')" />
                             </div>
                         </div>
                     @endif
