@@ -289,6 +289,25 @@ class Photo extends Model
         });
     }
 
+    protected function coverImageUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->isImage()) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+            $width = 1920;
+
+            return $this->generateCdnUrl($originalUrl, [
+                'w' => $width,
+                'q' => 93,
+                'output' => 'webp',
+                'face_crop' => 'true',
+            ]);
+        });
+    }
+
     /**
      * Generate a CDN URL for the image, supporting wsrv.nl, i0.wp.com, and Bunny.net.
      */
@@ -314,6 +333,10 @@ class Photo extends Model
 
             if (isset($params['output']) || isset($params['format'])) {
                 $bunnyParams['format'] = $params['output'] ?? $params['format'];
+            }
+
+            if (isset($params['face_crop'])) {
+                $bunnyParams['face_crop'] = $params['face_crop'];
             }
 
             $query = http_build_query($bunnyParams);

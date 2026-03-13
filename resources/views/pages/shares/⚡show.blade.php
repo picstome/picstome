@@ -100,7 +100,7 @@ new #[Layout('layouts.guest')] class extends Component
             </a>
         </div>
         <div class="relative mt-4 h-[164px] overflow-hidden max-sm:-mx-6 md:h-[240px] lg:mt-8">
-            <img src="{{ $this->coverImage?->large_thumbnail_url }}" class="h-full w-full object-cover" />
+            <img src="{{ $this->coverImage?->cover_image_url }}" class="h-full w-full object-cover" />
         </div>
     @else
         <div>
