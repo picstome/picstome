@@ -298,12 +298,14 @@ class Photo extends Model
 
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $width = 2560;
+            $height = 480;
 
             return $this->generateCdnUrl($originalUrl, [
                 'w' => $width,
+                'h' => $height,
                 'q' => 93,
                 'output' => 'webp',
-                'face_crop' => 'true',
+                'face_crop' => "{$width},{$height}",
             ]);
         });
     }
