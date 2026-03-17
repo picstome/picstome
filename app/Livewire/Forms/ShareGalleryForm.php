@@ -41,9 +41,6 @@ class ShareGalleryForm extends Form
     #[Validate('required|boolean')]
     public $commentsEnabled = true;
 
-    #[Validate('required|boolean')]
-    public $showCoverImage = false;
-
     public function setGallery(Gallery $gallery)
     {
         $this->gallery = $gallery;
@@ -57,7 +54,6 @@ class ShareGalleryForm extends Form
         $this->descriptionEnabled = ! empty($gallery->share_description);
         $this->description = $gallery->share_description;
         $this->commentsEnabled = (bool) $gallery->are_comments_enabled;
-        $this->showCoverImage = (bool) $gallery->is_share_cover_visible;
     }
 
     public function update()
@@ -68,7 +64,6 @@ class ShareGalleryForm extends Form
             'is_share_selectable' => $this->selectable,
             'is_share_downloadable' => $this->downloadable,
             'is_share_watermarked' => $this->watermarked,
-            'is_share_cover_visible' => $this->showCoverImage,
             'share_selection_limit' => $this->limitedSelection
                 ? $this->selectionLimit
                 : null,

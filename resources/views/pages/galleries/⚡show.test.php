@@ -295,18 +295,6 @@ describe('Gallery Sharing', function () {
         expect($gallery->fresh()->share_description)->toBeNull();
     });
 
-    it('can be shared with cover image visible', function () {
-        $gallery = Gallery::factory()->for($this->team)->create();
-        expect($gallery->is_share_cover_visible)->toBeFalse();
-
-        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.showCoverImage', true)
-            ->call('share');
-
-        expect($gallery->fresh()->is_shared)->toBeTrue();
-        expect($gallery->fresh()->is_share_cover_visible)->toBeTrue();
-    });
-
     it('can be shared without cover image visible (default)', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
@@ -314,7 +302,6 @@ describe('Gallery Sharing', function () {
             ->call('share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
-        expect($gallery->fresh()->is_share_cover_visible)->toBeFalse();
     });
 });
 

@@ -22,7 +22,6 @@ class GalleryFactory extends Factory
             'team_id' => Team::factory(),
             'name' => 'Just a Gallery',
             'is_public' => false,
-            'is_share_cover_visible' => false,
         ];
     }
 
@@ -113,24 +112,6 @@ class GalleryFactory extends Factory
         return $this->state(function () {
             return [
                 'is_share_watermarked' => false,
-            ];
-        });
-    }
-
-    public function sharedWithCover(): Factory
-    {
-        return $this->state(function () {
-            return [
-                'is_share_cover_visible' => true,
-            ];
-        });
-    }
-
-    public function sharedWithoutCover(): Factory
-    {
-        return $this->state(function () {
-            return [
-                'is_share_cover_visible' => false,
             ];
         });
     }

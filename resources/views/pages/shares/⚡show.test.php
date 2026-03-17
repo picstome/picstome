@@ -172,31 +172,25 @@ test('notification is sent only once per gallery when selection limit is reached
     Notification::assertSentTo($teamOwner, SelectionLimitReached::class, 1);
 });
 
-test('shared gallery displays cover image when is_share_cover_visible is true', function () {
-    $gallery = Gallery::factory()->shared()->for($this->team)->create([
-        'is_share_cover_visible' => true,
-    ]);
+test('shared gallery displays cover image when cover photo is set', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create();
 
     $gallery->update(['cover_photo_id' => $photo->id]);
 
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
-    expect($gallery->fresh()->is_share_cover_visible)->toBeTrue();
+    expect($gallery->fresh()->coverPhoto)->not->toBeNull();
     expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
     expect($component->coverImage)->not->toBeNull();
 });
 
-test('shared gallery does not display cover image when is_share_cover_visible is false', function () {
-    $gallery = Gallery::factory()->shared()->for($this->team)->create([
-        'is_share_cover_visible' => false,
-    ]);
+test('shared gallery does not display cover image when cover photo is not set', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create();
-
-    $gallery->update(['cover_photo_id' => $photo->id]);
 
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
-    expect($gallery->fresh()->is_share_cover_visible)->toBeFalse();
-    expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    expect($gallery->fresh()->coverPhoto)->toBeNull();
+    expect($gallery->fresh()->cover_photo_id)->toBeNull();
 });
