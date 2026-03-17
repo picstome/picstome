@@ -34,6 +34,7 @@ class Gallery extends Model
             'is_share_selectable' => 'boolean',
             'is_share_downloadable' => 'boolean',
             'is_share_watermarked' => 'boolean',
+            'is_share_cover_visible' => 'boolean',
             'is_public' => 'boolean',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',

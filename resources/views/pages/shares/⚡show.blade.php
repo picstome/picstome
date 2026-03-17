@@ -99,9 +99,11 @@ new #[Layout('layouts.guest')] class extends Component
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
             </a>
         </div>
-        <div class="relative mt-4 h-[164px] overflow-hidden max-sm:-mx-6 md:h-[240px] lg:mt-8">
-            <img src="{{ $this->coverImage?->cover_image_url }}" class="h-full w-full object-cover" />
-        </div>
+        @if ($gallery->is_share_cover_visible)
+            <div class="relative mt-4 h-[328px] overflow-hidden max-sm:-mx-6 md:h-[480px] lg:mt-8">
+                <img src="{{ $this->coverImage?->cover_image_url }}" class="h-full w-full object-cover" />
+            </div>
+        @endif
     @else
         <div>
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">

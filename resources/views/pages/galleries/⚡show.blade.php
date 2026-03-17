@@ -529,6 +529,8 @@ new class extends Component
                 <flux:subheading>{{ __('Customize your shared gallery.') }}</flux:subheading>
             </div>
 
+            <flux:switch wire:model="shareForm.showCoverImage" :label="__('Show cover image')" />
+
             <flux:switch
                 wire:model="shareForm.watermarked"
                 :label="__('Watermark photos')"

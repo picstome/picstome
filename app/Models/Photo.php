@@ -298,7 +298,7 @@ class Photo extends Model
 
             $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
             $width = 2560;
-            $height = 480;
+            $height = 960;
 
             return $this->generateCdnUrl($originalUrl, [
                 'w' => $width,
