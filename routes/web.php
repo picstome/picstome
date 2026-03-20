@@ -68,6 +68,8 @@ Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
     return redirect('/shares/'.$gallery.'/'.$gallery->slug);
 })->name('shares.redirect');
 
+Route::livewire('/shares/{gallery:ulid}/{slug}/experimental', 'pages::shares.experimental.show')->name('shares.experimental.show')->middleware([PasswordProtectGallery::class]);
+
 Route::livewire('/shares/{gallery:ulid}/{slug}', 'pages::shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);
 
 Route::livewire('/contract-templates', 'pages::contract-templates')->name('contract-templates')->middleware(['auth', 'verified']);

@@ -1,0 +1,238 @@
+<?php
+
+use App\Models\Gallery;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\Component;
+
+new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
+{
+    public Gallery $gallery;
+
+    public Collection $favorites;
+
+    public Collection $commentedPhotos;
+
+    #[Url]
+    public $activeTab = 'all';
+
+    public function mount(Gallery $gallery, string $slug)
+    {
+        abort_unless($gallery->is_shared, 404);
+        abort_if($gallery->slug !== $slug, 404);
+        $this->getFavorites();
+        $this->getCommentedPhotos();
+    }
+
+    #[On('photo-favorited')]
+    public function getFavorites()
+    {
+        $cacheKey = "gallery:{$this->gallery->id}:favorites";
+
+        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->favorited()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
+    }
+
+    public function getCommentedPhotos()
+    {
+        $cacheKey = "gallery:{$this->gallery->id}:commented";
+
+        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->whereHas('comments')
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
+    }
+
+    #[Computed]
+    public function coverImage()
+    {
+        if ($this->gallery->coverPhoto && $this->gallery->coverPhoto->isImage()) {
+            return $this->gallery->coverPhoto;
+        }
+
+        return $this->gallery->firstImage();
+    }
+
+    #[Computed]
+    public function allPhotos()
+    {
+        $cacheKey = "gallery:{$this->gallery->id}:photos";
+
+        return Cache::remember($cacheKey, now()->addHours(1), function () {
+            return $this->gallery->photos()
+                ->withCount('comments')
+                ->get()
+                ->naturalSortBy('name');
+        });
+    }
+
+    public function with()
+    {
+        return [
+            'font' => $this->gallery->team->brand_font,
+            'color' => $this->gallery->team->brand_color,
+        ];
+    }
+};
+?>
+
+<div class="h-full max-w-7xl mx-auto lg:px-8 pb-4"
+        x-data
+        x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')">
+    <div>
+        @if ($this->allPhotos->isNotEmpty())
+            <div class="relative">
+                <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
+                    <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                </a>
+            </div>
+        @else
+            <div>
+                <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
+                    <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
+                </a>
+            </div>
+        @endif
+    </div>
+    <div
+        class="flex flex-col sm:flex-row gap-8 relative mt-8"
+    >
+        <div class="w-full sm:w-sm sm:sticky sm:top-4 sm:self-start">
+            @if ($gallery->coverPhoto)
+                <div class="relative">
+                    <img src="{{ $this->coverImage?->portrait_thumbnail_url }}" class="h-full w-full object-cover sm:rounded-lg" />
+                </div>
+            @endif
+        </div>
+        <div class="flex-1 relative px-1">
+            <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-4 max-sm:px-2.5">
+                <div class="max-sm:w-full sm:flex-1">
+                    <div class="flex items-center gap-4">
+                        <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                    </div>
+                    @if ($gallery->share_description)
+                        <x-subheading class="mt-2">
+                            {{ $gallery->share_description }}
+                        </x-subheading>
+                    @endif
+                </div>
+                @if ($this->gallery->is_share_downloadable)
+                    <div class="flex gap-4 mb-4">
+                        <flux:button
+                            x-show="$wire.activeTab !== 'favorited'"
+                            :href="route('shares.download', ['gallery' => $gallery])"
+                            variant="primary"
+                        >
+                            {{ __('Download') }}
+                        </flux:button>
+                        <flux:button
+                            x-show="$wire.activeTab === 'favorited'"
+                            :href="route('shares.download', ['gallery' => $gallery, 'favorites' => true])"
+                            variant="primary"
+                            x-cloak
+                        >
+                            {{ __('Download') }}
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
+            @if ($this->allPhotos->isNotEmpty())
+                <div>
+                    <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
+                        <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">
+                            {{ __('All photos') }}
+                        </flux:navbar.item>
+                        @if ($gallery->is_share_selectable)
+                            <flux:navbar.item
+                                @click="$wire.activeTab = 'favorited'"
+                                x-bind:data-current="$wire.activeTab === 'favorited'"
+                            >
+                                {{ __('Favorited') }}
+                            </flux:navbar.item>
+                        @endif
+
+                        @if ($gallery->are_comments_enabled)
+                            <flux:navbar.item
+                                @click="$wire.activeTab = 'commented'"
+                                x-bind:data-current="$wire.activeTab === 'commented'"
+                            >
+                                {{ __('Commented') }}
+                            </flux:navbar.item>
+                        @endif
+                    </flux:navbar>
+                    <div x-show="$wire.activeTab === 'all'" class="pt-1">
+                        <div class="grid grid-flow-dense grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-4">
+                            @foreach ($this->allPhotos as $photo)
+                                <livewire:experimental-shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
+                            @endforeach
+                        </div>
+                    </div>
+                    <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                        <div class="grid grid-flow-dense grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-4">
+                            @foreach ($this->commentedPhotos as $photo)
+                                <livewire:experimental-shared-photo-item
+                                    :$photo
+                                    :asCommented="true"
+                                    :key="'commented-'.$photo->id"
+                                    :html-id="'commented-'.$photo->id"
+                                />
+                            @endforeach
+                        </div>
+                    </div>
+                    <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
+                        <div class="grid grid-flow-dense grid-cols-2 gap-1 md:grid-cols-4 lg:grid-cols-4">
+                            @foreach ($this->favorites as $photo)
+                                <livewire:experimental-shared-photo-item
+                                    :$photo
+                                    :asFavorite="true"
+                                    :key="'favorite-'.$photo->id"
+                                    :html-id="'favorite-'.$photo->id"
+                                />
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+                    <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                    <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
+                    <flux:subheading class="mb-6 max-w-72 text-center">
+                        {{ __("We couldn't find any photos.") }}
+                    </flux:subheading>
+                </div>
+            @endif
+            @unlesssubscribed($gallery->team)
+                <div class="mt-10">
+                    @include('partials.powered-by')
+                </div>
+            @endsubscribed
+        </div>
+    </div>
+</div>
+@script
+    <script>
+        document.addEventListener('livewire:navigated', () => {
+            const hash = window.location.hash;
+            if (hash) {
+                setTimeout(() => {
+                    const element = document.querySelector(hash);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 500);
+            }
+        });
+    </script>
+@endscript

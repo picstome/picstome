@@ -289,6 +289,24 @@ class Photo extends Model
         });
     }
 
+    protected function portraitThumbnailUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->isImage()) {
+                return null;
+            }
+
+            $originalUrl = Storage::disk($this->diskOrDefault())->url($this->path);
+
+            return $this->generateCdnUrl($originalUrl, [
+                'h' => 800,
+                'aspect_ratio' => '2:3',
+                'q' => 93,
+                'output' => 'webp',
+            ]);
+        });
+    }
+
     protected function coverImageUrl(): Attribute
     {
         return Attribute::get(function () {
@@ -339,6 +357,10 @@ class Photo extends Model
 
             if (isset($params['face_crop'])) {
                 $bunnyParams['face_crop'] = $params['face_crop'];
+            }
+
+            if (isset($params['aspect_ratio'])) {
+                $bunnyParams['aspect_ratio'] = $params['aspect_ratio'];
             }
 
             $query = http_build_query($bunnyParams);
