@@ -88,7 +88,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 };
 ?>
 
-<div class="h-full max-w-7xl mx-auto lg:px-8 pb-4"
+<div class="h-full max-w-7xl mx-auto pt-6 lg:p-8 pb-4"
         x-data
         x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')">
     <div>
