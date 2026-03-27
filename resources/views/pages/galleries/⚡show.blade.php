@@ -299,10 +299,6 @@ new class extends Component
                         </flux:modal.trigger>
                     @endif
 
-                    <flux:modal.trigger name="mark-favorites">
-                        <flux:menu.item icon="star">{{ __('Mark favorites') }}</flux:menu.item>
-                    </flux:modal.trigger>
-
                     <flux:modal.trigger name="edit">
                         <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
                     </flux:modal.trigger>
@@ -409,17 +405,38 @@ new class extends Component
             </div>
 
             <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($favorites as $photo)
-                        <livewire:photo-item
-                            :$photo
-                            :asFavorite="true"
-                            :key="'favorite-'.$photo->id"
-                            :html-id="'favorite-'.$photo->id"
-                            :lazy="$loop->index > 50"
-                        />
-                    @endforeach
-                </div>
+                @if ($favorites->isNotEmpty())
+                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($favorites as $photo)
+                            <livewire:photo-item
+                                :$photo
+                                :asFavorite="true"
+                                :key="'favorite-'.$photo->id"
+                                :html-id="'favorite-'.$photo->id"
+                                :lazy="$loop->index > 50"
+                            />
+                        @endforeach
+                    </div>
+                @else
+                    @if (auth()->user()->is_admin)
+                        <div class="flex flex-col items-center justify-center py-14">
+                            <flux:text class="mb-4 max-w-72 text-center">
+                                {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
+                            </flux:text>
+                            <flux:modal.trigger name="mark-favorites">
+                                <flux:button variant="primary" icon="star">
+                                    {{ __('Add bulk favorites') }}
+                                </flux:button>
+                            </flux:modal.trigger>
+                        </div>
+                    @else
+                        <div class="flex flex-col items-center justify-center py-14">
+                            <flux:text class="max-w-72 text-center">
+                                {{ __('Click on the heart icon to select your favorites.') }}
+                            </flux:text>
+                        </div>
+                    @endif
+                @endif
             </div>
         </div>
     @else
@@ -744,7 +761,7 @@ new class extends Component
                             return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
-                        
+
                     </flux:textarea>
 
                     <flux:text class="mt-2">
@@ -765,7 +782,7 @@ new class extends Component
                             return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
-                        
+
                     </flux:textarea>
 
                     <flux:text class="mt-2">
@@ -786,7 +803,7 @@ new class extends Component
                             return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
-                        
+
                     </flux:textarea>
 
                     <flux:text class="mt-2">
