@@ -325,6 +325,101 @@ describe('Favorites', function () {
         $component->assertDispatched('photo-favorited');
         expect($photo->fresh()->isFavorited())->toBeTrue();
     });
+
+    it('marks photos as favorites by filenames with extensions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6159.jpg\n1Z8A6190.CR3")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(4);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.jpg', '1Z8A6190.CR3');
+    });
+
+    it('marks photos as favorites by base names without extensions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6159\n1Z8A6190")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(4);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.jpg', '1Z8A6190.CR3');
+    });
+
+    it('only marks previously unfavorited photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create(['name' => '1Z8A6198.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6198\n1Z8A6255")
+            ->call('markFavorites');
+
+        expect($gallery->photos()->favorited()->count())->toBe(2);
+    });
+
+    it('does not mark photos from other galleries', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherGallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($otherGallery)->create(['name' => '1Z8A6159.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', '1Z8A6159')
+            ->call('markFavorites');
+
+        expect($gallery->photos()->favorited()->count())->toBe(1);
+        expect($otherGallery->photos()->favorited()->count())->toBe(0);
+    });
+
+    it('clears the input after marking favorites', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', '1Z8A6159.jpg')
+            ->call('markFavorites');
+
+        $component->assertSet('favoriteFileNames', '');
+    });
+
+    it('validates that favoriteFileNames is required', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('markFavorites');
+
+        $component->assertHasErrors(['favoriteFileNames' => 'required']);
+    });
+
+    it('handles empty lines and whitespace gracefully', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "\n  1Z8A6159.jpg  \n\n  \n1Z8A6190.CR3\n")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(3);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.CR3');
+    });
 });
 
 describe('Photo Deletion', function () {

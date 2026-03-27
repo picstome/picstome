@@ -39,6 +39,8 @@ new class extends Component
 
     public $photos = [];
 
+    public string $favoriteFileNames = '';
+
     public function mount(Gallery $gallery)
     {
         $this->authorize('view', $gallery);
@@ -177,6 +179,43 @@ new class extends Component
         });
     }
 
+    public function markFavorites()
+    {
+        $this->validate([
+            'favoriteFileNames' => ['required', 'string'],
+        ]);
+
+        $baseNames = collect(explode("\n", $this->favoriteFileNames))
+            ->map(fn ($line) => trim($line))
+            ->filter()
+            ->unique()
+            ->map(fn ($name) => pathinfo($name, PATHINFO_FILENAME))
+            ->filter()
+            ->values();
+
+        if ($baseNames->isEmpty()) {
+            return;
+        }
+
+        $this->gallery->photos()
+            ->whereNull('favorited_at')
+            ->where(function ($query) use ($baseNames) {
+                $baseNames->each(fn ($base) => $query->orWhere('name', 'LIKE', $base.'.%'));
+            })
+            ->update(['favorited_at' => now()]);
+
+        Cache::forget("gallery:{$this->gallery->id}:favorites");
+        Cache::forget("gallery:{$this->gallery->id}:favorites:nav");
+        Cache::forget("gallery:{$this->gallery->id}:photos");
+
+        $this->getFavorites();
+        $this->favoriteFileNames = '';
+
+        Flux::modal('mark-favorites')->close();
+
+        $this->dispatch('photo-favorited');
+    }
+
     #[Computed]
     public function allPhotos()
     {
@@ -259,6 +298,10 @@ new class extends Component
                             <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
                         </flux:modal.trigger>
                     @endif
+
+                    <flux:modal.trigger name="mark-favorites">
+                        <flux:menu.item icon="star">{{ __('Mark favorites') }}</flux:menu.item>
+                    </flux:modal.trigger>
 
                     <flux:modal.trigger name="edit">
                         <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
@@ -774,6 +817,33 @@ new class extends Component
                 </flux:tab.panel>
             </flux:tab.group>
         </div>
+    </flux:modal>
+
+    <flux:modal name="mark-favorites" class="w-full sm:max-w-lg">
+        <form wire:submit="markFavorites" class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Mark favorites') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('Paste a list of filenames to mark them as favorites.') }}
+                </flux:subheading>
+            </div>
+
+            <flux:textarea
+                wire:model="favoriteFileNames"
+                :label="__('Filenames')"
+                :description:trailing="__('One filename per line.')"
+                rows="10"
+                class="font-mono text-sm"
+            />
+
+            <flux:error name="favoriteFileNames" />
+
+            <div class="flex">
+                <flux:spacer />
+
+                <flux:button type="submit" variant="primary">{{ __('Mark as favorites') }}</flux:button>
+            </div>
+        </form>
     </flux:modal>
 </div>
 
