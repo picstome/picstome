@@ -94,7 +94,7 @@ describe('Contract limits', function () {
         ]);
 
         Contract::factory()->count(5)->for($this->team)->create([
-            'created_at' => Carbon::now()->subMonth()->startOfMonth(),
+            'created_at' => Carbon::now()->subMonthsNoOverflow(1)->startOfMonth(),
         ]);
 
         Contract::factory()->count(4)->for($this->team)->create();
