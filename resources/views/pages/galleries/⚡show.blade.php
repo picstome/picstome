@@ -418,24 +418,16 @@ new class extends Component
                         @endforeach
                     </div>
                 @else
-                    @if (auth()->user()->is_admin)
-                        <div class="flex flex-col items-center justify-center py-14">
-                            <flux:text class="mb-4 max-w-72 text-center">
-                                {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
-                            </flux:text>
-                            <flux:modal.trigger name="mark-favorites">
-                                <flux:button variant="primary" icon="star">
-                                    {{ __('Add bulk favorites') }}
-                                </flux:button>
-                            </flux:modal.trigger>
-                        </div>
-                    @else
-                        <div class="flex flex-col items-center justify-center py-14">
-                            <flux:text class="max-w-72 text-center">
-                                {{ __('Click on the heart icon to select your favorites.') }}
-                            </flux:text>
-                        </div>
-                    @endif
+                    <div class="flex flex-col items-center justify-center py-14">
+                        <flux:text class="mb-4 max-w-72 text-center">
+                            {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
+                        </flux:text>
+                        <flux:modal.trigger name="mark-favorites">
+                            <flux:button variant="primary" icon="star">
+                                {{ __('Add bulk favorites') }}
+                            </flux:button>
+                        </flux:modal.trigger>
+                    </div>
                 @endif
             </div>
         </div>

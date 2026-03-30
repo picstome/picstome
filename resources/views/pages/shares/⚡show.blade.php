@@ -186,16 +186,24 @@ new #[Layout('layouts.guest')] class extends Component
                 </div>
             </div>
             <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($this->favorites as $photo)
-                        <livewire:shared-photo-item
-                            :$photo
-                            :asFavorite="true"
-                            :key="'favorite-'.$photo->id"
-                            :html-id="'favorite-'.$photo->id"
-                        />
-                    @endforeach
-                </div>
+                @if ($favorites->isNotEmpty())
+                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($this->favorites as $photo)
+                            <livewire:shared-photo-item
+                                :$photo
+                                :asFavorite="true"
+                                :key="'favorite-'.$photo->id"
+                                :html-id="'favorite-'.$photo->id"
+                            />
+                        @endforeach
+                    </div>
+                @else
+                    <div class="flex flex-col items-center justify-center py-14">
+                        <flux:text class="max-w-72 text-center">
+                            {{ __('No favorites yet. Click on the heart icon to select your favorites.') }}
+                        </flux:text>
+                    </div>
+                @endif
             </div>
         </div>
     @else
