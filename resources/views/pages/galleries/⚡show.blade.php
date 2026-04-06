@@ -498,6 +498,24 @@ new class extends Component
 
                 <flux:error name="photos" />
 
+                <flux:callout
+                    x-show="oversizedFiles.length > 0"
+                    x-cloak
+                    icon="exclamation-triangle"
+                    variant="danger"
+                    class="mt-2"
+                >
+                    <flux:callout.heading>{{ __('Files too large') }}</flux:callout.heading>
+                    <flux:callout.text>
+                        <p>{{ __('The following files exceed the 5 GB upload limit and were skipped:') }}</p>
+                        <ul class="mt-1 list-disc pl-4">
+                            <template x-for="(file, i) in oversizedFiles" :key="i">
+                                <li x-text="file.name"></li>
+                            </template>
+                        </ul>
+                    </flux:callout.text>
+                </flux:callout>
+
                 <div
                     x-show="
                         files.filter(
@@ -891,6 +909,7 @@ new class extends Component
 
         Alpine.data('multiFileUploader', () => ({
             files: [],
+            oversizedFiles: [],
             dragActive: false,
             maxParallelUploads: 5,
             activeUploads: 0,
@@ -909,12 +928,14 @@ new class extends Component
 
             handleFileSelect(event) {
                 const selectedFiles = Array.from(event.target.files);
+                this.oversizedFiles = [];
                 this.processFiles(selectedFiles);
                 this.processUploadQueue();
             },
 
             handleDrop(event) {
                 this.dragActive = false;
+                this.oversizedFiles = [];
                 const dt = event.dataTransfer;
                 if (dt && dt.files && dt.files.length > 0) {
                     this.processFiles(Array.from(dt.files));
@@ -1023,11 +1044,17 @@ new class extends Component
                 const keepOriginalSize = {{ Js::from($gallery->keep_original_size) }};
 
                 const fileGroups = {};
+                const maxSize = 5 * 1024 * 1024 * 1024;
                 files.forEach((file) => {
                     const name = file.name;
                     const lastDot = name.lastIndexOf('.');
                     const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
                     const extension = lastDot !== -1 ? name.substring(lastDot + 1).toLowerCase() : '';
+
+                    if (file.size > maxSize) {
+                        this.oversizedFiles.push({ name: file.name, size: file.size });
+                        return;
+                    }
 
                     if (!fileGroups[baseName]) {
                         fileGroups[baseName] = [];
