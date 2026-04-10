@@ -911,9 +911,9 @@ new class extends Component
             files: [],
             oversizedFiles: [],
             dragActive: false,
-            maxParallelUploads: 5,
+            maxParallelUploads: 10,
             activeUploads: 0,
-            maxUploadsPerMinute: 60,
+            maxUploadsPerMinute: 200,
             uploadTimestamps: [],
 
             init() {
