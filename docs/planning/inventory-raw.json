@@ -1,0 +1,1358 @@
+{
+  "commit": "6b6c5e7e14e979fd999fd6390b56254a5c2a07de",
+  "flux_pro_source_inspected": false,
+  "vendor_node_modules_excluded": true,
+  "agpl_notice": "Picstome is AGPL-3.0; inventory is documentation-only and does not copy Flux Pro source.",
+  "blade_files_with_flux": 58,
+  "total_flux_opening_tags": 1158,
+  "unique_components": 84,
+  "file_counts": {
+    "resources/views/pages/\u26a1public-profile.blade.php": 140,
+    "resources/views/pages/galleries/\u26a1show.blade.php": 137,
+    "resources/views/pages/photoshoots/\u26a1show.blade.php": 92,
+    "resources/views/pages/\u26a1payments.blade.php": 55,
+    "resources/views/pages/\u26a1users.blade.php": 47,
+    "resources/views/pages/\u26a1contracts.blade.php": 37,
+    "resources/views/pages/\u26a1dashboard.blade.php": 37,
+    "resources/views/layouts/app.blade.php": 36,
+    "resources/views/pages/customers/\u26a1show.blade.php": 34,
+    "resources/views/pages/galleries/photos/\u26a1show.blade.php": 34,
+    "resources/views/pages/\u26a1portfolio.blade.php": 32,
+    "resources/views/pages/contracts/\u26a1show.blade.php": 31,
+    "resources/views/pages/shares/photos/\u26a1show.blade.php": 25,
+    "resources/views/pages/\u26a1galleries.blade.php": 25,
+    "resources/views/pages/\u26a1photoshoots.blade.php": 24,
+    "resources/views/pages/\u26a1customers.blade.php": 22,
+    "resources/views/pages/branding/\u26a1payments.blade.php": 21,
+    "resources/views/pages/signatures/\u26a1sign.blade.php": 20,
+    "resources/views/pages/\u26a1contract-templates.blade.php": 18,
+    "resources/views/pages/branding/\u26a1watermark.blade.php": 17,
+    "resources/views/pages/\u26a1subscribe.blade.php": 17,
+    "resources/views/components/\u26a1photo-item.blade.php": 16,
+    "resources/views/pages/contract-templates/\u26a1show.blade.php": 15,
+    "resources/views/components/\u26a1search.blade.php": 14,
+    "resources/views/components/\u26a1profile-dropdown.blade.php": 13,
+    "resources/views/pages/\u26a1register.blade.php": 13,
+    "resources/views/partials/social-links.blade.php": 12,
+    "resources/views/pages/branding/\u26a1logos.blade.php": 10,
+    "resources/views/pages/shares/\u26a1show.blade.php": 10,
+    "resources/views/pages/stripe-connect/\u26a1return.blade.php": 10,
+    "resources/views/pages/handle/\u26a1show.blade.php": 9,
+    "resources/views/components/\u26a1register-modal.blade.php": 8,
+    "resources/views/pages/settings/\u26a1appearance.blade.php": 8,
+    "resources/views/pages/settings/\u26a1profile.blade.php": 8,
+    "resources/views/pages/\u26a1login.blade.php": 8,
+    "resources/views/components/settings/layout.blade.php": 7,
+    "resources/views/components/\u26a1login-modal.blade.php": 7,
+    "resources/views/pages/branding/\u26a1general.blade.php": 7,
+    "resources/views/pages/portfolio/\u26a1show.blade.php": 7,
+    "resources/views/pages/stripe-connect/\u26a1index.blade.php": 7,
+    "resources/views/pages/branding/\u26a1styling.blade.php": 6,
+    "resources/views/pages/portfolio/\u26a1index.blade.php": 6,
+    "resources/views/partials/branding-nav.blade.php": 6,
+    "resources/views/components/\u26a1shared-photo-item.blade.php": 5,
+    "resources/views/pages/reset-password/\u26a1token.blade.php": 5,
+    "resources/views/pages/shares/\u26a1unlock.blade.php": 5,
+    "resources/views/pages/\u26a1forgot-password.blade.php": 5,
+    "resources/views/pages/\u26a1verify-email.blade.php": 5,
+    "resources/views/pages/settings/\u26a1password.blade.php": 4,
+    "resources/views/pages/pay/\u26a1cancel.blade.php": 3,
+    "resources/views/pages/pay/\u26a1success.blade.php": 3,
+    "resources/views/pages/portfolio/photos/\u26a1show.blade.php": 3,
+    "resources/views/partials/branding-header.blade.php": 3,
+    "resources/views/partials/settings-heading.blade.php": 3,
+    "resources/views/components/\u26a1storage-usage-indicator.blade.php": 2,
+    "resources/views/partials/powered-by.blade.php": 2,
+    "resources/views/layouts/guest.blade.php": 1,
+    "resources/views/partials/public-branding.blade.php": 1
+  },
+  "component_counts": {
+    "button": 168,
+    "input": 111,
+    "heading": 92,
+    "text": 75,
+    "subheading": 55,
+    "modal.trigger": 45,
+    "modal": 36,
+    "menu.item": 34,
+    "spacer": 34,
+    "separator": 33,
+    "error": 30,
+    "badge": 29,
+    "label": 27,
+    "field": 27,
+    "navlist.item": 23,
+    "callout": 20,
+    "callout.heading": 19,
+    "callout.text": 19,
+    "avatar": 19,
+    "menu": 14,
+    "select.option": 14,
+    "dropdown": 13,
+    "textarea": 13,
+    "select": 12,
+    "description": 12,
+    "link": 12,
+    "switch": 11,
+    "tooltip": 10,
+    "radio": 9,
+    "table.cell": 8,
+    "icon.check": 8,
+    "icon.photo": 7,
+    "navlist.group": 6,
+    "navbar.item": 6,
+    "pagination": 6,
+    "table.column": 6,
+    "navlist": 5,
+    "command.item": 5,
+    "tab": 5,
+    "tab.panel": 5,
+    "icon.heart": 4,
+    "input.group": 4,
+    "input.group.suffix": 4,
+    "modal.close": 4,
+    "checkbox": 3,
+    "radio.group": 3,
+    "profile": 2,
+    "menu.group": 2,
+    "sidebar.toggle": 2,
+    "main": 2,
+    "tooltip.content": 2,
+    "button.group": 2,
+    "navbar": 2,
+    "card": 2,
+    "breadcrumbs.item": 2,
+    "time-picker": 2,
+    "icon.bars-2": 2,
+    "table": 2,
+    "table.rows": 2,
+    "table.row": 2,
+    "icon.arrow-top-right-on-square": 2,
+    "command": 1,
+    "command.input": 1,
+    "command.items": 1,
+    "icon.server": 1,
+    "sidebar": 1,
+    "header": 1,
+    "toast": 1,
+    "icon.pencil-square": 1,
+    "icon.calendar": 1,
+    "menu.separator": 1,
+    "tab.group": 1,
+    "tabs": 1,
+    "breadcrumbs": 1,
+    "icon.clipboard-document-list": 1,
+    "icon.document-text": 1,
+    "icon.user": 1,
+    "icon.credit-card": 1,
+    "date-picker": 1,
+    "icon.camera": 1,
+    "icon.x-mark": 1,
+    "icon.plus": 1,
+    "avatar.group": 1,
+    "table.columns": 1
+  },
+  "php_refs": [
+    {
+      "file": "resources/views/pages/branding/\u26a1general.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1general.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1general.blade.php",
+      "line": 33,
+      "snippet": "Flux::toast(__('Setup steps have been reset.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1logos.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1logos.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1payments.blade.php",
+      "line": 4,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1payments.blade.php",
+      "line": 25,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1styling.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1styling.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1watermark.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1watermark.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+      "line": 29,
+      "snippet": "Flux::modal('edit')->close();"
+    },
+    {
+      "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+      "line": 4,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+      "line": 65,
+      "snippet": "Flux::modal('assign-photoshoot')->close();"
+    },
+    {
+      "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+      "line": 8,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+      "line": 107,
+      "snippet": "Flux::modal('share')->close();"
+    },
+    {
+      "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+      "line": 109,
+      "snippet": "Flux::modal('share-link')->show();"
+    },
+    {
+      "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+      "line": 214,
+      "snippet": "Flux::modal('mark-favorites')->close();"
+    },
+    {
+      "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+      "line": 4,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+      "line": 96,
+      "snippet": "Flux::modals()->close();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 6,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 38,
+      "snippet": "Flux::modal('edit-payment')->show();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 47,
+      "snippet": "Flux::modal('edit-payment')->close();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 58,
+      "snippet": "Flux::modal('edit-payment')->close();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 90,
+      "snippet": "Flux::modal('generate-payment-link')->close();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1payments.blade.php",
+      "line": 92,
+      "snippet": "Flux::modal('payment-link')->show();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1public-profile.blade.php",
+      "line": 8,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/\u26a1public-profile.blade.php",
+      "line": 33,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/\u26a1public-profile.blade.php",
+      "line": 46,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/\u26a1users.blade.php",
+      "line": 5,
+      "snippet": "use Flux\\Flux;"
+    },
+    {
+      "file": "resources/views/pages/\u26a1users.blade.php",
+      "line": 42,
+      "snippet": "Flux::modal('edit-user')->show();"
+    },
+    {
+      "file": "resources/views/pages/\u26a1users.blade.php",
+      "line": 48,
+      "snippet": "Flux::modal('edit-user')->close();"
+    }
+  ],
+  "use_flux_files": [
+    "resources/views/pages/branding/\u26a1general.blade.php",
+    "resources/views/pages/branding/\u26a1logos.blade.php",
+    "resources/views/pages/branding/\u26a1payments.blade.php",
+    "resources/views/pages/branding/\u26a1styling.blade.php",
+    "resources/views/pages/branding/\u26a1watermark.blade.php",
+    "resources/views/pages/contract-templates/\u26a1show.blade.php",
+    "resources/views/pages/contracts/\u26a1show.blade.php",
+    "resources/views/pages/galleries/\u26a1show.blade.php",
+    "resources/views/pages/signatures/\u26a1sign.blade.php",
+    "resources/views/pages/\u26a1payments.blade.php",
+    "resources/views/pages/\u26a1public-profile.blade.php",
+    "resources/views/pages/\u26a1users.blade.php"
+  ],
+  "modal_defs": {
+    "(unnamed)": [
+      {
+        "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+        "line": 246,
+        "attrs": ".close"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contract-templates.blade.php",
+        "line": 42,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contract-templates.blade.php",
+        "line": 101,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 63,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 145,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1customers.blade.php",
+        "line": 61,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1customers.blade.php",
+        "line": 206,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1galleries.blade.php",
+        "line": 52,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1galleries.blade.php",
+        "line": 141,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 132,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1photoshoots.blade.php",
+        "line": 51,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1photoshoots.blade.php",
+        "line": 113,
+        "attrs": ".trigger :name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 252,
+        "attrs": ".close"
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 282,
+        "attrs": ".close"
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 445,
+        "attrs": ".close"
+      }
+    ],
+    "add-comment": [
+      {
+        "file": "resources/views/pages/galleries/photos/\u26a1show.blade.php",
+        "line": 309,
+        "attrs": ".trigger name=\"add-comment\""
+      },
+      {
+        "file": "resources/views/pages/galleries/photos/\u26a1show.blade.php",
+        "line": 360,
+        "attrs": "name=\"add-comment\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/shares/photos/\u26a1show.blade.php",
+        "line": 419,
+        "attrs": ".trigger name=\"add-comment\""
+      },
+      {
+        "file": "resources/views/pages/shares/photos/\u26a1show.blade.php",
+        "line": 477,
+        "attrs": "name=\"add-comment\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "add-link": [
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 210,
+        "attrs": ".trigger name=\"add-link\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 221,
+        "attrs": ".trigger name=\"add-link\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 230,
+        "attrs": "name=\"add-link\" class=\"md:w-96\""
+      }
+    ],
+    "add-photos": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 345,
+        "attrs": ".trigger name=\"add-photos\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 441,
+        "attrs": ".trigger name=\"add-photos\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 449,
+        "attrs": "name=\"add-photos\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "assign-photoshoot": [
+      {
+        "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+        "line": 109,
+        "attrs": ".trigger name=\"assign-photoshoot\""
+      },
+      {
+        "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+        "line": 227,
+        "attrs": "name=\"assign-photoshoot\" class=\"md:w-96\""
+      }
+    ],
+    "available-galleries": [
+      {
+        "file": "resources/views/pages/\u26a1portfolio.blade.php",
+        "line": 139,
+        "attrs": ".trigger name=\"available-galleries\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1portfolio.blade.php",
+        "line": 150,
+        "attrs": ".trigger name=\"available-galleries\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1portfolio.blade.php",
+        "line": 158,
+        "attrs": "name=\"available-galleries\" class=\"md:w-[32rem]\""
+      }
+    ],
+    "create-contract": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 174,
+        "attrs": ".trigger name=\"create-contract\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 415,
+        "attrs": "name=\"create-contract\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 153,
+        "attrs": "name=\"create-contract\" class=\"w-full max-w-[794px]\""
+      }
+    ],
+    "create-customer": [
+      {
+        "file": "resources/views/pages/\u26a1customers.blade.php",
+        "line": 214,
+        "attrs": "name=\"create-customer\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "create-gallery": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 167,
+        "attrs": ".trigger name=\"create-gallery\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 308,
+        "attrs": ".trigger name=\"create-gallery\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 371,
+        "attrs": "name=\"create-gallery\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1galleries.blade.php",
+        "line": 149,
+        "attrs": "name=\"create-gallery\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "create-photoshoot": [
+      {
+        "file": "resources/views/pages/\u26a1photoshoots.blade.php",
+        "line": 121,
+        "attrs": "name=\"create-photoshoot\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "create-template": [
+      {
+        "file": "resources/views/pages/\u26a1contract-templates.blade.php",
+        "line": 109,
+        "attrs": "name=\"create-template\" class=\"w-full max-w-[794px]\""
+      }
+    ],
+    "edit": [
+      {
+        "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+        "line": 58,
+        "attrs": ".trigger name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+        "line": 72,
+        "attrs": "name=\"edit\" class=\"w-full max-w-[794px]\""
+      },
+      {
+        "file": "resources/views/pages/customers/\u26a1show.blade.php",
+        "line": 133,
+        "attrs": ".trigger name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/customers/\u26a1show.blade.php",
+        "line": 359,
+        "attrs": "name=\"edit\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 302,
+        "attrs": ".trigger name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 700,
+        "attrs": "name=\"edit\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 162,
+        "attrs": ".trigger name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 499,
+        "attrs": "name=\"edit\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "edit-link": [
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 260,
+        "attrs": "name=\"edit-link\" class=\"md:w-96\""
+      }
+    ],
+    "edit-payment": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 282,
+        "attrs": "name=\"edit-payment\" variant=\"flyout\""
+      }
+    ],
+    "edit-user": [
+      {
+        "file": "resources/views/pages/\u26a1users.blade.php",
+        "line": 308,
+        "attrs": "name=\"edit-user\" variant=\"flyout\""
+      }
+    ],
+    "favorite-list": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 297,
+        "attrs": ".trigger name=\"favorite-list\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 367,
+        "attrs": ".trigger name=\"favorite-list\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 750,
+        "attrs": "name=\"favorite-list\" class=\"w-full sm:max-w-lg\" x-data=\"copyToClipboard\""
+      }
+    ],
+    "generate-payment-link": [
+      {
+        "file": "resources/views/pages/handle/\u26a1show.blade.php",
+        "line": 127,
+        "attrs": "name=\"generate-payment-link\" x-init=\"if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() ="
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 543,
+        "attrs": "name=\"generate-payment-link\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 207,
+        "attrs": ".trigger name=\"generate-payment-link\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 215,
+        "attrs": "name=\"generate-payment-link\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/partials/social-links.blade.php",
+        "line": 57,
+        "attrs": ".trigger name=\"generate-payment-link\""
+      },
+      {
+        "file": "resources/views/partials/social-links.blade.php",
+        "line": 66,
+        "attrs": ".trigger name=\"generate-payment-link\""
+      }
+    ],
+    "login": [
+      {
+        "file": "resources/views/components/\u26a1login-modal.blade.php",
+        "line": 24,
+        "attrs": "name=\"login\" class=\"w-full sm:max-w-sm\""
+      },
+      {
+        "file": "resources/views/components/\u26a1profile-dropdown.blade.php",
+        "line": 40,
+        "attrs": ".trigger name=\"login\""
+      }
+    ],
+    "mark-favorites": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 425,
+        "attrs": ".trigger name=\"mark-favorites\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 877,
+        "attrs": "name=\"mark-favorites\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "payment-link": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 271,
+        "attrs": "name=\"payment-link\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "register": [
+      {
+        "file": "resources/views/components/\u26a1login-modal.blade.php",
+        "line": 46,
+        "attrs": ".trigger name=\"register\""
+      },
+      {
+        "file": "resources/views/components/\u26a1register-modal.blade.php",
+        "line": 41,
+        "attrs": "name=\"register\" class=\"w-full sm:max-w-sm\""
+      }
+    ],
+    "search": [
+      {
+        "file": "resources/views/layouts/app.blade.php",
+        "line": 47,
+        "attrs": ".trigger name=\"search\" shortcut=\"cmd.k\""
+      },
+      {
+        "file": "resources/views/layouts/app.blade.php",
+        "line": 57,
+        "attrs": "name=\"search\" variant=\"bare\" class=\"my-[12vh] max-h-screen w-full max-w-[30rem] overflow-y-hidden px-2\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1dashboard.blade.php",
+        "line": 286,
+        "attrs": ".trigger name=\"search\" shortcut=\"cmd.k\""
+      }
+    ],
+    "share": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 333,
+        "attrs": ".trigger name=\"share\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 340,
+        "attrs": ".trigger name=\"share\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 595,
+        "attrs": "name=\"share\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "share-link": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 330,
+        "attrs": ".trigger name=\"share-link\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 686,
+        "attrs": "name=\"share-link\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "show-payment-link": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 570,
+        "attrs": "name=\"show-payment-link\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "sign": [
+      {
+        "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+        "line": 127,
+        "attrs": ".trigger name=\"sign\""
+      },
+      {
+        "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+        "line": 162,
+        "attrs": "name=\"sign\" class=\"w-full sm:max-w-lg\""
+      }
+    ],
+    "social-links": [
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 355,
+        "attrs": ".trigger name=\"social-links\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 368,
+        "attrs": ".trigger name=\"social-links\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 376,
+        "attrs": "name=\"social-links\" variant=\"flyout\" class=\"md:w-[32rem]\""
+      }
+    ],
+    "templates": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 443,
+        "attrs": ".trigger name=\"templates\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 470,
+        "attrs": "name=\"templates\" class=\"w-full sm:max-w-lg\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 191,
+        "attrs": ".trigger name=\"templates\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 224,
+        "attrs": "name=\"templates\" class=\"w-full sm:max-w-lg\""
+      }
+    ]
+  },
+  "triggers": {
+    "(parent-context)": [
+      {
+        "file": "resources/views/pages/\u26a1contract-templates.blade.php",
+        "line": 42,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contract-templates.blade.php",
+        "line": 101,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 63,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 145,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1customers.blade.php",
+        "line": 61,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1customers.blade.php",
+        "line": 206,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1galleries.blade.php",
+        "line": 52,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1galleries.blade.php",
+        "line": 141,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 132,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1photoshoots.blade.php",
+        "line": 51,
+        "attrs": ":name=\"auth()-"
+      },
+      {
+        "file": "resources/views/pages/\u26a1photoshoots.blade.php",
+        "line": 113,
+        "attrs": ":name=\"auth()-"
+      }
+    ],
+    "add-comment": [
+      {
+        "file": "resources/views/pages/galleries/photos/\u26a1show.blade.php",
+        "line": 309,
+        "attrs": "name=\"add-comment\""
+      },
+      {
+        "file": "resources/views/pages/shares/photos/\u26a1show.blade.php",
+        "line": 419,
+        "attrs": "name=\"add-comment\""
+      }
+    ],
+    "add-link": [
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 210,
+        "attrs": "name=\"add-link\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 221,
+        "attrs": "name=\"add-link\""
+      }
+    ],
+    "add-photos": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 345,
+        "attrs": "name=\"add-photos\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 441,
+        "attrs": "name=\"add-photos\""
+      }
+    ],
+    "assign-photoshoot": [
+      {
+        "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+        "line": 109,
+        "attrs": "name=\"assign-photoshoot\""
+      }
+    ],
+    "available-galleries": [
+      {
+        "file": "resources/views/pages/\u26a1portfolio.blade.php",
+        "line": 139,
+        "attrs": "name=\"available-galleries\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1portfolio.blade.php",
+        "line": 150,
+        "attrs": "name=\"available-galleries\""
+      }
+    ],
+    "create-contract": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 174,
+        "attrs": "name=\"create-contract\""
+      }
+    ],
+    "create-gallery": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 167,
+        "attrs": "name=\"create-gallery\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 308,
+        "attrs": "name=\"create-gallery\""
+      }
+    ],
+    "edit": [
+      {
+        "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+        "line": 58,
+        "attrs": "name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/customers/\u26a1show.blade.php",
+        "line": 133,
+        "attrs": "name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 302,
+        "attrs": "name=\"edit\""
+      },
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 162,
+        "attrs": "name=\"edit\""
+      }
+    ],
+    "favorite-list": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 297,
+        "attrs": "name=\"favorite-list\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 367,
+        "attrs": "name=\"favorite-list\""
+      }
+    ],
+    "generate-payment-link": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 207,
+        "attrs": "name=\"generate-payment-link\""
+      },
+      {
+        "file": "resources/views/partials/social-links.blade.php",
+        "line": 57,
+        "attrs": "name=\"generate-payment-link\""
+      },
+      {
+        "file": "resources/views/partials/social-links.blade.php",
+        "line": 66,
+        "attrs": "name=\"generate-payment-link\""
+      }
+    ],
+    "login": [
+      {
+        "file": "resources/views/components/\u26a1profile-dropdown.blade.php",
+        "line": 40,
+        "attrs": "name=\"login\""
+      }
+    ],
+    "mark-favorites": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 425,
+        "attrs": "name=\"mark-favorites\""
+      }
+    ],
+    "register": [
+      {
+        "file": "resources/views/components/\u26a1login-modal.blade.php",
+        "line": 46,
+        "attrs": "name=\"register\""
+      }
+    ],
+    "search": [
+      {
+        "file": "resources/views/layouts/app.blade.php",
+        "line": 47,
+        "attrs": "name=\"search\" shortcut=\"cmd.k\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1dashboard.blade.php",
+        "line": 286,
+        "attrs": "name=\"search\" shortcut=\"cmd.k\""
+      }
+    ],
+    "share": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 333,
+        "attrs": "name=\"share\""
+      },
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 340,
+        "attrs": "name=\"share\""
+      }
+    ],
+    "share-link": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 330,
+        "attrs": "name=\"share-link\""
+      }
+    ],
+    "sign": [
+      {
+        "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+        "line": 127,
+        "attrs": "name=\"sign\""
+      }
+    ],
+    "social-links": [
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 355,
+        "attrs": "name=\"social-links\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1public-profile.blade.php",
+        "line": 368,
+        "attrs": "name=\"social-links\""
+      }
+    ],
+    "templates": [
+      {
+        "file": "resources/views/pages/photoshoots/\u26a1show.blade.php",
+        "line": 443,
+        "attrs": "name=\"templates\""
+      },
+      {
+        "file": "resources/views/pages/\u26a1contracts.blade.php",
+        "line": 191,
+        "attrs": "name=\"templates\""
+      }
+    ]
+  },
+  "shows": {
+    "edit-payment": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 38,
+        "snippet": "Flux::modal('edit-payment')->show();"
+      }
+    ],
+    "edit-user": [
+      {
+        "file": "resources/views/pages/\u26a1users.blade.php",
+        "line": 42,
+        "snippet": "Flux::modal('edit-user')->show();"
+      }
+    ],
+    "payment-link": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 92,
+        "snippet": "Flux::modal('payment-link')->show();"
+      }
+    ],
+    "share-link": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 109,
+        "snippet": "Flux::modal('share-link')->show();"
+      }
+    ]
+  },
+  "closes": {
+    "assign-photoshoot": [
+      {
+        "file": "resources/views/pages/contracts/\u26a1show.blade.php",
+        "line": 65,
+        "snippet": "Flux::modal('assign-photoshoot')->close();"
+      }
+    ],
+    "edit": [
+      {
+        "file": "resources/views/pages/contract-templates/\u26a1show.blade.php",
+        "line": 29,
+        "snippet": "Flux::modal('edit')->close();"
+      }
+    ],
+    "edit-payment": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 47,
+        "snippet": "Flux::modal('edit-payment')->close();"
+      },
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 58,
+        "snippet": "Flux::modal('edit-payment')->close();"
+      }
+    ],
+    "edit-user": [
+      {
+        "file": "resources/views/pages/\u26a1users.blade.php",
+        "line": 48,
+        "snippet": "Flux::modal('edit-user')->close();"
+      }
+    ],
+    "generate-payment-link": [
+      {
+        "file": "resources/views/pages/\u26a1payments.blade.php",
+        "line": 90,
+        "snippet": "Flux::modal('generate-payment-link')->close();"
+      }
+    ],
+    "mark-favorites": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 214,
+        "snippet": "Flux::modal('mark-favorites')->close();"
+      }
+    ],
+    "share": [
+      {
+        "file": "resources/views/pages/galleries/\u26a1show.blade.php",
+        "line": 107,
+        "snippet": "Flux::modal('share')->close();"
+      }
+    ]
+  },
+  "modals_close_all": [
+    {
+      "file": "resources/views/pages/signatures/\u26a1sign.blade.php",
+      "line": 96,
+      "snippet": "Flux::modals()->close();"
+    }
+  ],
+  "toasts": [
+    {
+      "file": "resources/views/pages/branding/\u26a1general.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1general.blade.php",
+      "line": 33,
+      "snippet": "Flux::toast(__('Setup steps have been reset.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1logos.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1payments.blade.php",
+      "line": 25,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1styling.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/branding/\u26a1watermark.blade.php",
+      "line": 24,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/\u26a1public-profile.blade.php",
+      "line": 33,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    },
+    {
+      "file": "resources/views/pages/\u26a1public-profile.blade.php",
+      "line": 46,
+      "snippet": "Flux::toast(__('Your changes have been saved.'), variant: 'success');"
+    }
+  ],
+  "dep_hits": [
+    {
+      "file": "composer.json",
+      "line": 15,
+      "snippet": "\"livewire/flux\": \"^2.0\","
+    },
+    {
+      "file": "composer.json",
+      "line": 16,
+      "snippet": "\"livewire/flux-pro\": \"^2.2\","
+    },
+    {
+      "file": "composer.json",
+      "line": 85,
+      "snippet": "\"flux-pro\": {"
+    },
+    {
+      "file": "composer.json",
+      "line": 87,
+      "snippet": "\"url\": \"https://composer.fluxui.dev\""
+    },
+    {
+      "file": "composer.lock",
+      "line": 2839,
+      "snippet": "\"name\": \"livewire/flux\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2843,
+      "snippet": "\"url\": \"https://github.com/livewire/flux.git\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2848,
+      "snippet": "\"url\": \"https://api.github.com/repos/livewire/flux/zipball/68a3b06b62b23bae82e02d6be39722cf2a8770ff\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2871,
+      "snippet": "\"Flux\\\\FluxServiceProvider\""
+    },
+    {
+      "file": "composer.lock",
+      "line": 2899,
+      "snippet": "\"issues\": \"https://github.com/livewire/flux/issues\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2900,
+      "snippet": "\"source\": \"https://github.com/livewire/flux/tree/v2.12.2\""
+    },
+    {
+      "file": "composer.lock",
+      "line": 2905,
+      "snippet": "\"name\": \"livewire/flux-pro\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2909,
+      "snippet": "\"url\": \"https://composer.fluxui.dev/download/a129da01-0b6c-4769-9430-e9156c8da2ba/flux-pro-2.12.2.zip\","
+    },
+    {
+      "file": "composer.lock",
+      "line": 2918,
+      "snippet": "\"livewire/flux\": \"2.12.2|dev-main\","
+    },
+    {
+      "file": "README.md",
+      "line": 27,
+      "snippet": "composer require livewire/flux-pro"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 16,
+      "snippet": "- livewire/flux (FLUXUI_FREE) - v2"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 17,
+      "snippet": "- livewire/flux-pro (FLUXUI_PRO) - v2"
+    },
+    {
+      "file": "resources/css/app.css",
+      "line": 2,
+      "snippet": "@import '../../vendor/livewire/flux/dist/flux.css';"
+    },
+    {
+      "file": "resources/views/layouts/app.blade.php",
+      "line": 19,
+      "snippet": "@fluxAppearance"
+    },
+    {
+      "file": "resources/views/layouts/app.blade.php",
+      "line": 188,
+      "snippet": "@fluxScripts"
+    },
+    {
+      "file": "resources/views/layouts/guest.blade.php",
+      "line": 47,
+      "snippet": "@fluxAppearance"
+    },
+    {
+      "file": "resources/views/layouts/guest.blade.php",
+      "line": 58,
+      "snippet": "@fluxScripts"
+    }
+  ],
+  "named_modals": [
+    "(unnamed)",
+    "add-comment",
+    "add-link",
+    "add-photos",
+    "assign-photoshoot",
+    "available-galleries",
+    "create-contract",
+    "create-customer",
+    "create-gallery",
+    "create-photoshoot",
+    "create-template",
+    "edit",
+    "edit-link",
+    "edit-payment",
+    "edit-user",
+    "favorite-list",
+    "generate-payment-link",
+    "login",
+    "mark-favorites",
+    "payment-link",
+    "register",
+    "search",
+    "share",
+    "share-link",
+    "show-payment-link",
+    "sign",
+    "social-links",
+    "templates"
+  ]
+}
