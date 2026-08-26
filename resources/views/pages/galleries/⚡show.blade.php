@@ -155,28 +155,12 @@ new class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:favorites";
-
-        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->favorited()
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        $this->favorites = $this->gallery->photosInOrder($this->gallery->favoritePhotoIds());
     }
 
     public function getCommentedPhotos()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:commented";
-
-        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->whereHas('comments')
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        $this->commentedPhotos = $this->gallery->photosInOrder($this->gallery->commentedPhotoIds());
     }
 
     public function markFavorites()
@@ -204,9 +188,7 @@ new class extends Component
             })
             ->update(['favorited_at' => now()]);
 
-        Cache::forget("gallery:{$this->gallery->id}:favorites");
-        Cache::forget("gallery:{$this->gallery->id}:favorites:nav");
-        Cache::forget("gallery:{$this->gallery->id}:photos");
+        Cache::forget("gallery:{$this->gallery->id}:favorites:ids");
 
         $this->getFavorites();
         $this->favoriteFileNames = '';
@@ -219,14 +201,7 @@ new class extends Component
     #[Computed]
     public function allPhotos()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:photos";
-
-        return Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        return $this->gallery->photosInOrder($this->gallery->photoIds());
     }
 
     #[Computed]

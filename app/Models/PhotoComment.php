@@ -17,14 +17,12 @@ class PhotoComment extends Model
     {
         static::created(function ($comment) {
             $comment->load('photo');
-            Cache::forget("gallery:{$comment->photo->gallery_id}:commented");
-            Cache::forget("gallery:{$comment->photo->gallery_id}:commented:nav");
+            Cache::forget("gallery:{$comment->photo->gallery_id}:commented:ids");
         });
 
         static::deleted(function ($comment) {
             $comment->load('photo');
-            Cache::forget("gallery:{$comment->photo->gallery_id}:commented");
-            Cache::forget("gallery:{$comment->photo->gallery_id}:commented:nav");
+            Cache::forget("gallery:{$comment->photo->gallery_id}:commented:ids");
         });
     }
 

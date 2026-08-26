@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,21 +32,17 @@ class Photo extends Model
         static::created(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
-            Cache::forget("gallery:{$photo->gallery_id}:commented");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
         });
 
         static::deleted(function ($photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:nav");
-            Cache::forget("gallery:{$photo->gallery_id}:commented");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:nav");
+            Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
         });
     }
 
@@ -68,8 +65,7 @@ class Photo extends Model
     {
         $this->update(['favorited_at' => $this->favorited_at ? null : Carbon::now()]);
 
-        Cache::forget("gallery:{$this->gallery_id}:favorites");
-        Cache::forget("gallery:{$this->gallery_id}:favorites:nav");
+        Cache::forget("gallery:{$this->gallery_id}:favorites:ids");
     }
 
     public function isFavorited()
@@ -77,82 +73,53 @@ class Photo extends Model
         return $this->favorited_at !== null;
     }
 
-    public function next()
+    public function next(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:photos";
-
-        $photos = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->get()->naturalSortBy('name');
-        });
-
-        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
-
-        return $photos->get($currentIndex + 1);
+        return $this->navigationNeighbor($this->gallery->photoIds(), 1);
     }
 
-    public function previous()
+    public function previous(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:photos";
-
-        $photos = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->get()->naturalSortBy('name');
-        });
-
-        $currentIndex = $photos->search(fn ($photo) => $photo->id === $this->id);
-
-        return $photos->get($currentIndex - 1);
+        return $this->navigationNeighbor($this->gallery->photoIds(), -1);
     }
 
-    public function nextFavorite()
+    public function nextFavorite(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:favorites:nav";
-
-        $favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->favorited()->get()->naturalSortBy('name');
-        });
-
-        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
-
-        return $favorites->get($currentIndex + 1);
+        return $this->navigationNeighbor($this->gallery->favoritePhotoIds(), 1);
     }
 
-    public function previousFavorite()
+    public function previousFavorite(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:favorites:nav";
-
-        $favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->favorited()->get()->naturalSortBy('name');
-        });
-
-        $currentIndex = $favorites->search(fn ($photo) => $photo->id === $this->id);
-
-        return $favorites->get($currentIndex - 1);
+        return $this->navigationNeighbor($this->gallery->favoritePhotoIds(), -1);
     }
 
-    public function nextCommented()
+    public function nextCommented(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:commented:nav";
-
-        $commented = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
-        });
-
-        $currentIndex = $commented->search(fn ($photo) => $photo->id === $this->id);
-
-        return $commented->get($currentIndex + 1);
+        return $this->navigationNeighbor($this->gallery->commentedPhotoIds(), 1);
     }
 
-    public function previousCommented()
+    public function previousCommented(): ?Photo
     {
-        $cacheKey = "gallery:{$this->gallery_id}:commented:nav";
+        return $this->navigationNeighbor($this->gallery->commentedPhotoIds(), -1);
+    }
 
-        $commented = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()->whereHas('comments')->get()->naturalSortBy('name');
-        });
+    /**
+     * Find the neighbor photo offset positions away within the given
+     * naturally sorted photo id list.
+     *
+     * @param  \Illuminate\Support\Collection<int, int>  $photoIds
+     */
+    protected function navigationNeighbor(Collection $photoIds, int $offset): ?Photo
+    {
+        $currentIndex = $photoIds->search($this->id);
 
-        $currentIndex = $commented->search(fn ($photo) => $photo->id === $this->id);
+        if ($currentIndex === false) {
+            return null;
+        }
 
-        return $commented->get($currentIndex - 1);
+        $neighborId = $photoIds->get($currentIndex + $offset);
+
+        return $neighborId === null ? null : static::find($neighborId);
     }
 
     public function deleteFromDisk()

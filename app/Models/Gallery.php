@@ -9,9 +9,11 @@ use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -56,11 +58,9 @@ class Gallery extends Model
         static::deleted(function (Gallery $gallery) {
             Cache::forget("gallery:{$gallery->id}:first_image");
             Cache::forget("gallery:{$gallery->id}:photos_count");
-            Cache::forget("gallery:{$gallery->id}:photos");
-            Cache::forget("gallery:{$gallery->id}:favorites");
-            Cache::forget("gallery:{$gallery->id}:favorites:nav");
-            Cache::forget("gallery:{$gallery->id}:commented");
-            Cache::forget("gallery:{$gallery->id}:commented:nav");
+            Cache::forget("gallery:{$gallery->id}:photos:ids");
+            Cache::forget("gallery:{$gallery->id}:favorites:ids");
+            Cache::forget("gallery:{$gallery->id}:commented:ids");
         });
     }
 
@@ -87,6 +87,59 @@ class Gallery extends Model
     public function favorites()
     {
         return $this->photos()->favorited();
+    }
+
+    /**
+     * Cached, naturally sorted by name photo ids of the gallery.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function photoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:photos:ids", now()->addHours(1), function () {
+            return $this->photos()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
+     * Cached, naturally sorted by name ids of the gallery's favorited photos.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function favoritePhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:favorites:ids", now()->addHours(1), function () {
+            return $this->favorites()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
+     * Cached, naturally sorted by name ids of the gallery's commented photos.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function commentedPhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:commented:ids", now()->addHours(1), function () {
+            return $this->photos()->whereHas('comments')->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
+     * Hydrate the photos for the given ids, in the given order, with comment counts.
+     *
+     * @param  \Illuminate\Support\Collection<int, int>  $ids
+     * @return \Illuminate\Database\Eloquent\Collection<int, Photo>
+     */
+    public function photosInOrder(Collection $ids): EloquentCollection
+    {
+        $photos = $this->photos()
+            ->whereKey($ids)
+            ->withCount('comments')
+            ->get()
+            ->keyBy('id');
+
+        return EloquentCollection::make($ids->map(fn ($id) => $photos->get($id))->filter()->values()->all());
     }
 
     #[Scope]

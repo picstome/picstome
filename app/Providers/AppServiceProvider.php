@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Models\Team;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
@@ -27,13 +26,6 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::if('subscribed', function (Team $team) {
             return $team && $team->subscribed();
-        });
-
-        Collection::macro('naturalSortBy', function ($attribute = 'name') {
-            /** @var \Illuminate\Support\Collection $this */
-            return $this->sort(function ($a, $b) use ($attribute) {
-                return strnatcmp($a->$attribute, $b->$attribute);
-            })->values();
         });
     }
 }

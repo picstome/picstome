@@ -315,6 +315,21 @@ describe('Favorites', function () {
         expect($component->favorites->contains($favorite))->toBeTrue();
     });
 
+    it('refreshes the favorites list after marking photos as favorites', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->favorited()->create(['name' => '1Z8A6190.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->favorites->count())->toBe(1);
+
+        $component->set('favoriteFileNames', '1Z8A6159')
+            ->call('markFavorites');
+
+        expect($component->favorites->pluck('name')->sort()->values()->all())->toBe(['1Z8A6159.jpg', '1Z8A6190.jpg']);
+    });
+
     it('allows users to favorite a photo', function () {
         $photo = Photo::factory()->unfavorited()->create();
         expect($photo->isFavorited())->toBeFalse();

@@ -2,7 +2,6 @@
 
 use App\Models\Gallery;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -31,28 +30,12 @@ new #[Layout('layouts.guest')] class extends Component
     #[On('photo-favorited')]
     public function getFavorites()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:favorites";
-
-        $this->favorites = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->favorited()
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        $this->favorites = $this->gallery->photosInOrder($this->gallery->favoritePhotoIds());
     }
 
     public function getCommentedPhotos()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:commented";
-
-        $this->commentedPhotos = Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->whereHas('comments')
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        $this->commentedPhotos = $this->gallery->photosInOrder($this->gallery->commentedPhotoIds());
     }
 
     #[Computed]
@@ -68,14 +51,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[Computed]
     public function allPhotos()
     {
-        $cacheKey = "gallery:{$this->gallery->id}:photos";
-
-        return Cache::remember($cacheKey, now()->addHours(1), function () {
-            return $this->gallery->photos()
-                ->withCount('comments')
-                ->get()
-                ->naturalSortBy('name');
-        });
+        return $this->gallery->photosInOrder($this->gallery->photoIds());
     }
 
     public function with()
