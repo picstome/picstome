@@ -86,7 +86,7 @@ class SyncTranslations extends Command
      */
     private function syncKeysToLangFiles(Collection $keys)
     {
-        $langFiles = collect(glob(base_path('lang/*.json')));
+        $langFiles = collect(glob($this->laravel->langPath('*.json')));
 
         foreach ($langFiles as $langFile) {
             $json = json_decode(file_get_contents($langFile), true) ?? [];
