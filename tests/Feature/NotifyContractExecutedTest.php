@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\ContractExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -49,6 +50,7 @@ it('falls back to the default locale when the owner has none', function () {
 
 it('renders the mail with translated strings', function () {
     app()->setLocale('es');
+    Storage::fake('s3');
 
     $owner = User::factory()->create(['language' => 'es']);
     $team = Team::factory()->for($owner, 'owner')->create();
