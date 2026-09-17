@@ -165,4 +165,30 @@ describe('Users Page', function () {
             ->assertSee($lifetimeUser->name)
             ->assertDontSee($regularUser->name);
     });
+
+    it('renders users without a personal team', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $teamlessUser = User::factory()->create();
+
+        expect($teamlessUser->personalTeam())->toBeNull();
+
+        $response = actingAs($admin)->get('/users');
+
+        $response->assertStatus(200);
+        $response->assertSee($teamlessUser->email);
+    });
+
+    it('lets an admin edit a user without a personal team', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $teamlessUser = User::factory()->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $teamlessUser->id)
+            ->assertHasNoErrors();
+    });
 });

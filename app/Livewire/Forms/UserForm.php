@@ -19,12 +19,14 @@ class UserForm extends Form
     {
         $this->user = $user;
 
-        $this->custom_storage_limit = ! is_null($user->personalTeam()->custom_storage_limit)
-            ? round($user->personalTeam()->storage_limit / 1073741824, 2) // Convert bytes to GB
+        $team = $user->personalTeam();
+
+        $this->custom_storage_limit = ! is_null($team?->custom_storage_limit)
+            ? round($team->storage_limit / 1073741824, 2) // Convert bytes to GB
             : null;
 
-        $this->monthly_contract_limit = $user->personalTeam()->monthly_contract_limit;
-        $this->lifetime = $user->personalTeam()->lifetime_at !== null;
+        $this->monthly_contract_limit = $team?->monthly_contract_limit;
+        $this->lifetime = $team?->lifetime_at !== null;
     }
 
     public function update()
@@ -34,11 +36,15 @@ class UserForm extends Form
             'monthly_contract_limit' => 'nullable|integer|min:0',
         ]);
 
+        if (! $team = $this->user->personalTeam()) {
+            return;
+        }
+
         $bytes = $this->custom_storage_limit !== null
             ? (int) $this->custom_storage_limit * (1024 ** 3) // Convert GB to bytes
             : null;
 
-        $this->user->personalTeam()->update([
+        $team->update([
             'custom_storage_limit' => $bytes,
             'monthly_contract_limit' => $this->monthly_contract_limit,
             'lifetime_at' => $this->lifetime ? now() : null,

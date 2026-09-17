@@ -227,11 +227,11 @@ new class extends Component
                                     <flux:heading>
                                         {{ $user->name }}
 
-                                        @if ($user->personalTeam()->lifetime_at)
+                                        @if ($user->personalTeam()?->lifetime_at)
                                             <flux:badge color="lime" size="sm">
                                                 {{ __('Lifetime') }}
                                             </flux:badge>
-                                        @elseif ($user->personalTeam()->subscribed())
+                                        @elseif ($user->personalTeam()?->subscribed())
                                             <flux:badge color="lime" size="sm">
                                                 {{ __('Subscribed') }}
                                             </flux:badge>
@@ -253,25 +253,30 @@ new class extends Component
                         </flux:table.cell>
 
                         <flux:table.cell class="whitespace-nowrap">
-                            @if ($user->personalTeam()->has_unlimited_storage)
+                            @php
+                                $team = $user->personalTeam();
+                            @endphp
+                            @if ($team?->has_unlimited_storage)
                                 <div class="text-xs tabular-nums">
-                                    {{ $user->personalTeam()->storage_used_gb }} / {{ __('Unlimited') }}
+                                    {{ $team->storage_used_gb }} / {{ __('Unlimited') }}
                                 </div>
-                            @else
+                            @elseif ($team)
                                 <div>
                                     <div class="text-xs tabular-nums">
-                                        {{ $user->personalTeam()->storage_used_gb }} /
-                                        {{ $user->personalTeam()->storage_limit_gb }}
+                                        {{ $team->storage_used_gb }} /
+                                        {{ $team->storage_limit_gb }}
                                     </div>
                                     <div class="mt-1 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
                                         <div
-                                            class="{{ $user->personalTeam()->storage_used_percent > 90 ? 'bg-red-500' : ($user->personalTeam()->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                            class="{{ $team->storage_used_percent > 90 ? 'bg-red-500' : ($team->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
                                             style="
-                                                width: {{ min($user->personalTeam()->storage_used_percent, 100) }}%;
+                                                width: {{ min($team->storage_used_percent, 100) }}%;
                                             "
                                         ></div>
                                     </div>
                                 </div>
+                            @else
+                                &mdash;
                             @endif
                         </flux:table.cell>
 
@@ -279,9 +284,9 @@ new class extends Component
                             @php
                                 $team = $user->personalTeam();
                             @endphp
-                            @if ($team->lifetime_at)
+                            @if ($team?->lifetime_at)
                                 {{ $team->lifetime_at->format('M j, Y') }}
-                            @elseif ($team->subscribed() && $subscription = $team->subscriptions->first())
+                            @elseif ($team?->subscribed() && $subscription = $team->subscriptions->first())
                                 {{ $subscription->created_at->format('M j, Y') }}
                             @else
                                 &mdash;
