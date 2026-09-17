@@ -26,8 +26,12 @@ class NotifyContractExecuted implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->contract->signatures->each(function (Signature $signature) {
-            Notification::route('mail', $signature->email)->notify(new ContractExecuted($this->contract));
+        $locale = $this->contract->team->owner->language ?? config('app.locale');
+
+        $this->contract->signatures->each(function (Signature $signature) use ($locale) {
+            Notification::route('mail', $signature->email)->notify(
+                (new ContractExecuted($this->contract))->locale($locale)
+            );
         });
     }
 }

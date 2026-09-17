@@ -38,7 +38,7 @@ class ContractExecuted extends Notification
             ->subject(__('Signed').': '.$this->contract->title)
             ->line(__('Contract signed'))
             ->line(__('Download the signed contract for your records. All relevant parties have been notified by email.'))
-            ->action('Download contract', $this->contract->pdf_file_url);
+            ->action(__('Download contract'), $this->contract->pdf_file_url);
 
         if ($this->contract->team->subscribed()) {
             $mail->salutation($this->contract->team->name);
