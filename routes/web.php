@@ -59,6 +59,8 @@ Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
 
 Route::livewire('/shares/{gallery:ulid}/{slug}', 'pages::shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);
 
+Route::livewire('/clients/{customer:ulid}', 'pages::clients.show')->name('clients.show');
+
 Route::livewire('/contract-templates', 'pages::contract-templates')->name('contract-templates')->middleware(['auth', 'verified']);
 
 Route::livewire('/contract-templates/{contractTemplate}', 'pages::contract-templates.show')->name('contract-templates.show')->middleware(['auth', 'verified']);

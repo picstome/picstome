@@ -66,7 +66,7 @@ test('visitors with unlocked gallery can download the password-protected gallery
             ->image('photo1.jpg')
             ->store('photo1.jpg', 's3'),
     ]);
-    session()->put('unlocked_gallery_ulid', '0123ABC');
+    session()->put('unlocked_gallery_ulids', ['0123ABC']);
 
     $response = get('/shares/0123ABC/photos/1/download');
 

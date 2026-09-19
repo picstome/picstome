@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
 class Customer extends Model
@@ -12,6 +13,15 @@ class Customer extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public static function booted()
+    {
+        static::creating(function (Customer $customer) {
+            if (empty($customer->ulid)) {
+                $customer->ulid = Str::ulid();
+            }
+        });
+    }
 
     protected function casts()
     {
@@ -28,6 +38,11 @@ class Customer extends Model
     public function photoshoots()
     {
         return $this->hasMany(Photoshoot::class);
+    }
+
+    public function galleries(): HasManyThrough
+    {
+        return $this->hasManyThrough(Gallery::class, Photoshoot::class);
     }
 
     protected function formattedBirthdate(): Attribute

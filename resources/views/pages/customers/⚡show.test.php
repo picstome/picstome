@@ -67,3 +67,13 @@ it('can edit customer notes via Livewire', function () {
     expect($customer->notes)->toBe('New notes with **markdown**');
     expect($customer->formatted_notes)->toContain('<strong>markdown</strong>');
 });
+
+it('shows the client link modal with the customer share url', function () {
+    $customer = Customer::factory()->for($this->team)->create();
+
+    $response = actingAs($this->user)->get("/customers/{$customer->id}");
+
+    $response->assertStatus(200)
+        ->assertSee(__('Client link'))
+        ->assertSee(route('clients.show', $customer));
+});

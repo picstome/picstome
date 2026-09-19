@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Gallery;
-use Illuminate\Support\Facades\Hash;
+use App\Services\GalleryUnlockService;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -21,13 +21,11 @@ new #[Layout('layouts.guest')] class extends Component
 
     public function unlock()
     {
-        if (! Hash::check($this->password, $this->gallery->share_password)) {
+        if (! app(GalleryUnlockService::class)->unlock($this->gallery, $this->password)) {
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
             ]);
         }
-
-        session()->put('unlocked_gallery_ulid', $this->gallery->ulid);
 
         return $this->redirect("/shares/{$this->gallery->ulid}/{$this->gallery->slug}");
     }

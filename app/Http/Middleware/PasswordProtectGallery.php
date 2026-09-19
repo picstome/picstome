@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Gallery;
+use App\Services\GalleryUnlockService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +23,7 @@ class PasswordProtectGallery
             $gallery = Gallery::where('ulid', $gallery)->firstOrFail();
         }
 
-        if ($gallery->share_password && $request->session()->get('unlocked_gallery_ulid') !== $gallery->ulid) {
+        if ($gallery->share_password && ! app(GalleryUnlockService::class)->isUnlocked($gallery)) {
             return redirect()->to(route('shares.unlock', ['gallery' => $gallery]));
         }
 
