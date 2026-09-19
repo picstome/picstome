@@ -58,7 +58,7 @@ test('unauthenticated visitors to a password-protected gallery are redirected to
 
 test('visitors with unlocked gallery can view the password-protected gallery', function () {
     $gallery = Gallery::factory()->shared()->protected()->create(['ulid' => '0123ABC']);
-    session()->put('unlocked_gallery_ulid', '0123ABC');
+    session()->put('unlocked_gallery_ulids', ['0123ABC']);
 
     $response = get('/shares/0123ABC/'.$gallery->slug);
 
