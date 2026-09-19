@@ -1,0 +1,8 @@
+
+Deprecated: Constant PDO::MYSQL_ATTR_SSL_CA is deprecated since 8.5, use Pdo\Mysql::ATTR_SSL_CA instead in /Users/oliver/Herd/app.picstome.com/config/database.php on line 61
+
+Deprecated: Constant PDO::MYSQL_ATTR_SSL_CA is deprecated since 8.5, use Pdo\Mysql::ATTR_SSL_CA instead in /Users/oliver/Herd/app.picstome.com/config/database.php on line 81
+array:2 [
+  "id" => 2
+  "is_shared" => true
+] // vendor/psy/psysh/src/ExecutionClosure.php(41) : eval()'d code:1

@@ -1,0 +1,5 @@
+Share URL recorded from the "Gallery shared" dialog (2026-09-18 run):
+
+https://app.picstome.com.test/shares/01M2VV0WPMDCBV9N4MWP398Q3W/verify-galleries-proof
+
+Shape /shares/{ulid}/{slug} as mapped in features/galleries.md.
