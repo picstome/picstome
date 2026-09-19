@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -30,9 +32,15 @@ new class extends Component
             throw $e;
         }
 
-        Auth::user()->update([
+        Auth::user()->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        DB::table('sessions')
+            ->where('user_id', Auth::id())
+            ->where('id', '!=', session()->getId())
+            ->delete();
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
