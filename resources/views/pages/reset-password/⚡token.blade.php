@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Session;
@@ -43,6 +44,8 @@ new #[Layout('layouts.guest')] class extends Component
                     'password' => Hash::make($this->password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                DB::table('sessions')->where('user_id', $user->id)->delete();
 
                 event(new PasswordReset($user));
             }
