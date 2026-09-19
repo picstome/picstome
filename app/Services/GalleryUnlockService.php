@@ -56,7 +56,9 @@ class GalleryUnlockService
 
         $matched = $locked->filter(fn (Gallery $gallery) => Hash::check($password, $gallery->share_password));
 
-        $this->markUnlocked($matched->pluck('ulid')->all());
+        if ($matched->isNotEmpty()) {
+            $this->markUnlocked($matched->pluck('ulid')->all());
+        }
 
         return $matched->count();
     }

@@ -31,7 +31,7 @@ it('writes nothing to the session when no gallery matches the password', functio
     $service = app(GalleryUnlockService::class);
 
     expect($service->unlockCustomerGalleries($customer, 'wrong-password'))->toBe(0);
-    expect($service->unlockedUlids())->toBeEmpty();
+    expect(session()->get(GalleryUnlockService::SESSION_KEY))->toBeNull();
 });
 
 it('returns false when the seed password does not verify', function () {
