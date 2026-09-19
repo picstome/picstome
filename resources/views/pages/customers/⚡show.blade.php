@@ -127,6 +127,9 @@ new class extends Component
             <x-heading level="1" size="xl">{{ $customer->name }}</x-heading>
         </div>
         <div class="flex gap-4">
+            <flux:modal.trigger name="client-link">
+                <flux:button icon="link">{{ __('Client link') }}</flux:button>
+            </flux:modal.trigger>
             <flux:button wire:click="delete" variant="subtle" wire:confirm="{{ __('Are you sure?') }}">
                 {{ __('Delete') }}
             </flux:button>
@@ -372,5 +375,23 @@ new class extends Component
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
             </div>
         </form>
+    </flux:modal>
+
+    <flux:modal name="client-link" class="w-full sm:max-w-lg">
+        <div class="space-y-6">
+            <flux:heading size="lg">{{ __('Client link') }}</flux:heading>
+
+            <flux:input
+                icon="link"
+                :value="route('clients.show', $customer)"
+                :label="__('Share URL')"
+                readonly
+                copyable
+            />
+
+            <flux:text variant="subtle">
+                {{ __('Share this link with your client so they can view all their shared galleries in one place.') }}
+            </flux:text>
+        </div>
     </flux:modal>
 </div>
