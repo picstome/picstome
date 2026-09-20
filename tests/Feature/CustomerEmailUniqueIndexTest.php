@@ -26,6 +26,13 @@ it('customers with null emails can coexist on the same team', function () {
     expect(Customer::whereNull('email')->count())->toBe(2);
 });
 
+it('a second customer with an empty-string email on the same team is rejected by the database', function () {
+    $team = Team::factory()->create();
+    Customer::factory()->for($team)->create(['email' => '']);
+
+    expect(fn () => Customer::factory()->for($team)->create(['email' => '']))->toThrow(QueryException::class);
+});
+
 it('the same email on different teams is allowed', function () {
     $firstTeam = Team::factory()->create();
     $secondTeam = Team::factory()->create();
