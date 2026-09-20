@@ -60,29 +60,33 @@ new #[Layout('layouts.guest')] class extends Component
             'user_agent' => request()->userAgent(),
         ]);
 
-        $customer = $this->signature->contract->team->customers()->where('email', $this->email)->first();
+        $team = $this->signature->contract->team;
+
+        $customer = $team->customers()->where('email', $this->email)->first();
+
+        $photoshootCustomer = $this->signature->contract->photoshoot?->customer;
+        $isClientSigning = $this->email !== $team->owner->email
+            && $this->signature->contract->signatures()->count() === 2;
+
+        if (! $customer && $photoshootCustomer && $isClientSigning) {
+            $customer = $photoshootCustomer;
+        }
 
         if ($customer) {
-            if (empty($customer->birthdate)) {
+            if ($isClientSigning && $customer->is($photoshootCustomer)) {
+                $customer->update([
+                    'email' => $this->email,
+                    'birthdate' => $this->birthday,
+                ]);
+            } elseif (empty($customer->birthdate)) {
                 $customer->update(['birthdate' => $this->birthday]);
             }
         } else {
-            $this->signature->contract->team->customers()->create([
+            $team->customers()->create([
                 'name' => $this->legalName,
                 'email' => $this->email,
                 'birthdate' => $this->birthday,
             ]);
-        }
-
-        if ($this->email !== $this->signature->contract->team->owner->email && $this->signature->contract->signatures()->count() === 2) {
-            $photoshootCustomer = $this->signature->contract->photoshoot?->customer;
-
-            if ($photoshootCustomer) {
-                $photoshootCustomer->update([
-                    'email' => $this->email,
-                    'birthdate' => $this->birthday,
-                ]);
-            }
         }
 
         $this->signature->updateSignatureImage($this->signature_image);

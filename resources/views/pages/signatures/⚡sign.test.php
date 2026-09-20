@@ -297,3 +297,67 @@ test('signing does not update photoshoot customer when contract has only one sig
     expect($photoshootCustomer->fresh()->email)->toBe('old-email@example.com');
     expect($photoshootCustomer->fresh()->birthdate->toDateString())->toBe('1990-01-01');
 });
+
+test('signing does not duplicate the photoshoot customer when it has no email', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $team = Team::factory()->create();
+    $photoshootCustomer = Customer::factory()->for($team)->create([
+        'email' => null,
+        'birthdate' => null,
+    ]);
+    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+        'customer_id' => $photoshootCustomer->id,
+    ]);
+    $contract = Contract::factory()->for($team)->for($photoshoot)->create();
+    $contract->addSignatures(2);
+
+    Livewire::test('pages::signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+        ->set('role', 'Client')
+        ->set('legalName', 'John Doe Fullname')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', '2000-12-12')
+        ->set('email', 'john@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($team->customers()->count())->toBe(1);
+    expect($photoshootCustomer->fresh()->email)->toBe('john@example.com');
+    expect($photoshootCustomer->fresh()->birthdate->toDateString())->toBe('2000-12-12');
+});
+
+test('signing does not stamp the photoshoot customer when the signer email matches another customer', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $team = Team::factory()->create();
+    $existingCustomer = Customer::factory()->for($team)->create([
+        'email' => 'john@example.com',
+        'birthdate' => null,
+    ]);
+    $photoshootCustomer = Customer::factory()->for($team)->create([
+        'email' => null,
+        'birthdate' => null,
+    ]);
+    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+        'customer_id' => $photoshootCustomer->id,
+    ]);
+    $contract = Contract::factory()->for($team)->for($photoshoot)->create();
+    $contract->addSignatures(2);
+
+    Livewire::test('pages::signatures.sign', ['signature' => $contract->signatures()->unsigned()->first()])
+        ->set('role', 'Client')
+        ->set('legalName', 'John Doe')
+        ->set('documentNumber', 'ABC1234')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', '2000-12-12')
+        ->set('email', 'john@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign');
+
+    expect($team->customers()->count())->toBe(2);
+    expect($photoshootCustomer->fresh()->email)->toBeNull();
+    expect($existingCustomer->fresh()->birthdate->toDateString())->toBe('2000-12-12');
+});
