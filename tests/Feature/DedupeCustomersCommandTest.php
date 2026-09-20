@@ -3,11 +3,21 @@
 use App\Models\Customer;
 use App\Models\Photoshoot;
 use App\Models\Team;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 
 use function Pest\Laravel\artisan;
 
 uses(RefreshDatabase::class);
+
+// The unique index on (team_id, email) now prevents seeding the duplicates
+// this command exists to clean, so the tests run against the pre-index schema.
+beforeEach(function () {
+    Schema::table('customers', function (Blueprint $table) {
+        $table->dropUnique(['team_id', 'email']);
+    });
+});
 
 function seedCristinaDuplicates(Team $team): array
 {
