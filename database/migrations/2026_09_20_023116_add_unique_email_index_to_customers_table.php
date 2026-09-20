@@ -11,9 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // MySQL keeps the customers.team_id foreign key on the plain index,
+        // so the unique index must exist before the plain one is dropped.
+        Schema::table('customers', function (Blueprint $table) {
+            $table->unique(['team_id', 'email']);
+        });
+
         Schema::table('customers', function (Blueprint $table) {
             $table->dropIndex(['team_id', 'email']);
-            $table->unique(['team_id', 'email']);
         });
     }
 
