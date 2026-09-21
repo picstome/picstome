@@ -23,7 +23,7 @@ class extends Component
 
         $this->team = $gallery->team;
         $this->gallery = $gallery;
-        $this->photos = $this->gallery->photos()->with('gallery')->get();
+        $this->photos = $this->gallery->photos()->with('gallery')->get()->filter(fn ($photo) => $photo->isImage())->values();
     }
 
     public function rendering(View $view): void

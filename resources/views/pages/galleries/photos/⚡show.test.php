@@ -28,6 +28,17 @@ test('users can view a team photo in the gallery', function () {
     $response->assertStatus(200);
 });
 
+test('users can open a pdf photo from an inline open button', function () {
+    $photo = Photo::factory()->pdf()->for(Gallery::factory()->for($this->team))->create();
+
+    $response = actingAs($this->user)->get('/galleries/1/photos/1');
+
+    $response->assertStatus(200);
+    $response->assertSee('Open PDF');
+    $response->assertSee('/galleries/1/photos/1/pdf');
+    $response->assertSee($photo->formattedSize());
+});
+
 test('guests cannot view any photos', function () {
     $photo = Photo::factory()->create();
 
