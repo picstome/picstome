@@ -111,6 +111,99 @@ describe('Photo Upload', function () {
             return $job->photo->is($photo);
         });
     });
+
+    it('allows pdfs to be added to a gallery', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->createWithContent('composite.pdf', '%PDF-1.4 fake pdf body'))
+            ->call('save', 0);
+
+        $component->assertHasNoErrors();
+
+        $photo = $gallery->fresh()->photos[0];
+        expect($photo->name)->toBe('composite.pdf');
+        expect($photo->path)->toEndWith('.pdf');
+        expect($photo->status)->toBe('pending');
+        expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+    });
+
+    it('rejects files with extensions outside the upload allowlist', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        foreach (['invoice.exe', 'evil.html', 'README'] as $index => $fileName) {
+            $component->set("photos.{$index}", UploadedFile::fake()->create($fileName, 100))
+                ->call('save', $index)
+                ->assertHasErrors(["photos.{$index}" => 'This file type is not supported.']);
+        }
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        Event::assertNotDispatched(PhotoAdded::class);
+    });
+
+    it('rejects pdfs whose content is not a pdf', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->createWithContent('composite.pdf', '<html>not a pdf</html>'))
+            ->call('save', 0);
+
+        $component->assertHasErrors(['photos.0' => 'This file is not a valid PDF.']);
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+    });
+
+    it('rejects files whose name contains control characters', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->createWithContent("evil\0composite.pdf", '%PDF-1.4 fake pdf body'))
+            ->call('save', 0);
+
+        $component->assertHasErrors(['photos.0' => 'The file name contains invalid characters.']);
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+    });
+
+    it('accepts every previously advertised upload extension', function (string $extension) {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->create("photo.{$extension}", 100))
+            ->call('save', 0);
+
+        $component->assertHasNoErrors();
+        expect($gallery->fresh()->photos()->count())->toBe(1);
+        expect($gallery->fresh()->photos[0]->name)->toBe("photo.{$extension}");
+    })->with(['jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr']);
+
+    it('keeps the upload extension allowlist equal to the advertised formats plus pdf', function () {
+        expect(config('picstome.upload_extensions'))->toBe([
+            'jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg',
+            'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr',
+            'pdf',
+        ]);
+    });
 });
 
 describe('Gallery Sharing', function () {
