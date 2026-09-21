@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Photo extends Model
 {
@@ -156,6 +157,19 @@ class Photo extends Model
         return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->name);
     }
 
+    /**
+     * Stream a PDF inline with a forced content type, so the browser's native
+     * PDF reader renders it regardless of the content type the upload placed
+     * on the stored object.
+     */
+    public function inline(): StreamedResponse
+    {
+        return Storage::disk($this->diskOrDefault())->response($this->path, $this->name, [
+            'Content-Type' => 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     protected function url(): Attribute
     {
         return Attribute::get(function () {
@@ -175,6 +189,10 @@ class Photo extends Model
                     'q' => 93,
                     'output' => 'webp',
                 ]);
+            }
+
+            if ($this->isPdf()) {
+                return null;
             }
 
             $disk = $this->diskOrDefault();
@@ -393,5 +411,15 @@ class Photo extends Model
         $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
 
         return in_array($ext, ['mp4', 'webm', 'ogg']);
+    }
+
+    /**
+     * Determine if the photo is a PDF document
+     */
+    public function isPdf(): bool
+    {
+        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return $ext === 'pdf';
     }
 }

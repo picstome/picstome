@@ -40,6 +40,15 @@ return [
 
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
+    /**
+     * File extensions accepted by the gallery upload dialog. Single source of
+     * truth for the dialog's accept attribute, the uploader's client-side
+     * pre-filter, and the server-side extension gate.
+     *
+     * @var list<string>
+     */
+    'upload_extensions' => ['jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr', 'pdf'],
+
     'disk' => 's3',
 
     // Number of days before expiration to send gallery reminder
