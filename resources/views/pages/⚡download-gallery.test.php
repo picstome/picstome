@@ -35,6 +35,30 @@ test('all gallery photos can be downloaded as a zip file', function () {
     $response->assertDownload('example-gallery.zip');
 });
 
+test('gallery zip includes pdfs under their pdf name', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
+    $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg'));
+    $gallery->addPhoto(UploadedFile::fake()->createWithContent('composite.pdf', '%PDF-1.4 fake pdf body'));
+
+    $response = actingAs($this->user)->get('galleries/1/download');
+
+    $response->assertDownload('example-gallery.zip');
+
+    $zipPath = tempnam(sys_get_temp_dir(), 'gallery-zip');
+    file_put_contents($zipPath, $response->streamedContent());
+
+    $zip = new ZipArchive;
+    $zip->open($zipPath);
+
+    expect($zip->locateName('photo1.jpg'))->not->toBeFalse();
+    expect($zip->getFromName('composite.pdf'))->toBe('%PDF-1.4 fake pdf body');
+
+    $zip->close();
+    unlink($zipPath);
+});
+
 test('guests cannot download any galleries', function () {
     Gallery::factory()->for($this->team)->create();
 
