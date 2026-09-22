@@ -45,6 +45,17 @@ class Customer extends Model
         return $this->hasManyThrough(Gallery::class, Photoshoot::class);
     }
 
+    protected function email(): Attribute
+    {
+        return Attribute::set(function (?string $value) {
+            if ($value === null || trim($value) === '') {
+                return null;
+            }
+
+            return $value;
+        });
+    }
+
     protected function formattedBirthdate(): Attribute
     {
         return Attribute::get(function () {
