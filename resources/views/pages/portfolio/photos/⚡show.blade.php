@@ -20,8 +20,32 @@ class extends Component
         abort_unless($photo->gallery->is_public, 404);
 
         $this->photo = $photo;
-        $this->next = $this->photo->next();
-        $this->previous = $this->photo->previous();
+        $this->next = $this->imageNeighbor(1);
+        $this->previous = $this->imageNeighbor(-1);
+    }
+
+    /**
+     * Find the neighbor image offset positions away, skipping non-image
+     * photos the way the portfolio grid does.
+     */
+    protected function imageNeighbor(int $offset): ?Photo
+    {
+        $imageIds = $this->photo->gallery->photos()
+            ->get()
+            ->filter(fn ($photo) => $photo->isImage())
+            ->pluck('name', 'id')
+            ->sort(SORT_NATURAL)
+            ->keys();
+
+        $currentIndex = $imageIds->search($this->photo->id);
+
+        if ($currentIndex === false) {
+            return null;
+        }
+
+        $neighborId = $imageIds->get($currentIndex + $offset);
+
+        return $neighborId === null ? null : Photo::find($neighborId);
     }
 
     public function rendering(View $view): void
@@ -63,42 +87,49 @@ class extends Component
     class="flex h-screen flex-col"
 >
     <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
-        <img
-            x-show="!zoom && !pinchZooming"
-            src="{{ $photo->thumbnail_url }}"
-            srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
-            sizes="(max-width: 640px) 100vw, 80vw"
-            @click="if (!isMobile()) zoom = true"
-            @contextmenu.prevent
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
-            onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            alt="{{ $photo->name }}"
-        />
+        @if ($photo->isImage())
+            <img
+                x-show="!zoom && !pinchZooming"
+                src="{{ $photo->thumbnail_url }}"
+                srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
+                sizes="(max-width: 640px) 100vw, 80vw"
+                @click="if (!isMobile()) zoom = true"
+                @contextmenu.prevent
+                class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
+                onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                alt="{{ $photo->name }}"
+            />
 
-        <img
-            x-show="!zoom && pinchZooming"
-            src="{{ $photo->url }}"
-            @click="if (!isMobile()) zoom = true"
-            class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
-            onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            alt="{{ $photo->name }}"
-            x-cloak
-        />
+            <img
+                x-show="!zoom && pinchZooming"
+                src="{{ $photo->url }}"
+                @click="if (!isMobile()) zoom = true"
+                class="mx-auto object-contain max-w-full hover:cursor-zoom-in animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
+                onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                alt="{{ $photo->name }}"
+                x-cloak
+            />
 
-        <img
-            x-show="zoom"
-            src="{{ $photo->url }}"
-            @click="zoom = false"
-            @contextmenu.prevent
-            class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
-            onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
-            loading="lazy"
-            alt="{{ $photo->name }}"
-            x-cloak
-        />
+            <img
+                x-show="zoom"
+                src="{{ $photo->url }}"
+                @click="zoom = false"
+                @contextmenu.prevent
+                class="mx-auto object-contain max-w-none hover:cursor-zoom-out animate-pulse bg-black/60 dark:bg-white/60 h-full w-full"
+                onload="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                onerror="this.classList.remove('animate-pulse','bg-black/60','dark:bg-white/60','h-full','w-full')"
+                loading="lazy"
+                alt="{{ $photo->name }}"
+                x-cloak
+            />
+        @else
+            <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
+                <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
+                <flux:text class="max-w-full truncate">{{ $photo->name }}</flux:text>
+            </div>
+        @endif
 
         <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
             :class="zoom ? 'hidden' : 'flex'">
@@ -156,7 +187,9 @@ class extends Component
 @endassets
 
 @push('head')
-    <link rel="preload" as="image" href="{{ $photo->url }}">
+    @if ($photo->isImage())
+        <link rel="preload" as="image" href="{{ $photo->url }}">
+    @endif
 
     @if ($next)
         <link rel="preload" as="image" href="{{ $next->url }}">

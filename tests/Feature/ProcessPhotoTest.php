@@ -116,6 +116,31 @@ it('does not process photo if extension is not allowed', function () {
     expect($photo->status)->toBe('skipped');
 });
 
+it('skips pdf photos without touching the stored file and stays idempotent', function () {
+    config(['picstome.photo_resize' => 128]);
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photoFile = UploadedFile::fake()->createWithContent('composite.pdf', '%PDF-1.4 fake pdf body');
+    $photo = $gallery->addPhoto($photoFile);
+    $originalPath = $photo->path;
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+    expect(Storage::disk('s3')->exists($originalPath))->toBeTrue();
+    expect(Storage::disk('s3')->get($originalPath))->toBe('%PDF-1.4 fake pdf body');
+    expect($photo->status)->toBe('skipped');
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+    expect(Storage::disk('s3')->exists($originalPath))->toBeTrue();
+    expect(Storage::disk('s3')->get($originalPath))->toBe('%PDF-1.4 fake pdf body');
+    expect($photo->status)->toBe('skipped');
+});
+
 it('processes canon cr2 raw files by extracting jpg preview', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('s3');

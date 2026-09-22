@@ -95,6 +95,13 @@ new class extends Component
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                 Your browser does not support the video tag.
             </video>
+        @elseif ($photo->isPdf())
+            <div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10">
+                <flux:icon.document-text class="size-10 text-zinc-400" />
+                <flux:text class="w-full truncate text-center text-xs text-zinc-500 dark:text-white/70">
+                    {{ $photo->name }}
+                </flux:text>
+            </div>
         @else
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
         @endif
@@ -144,14 +151,16 @@ new class extends Component
         <flux:dropdown x-model="moreActionsOpen">
             <flux:button icon="ellipsis-vertical" square size="sm" />
             <flux:menu>
-                @if ($gallery->coverPhoto?->is($this->photo))
-                    <flux:menu.item wire:click="removeAsCover" icon="x-mark">
-                        {{ __('Remove as Cover') }}
-                    </flux:menu.item>
-                @else
-                    <flux:menu.item wire:click="setAsCover" icon="star">
-                        {{ __('Set as Cover') }}
-                    </flux:menu.item>
+                @if (! $photo->isPdf())
+                    @if ($gallery->coverPhoto?->is($this->photo))
+                        <flux:menu.item wire:click="removeAsCover" icon="x-mark">
+                            {{ __('Remove as Cover') }}
+                        </flux:menu.item>
+                    @else
+                        <flux:menu.item wire:click="setAsCover" icon="star">
+                            {{ __('Set as Cover') }}
+                        </flux:menu.item>
+                    @endif
                 @endif
 
                 <flux:menu.item

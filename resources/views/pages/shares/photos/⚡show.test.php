@@ -18,6 +18,16 @@ test('photo can be viewed when the gallery is shared', function () {
         ->assertStatus(200);
 });
 
+test('pdf photo in a shared gallery shows an open button pointing at the inline route', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory()->pdf())->create(['ulid' => '0123ABC']);
+
+    $response = get('/shares/0123ABC/photos/1');
+
+    $response->assertStatus(200);
+    $response->assertSee('Open PDF');
+    $response->assertSee('/shares/0123ABC/photos/1/pdf');
+});
+
 test('photo cannot be viewed unless the gallery is shared', function () {
     $gallery = Gallery::factory(['ulid' => '0123ABC'])->unshared()->has(Photo::factory())->create();
 

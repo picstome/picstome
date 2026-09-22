@@ -53,6 +53,16 @@ Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $
     return $photo->download();
 })->name('shares.photos.download')->middleware([PasswordProtectGallery::class]);
 
+Route::get('/shares/{gallery:ulid}/photos/{photo}/pdf', function (Gallery $gallery, Photo $photo) {
+    abort_unless($gallery->is_shared, 404);
+
+    abort_unless($photo->gallery_id === $gallery->id, 404);
+
+    abort_unless($photo->isPdf(), 404);
+
+    return $photo->inline();
+})->name('shares.photos.inline')->middleware([PasswordProtectGallery::class]);
+
 Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
     return redirect('/shares/'.$gallery.'/'.$gallery->slug);
 })->name('shares.redirect');
@@ -173,3 +183,9 @@ Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $ga
 
     return $photo->download();
 })->name('galleries.photos.download')->middleware(['auth', 'verified', 'can:view,photo']);
+
+Route::get('/galleries/{gallery}/photos/{photo}/pdf', function (Gallery $gallery, Photo $photo) {
+    abort_unless($photo->isPdf(), 404);
+
+    return $photo->inline();
+})->name('galleries.photos.inline')->middleware(['auth', 'verified', 'can:view,photo']);

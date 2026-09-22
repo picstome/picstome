@@ -14,6 +14,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 
 new class extends Component
@@ -62,6 +63,18 @@ new class extends Component
                 function ($attribute, $value, $fail) use ($index) {
                     $uploadedPhoto = $this->photos[$index];
 
+                    if (! in_array(strtolower($uploadedPhoto->getClientOriginalExtension()), config('picstome.upload_extensions'), true)) {
+                        $fail(__('This file type is not supported.'));
+                    }
+
+                    if (preg_match('#[/\\\\\x00-\x1F\x7F]#', $uploadedPhoto->getClientOriginalName())) {
+                        $fail(__('The file name contains invalid characters.'));
+                    }
+
+                    if (strtolower($uploadedPhoto->getClientOriginalExtension()) === 'pdf' && ! $this->looksLikeAPdf($uploadedPhoto)) {
+                        $fail(__('This file is not a valid PDF.'));
+                    }
+
                     if ($this->gallery->photos()->where('name', $uploadedPhoto->getClientOriginalName())->exists()) {
                         $fail(__('A photo with this name already exists.'));
                     }
@@ -83,6 +96,21 @@ new class extends Component
         $photoSize = $uploadedPhoto->getSize();
 
         return $this->gallery->team->canStoreFile($photoSize);
+    }
+
+    protected function looksLikeAPdf(TemporaryUploadedFile $uploadedPhoto): bool
+    {
+        $stream = $uploadedPhoto->readStream();
+
+        if (! is_resource($stream)) {
+            return false;
+        }
+
+        try {
+            return fread($stream, 5) === '%PDF-';
+        } finally {
+            fclose($stream);
+        }
     }
 
     protected function addPhotoToGallery(UploadedFile $uploadedPhoto): void
@@ -464,11 +492,11 @@ new class extends Component
                 <flux:input
                     @change="handleFileSelect($event)"
                     type="file"
-                    accept=".jpg, .jpeg, .png, .tiff, .mp4, .webm, .ogg, .cr2, .cr3, .nef, .arw, .dng, .orf, .rw2, .pef, .srw, .mos, .mrw, .3fr"
+                    accept="{{ '.'.implode(',.', config('picstome.upload_extensions')) }}"
                     multiple
                 />
                 <flux:description class="mt-2 max-sm:hidden">
-                    {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
+                    {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
                 </flux:description>
 
                 <flux:error name="photos" />
@@ -485,6 +513,24 @@ new class extends Component
                         <p>{{ __('The following files exceed the 5 GB upload limit and were skipped:') }}</p>
                         <ul class="mt-1 list-disc pl-4">
                             <template x-for="(file, i) in oversizedFiles" :key="i">
+                                <li x-text="file.name"></li>
+                            </template>
+                        </ul>
+                    </flux:callout.text>
+                </flux:callout>
+
+                <flux:callout
+                    x-show="unsupportedFiles.length > 0"
+                    x-cloak
+                    icon="exclamation-triangle"
+                    variant="danger"
+                    class="mt-2"
+                >
+                    <flux:callout.heading>{{ __('Unsupported file type') }}</flux:callout.heading>
+                    <flux:callout.text>
+                        <p>{{ __('The following files have an unsupported format and were skipped:') }}</p>
+                        <ul class="mt-1 list-disc pl-4">
+                            <template x-for="(file, i) in unsupportedFiles" :key="i">
                                 <li x-text="file.name"></li>
                             </template>
                         </ul>
@@ -913,6 +959,7 @@ new class extends Component
         Alpine.data('multiFileUploader', () => ({
             files: [],
             oversizedFiles: [],
+            unsupportedFiles: [],
             dragActive: false,
             maxParallelUploads: 10,
             activeUploads: 0,
@@ -932,6 +979,7 @@ new class extends Component
             handleFileSelect(event) {
                 const selectedFiles = Array.from(event.target.files);
                 this.oversizedFiles = [];
+                this.unsupportedFiles = [];
                 this.processFiles(selectedFiles);
                 this.processUploadQueue();
             },
@@ -939,6 +987,7 @@ new class extends Component
             handleDrop(event) {
                 this.dragActive = false;
                 this.oversizedFiles = [];
+                this.unsupportedFiles = [];
                 const dt = event.dataTransfer;
                 if (dt && dt.files && dt.files.length > 0) {
                     this.processFiles(Array.from(dt.files));
@@ -1045,6 +1094,7 @@ new class extends Component
                 ];
                 const jpgExtensions = ['jpg', 'jpeg'];
                 const keepOriginalSize = {{ Js::from($gallery->keep_original_size) }};
+                const allowedExtensions = {{ Js::from(config('picstome.upload_extensions')) }};
 
                 const fileGroups = {};
                 const maxSize = 5 * 1024 * 1024 * 1024;
@@ -1056,6 +1106,11 @@ new class extends Component
 
                     if (file.size > maxSize) {
                         this.oversizedFiles.push({ name: file.name, size: file.size });
+                        return;
+                    }
+
+                    if (!allowedExtensions.includes(extension)) {
+                        this.unsupportedFiles.push({ name: file.name });
                         return;
                     }
 

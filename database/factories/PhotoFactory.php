@@ -35,6 +35,16 @@ class PhotoFactory extends Factory
         });
     }
 
+    public function pdf(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'name' => 'document.pdf',
+                'path' => 'galleries/gallery-id/document.pdf',
+            ];
+        });
+    }
+
     public function unfavorited(): Factory
     {
         return $this->state(function (array $attributes) {

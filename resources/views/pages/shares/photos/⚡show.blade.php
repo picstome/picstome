@@ -342,10 +342,24 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                     Your browser does not support the video tag.
                 </video>
+            @elseif ($photo->isPdf())
+                <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
+                    <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
+                    <flux:heading size="lg" class="max-w-full truncate">{{ $photo->name }}</flux:heading>
+                    <flux:text>{{ $photo->formattedSize() }}</flux:text>
+                    <flux:button
+                        :href="route('shares.photos.inline', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                        icon="arrow-top-right-on-square"
+                        target="_blank"
+                        variant="primary"
+                    >
+                        {{ __('Open PDF') }}
+                    </flux:button>
+                </div>
             @else
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
-            @if ($photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+            @if (! $photo->isPdf() && $photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
                 @if ($photo->gallery->team->brand_watermark_position === 'repeated')
                     <div
                         x-show="showWatermark"

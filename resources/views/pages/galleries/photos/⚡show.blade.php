@@ -225,6 +225,20 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 />
                 Your browser does not support the video tag.
             </video>
+        @elseif ($photo->isPdf())
+            <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
+                <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
+                <flux:heading size="lg" class="max-w-full truncate">{{ $photo->name }}</flux:heading>
+                <flux:text>{{ $photo->formattedSize() }}</flux:text>
+                <flux:button
+                    :href="route('galleries.photos.inline', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                    icon="arrow-top-right-on-square"
+                    target="_blank"
+                    variant="primary"
+                >
+                    {{ __('Open PDF') }}
+                </flux:button>
+            </div>
         @else
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
         @endif
@@ -426,15 +440,17 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 @endassets
 
 @push('head')
-    <link rel="preload" as="image" href="{{ $photo->url }}" />
+    @if ($photo->isImage())
+        <link rel="preload" as="image" href="{{ $photo->url }}" />
+    @endif
 
-    @if ($next)
+    @if ($next && $next->isImage())
         <link rel="preload" as="image" href="{{ $next->url }}" />
         <link rel="preload" as="image" href="{{ $next->thumbnail_url }}" />
         <link rel="preload" as="image" href="{{ $next->large_thumbnail_url }}" />
     @endif
 
-    @if ($previous)
+    @if ($previous && $previous->isImage())
         <link rel="preload" as="image" href="{{ $previous->url }}" />
         <link rel="preload" as="image" href="{{ $previous->thumbnail_url }}" />
         <link rel="preload" as="image" href="{{ $previous->large_thumbnail_url }}" />

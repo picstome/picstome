@@ -50,6 +50,21 @@ test('users cannot download the team gallery photos of other users', function ()
     $response->assertStatus(403);
 });
 
+test('can download a pdf keeping its pdf name', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('photos/composite.pdf', '%PDF-1.4 fake pdf body');
+
+    Photo::factory()->pdf()->for(Gallery::factory()->for($this->team))->create([
+        'name' => 'composite.pdf',
+        'disk' => 's3',
+        'path' => 'photos/composite.pdf',
+    ]);
+
+    $response = actingAs($this->user)->get('galleries/1/photos/1/download');
+
+    $response->assertDownload('composite.pdf');
+});
+
 test('can download a photo with raw_path when available', function () {
     Storage::fake('s3');
 
