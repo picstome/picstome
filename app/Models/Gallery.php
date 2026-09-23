@@ -47,6 +47,17 @@ class Gallery extends Model
         ];
     }
 
+    protected function sharePassword(): Attribute
+    {
+        return Attribute::set(function (?string $value) {
+            if ($value === null || trim($value) === '') {
+                return null;
+            }
+
+            return $value;
+        });
+    }
+
     public static function booted()
     {
         static::creating(function (Gallery $gallery) {
