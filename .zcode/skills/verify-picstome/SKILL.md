@@ -57,19 +57,24 @@ In the first browser call of a session also emit `await browser.documentation()`
 
 Stable handles to build on (labels and text render in English for the seeded account):
 
-- **Login page** (`/login`): `input[type="email"]`, `input[type="password"]`, button named `Log in`. Success lands on `/dashboard?verified=1` or the intended page; wrong credentials re-render with an error summary.
+- **Login page** (`/login`): `input[type="email"]`, `input[type="password"]`, button named `Log in`. Success lands on the intended page (when login followed a guest redirect) or `/` → `/dashboard` — never with `?verified=1` (that query only comes from the email-verification routes and targets `/galleries`); wrong credentials re-render with an error summary. `/dashboard` requires an email-verified user.
 - **App sidebar** (after login): links `Dashboard`, `Galleries`, `Photoshoots`, `Contracts`, `Contract templates`, `Customers`, `Payments`, `Portfolio`, `Branding`, `Public profile`, plus Tools (`/tools/calculator`, `/tools/invoice-generator`).
 - **Profile dropdown** (top right): menu item `Logout` (wire action, not a link).
 - **Modals:** open them via their visible trigger buttons (`Create gallery`, `Create contract`, `Share`, `Add media`, `Save`). Flux modals are `<dialog>` elements; inputs inside them are addressable by label text (e.g. `Gallery name`).
 - **Livewire feedback:** after clicking a `wire:` control, wait for the DOM to reflect the action (badge appears, modal opens/closes, URL changes) rather than trusting the click alone.
 
-**Known harness friction on this app (proven 2026-09-18):**
+**Known harness friction on this app (proven 2026-09-18, re-proven and extended 2026-09-22):**
 
 - **Playwright locator clicks stall on Flux buttons.** `click()` on Flux-rendered buttons times out in actionability even when the button is visible, enabled, and unobstructed (`force: true` does not help). When a locator click times out, do not retry it — dispatch a synthetic click in the page instead:
   - buttons/triggers: `tab.playwright.evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim() === '<visible text>'); b.click(); })()")`;
   - `wire:submit` forms: find the open `<dialog>` containing a known heading and call `form.requestSubmit()` — clicking the submit button is not enough. Livewire round trips take a moment: wait on the expected effect (`getByRole("dialog")`, `getByText(...)`, `waitForURL`), not a fixed sleep.
 - **`wire:confirm` actions cannot be driven reliably in this browser backend.** Destructive actions (gallery/contract Delete) pop a native `confirm()` that blocks the page thread; accepting it via `tab.getJsDialog().accept()` frees the page but the Livewire action is silently lost (verified: gallery count unchanged after accept). For destructive cleanup use the tinker cascades in Cleanup below; treat UI Delete as a click-only assertion (menu opens, confirm appears), not a completed action.
 - Flux dropdown menus and the profile dropdown work fine via synthetic clicks; the snapshot then shows `menuitem` roles (e.g. `Logout` — verified working).
+- **File uploads: the Playwright file-chooser API is `capability_unsupported` in this backend.** Inject files from page context instead — build a `File` from base64, assign via `DataTransfer` to `input[type=file]`, and dispatch a bubbling `change` event; the app's Alpine uploader reacts exactly as to a real picker (verified). `evaluate()` must receive a **self-invoking** string (`(() => …)(payloadJson)`); the arrow-function-with-argument form returns `{}` silently. Upload fixtures must be real files: a hand-crafted minimal JPEG fails Imagick ("Invalid JPEG file structure: missing SOS marker") and the `ProcessPhoto` job lands in `failed_jobs` — generate JPEGs with PHP GD.
+- **Flux switches are `<ui-switch>` custom elements** (no `role=switch`, no checkbox). To read/toggle one: find its `[data-flux-field]` container by its `[data-flux-label]` text, then click the `ui-switch`'s inner `button`. Verified on the share dialog (Watermark forces the download switch `disabled`).
+- **`dialog[open]` is not reliable for Flux modals** — the Add media dialog renders with `open=false` while visible. Locate dialogs by `textContent` (e.g. the dialog containing "Share gallery" and "Watermark"), not the open attribute.
+- **Downloads surface as `waitForEvent("download")`** whose object only exposes `path()` in this backend — copy the file from that path into the evidence directory (verified with the contract PDF).
+- **wire:navigate can bounce history after programmatic clicks** (a tab was once found on an unrelated photo page mid-run). Before every action batch, assert `location.pathname` matches the expected page and re-navigate if not.
 
 Screenshots: capture via the tab/page screenshot API into the evidence directory (below), one per meaningful state change you intend to prove.
 
