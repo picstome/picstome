@@ -396,6 +396,28 @@ describe('Gallery Sharing', function () {
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
     });
+
+    it('renders the share url for galleries whose name has no latin characters', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'name' => '日本語ギャラリー',
+            'ulid' => 'TESTGALLERY',
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertHasNoErrors();
+        $component->assertSee('shares/TESTGALLERY/TESTGALLERY');
+    });
+
+    it('falls back to the ulid when the name has no slugifiable characters', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'name' => '日本語ギャラリー',
+            'ulid' => 'TESTGALLERY',
+        ]);
+
+        expect($gallery->slug)->toBe('TESTGALLERY');
+        expect(Gallery::factory()->for($this->team)->create()->slug)->toBe('just-a-gallery');
+    });
 });
 
 describe('Favorites', function () {
