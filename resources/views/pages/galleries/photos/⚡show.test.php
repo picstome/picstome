@@ -39,6 +39,25 @@ test('users can open a pdf photo from an inline open button', function () {
     $response->assertSee($photo->formattedSize());
 });
 
+test('image photos offer the cover menu', function () {
+    Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+
+    $response = actingAs($this->user)->get('/galleries/1/photos/1');
+
+    $response->assertSuccessful();
+    $response->assertSee('Set as Cover');
+});
+
+test('pdf photos do not offer the cover menu', function () {
+    Photo::factory()->pdf()->for(Gallery::factory()->for($this->team))->create();
+
+    $response = actingAs($this->user)->get('/galleries/1/photos/1');
+
+    $response->assertSuccessful();
+    $response->assertDontSee('Set as Cover');
+    $response->assertDontSee('Remove as Cover');
+});
+
 test('guests cannot view any photos', function () {
     $photo = Photo::factory()->create();
 

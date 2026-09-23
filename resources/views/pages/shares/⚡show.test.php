@@ -25,6 +25,14 @@ test('shared gallery can be viewed', function () {
     $response->assertStatus(200);
 });
 
+test('bare share URL redirects to the slug URL', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
+
+    $response = get('/shares/0123ABC');
+
+    $response->assertRedirect('/shares/0123ABC/'.$gallery->slug);
+});
+
 test('visitors can view a shared gallery', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
     $photoA = Photo::factory()->for($gallery)->create();
