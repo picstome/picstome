@@ -64,7 +64,7 @@ Route::get('/shares/{gallery:ulid}/photos/{photo}/pdf', function (Gallery $galle
 })->name('shares.photos.inline')->middleware([PasswordProtectGallery::class]);
 
 Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
-    return redirect('/shares/'.$gallery.'/'.$gallery->slug);
+    return redirect('/shares/'.$gallery->ulid.'/'.$gallery->slug);
 })->name('shares.redirect');
 
 Route::livewire('/shares/{gallery:ulid}/{slug}', 'pages::shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);

@@ -300,14 +300,16 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 <flux:dropdown>
                     <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
                     <flux:menu>
-                        @if ($photo->gallery->coverPhoto?->is($photo))
-                            <flux:menu.item wire:click="removeAsCover" icon="x-mark">
-                                {{ __('Remove as Cover') }}
-                            </flux:menu.item>
-                        @else
-                            <flux:menu.item wire:click="setAsCover" icon="star">
-                                {{ __('Set as Cover') }}
-                            </flux:menu.item>
+                        @if (! $photo->isPdf())
+                            @if ($photo->gallery->coverPhoto?->is($photo))
+                                <flux:menu.item wire:click="removeAsCover" icon="x-mark">
+                                    {{ __('Remove as Cover') }}
+                                </flux:menu.item>
+                            @else
+                                <flux:menu.item wire:click="setAsCover" icon="star">
+                                    {{ __('Set as Cover') }}
+                                </flux:menu.item>
+                            @endif
                         @endif
                         <flux:menu.item
                             wire:click="delete"
