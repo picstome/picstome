@@ -430,6 +430,6 @@ class Gallery extends Model
     #[Attribute]
     protected function slug(): Attribute
     {
-        return Attribute::get(fn () => Str::slug($this->name));
+        return Attribute::get(fn () => Str::slug($this->name) ?: $this->ulid);
     }
 }
