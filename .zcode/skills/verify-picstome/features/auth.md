@@ -33,6 +33,9 @@ Preconditions:
 ## Gotchas
 
 - Only use `test@example.com`. `oliver@example.com` / `chema@example.com` own the developer's real dev data.
-- `redirectIntended` means the post-login URL depends on where the user came from; assert the intended page, not a fixed `/dashboard`.
+- `redirectIntended` means the post-login URL depends on where the user came from; assert the intended page, not a fixed `/dashboard`. A direct login (no intended URL) lands on `/` → `/dashboard` — never with `?verified=1` (verified live 2026-09-22; that query only comes from the email-verification routes and targets `/galleries`).
+- `/dashboard` sits behind `auth` **and** `verified` middleware — the seeded user is verified, but any freshly created test user must verify email before login-success can reach the dashboard.
 - The login form uses `wire:submit`; wait for the DOM/URL change after clicking `Log in` instead of assuming navigation.
 - The login form rate-limits at 5 failed attempts per email+IP (`LoginForm::ensureIsNotRateLimited`) and then locks out for 60 seconds; use at most one wrong-password attempt per run.
+- Changing the password at `/settings/password` (or a password reset) now logs out the user's other sessions (commit e5d5448: remember-token rotation + other `sessions` rows deleted). Known behavior only — do not drive it on the seeded user, it would break the documented `password` login for other runs.
+- Guest pages localize via the browser's `Accept-Language` (`SetLocale` middleware); if labels appear in Spanish, set the browser locale to en before driving. Logged-in pages follow the user's saved language.

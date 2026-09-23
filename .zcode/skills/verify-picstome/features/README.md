@@ -40,4 +40,5 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Manage galleries](./galleries.md) covers creating a gallery, uploading media, sharing it, reading the share link, and deleting it.
 - [Visit a shared gallery](./shared-gallery-visitor.md) covers the client-facing share URL, password unlock, and the download boundary.
 - [Contracts and signatures](./contracts.md) covers creating a contract, signing it at the public signer URL, execution, PDF, and the executed emails.
+- [Client link](./clients.md) covers the per-customer public gallery index at `/clients/{ulid}` and the copy-link modal on the customer page.
 - [Public profile](./public-profile.md) covers the `@handle` page, portfolio, and pay links up to the Stripe boundary.
