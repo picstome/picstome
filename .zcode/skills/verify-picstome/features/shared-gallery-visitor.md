@@ -5,7 +5,7 @@ A photographer's client opens the public share link in a logged-out browser, see
 ## Sub-features
 
 - `share-open` renders the shared gallery at `/shares/{ulid}/{slug}` for anonymous visitors (image tiles from the CDN; PDFs as document-icon tiles with an `Open PDF` action).
-- `share-slug-redirect` forwards the bare `/shares/{ulid}` URL to the slug URL. **Known regression (2026-09-22):** the redirect Location currently embeds the whole Gallery model JSON instead of the ULID (`routes/web.php` `shares.redirect` string-concatenates the model), so the bare URL 302s to a 404 — the product bug is reported separately; re-check this entry when it's fixed.
+- `share-slug-redirect` forwards the bare `/shares/{ulid}` URL to the slug URL. (A regression that embedded the whole Gallery model JSON in the redirect was found on 2026-09-22 and fixed in #227 — the live proof after the fix: bare URL 302s to `/shares/{ulid}/{slug}` and resolves 200.)
 - `share-password-unlock` gates a password-protected gallery behind `/shares/{ulid}/unlock`; one correct password unlocks every same-customer gallery sharing it for the session (see [clients.md](./clients.md)).
 - `share-download` serves a zip of the gallery (PDFs included) when downloads are enabled. Per-photo `Open PDF` viewing is NOT gated on the download switch.
 - `share-disabled` disappears (404) once sharing is stopped.
@@ -22,7 +22,7 @@ Preconditions:
 - A gallery named `verify-<label>` created and shared per [galleries.md](./galleries.md), with at least one processed photo, and the recorded share URL.
 - A logged-out tab (fresh context or after logout).
 
-- **Slug redirect.** `browser: goto https://app.picstome.com.test/shares/{ulid}` (bare, no slug). The URL settles on `/shares/{ulid}/{slug}` — except for the known regression above (currently lands on a 404 with the model JSON in the URL); assert whichever way the fix stands when you run this.
+- **Slug redirect.** `browser: goto https://app.picstome.com.test/shares/{ulid}` (bare, no slug). The URL settles on `/shares/{ulid}/{slug}` (fixed in #227; before that it 302'd to a model-JSON URL that 404'd).
 - **Open shared gallery.** `browser: goto <share URL>`. The gallery name heading and photo tiles render without any login: images as thumbnail tiles, PDFs as document-icon tiles showing the filename. Save `01-share-open.png`.
 - **PDF viewing is not download-gated.** With `Visitors can download photos` OFF, the page shows no Download button and `/shares/{ulid}/download` returns `401` — but the PDF detail's `Open PDF` (`/shares/{ulid}/photos/{photo}/pdf`) still returns `200 application/pdf` `inline`. Prove both sides in one state.
 - **Download enabled.** With `Visitors can download photos` on, the download route is `/shares/{ulid}/download`: `curl -sIL "https://app.picstome.com.test/shares/{ulid}/download"` returns `200` with `attachment; filename="<slug>.zip"` (PDFs are inside the zip); with downloads off it returns `401`. Save headers as evidence.
