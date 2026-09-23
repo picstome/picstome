@@ -62,6 +62,29 @@ test('protected gallery details stay hidden until unlocked', function () {
         ->assertSee(__('Protected galleries'));
 });
 
+test('hides the unlock form when no shared gallery is protected', function () {
+    Gallery::factory()->shared()->for($this->photoshoot)->for($this->team)->create(['name' => 'Open Gallery']);
+
+    get('/clients/'.$this->customer->ulid)
+        ->assertStatus(200)
+        ->assertSee('Open Gallery')
+        ->assertDontSee(__('Protected galleries'));
+});
+
+test('stores an empty-string password as no password', function () {
+    $gallery = Gallery::factory()->shared()->for($this->photoshoot)->for($this->team)->create([
+        'name' => 'Legacy Empty Password Gallery',
+        'share_password' => '',
+    ]);
+
+    expect($gallery->fresh()->share_password)->toBeNull();
+
+    get('/clients/'.$this->customer->ulid)
+        ->assertStatus(200)
+        ->assertSee('Legacy Empty Password Gallery')
+        ->assertDontSee(__('Protected galleries'));
+});
+
 test('one unlock on the index reveals the gallery and a same-password sibling', function () {
     Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create(['name' => 'Gallery A']);
     Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create(['name' => 'Gallery B']);
