@@ -35,6 +35,17 @@ test('protected gallery can be unlocked with correct password', function () {
     get('shares/0123ABC/'.$gallery->slug)->assertStatus(200);
 });
 
+test('unlocking without a password keeps the gallery locked', function () {
+    $gallery = Gallery::factory()->shared()->protected(password: 'secret')->create(['ulid' => '0123ABC']);
+
+    $component = Livewire::test('pages::shares.unlock', ['gallery' => $gallery])
+        ->call('unlock');
+
+    $component->assertHasErrors(['password']);
+    expect(session()->get('unlocked_gallery_ulids'))->toBeNull();
+    get('shares/0123ABC/'.$gallery->slug)->assertRedirect('/shares/0123ABC/unlock');
+});
+
 test('protected gallery remains locked with incorrect password', function () {
     $gallery = Gallery::factory()->shared()->protected(password: 'secret')->create(['ulid' => '0123ABC']);
 

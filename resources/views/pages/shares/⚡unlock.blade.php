@@ -21,7 +21,9 @@ new #[Layout('layouts.guest')] class extends Component
 
     public function unlock()
     {
-        if (! app(GalleryUnlockService::class)->unlock($this->gallery, $this->password)) {
+        $validated = $this->validate(['password' => ['required', 'string']]);
+
+        if (! app(GalleryUnlockService::class)->unlock($this->gallery, $validated['password'])) {
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
             ]);
