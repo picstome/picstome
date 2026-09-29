@@ -55,12 +55,12 @@ class SetLocale
                 return $locale['factor'];
             });
 
-        $locale = Str::of($locales->first()['locale'] ?? '')->before('-');
+        $locale = (string) Str::of($locales->first()['locale'] ?? '')->before('-');
 
-        if (empty($locale) || $locale === '*') {
+        if ($locale === '' || $locale === '*') {
             return null;
         }
 
-        return (string) $locale;
+        return $locale;
     }
 }
