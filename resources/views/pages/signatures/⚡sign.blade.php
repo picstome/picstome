@@ -4,6 +4,8 @@ use App\Models\Signature;
 use Flux\Flux;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -47,6 +49,12 @@ new #[Layout('layouts.guest')] class extends Component
 
     public function sign()
     {
+        if ($this->signature->isSigned()) {
+            abort(410);
+        }
+
+        $this->ensureIsNotRateLimited();
+
         $this->validate();
 
         $this->signature->update([
@@ -98,6 +106,21 @@ new #[Layout('layouts.guest')] class extends Component
         }
 
         Flux::modals()->close();
+    }
+
+    protected function ensureIsNotRateLimited(): void
+    {
+        $key = 'signature-sign:'.$this->signature->ulid.':'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, $maxAttempts = 5)) {
+            throw ValidationException::withMessages([
+                'signing' => __('Too many attempts. Please try again in :seconds seconds.', [
+                    'seconds' => RateLimiter::availableIn($key),
+                ]),
+            ]);
+        }
+
+        RateLimiter::hit($key, 60);
     }
 
     protected function setLastSignature()
@@ -210,6 +233,8 @@ new #[Layout('layouts.guest')] class extends Component
                         </flux:button>
                     </div>
                 </flux:field>
+
+                <flux:error name="signing" />
 
                 <div class="flex">
                     <flux:spacer />

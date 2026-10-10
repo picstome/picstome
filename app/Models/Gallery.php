@@ -264,7 +264,7 @@ class Gallery extends Model
         return $zip;
     }
 
-    public function addPhoto(UploadedFile $photo)
+    public function addPhoto(UploadedFile $photo): Photo
     {
         $team = $this->team;
 
@@ -275,7 +275,7 @@ class Gallery extends Model
         }
 
         $photoModel = $this->photos()->create([
-            'name' => $photo->getClientOriginalName(),
+            'name' => static::sanitizeFileName($photo->getClientOriginalName()),
             'size' => $photoSize,
             'path' => FileUploadConfiguration::isUsingS3()
                 ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
@@ -287,6 +287,14 @@ class Gallery extends Model
         ]);
 
         return $photoModel;
+    }
+
+    /**
+     * Normalize a client-provided file name to a safe subset of characters.
+     */
+    public static function sanitizeFileName(string $name): string
+    {
+        return preg_replace('/[^A-Za-z0-9._-]/', '_', $name);
     }
 
     protected function storagePath(): Attribute
