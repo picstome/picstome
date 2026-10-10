@@ -361,3 +361,42 @@ test('signing does not stamp the photoshoot customer when the signer email match
     expect($photoshootCustomer->fresh()->email)->toBeNull();
     expect($existingCustomer->fresh()->birthdate->toDateString())->toBe('2000-12-12');
 });
+
+test('signed signatures cannot be signed again', function () {
+    Storage::fake('s3');
+    Queue::fake();
+
+    $signature = Signature::factory()->signed()->create([
+        'ulid' => '0123ABC',
+        'email' => 'original@example.com',
+        'legal_name' => 'Original Signer',
+    ]);
+
+    Livewire::test('pages::signatures.sign', ['signature' => $signature])
+        ->set('role', 'Model')
+        ->set('legalName', 'Evil Re-Signer')
+        ->set('documentNumber', 'HACKED1')
+        ->set('nationality', '::nationality::')
+        ->set('birthday', '2000-12-12')
+        ->set('email', 'attacker@example.com')
+        ->set('signature_image', UploadedFile::fake()->image('signature.png'))
+        ->call('sign')
+        ->assertStatus(410);
+
+    tap($signature->fresh(), function (Signature $signature) {
+        expect($signature->email)->toBe('original@example.com');
+        expect($signature->legal_name)->toBe('Original Signer');
+    });
+});
+
+test('signing is rate limited', function () {
+    $signature = Signature::factory()->unsigned()->create(['ulid' => '0123ABC']);
+
+    $component = Livewire::test('pages::signatures.sign', ['signature' => $signature]);
+
+    foreach (range(1, 5) as $attempt) {
+        $component->call('sign')->assertHasErrors();
+    }
+
+    $component->call('sign')->assertHasErrors(['signing']);
+});
