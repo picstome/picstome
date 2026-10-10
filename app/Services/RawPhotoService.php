@@ -40,7 +40,7 @@ class RawPhotoService
     public function isExifToolAvailable(): bool
     {
         try {
-            return Process::run('which exiftool')->successful();
+            return Process::run(['which', 'exiftool'])->successful();
         } catch (Exception) {
             return false;
         }
@@ -78,7 +78,7 @@ class RawPhotoService
      */
     protected function extractJpgFromRawTag(string $rawFilePath, string $outputPath): bool
     {
-        return $this->runExifToolCommand("-JpgFromRaw -b {$rawFilePath} > {$outputPath}", $outputPath);
+        return $this->runExifToolCommand(['-JpgFromRaw', '-b', $rawFilePath], $outputPath);
     }
 
     /**
@@ -86,7 +86,7 @@ class RawPhotoService
      */
     protected function extractPreviewImage(string $rawFilePath, string $outputPath): bool
     {
-        return $this->runExifToolCommand("-PreviewImage -b {$rawFilePath} > {$outputPath}", $outputPath);
+        return $this->runExifToolCommand(['-PreviewImage', '-b', $rawFilePath], $outputPath);
     }
 
     /**
@@ -94,21 +94,28 @@ class RawPhotoService
      */
     protected function extractThumbnailImage(string $rawFilePath, string $outputPath): bool
     {
-        return $this->runExifToolCommand("-ThumbnailImage -b {$rawFilePath} > {$outputPath}", $outputPath);
+        return $this->runExifToolCommand(['-ThumbnailImage', '-b', $rawFilePath], $outputPath);
     }
 
     /**
      * Run an ExifTool command with timeout and error handling.
+     *
+     * @param  array<int, string>  $arguments
      */
-    protected function runExifToolCommand(string $command, string $outputPath): bool
+    protected function runExifToolCommand(array $arguments, string $outputPath): bool
     {
         try {
             $timeout = config('picstome.exiftool_timeout', 30);
-            $fullCommand = "exiftool {$command}";
 
-            $result = Process::timeout($timeout)->run($fullCommand);
+            $result = Process::timeout($timeout)->run(['exiftool', ...$arguments]);
 
-            return $result->successful() && file_exists($outputPath);
+            if (! $result->successful() || $result->output() === '') {
+                return false;
+            }
+
+            file_put_contents($outputPath, $result->output());
+
+            return file_exists($outputPath);
         } catch (Exception) {
             return false;
         }
@@ -155,9 +162,8 @@ class RawPhotoService
 
         try {
             $timeout = config('picstome.exiftool_timeout', 30);
-            $command = "exiftool -Orientation -n {$rawFilePath}";
 
-            $result = Process::timeout($timeout)->run($command);
+            $result = Process::timeout($timeout)->run(['exiftool', '-Orientation', '-n', $rawFilePath]);
 
             if (! $result->successful()) {
                 return null;

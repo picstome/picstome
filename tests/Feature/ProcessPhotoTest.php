@@ -320,3 +320,16 @@ it('uses raw file size when raw_path exists and keep_original_size is enabled', 
     expect($photo->raw_path)->not->toBeNull();
     expect($photo->size)->toBeGreaterThan(0); // Should have a size from the raw file
 });
+
+it('sanitizes unsafe characters from uploaded file names', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+
+    $photo = $gallery->addPhoto(UploadedFile::fake()->createWithContent('a`id`.cr2', 'raw-content'));
+    expect($photo->name)->toBe('a_id_.cr2');
+
+    $photo = $gallery->addPhoto(UploadedFile::fake()->createWithContent('shell; injection $(cmd).jpg', 'fake-image'));
+    expect($photo->name)->toBe('shell__injection___cmd_.jpg');
+});

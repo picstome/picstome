@@ -75,7 +75,7 @@ new class extends Component
                         $fail(__('This file is not a valid PDF.'));
                     }
 
-                    if ($this->gallery->photos()->where('name', $uploadedPhoto->getClientOriginalName())->exists()) {
+                    if ($this->gallery->photos()->where('name', Gallery::sanitizeFileName($uploadedPhoto->getClientOriginalName()))->exists()) {
                         $fail(__('A photo with this name already exists.'));
                     }
 

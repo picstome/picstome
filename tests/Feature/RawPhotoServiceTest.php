@@ -14,7 +14,7 @@ it('can check if exiftool is available', function () {
     $mockResult->shouldReceive('successful')->andReturn(true);
 
     Process::shouldReceive('run')
-        ->with('which exiftool')
+        ->with(['which', 'exiftool'])
         ->andReturn($mockResult);
 
     expect($service->isExifToolAvailable())->toBeTrue();
@@ -28,7 +28,7 @@ it('returns false when exiftool is not available', function () {
     $mockResult->shouldReceive('successful')->andReturn(false);
 
     Process::shouldReceive('run')
-        ->with('which exiftool')
+        ->with(['which', 'exiftool'])
         ->andReturn($mockResult);
 
     expect($service->isExifToolAvailable())->toBeFalse();
