@@ -290,6 +290,38 @@ class Gallery extends Model
     }
 
     /**
+     * Replace an existing photo's file with a newly uploaded one, keeping the
+     * same database row so favorites, comments, and cover references survive.
+     */
+    public function replacePhoto(UploadedFile $photo, Photo $existingPhoto): Photo
+    {
+        $team = $this->team;
+
+        $photoSize = $photo->getSize();
+
+        if ($team->storage_limit !== null && ! $team->canStoreFile(max(0, $photoSize - $existingPhoto->size))) {
+            throw new \Exception('Not enough storage');
+        }
+
+        $existingPhoto->deleteFromDisk();
+
+        $existingPhoto->update([
+            'size' => $photoSize,
+            'path' => FileUploadConfiguration::isUsingS3()
+                ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
+                    Storage::disk('s3')->move($photo->getRealPath(), $path);
+                })
+                : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
+            'thumb_path' => null,
+            'raw_path' => null,
+            'disk' => 's3',
+            'status' => 'pending',
+        ]);
+
+        return $existingPhoto;
+    }
+
+    /**
      * Normalize a client-provided file name to a safe subset of characters.
      */
     public static function sanitizeFileName(string $name): string
