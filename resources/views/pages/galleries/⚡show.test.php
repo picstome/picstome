@@ -1,9 +1,11 @@
 <?php
 
 use App\Events\PhotoAdded;
+use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
 use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
@@ -203,6 +205,82 @@ describe('Photo Upload', function () {
             'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr',
             'pdf',
         ]);
+    });
+
+    it('finds the selected file names that already exist in the gallery', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => 'a_id_.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('findDuplicateNames', ['photo1.jpg', 'photo2.jpg', 'a`id`.jpg', 'photo1.jpg'])
+            ->assertSet('existingPhotoNames', ['photo1.jpg', 'a`id`.jpg']);
+    });
+
+    it('still rejects duplicate file names when no replace choice was made', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
+            ->call('save', 0);
+
+        $component->assertHasErrors(['photos.0' => 'A photo with this name already exists.']);
+        expect($photo->fresh()->path)->toBe($photo->path);
+        expect($gallery->photos()->count())->toBe(1);
+    });
+
+    it('replaces an existing photo when the user chooses replace', function () {
+        Storage::fake('s3');
+        Queue::fake();
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->favorited()->create([
+            'name' => 'photo1.jpg',
+            'path' => 'old/path/photo1.jpg',
+            'size' => 1024,
+            'status' => 'processed',
+        ]);
+        PhotoComment::factory()->for($photo)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
+            ->call('save', 0, true);
+
+        $component->assertHasNoErrors();
+        $photo->refresh();
+
+        // Same row survives, so favorites and comments are preserved.
+        expect($gallery->photos()->count())->toBe(1);
+        expect($photo->favorited_at)->not->toBeNull();
+        expect($photo->comments)->toHaveCount(1);
+
+        // The file is swapped and processing is scheduled again.
+        expect($photo->path)->not->toBe('old/path/photo1.jpg');
+        expect($photo->size)->toBeGreaterThan(0);
+        expect($photo->status)->toBe('pending');
+
+        Queue::assertPushed(ProcessPhoto::class);
+        Queue::assertPushed(function (DeleteFromDisk $job) {
+            return $job->path === 'old/path/photo1.jpg';
+        });
+    });
+
+    it('adds the photo when replace is chosen but the original was already deleted', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
+            ->call('save', 0, true);
+
+        $component->assertHasNoErrors();
+        expect($gallery->photos()->count())->toBe(1);
     });
 });
 
@@ -897,6 +975,32 @@ describe('Storage Limits', function () {
         expect($gallery->fresh()->photos()->count())->toBe(1);
         expect($this->team->calculateStorageUsed())->toBeGreaterThanOrEqual($initialStorageUsed);
         $component->assertHasNoErrors();
+    });
+
+    it('only requires storage for the size difference when replacing a photo', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 3 * 1024, // 3 KB
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'REPLACEKB']);
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'size' => 2 * 1024]); // 2 KB
+
+        // A 2 KB replacement needs no additional bytes against the 2 KB in use.
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(2))
+            ->call('save', 0, true)
+            ->assertHasNoErrors();
+
+        // A 10 KB replacement exceeds the 3 KB limit.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(10))
+            ->call('save', 0, true);
+
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
     });
 });
 

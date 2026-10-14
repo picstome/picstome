@@ -40,21 +40,15 @@ class SyncTranslations extends Command
      */
     private function findBladeFiles()
     {
-        $files = collect(glob(resource_path('views/**/*.blade.php')));
-
-        if ($files->isEmpty()) {
-            $files = collect(
-                iterator_to_array(
-                    new \RecursiveIteratorIterator(
-                        new \RecursiveDirectoryIterator(resource_path('views'))
-                    )
+        return collect(
+            iterator_to_array(
+                new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator(resource_path('views'))
                 )
             )
-                ->filter(fn ($file) => $file->isFile() && str_ends_with($file->getFilename(), '.blade.php'))
-                ->map(fn ($file) => $file->getPathname());
-        }
-
-        return $files;
+        )
+            ->filter(fn ($file) => $file->isFile() && str_ends_with($file->getFilename(), '.blade.php'))
+            ->map(fn ($file) => $file->getPathname());
     }
 
     /**

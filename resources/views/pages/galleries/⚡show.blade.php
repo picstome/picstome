@@ -52,15 +52,19 @@ new class extends Component
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
     }
 
-    public function save($index)
+    public function save($index, $replace = false)
     {
         if (! isset($this->photos[$index])) {
             return;
         }
 
+        $uploadedPhoto = $this->photos[$index];
+
+        $existingPhoto = $replace ? $this->findPhotoByName($uploadedPhoto->getClientOriginalName()) : null;
+
         $this->validate([
             "photos.{$index}" => [
-                function ($attribute, $value, $fail) use ($index) {
+                function ($attribute, $value, $fail) use ($index, $existingPhoto) {
                     $uploadedPhoto = $this->photos[$index];
 
                     if (! in_array(strtolower($uploadedPhoto->getClientOriginalExtension()), config('picstome.upload_extensions'), true)) {
@@ -75,11 +79,11 @@ new class extends Component
                         $fail(__('This file is not a valid PDF.'));
                     }
 
-                    if ($this->gallery->photos()->where('name', Gallery::sanitizeFileName($uploadedPhoto->getClientOriginalName()))->exists()) {
+                    if ($existingPhoto === null && $this->findPhotoByName($uploadedPhoto->getClientOriginalName()) !== null) {
                         $fail(__('A photo with this name already exists.'));
                     }
 
-                    if (! $this->hasSufficientStorage($uploadedPhoto)) {
+                    if (! $this->hasSufficientStorage($uploadedPhoto, $existingPhoto?->size ?? 0)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
                 },
@@ -88,12 +92,47 @@ new class extends Component
 
         $uploadedPhoto = $this->photos[$index];
 
-        $this->addPhotoToGallery($uploadedPhoto);
+        if ($existingPhoto !== null) {
+            $this->replacePhotoInGallery($uploadedPhoto, $existingPhoto);
+        } else {
+            $this->addPhotoToGallery($uploadedPhoto);
+        }
     }
 
-    protected function hasSufficientStorage(UploadedFile $uploadedPhoto): bool
+    /**
+     * Return the original file names that would collide with photos already
+     * in this gallery, so the uploader can ask how to resolve each conflict.
+     *
+     * @param  array<int, string>  $fileNames
+     * @return array<int, string>
+     */
+    public function findDuplicateNames(array $fileNames): array
     {
-        $photoSize = $uploadedPhoto->getSize();
+        $sanitizedNames = array_map(
+            fn ($name) => Gallery::sanitizeFileName((string) $name),
+            $fileNames,
+        );
+
+        $existingNames = $this->gallery->photos()->whereIn('name', $sanitizedNames)->pluck('name');
+
+        return $this->existingPhotoNames = collect($fileNames)
+            ->unique()
+            ->filter(fn ($name) => $existingNames->contains(Gallery::sanitizeFileName((string) $name)))
+            ->values()
+            ->map(fn ($name) => (string) $name)
+            ->all();
+    }
+
+    protected function findPhotoByName(string $clientName): ?Photo
+    {
+        return $this->gallery->photos()
+            ->where('name', Gallery::sanitizeFileName($clientName))
+            ->first();
+    }
+
+    protected function hasSufficientStorage(UploadedFile $uploadedPhoto, int $replacedSize = 0): bool
+    {
+        $photoSize = max(0, $uploadedPhoto->getSize() - $replacedSize);
 
         return $this->gallery->team->canStoreFile($photoSize);
     }
@@ -116,6 +155,13 @@ new class extends Component
     protected function addPhotoToGallery(UploadedFile $uploadedPhoto): void
     {
         $photo = $this->gallery->addPhoto($uploadedPhoto);
+
+        PhotoAdded::dispatch($photo);
+    }
+
+    protected function replacePhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
+    {
+        $photo = $this->gallery->replacePhoto($uploadedPhoto, $existingPhoto);
 
         PhotoAdded::dispatch($photo);
     }
@@ -566,21 +612,21 @@ new class extends Component
                     <template x-for="(fileObj, index) in files" :key="index">
                         <div
                             x-show="fileObj.status !== 'completed'"
-                            class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
+                            class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:pointer-events-none after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
                         >
-                            <div class="flex w-full items-center gap-4">
+                            <div class="flex w-full flex-wrap items-center gap-4">
                                 <div
                                     x-text="fileObj.file.name"
-                                    class="flex-1 text-sm font-medium text-zinc-800 dark:text-white"
+                                    class="flex-1 truncate text-sm font-medium text-zinc-800 dark:text-white"
                                 ></div>
                                 <div
                                     class="text-sm text-zinc-500 dark:text-white/70"
-                                    x-show="fileObj.status !== 'duplicated'"
+                                    x-show="['pending', 'queued', 'uploading'].includes(fileObj.status)"
                                 >
                                     <span x-text="fileObj.progress + '%'"></span>
                                 </div>
                                 <flux:badge
-                                    x-show="! ['failed', 'duplicated'].includes(fileObj.status)"
+                                    x-show="! ['failed', 'conflict', 'skipped'].includes(fileObj.status)"
                                     x-text="fileObj.status"
                                     size="sm"
                                     color="zinc"
@@ -592,11 +638,34 @@ new class extends Component
                                     color="red"
                                 ></flux:badge>
                                 <flux:badge
-                                    x-show="fileObj.status === 'duplicated'"
-                                    x-text="fileObj.status"
+                                    x-show="fileObj.status === 'conflict'"
+                                    x-text="{{ Js::from(__('Already exists')) }}"
                                     size="sm"
                                     color="yellow"
                                 ></flux:badge>
+                                <flux:badge
+                                    x-show="fileObj.status === 'skipped'"
+                                    x-text="{{ Js::from(__('Skipped')) }}"
+                                    size="sm"
+                                    color="zinc"
+                                ></flux:badge>
+
+                                <div class="flex items-center gap-2" x-show="fileObj.status === 'conflict'">
+                                    <flux:button
+                                        size="sm"
+                                        variant="primary"
+                                        x-on:click="resolveConflict(index, 'replace')"
+                                    >
+                                        {{ __('Replace') }}
+                                    </flux:button>
+                                    <flux:button
+                                        size="sm"
+                                        variant="ghost"
+                                        x-on:click="resolveConflict(index, 'skip')"
+                                    >
+                                        {{ __('Skip') }}
+                                    </flux:button>
+                                </div>
 
                                 <flux:button
                                     class="z-10"
@@ -606,6 +675,11 @@ new class extends Component
                                     icon="arrow-path"
                                 />
                             </div>
+                            <div
+                                x-show="fileObj.status === 'failed' && fileObj.error"
+                                x-text="fileObj.error"
+                                class="w-full text-sm text-red-600 dark:text-red-400"
+                            ></div>
                         </div>
                     </template>
                 </div>
@@ -976,21 +1050,23 @@ new class extends Component
                 }, 1000);
             },
 
-            handleFileSelect(event) {
+            async handleFileSelect(event) {
                 const selectedFiles = Array.from(event.target.files);
                 this.oversizedFiles = [];
                 this.unsupportedFiles = [];
                 this.processFiles(selectedFiles);
+                await this.markConflicts();
                 this.processUploadQueue();
             },
 
-            handleDrop(event) {
+            async handleDrop(event) {
                 this.dragActive = false;
                 this.oversizedFiles = [];
                 this.unsupportedFiles = [];
                 const dt = event.dataTransfer;
                 if (dt && dt.files && dt.files.length > 0) {
                     this.processFiles(Array.from(dt.files));
+                    await this.markConflicts();
                     this.processUploadQueue();
                 }
             },
@@ -1030,9 +1106,54 @@ new class extends Component
             checkAllUploadsComplete() {
                 return (
                     this.files.every(
-                        (file) => file.status === 'completed',
+                        (file) => file.status === 'completed' || file.status === 'skipped',
                     ) && this.activeUploads === 0
                 );
+            },
+
+            closeIfAllResolved() {
+                if (this.checkAllUploadsComplete()) {
+                    $flux.modals('add-photos').close();
+                }
+            },
+
+            async markConflicts() {
+                const checkingFiles = this.files.filter((f) => f.status === 'checking');
+
+                if (checkingFiles.length === 0) {
+                    return;
+                }
+
+                try {
+                    const duplicates = await $wire.findDuplicateNames(
+                        checkingFiles.map((f) => f.file.name),
+                    );
+
+                    checkingFiles.forEach((fileObj) => {
+                        fileObj.status = duplicates.includes(fileObj.file.name) ? 'conflict' : 'pending';
+                    });
+                } catch (error) {
+                    // Fail open: the server still rejects duplicates on save.
+                    console.error('Duplicate name check failed:', error);
+                    checkingFiles.forEach((fileObj) => {
+                        fileObj.status = 'pending';
+                    });
+                }
+            },
+
+            resolveConflict(index, action) {
+                const fileObj = this.files[index];
+
+                if (action === 'replace') {
+                    fileObj.conflictAction = 'replace';
+                    fileObj.status = 'pending';
+                    this.processUploadQueue();
+
+                    return;
+                }
+
+                fileObj.status = 'skipped';
+                this.closeIfAllResolved();
             },
 
             uploadFile(fileObj, index) {
@@ -1046,22 +1167,19 @@ new class extends Component
                     uploadName,
                     fileObj.file,
                     () => {
-                        $wire.save(index).then((result) => {
+                        $wire.save(index, fileObj.conflictAction === 'replace').then((result) => {
                             if (result && result.errors && result.errors['photos.' + index]) {
-                                fileObj.status = 'duplicated';
+                                const error = result.errors['photos.' + index];
+                                fileObj.error = typeof error === 'string' ? error : null;
+                                fileObj.status = 'failed';
                                 this.activeUploads--;
-                                setTimeout(() => {
-                                    this.processUploadQueue();
-                                }, 10000);
+                                this.processUploadQueue();
                             } else {
                                 fileObj.status = 'completed';
                                 fileObj.progress = 100;
                                 this.activeUploads--;
                                 this.processUploadQueue();
-
-                                if (this.checkAllUploadsComplete()) {
-                                    $flux.modals('add-photos').close();
-                                }
+                                this.closeIfAllResolved();
                             }
                         });
                     },
@@ -1129,7 +1247,7 @@ new class extends Component
                             this.files.push({
                                 file: item.file,
                                 progress: 0,
-                                status: 'pending',
+                                status: 'checking',
                             });
                         });
                         return;
@@ -1163,6 +1281,7 @@ new class extends Component
                 const fileObj = this.files[index];
                 fileObj.status = 'pending';
                 fileObj.progress = 0;
+                fileObj.error = null;
                 this.processUploadQueue();
             },
         }));
