@@ -809,7 +809,7 @@ new class extends Component
 
                     <flux:text class="mt-1">
                         {{ __("Don't have the app?") }}
-                        <flux:link href="https://github.com/picstome/picstome-rater/releases" target="_blank">{{ __('Download Picstome Rater') }}</flux:link>
+                        <flux:link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">{{ __('Download Picstome Rater') }}</flux:link>
                     </flux:text>
                 </flux:tab.panel>
 
