@@ -670,5 +670,9 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "We couldn't find any photos. Add one to get started.": "No encontramos fotos. Agrega una para empezar.",
+    "We couldn't find any galleries. Create one to get started.": "No encontramos galerías. Crea una para empezar.",
+    "There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.": "Hay un límite máximo de :max píxeles por foto porque esta galería tiene activado el tamaño original.",
+    "Your unique @handle for sharing.": "Tu @usuario único para compartir."
 }

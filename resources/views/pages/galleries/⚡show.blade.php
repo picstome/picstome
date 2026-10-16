@@ -375,7 +375,7 @@ new class extends Component
                 </div>
             @endif
         </div>
-        <div class="flex gap-4">
+        <div class="flex flex-wrap justify-end gap-4">
             <flux:dropdown>
                 <flux:button icon="ellipsis-horizontal" variant="subtle" />
 
