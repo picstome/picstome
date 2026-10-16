@@ -3,8 +3,10 @@
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
+use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Services\SftpgoService;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -283,6 +285,60 @@ new class extends Component
     {
         return Auth::user()?->currentTeam;
     }
+
+    public bool $showFtpPassword = false;
+
+    #[Computed]
+    public function ftpAccount(): ?FtpAccount
+    {
+        return $this->gallery->ftpAccount;
+    }
+
+    public function toggleFtpPassword()
+    {
+        $this->showFtpPassword = ! $this->showFtpPassword;
+    }
+
+    public function toggleFtpUploads()
+    {
+        $this->authorize('update', $this->gallery);
+
+        if (! $this->team->subscribed()) {
+            return;
+        }
+
+        $sftpgo = app(SftpgoService::class);
+
+        if ($account = $this->gallery->ftpAccount) {
+            $account->update(['active' => ! $account->active]);
+
+            try {
+                $sftpgo->updateUser($account);
+            } catch (\RuntimeException $e) {
+                report($e);
+
+                $account->update(['active' => ! $account->active]);
+
+                Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+            }
+        } else {
+            $account = FtpAccount::generateForGallery($this->gallery);
+
+            try {
+                $sftpgo->createUser($account);
+            } catch (\RuntimeException $e) {
+                report($e);
+
+                $account->delete();
+
+                Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+            }
+
+            $this->gallery->load('ftpAccount');
+        }
+
+        unset($this->ftpAccount);
+    }
 }; ?>
 
 <div>
@@ -347,6 +403,10 @@ new class extends Component
                             <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
                         </flux:modal.trigger>
                     @endif
+
+                    <flux:modal.trigger name="live-upload">
+                        <flux:menu.item icon="camera">{{ __('Live upload') }}</flux:menu.item>
+                    </flux:modal.trigger>
 
                     <flux:modal.trigger name="edit">
                         <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
@@ -789,6 +849,151 @@ new class extends Component
                 readonly
                 copyable
             />
+        </div>
+    </flux:modal>
+
+    <flux:modal name="live-upload" class="w-full sm:max-w-lg">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Live camera upload') }}</flux:heading>
+                <flux:subheading>{{ __('Connect your camera and every shot lands in this gallery automatically.') }}</flux:subheading>
+            </div>
+
+            @if (! $this->team->subscribed())
+                <flux:callout icon="bolt" variant="secondary">
+                    <flux:callout.heading>{{ __('Unlock live camera upload') }}</flux:callout.heading>
+                    <flux:callout.text>
+                        {{ __('Subscribe to shoot live: your camera uploads photos straight to this gallery over FTP/SFTP while you shoot.') }}
+                    </flux:callout.text>
+                    <x-slot name="actions">
+                        <flux:button :href="route('subscribe')" variant="primary">
+                            {{ __('Subscribe') }}
+                        </flux:button>
+                    </x-slot>
+                </flux:callout>
+            @endif
+
+            <flux:switch
+                wire:click="toggleFtpUploads"
+                :checked="$this->ftpAccount?->active"
+                :label="__('Upload photos from camera')"
+                :disabled="!$this->team->subscribed()"
+            />
+
+            @if ($this->ftpAccount?->active)
+                <div class="space-y-4">
+                    <flux:input
+                        :value="config('picstome.ftp_uploads.host')"
+                        :label="__('Host')"
+                        readonly
+                        copyable
+                    />
+
+                    <flux:input
+                        :value="config('picstome.ftp_uploads.sftp_port')"
+                        :label="__('SFTP port (Sony)')"
+                        readonly
+                        copyable
+                    />
+
+                    <flux:input
+                        :value="config('picstome.ftp_uploads.ftp_port')"
+                        :label="__('FTP port (Canon, Nikon, Fuji)')"
+                        readonly
+                        copyable
+                    />
+
+                    <flux:input
+                        :value="$this->ftpAccount->username"
+                        :label="__('Username')"
+                        readonly
+                        copyable
+                    />
+
+                    <flux:field>
+                        <flux:label>{{ __('Password') }}</flux:label>
+                        <div class="flex gap-2">
+                            <flux:input
+                                class="flex-1"
+                                type="{{ $showFtpPassword ? 'text' : 'password' }}"
+                                :value="$this->ftpAccount->password"
+                                readonly
+                                copyable
+                            />
+                            <flux:button
+                                variant="subtle"
+                                icon="{{ $showFtpPassword ? 'eye-slash' : 'eye' }}"
+                                wire:click="toggleFtpPassword"
+                            />
+                        </div>
+                    </flux:field>
+
+                    @if ($this->ftpAccount->last_upload_at)
+                        <flux:callout
+                            icon="check-circle"
+                            variant="success"
+                            :heading="__('Last photo received')"
+                            :text="$this->ftpAccount->last_upload_at->diffForHumans()"
+                        />
+                    @else
+                        <flux:callout
+                            icon="clock"
+                            variant="secondary"
+                            :text="__('Waiting for the first photo. It will appear here within a minute of shooting.')"
+                        />
+                    @endif
+
+                    <div>
+                        <flux:heading size="sm">{{ __('Camera setup') }}</flux:heading>
+
+                        <flux:timeline class="mt-2">
+                            <flux:timeline.item>
+                                <flux:timeline.indicator>
+                                    <flux:icon name="wifi" variant="micro" />
+                                </flux:timeline.indicator>
+
+                                <flux:timeline.content>
+                                    <flux:heading size="xs">{{ __('Connect to Wi-Fi') }}</flux:heading>
+                                    <flux:text size="sm">{{ __('Use a network with internet. A phone hotspot works best.') }}</flux:text>
+                                </flux:timeline.content>
+                            </flux:timeline.item>
+
+                            <flux:timeline.item>
+                                <flux:timeline.indicator>
+                                    <flux:icon name="server-stack" variant="micro" />
+                                </flux:timeline.indicator>
+
+                                <flux:timeline.content>
+                                    <flux:heading size="xs">{{ __('Add the FTP server') }}</flux:heading>
+                                    <flux:text size="sm">{{ __('In your camera network menu, add a server with the settings above.') }}</flux:text>
+                                </flux:timeline.content>
+                            </flux:timeline.item>
+
+                            <flux:timeline.item>
+                                <flux:timeline.indicator>
+                                    <flux:icon name="arrow-up-tray" variant="micro" />
+                                </flux:timeline.indicator>
+
+                                <flux:timeline.content>
+                                    <flux:heading size="xs">{{ __('Send JPEGs automatically') }}</flux:heading>
+                                    <flux:text size="sm">{{ __('Enable auto send. Shoot RAW+JPEG and send the JPEG only for the fastest uploads.') }}</flux:text>
+                                </flux:timeline.content>
+                            </flux:timeline.item>
+
+                            <flux:timeline.item>
+                                <flux:timeline.indicator>
+                                    <flux:icon name="camera" variant="micro" />
+                                </flux:timeline.indicator>
+
+                                <flux:timeline.content>
+                                    <flux:heading size="xs">{{ __('Take a test shot') }}</flux:heading>
+                                    <flux:text size="sm">{{ __('New photos appear in this gallery automatically within a minute.') }}</flux:text>
+                                </flux:timeline.content>
+                            </flux:timeline.item>
+                        </flux:timeline>
+                    </div>
+                </div>
+            @endif
         </div>
     </flux:modal>
 
