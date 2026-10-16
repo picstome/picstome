@@ -78,4 +78,29 @@ return [
      * Timeout in seconds for ExifTool operations when extracting JPG from RAW files.
      */
     'exiftool_timeout' => env('PICSTOME_EXIFTOOL_TIMEOUT', 30),
+
+    /**
+     * Live camera uploads. Cameras upload via FTP/SFTP to a SFTPGo server
+     * which writes files into the storage disk under the inbox prefix.
+     */
+    'ftp_uploads' => [
+        'host' => env('FTP_UPLOADS_HOST', 'upload.picstome.com'),
+        'sftp_port' => (int) env('FTP_UPLOADS_SFTP_PORT', 2222),
+        'ftp_port' => (int) env('FTP_UPLOADS_FTP_PORT', 21),
+
+        // Disk where SFTPGo writes uploads. Defaults to the photo disk.
+        'disk' => env('FTP_UPLOADS_DISK'),
+
+        // Folder prefix under which each camera user's uploads land.
+        'inbox_prefix' => env('FTP_UPLOADS_INBOX_PREFIX', 'camera-uploads'),
+
+        // Files younger than this are skipped to avoid ingesting
+        // transfers that are still in progress.
+        'stability_seconds' => (int) env('FTP_UPLOADS_STABILITY_SECONDS', 60),
+
+        // SFTPGo admin API. Leave empty to disable provisioning
+        // (e.g. local development without a SFTPGo server).
+        'sftpgo_url' => env('SFTPGO_URL'),
+        'sftpgo_api_key' => env('SFTPGO_API_KEY'),
+    ],
 ];

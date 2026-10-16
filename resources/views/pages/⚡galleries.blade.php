@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Forms\GalleryForm;
+use App\Models\FtpAccount;
 use App\Models\Gallery;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -27,6 +29,46 @@ new class extends Component
         });
     }
 
+    /**
+     * Create today's shoot gallery, route live uploads to it, and jump
+     * straight to its credentials.
+     */
+    public function startLiveShoot()
+    {
+        $this->authorize('create', Gallery::class);
+
+        if (! $this->team->subscribed()) {
+            return;
+        }
+
+        $name = FtpAccount::shootName();
+
+        if ($todayShoots = $this->team->galleries()->where('name', 'like', $name.'%')->count()) {
+            $name = $name.' ('.($todayShoots + 1).')';
+        }
+
+        $gallery = $this->team->galleries()->create([
+            'name' => $name,
+            'is_public' => false,
+        ]);
+
+        if (! $account = $this->team->ftpAccount()->first()) {
+            $account = FtpAccount::provisionForTeam($this->team);
+        }
+
+        if (! $account) {
+            Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+
+            $this->redirect(route('galleries.show', ['gallery' => $gallery]));
+
+            return;
+        }
+
+        $account->routeTo($gallery);
+
+        $this->redirect(route('galleries.show', ['gallery' => $gallery, 'live' => 1]));
+    }
+
     #[Computed]
     public function team()
     {
@@ -49,9 +91,16 @@ new class extends Component
             <x-heading level="1" size="xl">{{ __('Galleries') }}</x-heading>
             <x-subheading>{{ __('View, create, and manage your galleries.') }}</x-subheading>
         </div>
-        <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
-            <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
-        </flux:modal.trigger>
+        <div class="flex gap-4">
+            @if ($this->team?->subscribed())
+                <flux:button icon="camera" wire:click="startLiveShoot">
+                    {{ __('Start live shoot') }}
+                </flux:button>
+            @endif
+            <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
+                <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
+            </flux:modal.trigger>
+        </div>
     </div>
 
     @if ($this->galleries?->isNotEmpty())
