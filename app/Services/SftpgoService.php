@@ -12,8 +12,8 @@ class SftpgoService
      */
     public function isEnabled(): bool
     {
-        return config('picstome.ftp_uploads.sftpgo_url') !== null
-            && config('picstome.ftp_uploads.sftpgo_api_key') !== null;
+        return filled(config('picstome.ftp_uploads.sftpgo_url'))
+            && filled(config('picstome.ftp_uploads.sftpgo_api_key'));
     }
 
     /**

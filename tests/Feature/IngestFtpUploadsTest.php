@@ -144,4 +144,18 @@ describe('ingest job', function () {
         expect($this->gallery->photos()->count())->toBe(0);
         expect(Storage::disk('s3')->exists($path))->toBeTrue();
     });
+
+    it('falls back to the photo disk when the ftp disk env is empty', function () {
+        Queue::fake();
+        Event::fake(PhotoAdded::class);
+
+        config(['picstome.ftp_uploads.disk' => '']);
+
+        $path = putUpload($this->account, 'DSC_0001.JPG');
+
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
+        expect($this->gallery->fresh()->photos()->count())->toBe(1);
+        expect(Storage::disk('s3')->exists($path))->toBeFalse();
+    });
 });

@@ -81,6 +81,6 @@ class FtpAccount extends Model
      */
     public static function disk(): \Illuminate\Contracts\Filesystem\Filesystem
     {
-        return Storage::disk(config('picstome.ftp_uploads.disk') ?? config('picstome.disk'));
+        return Storage::disk(config('picstome.ftp_uploads.disk') ?: config('picstome.disk'));
     }
 }

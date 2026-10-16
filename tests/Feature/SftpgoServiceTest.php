@@ -15,6 +15,22 @@ function configureSftpgo(): void
     ]);
 }
 
+it('is disabled when the url is an empty string', function () {
+    config([
+        'picstome.ftp_uploads.sftpgo_url' => '',
+        'picstome.ftp_uploads.sftpgo_api_key' => 'secret-key',
+    ]);
+
+    Http::fake();
+
+    $service = app(SftpgoService::class);
+
+    expect($service->isEnabled())->toBeFalse();
+    expect($service->createUser(FtpAccount::factory()->create()))->toBeFalse();
+
+    Http::assertNothingSent();
+});
+
 it('is disabled when not configured', function () {
     config(['picstome.ftp_uploads.sftpgo_url' => null]);
 
