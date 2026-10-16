@@ -6,7 +6,6 @@ use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
-use App\Services\SftpgoService;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -295,7 +294,7 @@ new class extends Component
     #[Computed]
     public function ftpAccount(): ?FtpAccount
     {
-        return $this->gallery->ftpAccount;
+        return FtpAccount::where('team_id', $this->gallery->team_id)->first();
     }
 
     public function toggleFtpPassword()
@@ -303,6 +302,10 @@ new class extends Component
         $this->showFtpPassword = ! $this->showFtpPassword;
     }
 
+    /**
+     * Start or stop routing camera uploads into this gallery. The team's
+     * credentials never change, so cameras stay configured.
+     */
     public function toggleFtpUploads()
     {
         $this->authorize('update', $this->gallery);
@@ -311,25 +314,17 @@ new class extends Component
             return;
         }
 
-        $sftpgo = app(SftpgoService::class);
+        if (! $account = $this->ftpAccount) {
+            $account = FtpAccount::provisionForTeam($this->gallery->team);
 
-        if ($account = $this->gallery->ftpAccount) {
-            $account->update(['active' => ! $account->active]);
-
-            try {
-                $sftpgo->updateUser($account);
-            } catch (\RuntimeException $e) {
-                report($e);
-
-                $account->update(['active' => ! $account->active]);
-
+            if (! $account) {
                 Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+
+                return;
             }
-        } elseif (FtpAccount::provisionForGallery($this->gallery)) {
-            $this->gallery->load('ftpAccount');
-        } else {
-            Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
         }
+
+        $account->routeTo($account->routesTo($this->gallery) ? null : $this->gallery);
 
         unset($this->ftpAccount);
     }
@@ -850,7 +845,7 @@ new class extends Component
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">{{ __('Live camera upload') }}</flux:heading>
-                <flux:subheading>{{ __('Connect your camera and every shot lands in this gallery automatically.') }}</flux:subheading>
+                <flux:subheading>{{ __('Set your camera up once — every shot lands in the gallery receiving uploads.') }}</flux:subheading>
             </div>
 
             @if (! $this->team->subscribed())
@@ -867,14 +862,22 @@ new class extends Component
                 </flux:callout>
             @endif
 
+            @if ($this->ftpAccount && ! $this->ftpAccount->routesTo($gallery) && $this->ftpAccount->activeGallery)
+                <flux:callout
+                    icon="exclamation-triangle"
+                    variant="warning"
+                    :text="__('Photos currently upload to :gallery.', ['gallery' => $this->ftpAccount->activeGallery->name])"
+                />
+            @endif
+
             <flux:switch
                 wire:click="toggleFtpUploads"
-                :checked="$this->ftpAccount?->active"
-                :label="__('Upload photos from camera')"
+                :checked="$this->ftpAccount?->routesTo($gallery)"
+                :label="__('Receive photos in this gallery')"
                 :disabled="!$this->team->subscribed()"
             />
 
-            @if ($this->ftpAccount?->active)
+            @if ($this->ftpAccount)
                 <div class="space-y-4">
                     <flux:input
                         :value="config('picstome.ftp_uploads.host')"

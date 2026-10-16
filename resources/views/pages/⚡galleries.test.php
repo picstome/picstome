@@ -132,8 +132,11 @@ test('subscribed users can start a live shoot', function () {
 
     $gallery = $this->team->galleries()->first();
     expect($gallery->name)->toBe('Shoot '.now()->format('Y-m-d'));
-    expect($gallery->ftpAccount)->not->toBeNull();
-    expect($gallery->ftpAccount->active)->toBeTrue();
+
+    $account = $this->team->ftpAccount;
+    expect($account)->not->toBeNull();
+    expect($account->routesTo($gallery))->toBeTrue();
+    expect($account->password)->toMatch('/^\d{8}$/');
 });
 
 test('live shoot gallery names increment within the same day', function () {
@@ -147,6 +150,10 @@ test('live shoot gallery names increment within the same day', function () {
 
     expect($names)->toContain('Shoot '.now()->format('Y-m-d'));
     expect($names)->toContain('Shoot '.now()->format('Y-m-d').' (2)');
+
+    // One stable team account, routing to the latest shoot.
+    expect(\App\Models\FtpAccount::count())->toBe(1);
+    expect($this->team->ftpAccount->activeGallery->name)->toBe('Shoot '.now()->format('Y-m-d').' (2)');
 });
 
 test('starting a live shoot requires a subscription', function () {

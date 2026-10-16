@@ -370,6 +370,7 @@
     "Rate my images": "Rate my images",
     "Rate your favorited images with the Picstome Rater desktop app.": "Rate your favorited images with the Picstome Rater desktop app.",
     "Rater": "Rater",
+    "Receive photos in this gallery": "Receive photos in this gallery",
     "Red": "Red",
     "Referral Code": "Referral Code",
     "Register": "Register",
@@ -408,6 +409,7 @@
     "Set how many contracts this user can create per month. Leave empty for unlimited.": "Set how many contracts this user can create per month. Leave empty for unlimited.",
     "Set up portfolio": "Set up portfolio",
     "Set up your portfolio": "Set up your portfolio",
+    "Set your camera up once — every shot lands in the gallery receiving uploads.": "Set your camera up once — every shot lands in the gallery receiving uploads.",
     "Settings": "Settings",
     "Setup steps have been reset.": "Setup steps have been reset.",
     "Share": "Share",
@@ -418,6 +420,7 @@
     "Share this link with your client so they can view all their shared galleries in one place.": "Share this link with your client so they can view all their shared galleries in one place.",
     "Share this link with your client to request payment.": "Share this link with your client to request payment.",
     "Sharing": "Sharing",
+    "Shoot :date": "Shoot :date",
     "Shoot :date', ['date' => now()->format('Y-m-d": "Shoot :date', ['date' => now()->format('Y-m-d",
     "Shooting date": "Shooting date",
     "Show Accept Payments Button": "Show Accept Payments Button",
@@ -587,5 +590,5 @@
     "remaining files.": "remaining files.",
     "signatures": "signatures",
     "total storage": "total storage",
-    "Shoot :date": "Shoot :date"
+    "Photos currently upload to :gallery.": "Photos currently upload to :gallery."
 }

@@ -30,7 +30,7 @@ new class extends Component
     }
 
     /**
-     * Create today's shoot gallery with live upload enabled and jump
+     * Create today's shoot gallery, route live uploads to it, and jump
      * straight to its credentials.
      */
     public function startLiveShoot()
@@ -41,7 +41,7 @@ new class extends Component
             return;
         }
 
-        $name = __('Shoot :date', ['date' => now()->format('Y-m-d')]);
+        $name = FtpAccount::shootName();
 
         if ($todayShoots = $this->team->galleries()->where('name', 'like', $name.'%')->count()) {
             $name = $name.' ('.($todayShoots + 1).')';
@@ -52,13 +52,19 @@ new class extends Component
             'is_public' => false,
         ]);
 
-        if (! FtpAccount::provisionForGallery($gallery)) {
+        if (! $account = $this->team->ftpAccount()->first()) {
+            $account = FtpAccount::provisionForTeam($this->team);
+        }
+
+        if (! $account) {
             Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
 
             $this->redirect(route('galleries.show', ['gallery' => $gallery]));
 
             return;
         }
+
+        $account->routeTo($gallery);
 
         $this->redirect(route('galleries.show', ['gallery' => $gallery, 'live' => 1]));
     }

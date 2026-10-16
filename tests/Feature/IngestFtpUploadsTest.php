@@ -19,8 +19,9 @@ beforeEach(function () {
     Storage::fake('s3');
 
     $this->gallery = Gallery::factory()->create(['ulid' => 'LIVEGALLERY']);
-    $this->account = FtpAccount::factory()->for($this->gallery)->create([
+    $this->account = FtpAccount::factory()->for($this->gallery->team)->create([
         'username' => 'AB23CD45',
+        'active_gallery_id' => $this->gallery->id,
     ]);
 });
 
@@ -74,10 +75,23 @@ describe('ingest command', function () {
 
         Queue::assertNotPushed(IngestFtpUpload::class);
     });
+
+    it('creates a dated shoot gallery when no gallery is receiving uploads', function () {
+        Queue::fake();
+
+        $this->account->update(['active_gallery_id' => null]);
+
+        putUpload($this->account, 'DSC_0001.JPG');
+
+        $this->artisan('ingest:ftp-uploads');
+
+        expect($this->account->fresh()->activeGallery->name)->toBe(FtpAccount::shootName());
+        Queue::assertPushed(IngestFtpUpload::class);
+    });
 });
 
 describe('ingest job', function () {
-    it('moves an uploaded photo into its gallery and schedules processing', function () {
+    it('moves an uploaded photo into the receiving gallery and schedules processing', function () {
         Queue::fake();
         Event::fake(PhotoAdded::class);
 
@@ -100,6 +114,17 @@ describe('ingest job', function () {
         Queue::assertPushed(ProcessPhoto::class);
         Event::assertDispatched(PhotoAdded::class);
         expect($this->account->fresh()->last_upload_at)->not->toBeNull();
+    });
+
+    it('leaves the file in the inbox when no gallery is receiving uploads', function () {
+        $this->account->update(['active_gallery_id' => null]);
+
+        $path = putUpload($this->account, 'DSC_0001.JPG');
+
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
+        expect($this->gallery->photos()->count())->toBe(0);
+        expect(Storage::disk('s3')->exists($path))->toBeTrue();
     });
 
     it('removes uploads with unsupported extensions', function () {

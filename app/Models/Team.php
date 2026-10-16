@@ -107,6 +107,11 @@ class Team extends Model
         return $this->hasMany(Gallery::class);
     }
 
+    public function ftpAccount()
+    {
+        return $this->hasOne(FtpAccount::class);
+    }
+
     public function contracts()
     {
         return $this->hasMany(Contract::class);

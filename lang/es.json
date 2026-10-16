@@ -416,6 +416,7 @@
     "Rate my images": "Calificar mis imágenes",
     "Rate your favorited images with the Picstome Rater desktop app.": "Califica tus imágenes favoritas con la aplicación de escritorio Picstome Rater.",
     "Rater": "Rater",
+    "Receive photos in this gallery": "Recibir fotos en esta galería",
     "Red": "Rojo",
     "Referral Code": "Referral Code",
     "Register": "Registrarse",
@@ -463,6 +464,7 @@
     "Set how many contracts this user can create per month. Leave empty for unlimited.": "Establece cuántos contratos puede crear este usuario por mes. Déjalo vacío para ilimitado.",
     "Set up portfolio": "Configurar porfolio",
     "Set up your portfolio": "Configura tu porfolio",
+    "Set your camera up once — every shot lands in the gallery receiving uploads.": "Configura tu cámara una sola vez: cada foto llega a la galería que está recibiendo subidas.",
     "Settings": "Configuraciones",
     "Setup steps have been reset.": "Los pasos de configuración se han restablecido.",
     "Share": "Compartir",
@@ -473,6 +475,7 @@
     "Share this link with your client so they can view all their shared galleries in one place.": "Comparte este enlace con tu cliente para que pueda ver todas sus galerías compartidas en un solo lugar.",
     "Share this link with your client to request payment.": "Comparte este enlace con tu cliente para solicitar el pago.",
     "Sharing": "Compartiendo",
+    "Shoot :date": "Sesión :date",
     "Shoot :date', ['date' => now()->format('Y-m-d": "Shoot :date', ['date' => now()->format('Y-m-d",
     "Shooting date": "Fecha de la sesión",
     "Show Accept Payments Button": "Mostrar botón de aceptar pagos",
@@ -665,5 +668,5 @@
     "signatures": "firmas",
     "to": "al",
     "total storage": "almacenamiento total",
-    "Shoot :date": "Sesión :date"
+    "Photos currently upload to :gallery.": "Las fotos se suben actualmente a :gallery."
 }

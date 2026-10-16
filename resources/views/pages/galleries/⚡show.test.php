@@ -1187,7 +1187,7 @@ describe('Live Camera Upload', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
         $gallery = Gallery::factory()->for($this->team)->create();
-        FtpAccount::factory()->for($gallery)->create();
+        FtpAccount::factory()->for($this->team)->create(['active_gallery_id' => $gallery->id]);
 
         Livewire::actingAs($this->user)->withQueryParams(['live' => '1'])
             ->test('pages::galleries.show', ['gallery' => $gallery])
@@ -1213,7 +1213,7 @@ describe('Live Camera Upload', function () {
         expect(FtpAccount::count())->toBe(0);
     });
 
-    it('creates an active ftp account with camera friendly credentials when subscribed', function () {
+    it('provisions a team account and routes uploads to the gallery when subscribed', function () {
         config(['picstome.ftp_uploads.sftpgo_url' => null]);
 
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
@@ -1225,25 +1225,37 @@ describe('Live Camera Upload', function () {
 
         tap(FtpAccount::first(), function ($account) use ($gallery) {
             expect($account)->not->toBeNull();
-            expect($account->gallery_id)->toBe($gallery->id);
-            expect($account->active)->toBeTrue();
+            expect($account->team_id)->toBe($this->team->id);
+            expect($account->routesTo($gallery))->toBeTrue();
             expect($account->username)->toMatch('/^[A-HJ-NP-Z2-9]{8}$/');
-            expect($account->password)->toMatch('/^[A-HJ-NP-Z2-9]{10}$/');
+            expect($account->password)->toMatch('/^\d{8}$/');
         });
 
         $component->assertSee(FtpAccount::first()->username);
     });
 
-    it('deactivates the account when toggled again', function () {
+    it('stops routing uploads when toggled again without touching the credentials', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
         $gallery = Gallery::factory()->for($this->team)->create();
-        $account = FtpAccount::factory()->for($gallery)->create();
+        $account = FtpAccount::factory()->for($this->team)->create(['active_gallery_id' => $gallery->id]);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->call('toggleFtpUploads');
 
-        expect($account->fresh()->active)->toBeFalse();
+        expect($account->fresh()->active)->toBeTrue();
+        expect($account->fresh()->active_gallery_id)->toBeNull();
+    });
+
+    it('shows which gallery is receiving uploads when it is another one', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherGallery = Gallery::factory()->for($this->team)->create(['name' => 'Other Gallery']);
+        FtpAccount::factory()->for($this->team)->create(['active_gallery_id' => $otherGallery->id]);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->assertSee('Other Gallery');
     });
 
     it('rolls back the account when the sftpgo server cannot be reached', function () {

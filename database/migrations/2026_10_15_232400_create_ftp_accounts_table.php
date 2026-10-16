@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('ftp_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('gallery_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignId('team_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignId('active_gallery_id')->nullable()->constrained('galleries')->nullOnDelete();
             $table->string('username')->unique();
             $table->text('password');
-            $table->boolean('active')->default(false);
+            $table->boolean('active')->default(true);
             $table->timestamp('last_upload_at')->nullable();
             $table->timestamps();
         });

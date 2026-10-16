@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\FtpAccount;
-use App\Models\Gallery;
+use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<FtpAccount> */
@@ -15,9 +15,9 @@ class FtpAccountFactory extends Factory
     public function definition(): array
     {
         return [
-            'gallery_id' => Gallery::factory(),
+            'team_id' => Team::factory(),
             'username' => FtpAccount::generateCode(),
-            'password' => FtpAccount::generateCode(10),
+            'password' => FtpAccount::generateNumericPassword(),
             'active' => true,
         ];
     }
