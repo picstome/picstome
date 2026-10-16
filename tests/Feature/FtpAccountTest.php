@@ -75,6 +75,7 @@ it('encrypts passwords at rest', function () {
 
 it('rotates credentials to numeric ones while preserving team and routing', function () {
     config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Storage::fake('s3');
 
     $team = Team::factory()->create();
     $gallery = $team->galleries()->create(['name' => 'Wedding']);
