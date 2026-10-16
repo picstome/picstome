@@ -3,6 +3,8 @@
 use App\Models\FtpAccount;
 use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -69,4 +71,64 @@ it('encrypts passwords at rest', function () {
 
     expect($rawPassword)->not->toBe('12345678');
     expect($rawPassword)->not->toContain('12345678');
+});
+
+it('rotates credentials to numeric ones while preserving team and routing', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+
+    $team = Team::factory()->create();
+    $gallery = $team->galleries()->create(['name' => 'Wedding']);
+    $account = FtpAccount::factory()->for($team)->create([
+        'username' => 'JXQJSR2U',
+        'active_gallery_id' => $gallery->id,
+    ]);
+
+    expect($account->rotateCredentials())->toBeTrue();
+
+    tap($account->fresh(), function ($rotated) use ($gallery, $team) {
+        expect($rotated->username)->toMatch('/^\d{6}$/');
+        expect($rotated->password)->toMatch('/^\d{8}$/');
+        expect($rotated->username)->not->toBe('JXQJSR2U');
+        expect($rotated->team_id)->toBe($team->id);
+        expect($rotated->routesTo($gallery))->toBeTrue();
+    });
+});
+
+it('moves pending inbox files to the new inbox when rotating', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Storage::fake('s3');
+
+    $account = FtpAccount::factory()->create(['username' => 'JXQJSR2U']);
+
+    Storage::disk('s3')->put($account->inboxPath().'/DSC_0001.JPG', 'pending');
+
+    $account->rotateCredentials();
+
+    $newPath = $account->fresh()->inboxPath().'/DSC_0001.JPG';
+
+    expect(Storage::disk('s3')->exists($newPath))->toBeTrue();
+    expect(Storage::disk('s3')->exists('camera-uploads/JXQJSR2U/DSC_0001.JPG'))->toBeFalse();
+});
+
+it('rolls back the rotation when the sftpgo server cannot be reached', function () {
+    config([
+        'picstome.ftp_uploads.sftpgo_url' => 'https://sftpgo.test',
+        'picstome.ftp_uploads.sftpgo_api_key' => 'secret-key',
+    ]);
+
+    Http::fake([
+        'sftpgo.test/*' => Http::response('boom', 500),
+    ]);
+
+    $account = FtpAccount::factory()->create(['username' => 'JXQJSR2U', 'password' => '12345678']);
+
+    expect($account->rotateCredentials())->toBeFalse();
+
+    tap($account->fresh(), function ($account) {
+        expect($account->username)->toBe('JXQJSR2U');
+        expect($account->password)->toBe('12345678');
+    });
+
+    Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+        && str_contains($request->url(), '/api/v2/users/JXQJSR2U'));
 });

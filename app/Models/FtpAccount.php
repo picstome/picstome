@@ -91,6 +91,46 @@ class FtpAccount extends Model
     }
 
     /**
+     * Rotate the account's username and password to freshly generated
+     * numeric credentials, replacing the SFTPGo user and moving any files
+     * still waiting in the old inbox. Routing state is preserved. Rolls
+     * back when provisioning fails.
+     */
+    public function rotateCredentials(): bool
+    {
+        $oldAccount = clone $this;
+        $oldUsername = $this->username;
+        $oldPassword = $this->password;
+
+        $this->update([
+            'username' => static::generateUniqueUsername(),
+            'password' => static::generateNumericCode(8),
+        ]);
+
+        try {
+            app(SftpgoService::class)->deleteUser($oldAccount);
+            app(SftpgoService::class)->createUser($this);
+        } catch (\RuntimeException $e) {
+            report($e);
+
+            $this->update([
+                'username' => $oldUsername,
+                'password' => $oldPassword,
+            ]);
+
+            return false;
+        }
+
+        $disk = static::disk();
+
+        foreach ($disk->files($oldAccount->inboxPath()) as $path) {
+            $disk->move($path, $this->inboxPath().'/'.basename($path));
+        }
+
+        return true;
+    }
+
+    /**
      * The name used for a gallery created for a shoot on the given day.
      */
     public static function shootName(): string
