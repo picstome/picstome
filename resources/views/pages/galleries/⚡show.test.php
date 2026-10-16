@@ -1227,7 +1227,7 @@ describe('Live Camera Upload', function () {
             expect($account)->not->toBeNull();
             expect($account->team_id)->toBe($this->team->id);
             expect($account->routesTo($gallery))->toBeTrue();
-            expect($account->username)->toMatch('/^[A-HJ-NP-Z2-9]{8}$/');
+            expect($account->username)->toMatch('/^\d{6}$/');
             expect($account->password)->toMatch('/^\d{8}$/');
         });
 

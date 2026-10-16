@@ -6,23 +6,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('generates camera friendly usernames with the expected length and alphabet', function () {
-    $code = FtpAccount::generateCode();
+it('generates numeric only credentials that are easy to enter on a camera', function () {
+    $code = FtpAccount::generateNumericCode(6);
+    $password = FtpAccount::generateNumericCode(8);
 
-    expect(strlen($code))->toBe(8);
-
-    foreach (str_split($code) as $char) {
-        expect(str_contains(FtpAccount::CAMERA_FRIENDLY_ALPHABET, $char))->toBeTrue();
-    }
-
-    // Ambiguous lookalikes never appear.
-    expect($code)->not->toMatch('/[0O1Iil]/');
-});
-
-it('generates numeric only passwords that are easy to type on a camera', function () {
-    $password = FtpAccount::generateNumericPassword();
-
-    expect(strlen($password))->toBe(8);
+    expect($code)->toMatch('/^\d{6}$/');
     expect($password)->toMatch('/^\d{8}$/');
 });
 
@@ -35,7 +23,7 @@ it('provisions one account per team with stable credentials', function () {
 
     expect($account->team_id)->toBe($team->id);
     expect($account->active)->toBeTrue();
-    expect($account->username)->toMatch('/^[A-HJ-NP-Z2-9]{8}$/');
+    expect($account->username)->toMatch('/^\d{6}$/');
     expect($account->password)->toMatch('/^\d{8}$/');
     expect($account->activeGallery)->toBeNull();
 

@@ -16,8 +16,8 @@ class FtpAccountFactory extends Factory
     {
         return [
             'team_id' => Team::factory(),
-            'username' => FtpAccount::generateCode(),
-            'password' => FtpAccount::generateNumericPassword(),
+            'username' => FtpAccount::generateNumericCode(6),
+            'password' => FtpAccount::generateNumericCode(8),
             'active' => true,
         ];
     }

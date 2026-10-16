@@ -12,13 +12,6 @@ class FtpAccount extends Model
     /** @use HasFactory<\Database\Factories\FtpAccountFactory> */
     use HasFactory;
 
-    /**
-     * Camera-friendly alphabet for usernames: digits and letters without
-     * ambiguous lookalikes (0/O, 1/I/l), since credentials are typed on
-     * camera bodies using a dial.
-     */
-    public const CAMERA_FRIENDLY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-
     protected $guarded = [];
 
     protected function casts()
@@ -41,34 +34,19 @@ class FtpAccount extends Model
     }
 
     /**
-     * Generate a random camera-friendly username fragment.
+     * Generate a numeric-only code: the easiest thing to enter on a camera
+     * dial (single keyboard, no case, no letter lookalikes). Usernames are
+     * 6 digits, passwords 8. Brute force is throttled by SFTPGo's defender.
      */
-    public static function generateCode(int $length = 8): string
+    public static function generateNumericCode(int $length): string
     {
-        $alphabet = self::CAMERA_FRIENDLY_ALPHABET;
-
         $code = '';
 
         for ($i = 0; $i < $length; $i++) {
-            $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            $code .= (string) random_int(0, 9);
         }
 
         return $code;
-    }
-
-    /**
-     * Generate a numeric-only password: the easiest thing to type on a
-     * camera dial. Brute force is throttled by SFTPGo's defender.
-     */
-    public static function generateNumericPassword(int $length = 8): string
-    {
-        $password = '';
-
-        for ($i = 0; $i < $length; $i++) {
-            $password .= (string) random_int(0, 9);
-        }
-
-        return $password;
     }
 
     /**
@@ -86,7 +64,7 @@ class FtpAccount extends Model
         $account = static::create([
             'team_id' => $team->id,
             'username' => static::generateUniqueUsername(),
-            'password' => static::generateNumericPassword(),
+            'password' => static::generateNumericCode(8),
             'active' => true,
         ]);
 
@@ -106,7 +84,7 @@ class FtpAccount extends Model
     protected static function generateUniqueUsername(): string
     {
         do {
-            $username = static::generateCode();
+            $username = static::generateNumericCode(6);
         } while (static::query()->where('username', $username)->exists());
 
         return $username;
