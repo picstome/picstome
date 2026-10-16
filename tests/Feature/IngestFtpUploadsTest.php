@@ -88,6 +88,19 @@ describe('ingest command', function () {
         expect($this->account->fresh()->activeGallery->name)->toBe(FtpAccount::shootName());
         Queue::assertPushed(IngestFtpUpload::class);
     });
+
+    it('names the auto-created shoot gallery in the team owner language', function () {
+        Queue::fake();
+
+        $this->gallery->team->owner->update(['language' => 'es']);
+        $this->account->update(['active_gallery_id' => null]);
+
+        putUpload($this->account, 'DSC_0001.JPG');
+
+        $this->artisan('ingest:ftp-uploads');
+
+        expect($this->account->fresh()->activeGallery->name)->toBe('Sesión '.now()->format('Y-m-d'));
+    });
 });
 
 describe('ingest job', function () {

@@ -886,19 +886,21 @@ new class extends Component
                         copyable
                     />
 
-                    <flux:input
-                        :value="config('picstome.ftp_uploads.sftp_port')"
-                        :label="__('SFTP port (Sony)')"
-                        readonly
-                        copyable
-                    />
+                    <div class="grid grid-cols-2 gap-4">
+                        <flux:input
+                            :value="config('picstome.ftp_uploads.sftp_port')"
+                            :label="__('SFTP port')"
+                            readonly
+                            copyable
+                        />
 
-                    <flux:input
-                        :value="config('picstome.ftp_uploads.ftp_port')"
-                        :label="__('FTP port (Canon, Nikon, Fuji)')"
-                        readonly
-                        copyable
-                    />
+                        <flux:input
+                            :value="config('picstome.ftp_uploads.ftp_port')"
+                            :label="__('FTP port')"
+                            readonly
+                            copyable
+                        />
+                    </div>
 
                     <flux:input
                         :value="$this->ftpAccount->username"

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'stripe/*',
+            'webhooks/sftpgo',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

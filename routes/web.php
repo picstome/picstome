@@ -189,3 +189,6 @@ Route::get('/galleries/{gallery}/photos/{photo}/pdf', function (Gallery $gallery
 
     return $photo->inline();
 })->name('galleries.photos.inline')->middleware(['auth', 'verified', 'can:view,photo']);
+
+Route::post('/webhooks/sftpgo', App\Http\Controllers\Webhooks\SftpgoWebhookController::class)
+    ->name('webhooks.sftpgo');
