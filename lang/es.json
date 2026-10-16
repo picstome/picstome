@@ -242,6 +242,7 @@
     "Export CSV": "Export CSV",
     "Export favorite list": "Exportar lista de favoritos",
     "Extra storage": "Almacenamiento extra",
+    "FTP port": "Puerto FTP",
     "FTP port (Canon, Nikon, Fuji)": "Puerto FTP (Canon, Nikon, Fuji)",
     "Facebook": "Facebook",
     "Favorite list": "Lista de favoritos",
@@ -384,6 +385,7 @@
     "Photo: :name": "Foto: :name",
     "Photographer": "Fotógrafo/a",
     "Photos": "Fotos",
+    "Photos currently upload to :gallery.": "Las fotos se suben actualmente a :gallery.",
     "Photoshoot": "Sesión de fotos",
     "Photoshoot Name": "Nombre de la sesión de fotos",
     "Photoshoot with :customer": "Sesión de fotos con :customer",
@@ -431,6 +433,7 @@
     "Revenue (30d)": "Ingresos (30d)",
     "Role": "Rol",
     "Rose": "Rosa",
+    "SFTP port": "Puerto SFTP",
     "SFTP port (Sony)": "Puerto SFTP (Sony)",
     "Save": "Guardar",
     "Save changes": "Guardar cambios",
@@ -667,6 +670,5 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total",
-    "Photos currently upload to :gallery.": "Las fotos se suben actualmente a :gallery."
+    "total storage": "almacenamiento total"
 }

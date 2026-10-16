@@ -102,5 +102,9 @@ return [
         // (e.g. local development without a SFTPGo server).
         'sftpgo_url' => env('SFTPGO_URL'),
         'sftpgo_api_key' => env('SFTPGO_API_KEY'),
+
+        // Shared secret for SFTPGo upload webhooks. Leave empty to
+        // disable the webhook endpoint.
+        'webhook_token' => env('SFTPGO_WEBHOOK_TOKEN'),
     ],
 ];

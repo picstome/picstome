@@ -139,6 +139,24 @@ class FtpAccount extends Model
     }
 
     /**
+     * The shoot gallery name in the team owner's language, so names are
+     * consistent regardless of who triggered the creation (web request or
+     * the ingest command, which runs without a user locale).
+     */
+    public static function shootNameFor(Team $team): string
+    {
+        $previous = app()->getLocale();
+
+        app()->setLocale($team->owner?->language ?: $previous);
+
+        try {
+            return static::shootName();
+        } finally {
+            app()->setLocale($previous);
+        }
+    }
+
+    /**
      * The gallery receiving this team's uploads: the active shoot, or a
      * dated gallery created (or reused) for today when no shoot is active.
      */
@@ -148,7 +166,7 @@ class FtpAccount extends Model
             return $gallery;
         }
 
-        $name = static::shootName();
+        $name = static::shootNameFor($this->team);
 
         $gallery = $this->team->galleries()->where('name', $name)->first()
             ?? $this->team->galleries()->create(['name' => $name, 'is_public' => false]);

@@ -41,7 +41,7 @@ new class extends Component
             return;
         }
 
-        $name = FtpAccount::shootName();
+        $name = FtpAccount::shootNameFor($this->team);
 
         if ($todayShoots = $this->team->galleries()->where('name', 'like', $name.'%')->count()) {
             $name = $name.' ('.($todayShoots + 1).')';
