@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\SftpgoService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,6 +67,28 @@ class FtpAccount extends Model
             'password' => static::generateCode(10),
             'active' => true,
         ]);
+    }
+
+    /**
+     * Create an account with generated credentials for the given gallery and
+     * provision it on the SFTPGo server, rolling the account back when
+     * provisioning fails.
+     */
+    public static function provisionForGallery(Gallery $gallery): ?static
+    {
+        $account = static::generateForGallery($gallery);
+
+        try {
+            app(SftpgoService::class)->createUser($account);
+        } catch (\RuntimeException $e) {
+            report($e);
+
+            $account->delete();
+
+            return null;
+        }
+
+        return $account;
     }
 
     /**

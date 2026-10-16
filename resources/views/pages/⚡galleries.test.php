@@ -120,3 +120,57 @@ test('cannot create a gallery with an invalid expiration date', function () {
     $component->assertHasErrors(['form.expirationDate' => 'before_or_equal']);
     expect($this->team->galleries()->count())->toBe(0);
 });
+
+test('subscribed users can start a live shoot', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
+        ->call('startLiveShoot');
+
+    $component->assertRedirect('/galleries/1?live=1');
+
+    $gallery = $this->team->galleries()->first();
+    expect($gallery->name)->toBe('Shoot '.now()->format('Y-m-d'));
+    expect($gallery->ftpAccount)->not->toBeNull();
+    expect($gallery->ftpAccount->active)->toBeTrue();
+});
+
+test('live shoot gallery names increment within the same day', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    $names = $this->team->galleries()->pluck('name');
+
+    expect($names)->toContain('Shoot '.now()->format('Y-m-d'));
+    expect($names)->toContain('Shoot '.now()->format('Y-m-d').' (2)');
+});
+
+test('starting a live shoot requires a subscription', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
+        ->call('startLiveShoot');
+
+    expect($this->team->galleries()->count())->toBe(0);
+    expect(\App\Models\FtpAccount::count())->toBe(0);
+});
+
+test('starting a live shoot keeps the gallery when the upload server is unreachable', function () {
+    config([
+        'picstome.ftp_uploads.sftpgo_url' => 'https://sftpgo.test',
+        'picstome.ftp_uploads.sftpgo_api_key' => 'secret-key',
+    ]);
+
+    \Illuminate\Support\Facades\Http::fake([
+        'sftpgo.test/*' => \Illuminate\Support\Facades\Http::response('boom', 500),
+    ]);
+
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->count())->toBe(1);
+    expect(\App\Models\FtpAccount::count())->toBe(0);
+});

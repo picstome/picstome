@@ -52,6 +52,10 @@ new class extends Component
         $this->getFavorites();
         $this->getCommentedPhotos();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
+
+        if (request()->boolean('live')) {
+            Flux::modal('live-upload')->show();
+        }
     }
 
     public function save($index, $replace = false)
@@ -321,20 +325,10 @@ new class extends Component
 
                 Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
             }
-        } else {
-            $account = FtpAccount::generateForGallery($this->gallery);
-
-            try {
-                $sftpgo->createUser($account);
-            } catch (\RuntimeException $e) {
-                report($e);
-
-                $account->delete();
-
-                Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
-            }
-
+        } elseif (FtpAccount::provisionForGallery($this->gallery)) {
             $this->gallery->load('ftpAccount');
+        } else {
+            Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
         }
 
         unset($this->ftpAccount);

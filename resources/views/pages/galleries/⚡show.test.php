@@ -1183,6 +1183,18 @@ describe('Portfolio Index Public Access', function () {
 });
 
 describe('Live Camera Upload', function () {
+    it('opens the live upload modal when arriving with the live flag', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        FtpAccount::factory()->for($gallery)->create();
+
+        Livewire::actingAs($this->user)->withQueryParams(['live' => '1'])
+            ->test('pages::galleries.show', ['gallery' => $gallery])
+            ->assertHasNoErrors()
+            ->assertSee('Camera setup');
+    });
+
     it('shows the upsell to unsubscribed teams', function () {
         config(['picstome.ftp_uploads.host' => 'upload.picstome.com']);
 

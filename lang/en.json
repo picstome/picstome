@@ -418,6 +418,7 @@
     "Share this link with your client so they can view all their shared galleries in one place.": "Share this link with your client so they can view all their shared galleries in one place.",
     "Share this link with your client to request payment.": "Share this link with your client to request payment.",
     "Sharing": "Sharing",
+    "Shoot :date', ['date' => now()->format('Y-m-d": "Shoot :date', ['date' => now()->format('Y-m-d",
     "Shooting date": "Shooting date",
     "Show Accept Payments Button": "Show Accept Payments Button",
     "Show cover image": "Show cover image",
@@ -436,6 +437,7 @@
     "Social Links": "Social Links",
     "Start Time": "Start Time",
     "Start accepting payments": "Start accepting payments",
+    "Start live shoot": "Start live shoot",
     "Stop sharing": "Stop sharing",
     "Storage": "Storage",
     "Storage Limit": "Storage Limit",
@@ -584,5 +586,6 @@
     "photos": "photos",
     "remaining files.": "remaining files.",
     "signatures": "signatures",
-    "total storage": "total storage"
+    "total storage": "total storage",
+    "Shoot :date": "Shoot :date"
 }

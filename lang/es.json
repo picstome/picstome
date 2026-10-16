@@ -473,6 +473,7 @@
     "Share this link with your client so they can view all their shared galleries in one place.": "Comparte este enlace con tu cliente para que pueda ver todas sus galerías compartidas en un solo lugar.",
     "Share this link with your client to request payment.": "Comparte este enlace con tu cliente para solicitar el pago.",
     "Sharing": "Compartiendo",
+    "Shoot :date', ['date' => now()->format('Y-m-d": "Shoot :date', ['date' => now()->format('Y-m-d",
     "Shooting date": "Fecha de la sesión",
     "Show Accept Payments Button": "Mostrar botón de aceptar pagos",
     "Show cover image": "Mostrar imagen de portada",
@@ -493,6 +494,7 @@
     "Start Time": "Hora de inicio",
     "Start Time: :start": "Hora de inicio: :start",
     "Start accepting payments": "Comienza a aceptar pagos",
+    "Start live shoot": "Nueva sesión en vivo",
     "Stop sharing": "Dejar de compartir",
     "Storage": "Almacenamiento",
     "Storage Limit": "Límite de almacenamiento",
@@ -662,5 +664,6 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Shoot :date": "Sesión :date"
 }
