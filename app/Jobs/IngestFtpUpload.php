@@ -30,7 +30,7 @@ class IngestFtpUpload implements ShouldQueue
     {
         $account = FtpAccount::find($this->ftpAccountId);
 
-        if (! $account?->active || ! $account->gallery) {
+        if (! $account?->active || ! $account->team) {
             return;
         }
 
@@ -40,7 +40,12 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        $gallery = $account->gallery;
+        $gallery = $account->activeGallery;
+
+        if (! $gallery) {
+            return;
+        }
+
         $name = Gallery::sanitizeFileName(basename($this->path));
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 

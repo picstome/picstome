@@ -20,7 +20,7 @@ class IngestFtpUploadsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Ingest camera photos uploaded via FTP/SFTP into their galleries.';
+    protected $description = 'Ingest camera photos uploaded via FTP/SFTP into the galleries receiving them.';
 
     /**
      * Execute the console command.
@@ -32,12 +32,16 @@ class IngestFtpUploadsCommand extends Command
 
         FtpAccount::query()
             ->where('active', true)
-            ->with('gallery')
+            ->with(['team', 'activeGallery'])
             ->get()
             ->each(function (FtpAccount $account) use ($stabilityCutoff, &$dispatched) {
-                if (! $account->gallery) {
+                if (! $account->team) {
                     return;
                 }
+
+                // Resolve the receiving gallery up front so concurrent file
+                // jobs never race to create a duplicate shoot gallery.
+                $account->resolveActiveGallery();
 
                 $disk = FtpAccount::disk();
 
