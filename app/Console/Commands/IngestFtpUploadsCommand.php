@@ -32,16 +32,12 @@ class IngestFtpUploadsCommand extends Command
 
         FtpAccount::query()
             ->where('active', true)
-            ->with(['team', 'activeGallery'])
+            ->with('team')
             ->get()
             ->each(function (FtpAccount $account) use ($stabilityCutoff, &$dispatched) {
                 if (! $account->team) {
                     return;
                 }
-
-                // Resolve the receiving gallery up front so concurrent file
-                // jobs never race to create a duplicate shoot gallery.
-                $account->resolveActiveGallery();
 
                 $disk = FtpAccount::disk();
 

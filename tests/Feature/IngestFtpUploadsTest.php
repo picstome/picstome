@@ -76,7 +76,7 @@ describe('ingest command', function () {
         Queue::assertNotPushed(IngestFtpUpload::class);
     });
 
-    it('creates a dated shoot gallery when no gallery is receiving uploads', function () {
+    it('creates a dated shoot gallery when the first upload arrives', function () {
         Queue::fake();
 
         $this->account->update(['active_gallery_id' => null]);
@@ -85,8 +85,17 @@ describe('ingest command', function () {
 
         $this->artisan('ingest:ftp-uploads');
 
-        expect($this->account->fresh()->activeGallery->name)->toBe(FtpAccount::shootName());
         Queue::assertPushed(IngestFtpUpload::class);
+
+        // The gallery is only created when the job actually ingests.
+        expect($this->account->team->galleries()->where('name', FtpAccount::shootName())->count())->toBe(0);
+
+        (new IngestFtpUpload($this->account->id, $this->account->inboxPath().'/DSC_0001.JPG'))->handle();
+
+        $shoot = $this->account->fresh()->activeGallery;
+
+        expect($shoot->name)->toBe(FtpAccount::shootName());
+        expect($shoot->photos()->count())->toBe(1);
     });
 
     it('names the auto-created shoot gallery in the team owner language', function () {
@@ -95,11 +104,23 @@ describe('ingest command', function () {
         $this->gallery->team->owner->update(['language' => 'es']);
         $this->account->update(['active_gallery_id' => null]);
 
-        putUpload($this->account, 'DSC_0001.JPG');
+        $path = putUpload($this->account, 'DSC_0001.JPG');
 
         $this->artisan('ingest:ftp-uploads');
 
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
         expect($this->account->fresh()->activeGallery->name)->toBe('Sesión '.now()->format('Y-m-d'));
+    });
+
+    it('does not recreate a deleted shoot gallery until a new upload arrives', function () {
+        // chmea's report: deleting the empty gallery brought it back within
+        // a minute. With lazy creation, it must stay deleted.
+        $this->gallery->delete();
+
+        $this->artisan('ingest:ftp-uploads');
+
+        expect($this->account->team->galleries()->count())->toBe(0);
     });
 });
 
@@ -127,17 +148,6 @@ describe('ingest job', function () {
         Queue::assertPushed(ProcessPhoto::class);
         Event::assertDispatched(PhotoAdded::class);
         expect($this->account->fresh()->last_upload_at)->not->toBeNull();
-    });
-
-    it('leaves the file in the inbox when no gallery is receiving uploads', function () {
-        $this->account->update(['active_gallery_id' => null]);
-
-        $path = putUpload($this->account, 'DSC_0001.JPG');
-
-        (new IngestFtpUpload($this->account->id, $path))->handle();
-
-        expect($this->gallery->photos()->count())->toBe(0);
-        expect(Storage::disk('s3')->exists($path))->toBeTrue();
     });
 
     it('removes uploads with unsupported extensions', function () {

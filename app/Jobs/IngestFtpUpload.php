@@ -40,11 +40,9 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        $gallery = $account->activeGallery;
-
-        if (! $gallery) {
-            return;
-        }
+        // Lazy: the receiving gallery is resolved (or created) only when a
+        // real file arrives, so empty shoot galleries are never spawned.
+        $gallery = $account->resolveActiveGallery();
 
         $name = Gallery::sanitizeFileName(basename($this->path));
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
