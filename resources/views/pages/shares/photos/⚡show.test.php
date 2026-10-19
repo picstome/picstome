@@ -6,11 +6,16 @@ use App\Models\PhotoComment;
 use App\Models\PhotoVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Storage::fake('s3');
+});
 
 test('photo can be viewed when the gallery is shared', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create(['ulid' => '0123ABC']);
