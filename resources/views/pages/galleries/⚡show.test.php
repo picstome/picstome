@@ -219,37 +219,44 @@ describe('Photo Upload', function () {
             ->assertSet('existingPhotoNames', ['photo1.jpg', 'a`id`.jpg']);
     });
 
-    it('still rejects duplicate file names when no replace choice was made', function () {
+    it('creates a new version when a duplicate file name is uploaded', function () {
         Storage::fake('s3');
 
+        Event::fake(PhotoAdded::class);
+
         $gallery = Gallery::factory()->for($this->team)->create();
-        $photo = Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg']);
+        $photo = Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'path' => 'old/path/photo1.jpg', 'source_name' => 'photo1.jpg', 'version_count' => 1]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
             ->call('save', 0);
 
-        $component->assertHasErrors(['photos.0' => 'A photo with this name already exists.']);
-        expect($photo->fresh()->path)->toBe($photo->path);
+        $component->assertHasNoErrors();
+        $photo->refresh();
         expect($gallery->photos()->count())->toBe(1);
+        expect($photo->version_count)->toBe(2);
+        expect(\App\Models\PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
+        expect($photo->path)->not->toBe('old/path/photo1.jpg');
     });
 
-    it('replaces an existing photo when the user chooses replace', function () {
+    it('records a new version when uploading the same file name again', function () {
         Storage::fake('s3');
         Queue::fake();
 
         $gallery = Gallery::factory()->for($this->team)->create();
         $photo = Photo::factory()->for($gallery)->favorited()->create([
             'name' => 'photo1.jpg',
+            'source_name' => 'photo1.jpg',
             'path' => 'old/path/photo1.jpg',
             'size' => 1024,
             'status' => 'processed',
+            'version_count' => 1,
         ]);
         PhotoComment::factory()->for($photo)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
-            ->call('save', 0, true);
+            ->call('save', 0);
 
         $component->assertHasNoErrors();
         $photo->refresh();
@@ -259,15 +266,50 @@ describe('Photo Upload', function () {
         expect($photo->favorited_at)->not->toBeNull();
         expect($photo->comments)->toHaveCount(1);
 
-        // The file is swapped and processing is scheduled again.
+        // The older version is retained and processing is scheduled again.
         expect($photo->path)->not->toBe('old/path/photo1.jpg');
         expect($photo->size)->toBeGreaterThan(0);
         expect($photo->status)->toBe('pending');
+        expect($photo->version_count)->toBe(2);
+        expect(\App\Models\PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
 
         Queue::assertPushed(ProcessPhoto::class);
-        Queue::assertPushed(function (DeleteFromDisk $job) {
+        Queue::assertNotPushed(function (DeleteFromDisk $job) {
             return $job->path === 'old/path/photo1.jpg';
         });
+    });
+
+    it('replaces only the current version and keeps older versions', function () {
+        Storage::fake('s3');
+        Queue::fake();
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create([
+            'name' => 'photo1.jpg',
+            'source_name' => 'photo1.jpg',
+            'path' => 'old/current.jpg',
+            'size' => 1024,
+            'status' => 'processed',
+            'version_count' => 2,
+        ]);
+        $oldVersion = \App\Models\PhotoVersion::factory()->for($photo)->create([
+            'version_number' => 1,
+            'path' => 'old/history.jpg',
+        ]);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
+            ->call('save', 0, 'replace')
+            ->assertHasNoErrors();
+
+        $photo->refresh();
+
+        expect($photo->version_count)->toBe(2);
+        expect($photo->current_version_id)->toBeNull();
+        expect($photo->path)->not->toBe('old/current.jpg');
+        expect($photo->versions()->count())->toBe(1);
+        expect($oldVersion->fresh()->path)->toBe('old/history.jpg');
+        Queue::assertNotPushed(DeleteFromDisk::class, fn ($job) => $job->path === 'old/history.jpg');
     });
 
     it('adds the photo when replace is chosen but the original was already deleted', function () {
@@ -294,6 +336,33 @@ describe('Gallery Sharing', function () {
             ->call('share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
+    });
+
+    it('can expose versions in shared galleries and remembers the default', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.versionsVisible', true)
+            ->call('share')
+            ->assertHasNoErrors();
+
+        expect($gallery->fresh()->is_share_versions_visible)->toBeTrue();
+        expect($this->user->fresh()->shareGalleryDefaults()['versions_visible'])->toBeTrue();
+    });
+
+    it('prefills new gallery sharing options from the user defaults', function () {
+        $this->user->rememberShareGalleryDefaults([
+            'selectable' => true,
+            'versions_visible' => true,
+            'comments_enabled' => false,
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->assertSet('shareForm.selectable', true)
+            ->assertSet('shareForm.versionsVisible', true)
+            ->assertSet('shareForm.commentsEnabled', false);
     });
 
     it('can be shared with selectable options enabled', function () {
@@ -979,7 +1048,7 @@ describe('Storage Limits', function () {
         $component->assertHasNoErrors();
     });
 
-    it('only requires storage for the size difference when replacing a photo', function () {
+    it('charges only the size difference when replacing the current version', function () {
         Storage::fake('s3');
 
         Event::fake(PhotoAdded::class);
@@ -989,18 +1058,37 @@ describe('Storage Limits', function () {
         ]);
 
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'REPLACEKB']);
-        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'size' => 2 * 1024]); // 2 KB
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'source_name' => 'photo1.jpg', 'size' => 2 * 1024]); // 2 KB
 
-        // A 2 KB replacement needs no additional bytes against the 2 KB in use.
+        // Replacing 2 KB with 2 KB needs no additional storage.
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(2))
-            ->call('save', 0, true)
+            ->call('save', 0, 'replace')
             ->assertHasNoErrors();
 
         // A 10 KB replacement exceeds the 3 KB limit.
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(10))
-            ->call('save', 0, true);
+            ->call('save', 0, 'replace');
+
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+
+    it('requires full storage when adding a new version', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 3 * 1024, // 3 KB
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'VERSIONKB']);
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'source_name' => 'photo1.jpg', 'size' => 2 * 1024]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(2))
+            ->call('save', 0, 'version');
 
         $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
     });

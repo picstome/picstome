@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\StorageUsageService;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
@@ -312,10 +312,7 @@ class Team extends Model
      */
     public function calculateStorageUsed(): int
     {
-        return DB::table('photos')
-            ->join('galleries', 'photos.gallery_id', '=', 'galleries.id')
-            ->where('galleries.team_id', $this->id)
-            ->sum('photos.size');
+        return StorageUsageService::forTeam($this);
     }
 
     /**

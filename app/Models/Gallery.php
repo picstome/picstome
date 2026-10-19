@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
+use App\Services\PhotoIdentityService;
+use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -36,6 +40,7 @@ class Gallery extends Model
             'is_share_selectable' => 'boolean',
             'is_share_downloadable' => 'boolean',
             'is_share_watermarked' => 'boolean',
+            'is_share_versions_visible' => 'boolean',
             'is_public' => 'boolean',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
@@ -83,6 +88,11 @@ class Gallery extends Model
     public function photos()
     {
         return $this->hasMany(Photo::class);
+    }
+
+    public function photoVersions()
+    {
+        return $this->hasManyThrough(PhotoVersion::class, Photo::class);
     }
 
     public function photoshoot()
@@ -274,51 +284,249 @@ class Gallery extends Model
             throw new \Exception('Not enough storage');
         }
 
+        $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
+
         $photoModel = $this->photos()->create([
-            'name' => static::sanitizeFileName($photo->getClientOriginalName()),
+            'name' => $sourceName,
+            'source_name' => $sourceName,
+            'identity_key' => static::identityKey($sourceName),
             'size' => $photoSize,
-            'path' => FileUploadConfiguration::isUsingS3()
-                ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
-                    Storage::disk('s3')->move($photo->getRealPath(), $path);
-                })
-                : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
+            'stored_size' => $photoSize,
+            'path' => $this->storeUploadedPhoto($photo, $sourceName),
             'disk' => 's3',
             'status' => 'pending',
+            'version_count' => 1,
+            'uploaded_at' => now(),
         ]);
 
         return $photoModel;
     }
 
     /**
-     * Replace an existing photo's file with a newly uploaded one, keeping the
-     * same database row so favorites, comments, and cover references survive.
+     * Add a new version of an existing logical photo, retaining all previous
+     * files on disk as PhotoVersion rows.
      */
-    public function replacePhoto(UploadedFile $photo, Photo $existingPhoto): Photo
+    public function addVersion(UploadedFile $photo, Photo $existing): Photo
     {
         $team = $this->team;
 
         $photoSize = $photo->getSize();
 
-        if ($team->storage_limit !== null && ! $team->canStoreFile(max(0, $photoSize - $existingPhoto->size))) {
+        if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
             throw new \Exception('Not enough storage');
         }
 
-        $existingPhoto->deleteFromDisk();
+        $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
 
-        $existingPhoto->update([
+        $this->prepareNewVersion($existing);
+
+        $existing->update([
+            'name' => $sourceName,
+            'source_name' => $sourceName,
+            'identity_key' => $existing->identity_key ?: static::identityKey($sourceName),
             'size' => $photoSize,
-            'path' => FileUploadConfiguration::isUsingS3()
-                ? tap($this->storage_path.'/'.$photo->getFilename(), function ($path) use ($photo) {
-                    Storage::disk('s3')->move($photo->getRealPath(), $path);
-                })
-                : $photo->store(path: $this->storage_path, options: ['disk' => 's3']),
+            'stored_size' => $photoSize,
+            'path' => $this->storeUploadedPhoto($photo, $sourceName),
             'thumb_path' => null,
             'raw_path' => null,
             'disk' => 's3',
             'status' => 'pending',
+            'current_version_id' => null,
+            'uploaded_at' => now(),
         ]);
 
-        return $existingPhoto;
+        return $existing;
+    }
+
+    /**
+     * Replace the current version in place without creating a new version.
+     * Older versions are retained.
+     */
+    public function replaceCurrentVersion(UploadedFile $photo, Photo $existing): Photo
+    {
+        $team = $this->team;
+
+        $photoSize = $photo->getSize();
+
+        if ($team->storage_limit !== null && ! $team->canStoreFile(max(0, $photoSize - $existing->stored_size))) {
+            throw new \Exception('Not enough storage');
+        }
+
+        $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
+        $newPath = $this->storeUploadedPhoto($photo, $sourceName);
+        $oldPath = $existing->path;
+        $oldRawPath = $existing->raw_path;
+        $oldDisk = $existing->diskOrDefault();
+        $currentVersion = $existing->current_version_id
+            ? $existing->versions()->whereKey($existing->current_version_id)->first()
+            : null;
+
+        DB::transaction(function () use ($existing, $currentVersion, $sourceName, $photoSize, $newPath, $oldPath, $oldRawPath, $oldDisk): void {
+            $existing->update([
+                'name' => $sourceName,
+                'source_name' => $sourceName,
+                'identity_key' => $existing->identity_key ?: static::identityKey($sourceName),
+                'size' => $photoSize,
+                'stored_size' => $photoSize,
+                'path' => $newPath,
+                'thumb_path' => null,
+                'raw_path' => null,
+                'disk' => 's3',
+                'status' => 'pending',
+                'uploaded_at' => now(),
+            ]);
+
+            if ($currentVersion) {
+                $currentVersion->update([
+                    'name' => $sourceName,
+                    'source_name' => $sourceName,
+                    'size' => $photoSize,
+                    'stored_size' => $photoSize,
+                    'path' => $newPath,
+                    'raw_path' => null,
+                    'disk' => 's3',
+                    'status' => 'pending',
+                    'uploaded_at' => now(),
+                ]);
+            }
+
+            $this->deleteUnreferencedPath($existing, $oldPath, $oldRawPath, $oldDisk);
+        });
+
+        return $existing;
+    }
+
+    protected function prepareNewVersion(Photo $existing): void
+    {
+        $previousCount = $existing->version_count ?: 1;
+
+        DB::transaction(function () use ($existing, $previousCount): void {
+            $currentVersionMatches = $existing->current_version_id
+                && $existing->currentVersion
+                && $existing->currentVersion->path === $existing->path;
+
+            if (! $currentVersionMatches) {
+                $existing->snapshotAsVersion($previousCount);
+                $existing->current_version_id = null;
+            }
+
+            $existing->version_count = $previousCount + 1;
+            $existing->save();
+        });
+    }
+
+    protected function storeUploadedPhoto(UploadedFile $photo, string $sourceName): string
+    {
+        if (FileUploadConfiguration::isUsingS3()) {
+            $path = $this->storage_path.'/'.Str::ulid().'-'.$sourceName;
+            Storage::disk('s3')->move($photo->getRealPath(), $path);
+
+            return $path;
+        }
+
+        return $photo->store(path: $this->storage_path, options: ['disk' => 's3']);
+    }
+
+    protected function deleteUnreferencedPath(Photo $photo, ?string $path, ?string $rawPath, string $disk): void
+    {
+        foreach (array_filter([$path, $rawPath]) as $candidate) {
+            $referenced = $photo->versions()
+                ->where(function ($query) use ($candidate) {
+                    $query->where('path', $candidate)->orWhere('raw_path', $candidate);
+                })
+                ->exists();
+
+            if (! $referenced) {
+                DeleteFromDisk::dispatch($candidate, $disk);
+            }
+        }
+    }
+
+    public function findLogicalPhotoBySourceName(string $clientName): ?Photo
+    {
+        $sourceName = static::sanitizeFileName($clientName);
+        $identityKey = static::identityKey($sourceName);
+
+        return $this->photos()
+            ->where(function ($query) use ($identityKey, $sourceName) {
+                $query->where('identity_key', $identityKey)
+                    ->orWhere(function ($fallback) use ($sourceName) {
+                        $fallback->whereNull('identity_key')
+                            ->where(function ($legacy) use ($sourceName) {
+                                $legacy->where('source_name', $sourceName)
+                                    ->orWhere('name', $sourceName);
+                            });
+                    });
+            })
+            ->latest('updated_at')
+            ->first();
+    }
+
+    public static function identityKey(string $filename): string
+    {
+        return PhotoIdentityService::key($filename);
+    }
+
+    public function withPhotoIdentityLock(string $identityKey, \Closure $callback): mixed
+    {
+        return Cache::lock("gallery:{$this->id}:photo-identity:{$identityKey}", 60)
+            ->block(30, $callback);
+    }
+
+    public function addPhotoFromStoredPath(string $path, string $clientName, int $size): Photo
+    {
+        $team = $this->team;
+
+        if ($team->storage_limit !== null && ! $team->canStoreFile($size)) {
+            throw new \Exception('Not enough storage');
+        }
+
+        $sourceName = static::sanitizeFileName($clientName);
+
+        return $this->photos()->create([
+            'name' => $sourceName,
+            'source_name' => $sourceName,
+            'identity_key' => static::identityKey($sourceName),
+            'size' => $size,
+            'stored_size' => $size,
+            'path' => $path,
+            'thumb_path' => null,
+            'raw_path' => null,
+            'disk' => config('picstome.disk', 's3'),
+            'status' => 'pending',
+            'version_count' => 1,
+            'uploaded_at' => now(),
+        ]);
+    }
+
+    public function addVersionFromStoredPath(Photo $existing, string $path, string $clientName, int $size): Photo
+    {
+        $team = $this->team;
+
+        if ($team->storage_limit !== null && ! $team->canStoreFile($size)) {
+            throw new \Exception('Not enough storage');
+        }
+
+        $sourceName = static::sanitizeFileName($clientName);
+
+        $this->prepareNewVersion($existing);
+
+        $existing->update([
+            'name' => $sourceName,
+            'source_name' => $sourceName,
+            'identity_key' => $existing->identity_key ?: static::identityKey($sourceName),
+            'size' => $size,
+            'stored_size' => $size,
+            'path' => $path,
+            'thumb_path' => null,
+            'raw_path' => null,
+            'disk' => config('picstome.disk', 's3'),
+            'status' => 'pending',
+            'current_version_id' => null,
+            'uploaded_at' => now(),
+        ]);
+
+        return $existing;
     }
 
     /**
@@ -338,16 +546,16 @@ class Gallery extends Model
 
     public function deletePhotos()
     {
-        $this->photos()->cursor()->each(
+        $this->photos()->with('versions')->cursor()->each(
             fn (Photo $photo) => $photo->deleteFromDisk()->delete()
         );
 
         return $this;
     }
 
-    public function getTotalStorageSize()
+    public function getTotalStorageSize(): int
     {
-        return $this->photos()->sum('size');
+        return StorageUsageService::forGallery($this);
     }
 
     public function getFormattedStorageSize()
@@ -402,7 +610,7 @@ class Gallery extends Model
 
         if ($shouldProcessPhotos) {
             foreach ($this->photos()->cursor() as $photo) {
-                ProcessPhoto::dispatch($photo);
+                ProcessPhoto::dispatch($photo, $photo->version_count);
             }
         }
     }

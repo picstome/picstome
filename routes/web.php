@@ -102,6 +102,18 @@ Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
 })->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
 Route::livewire('/galleries/{gallery}/photos/{photo}', 'pages::galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
 
+Route::get('/galleries/{gallery}/photos/{photo}/versions/{version}/download', function (Gallery $gallery, Photo $photo, \App\Models\PhotoVersion $version) {
+    abort_unless($photo->gallery_id === $gallery->id, 404);
+    abort_unless($version->photo_id === $photo->id, 404);
+    abort_unless($gallery->team->is(Auth::user()->currentTeam), 403);
+
+    if (request()->query('type') === 'raw') {
+        return $version->downloadRaw();
+    }
+
+    return $version->download();
+})->name('galleries.photos.versions.download')->middleware(['auth', 'verified']);
+
 Route::livewire('/photoshoots', 'pages::photoshoots')->name('photoshoots')->middleware(['auth', 'verified']);
 Route::livewire('/photoshoots/{photoshoot}', 'pages::photoshoots.show')->name('photoshoots.show')->middleware(['auth', 'verified']);
 

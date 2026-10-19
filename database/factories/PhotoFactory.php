@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Gallery;
+use App\Models\Photo;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,7 +24,17 @@ class PhotoFactory extends Factory
             'name' => 'photo1.jpg',
             'path' => 'galleries/gallery-id/photo1.jpg',
             'size' => 1024,
+            'version_count' => 1,
+            'uploaded_at' => now(),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterMaking(function (Photo $photo): void {
+            $photo->source_name ??= $photo->name;
+            $photo->stored_size ??= $photo->size;
+        });
     }
 
     public function favorited(): Factory

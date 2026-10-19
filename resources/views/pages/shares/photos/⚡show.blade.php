@@ -486,6 +486,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @endif
             </div>
         </div>
+
+        @if ($photo->gallery->is_share_versions_visible)
+            <livewire:photo-versions :photo="$photo" :manageable="false" />
+        @endif
     </div>
     @if ($photo->gallery->are_comments_enabled)
         <flux:modal name="add-comment" class="w-full sm:max-w-lg">

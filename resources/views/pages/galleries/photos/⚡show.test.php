@@ -3,6 +3,7 @@
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use App\Models\PhotoVersion;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -186,4 +187,79 @@ test('user can delete their own comment', function () {
         ->assertHasNoErrors();
 
     expect($photo->comments()->find($comment->id))->toBeNull();
+});
+
+test('restoring a version keeps the previous current as history without duplicating it', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'path' => 'galleries/current.jpg',
+        'uploaded_at' => now(),
+        'version_count' => 2,
+    ]);
+
+    $old = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+        'uploaded_at' => now()->subDay(),
+        'status' => 'processed',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('restoreVersion', $old->id)
+        ->assertHasNoErrors();
+
+    $photo->refresh();
+
+    expect($photo->current_version_id)->toBe($old->id);
+    expect($photo->path)->toBe('galleries/old.jpg');
+    expect($photo->uploaded_at->timestamp)->toBe($old->uploaded_at->timestamp);
+    expect($photo->versions()->where('path', 'galleries/old.jpg')->count())->toBe(1);
+    expect($photo->versions()->where('path', 'galleries/current.jpg')->count())->toBe(1);
+});
+
+test('deleting a version removes only that version and its files', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'path' => 'galleries/current.jpg',
+        'disk' => 's3',
+        'version_count' => 2,
+    ]);
+    Storage::disk('s3')->put('galleries/current.jpg', 'current');
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+        'disk' => 's3',
+    ]);
+    Storage::disk('s3')->put('galleries/old.jpg', 'old');
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('deleteVersion', $version->id)
+        ->assertHasNoErrors();
+
+    expect(PhotoVersion::find($version->id))->toBeNull();
+    Storage::disk('s3')->assertMissing('galleries/old.jpg');
+    Storage::disk('s3')->assertExists('galleries/current.jpg');
+});
+
+test('the current version cannot be deleted', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/current.jpg',
+    ]);
+
+    $photo->update(['current_version_id' => $version->id, 'path' => 'galleries/current.jpg']);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('deleteVersion', $version->id);
+
+    expect(PhotoVersion::find($version->id))->not->toBeNull();
 });

@@ -18,6 +18,7 @@ new class extends Component
     public function mount()
     {
         $this->form->expirationDate = now()->addMonth()->format('Y-m-d');
+        $this->form->keepOriginalSize = (bool) (Auth::user()?->galleryDefaults()['keep_original_size'] ?? false);
     }
 
     public function save()
