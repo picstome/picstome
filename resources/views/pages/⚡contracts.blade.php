@@ -59,7 +59,10 @@ new class extends Component
             <x-heading level="1" size="xl">{{ __('Contracts') }}</x-heading>
             <x-subheading>{{ __('View, create, and manage your contracts.') }}</x-subheading>
         </div>
-        <div>
+        <div class="flex flex-wrap gap-2">
+            <flux:button :href="route('contract-templates')" icon="clipboard-document-list" wire:navigate>
+                {{ __('Templates') }}
+            </flux:button>
             <flux:modal.trigger :name="auth()->check() ? 'create-contract' : 'login'">
                 <flux:button variant="primary">{{ __('Create contract') }}</flux:button>
             </flux:modal.trigger>
