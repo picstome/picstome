@@ -26,7 +26,9 @@ it('shows the reorganized main navigation', function () {
         ->assertSee(route('payments'), false)
         ->assertSee(route('tools.invoice-generator'), false)
         ->assertSee(route('tools.calculator'), false)
-        ->assertSee('https://picstome.com/blackscreen/', false)
+        ->assertSee(route('tools.black-screen'), false)
+        ->assertSee('data-black-screen-shortcut', false)
+        ->assertDontSee('https://picstome.com/blackscreen/', false)
         ->assertDontSee(route('stripe.connect'), false)
         ->assertDontSee('Install the app');
 });

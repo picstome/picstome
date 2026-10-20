@@ -128,6 +128,8 @@ Route::livewire('/settings/password', 'pages::settings.password')->name('setting
 
 Route::livewire('/settings/profile', 'pages::settings.profile')->name('settings.profile')->middleware('auth');
 
+Route::livewire('/tools/black-screen', 'pages::tools.black-screen')->name('tools.black-screen')->middleware(['auth', 'verified']);
+
 Route::livewire('/tools/calculator', 'pages::tools.calculator')->name('tools.calculator')->middleware(['auth', 'verified']);
 
 Route::livewire('/tools/invoice-generator', 'pages::tools.invoice-generator')->name('tools.invoice-generator')->middleware(['auth', 'verified']);
