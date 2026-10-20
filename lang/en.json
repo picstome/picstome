@@ -663,7 +663,7 @@
     "Add time": "Add time",
     "Added to the client invoice. Set it to 0 when it does not apply.": "Added to the client invoice. Set it to 0 when it does not apply.",
     "Base price": "Base price",
-    "Base price (before taxes)": "Base price (before taxes)",
+    "Base price (without taxes)": "Base price (without taxes)",
     "Calculator reset to defaults.": "Calculator reset to defaults.",
     "Camera gear and depreciation.": "Camera gear and depreciation.",
     "Client pays": "Client pays",
@@ -745,5 +745,9 @@
     "Admin Tasks": "Admin Tasks",
     "Copy failed": "Copy failed",
     "Reset calculator?": "Reset calculator?",
-    "This will replace all calculator settings and items with the defaults.": "This will replace all calculator settings and items with the defaults."
+    "This will replace all calculator settings and items with the defaults.": "This will replace all calculator settings and items with the defaults.",
+    "After IRPF withholding": "After IRPF withholding",
+    "IRPF is credited against your income tax return.": "IRPF is credited against your income tax return.",
+    "Effective hourly rate": "Effective hourly rate",
+    "Base price ÷ total time per session": "Base price ÷ total time per session"
 }

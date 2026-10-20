@@ -745,7 +745,7 @@
     "Add time": "Añadir tiempo",
     "Added to the client invoice. Set it to 0 when it does not apply.": "Se añade a la factura del cliente. Pon 0 si no corresponde.",
     "Base price": "Precio base",
-    "Base price (before taxes)": "Precio base (sin impuestos)",
+    "Base price (without taxes)": "Precio base (sin impuestos)",
     "Calculator reset to defaults.": "Calculadora restablecida a los valores predeterminados.",
     "Camera gear and depreciation.": "Equipo fotográfico y depreciación.",
     "Client pays": "El cliente paga",
@@ -827,5 +827,9 @@
     "Admin Tasks": "Tareas Administrativas",
     "Copy failed": "No se pudo copiar",
     "Reset calculator?": "¿Restablecer la calculadora?",
-    "This will replace all calculator settings and items with the defaults.": "Esto reemplazará todos los ajustes y elementos de la calculadora por los valores predeterminados."
+    "This will replace all calculator settings and items with the defaults.": "Esto reemplazará todos los ajustes y elementos de la calculadora por los valores predeterminados.",
+    "After IRPF withholding": "Después de retener IRPF",
+    "IRPF is credited against your income tax return.": "El IRPF se compensa en tu declaración de la renta.",
+    "Effective hourly rate": "Tarifa horaria efectiva",
+    "Base price ÷ total time per session": "Precio base ÷ tiempo total por sesión"
 }

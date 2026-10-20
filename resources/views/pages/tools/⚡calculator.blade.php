@@ -223,7 +223,6 @@ new class extends Component
             __('Invoice total').': '.$this->formatMoney($summary['invoice_total']),
             __('IRPF withheld').' ('.$summary['income_tax_percent'].'%): -'.$this->formatMoney($summary['income_tax_withheld']),
             __('Client pays').': '.$this->formatMoney($summary['client_pays']),
-            __('You receive now').': '.$this->formatMoney($summary['net_received']),
         ]);
     }
 
@@ -686,6 +685,7 @@ new class extends Component
                 <div class="mt-5 rounded-xl bg-zinc-900 px-5 py-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
                     <div class="text-xs font-medium uppercase tracking-wide opacity-70">{{ __('Client pays') }}</div>
                     <div class="mt-1 text-4xl font-bold tabular-nums">{{ $this->formatMoney($summary['client_pays']) }}</div>
+                    <div class="mt-1 text-sm opacity-70">{{ __('After IRPF withholding') }}</div>
                 </div>
 
                 <div class="mt-5 space-y-2 text-sm">
@@ -715,7 +715,7 @@ new class extends Component
 
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between gap-3 font-semibold">
-                        <span>{{ __('Base price (before taxes)') }}</span>
+                        <span>{{ __('Base price (without taxes)') }}</span>
                         <span class="tabular-nums">{{ $this->formatMoney($summary['base_price']) }}</span>
                     </div>
                     <div class="flex justify-between gap-3">
@@ -730,9 +730,8 @@ new class extends Component
                         <span>{{ __('IRPF withheld') }} ({{ $summary['income_tax_percent'] }}%)</span>
                         <span class="tabular-nums">-{{ $this->formatMoney($summary['income_tax_withheld']) }}</span>
                     </div>
-                    <div class="flex justify-between gap-3 font-semibold">
-                        <span>{{ __('You receive now') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['net_received']) }}</span>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ __('IRPF is credited against your income tax return.') }}
                     </div>
                 </div>
 
@@ -742,12 +741,11 @@ new class extends Component
                         <span class="tabular-nums">{{ $this->formatHours($summary['total_time_per_session']) }}</span>
                     </div>
                     <div class="mt-2 flex justify-between gap-3">
-                        <span>{{ __('Gross hourly rate') }}</span>
+                        <span>{{ __('Effective hourly rate') }}</span>
                         <span class="tabular-nums">{{ $this->formatMoney($summary['effective_gross_hourly']) }}</span>
                     </div>
-                    <div class="mt-2 flex justify-between gap-3">
-                        <span>{{ __('Net hourly rate after IRPF') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['effective_net_hourly']) }}</span>
+                    <div class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ __('Base price ÷ total time per session') }}
                     </div>
                 </div>
 
