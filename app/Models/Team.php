@@ -7,6 +7,7 @@ use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -126,6 +127,11 @@ class Team extends Model
     public function bioLinks()
     {
         return $this->hasMany(BioLink::class)->orderBy('order');
+    }
+
+    public function calculatorState(): HasOne
+    {
+        return $this->hasOne(CalculatorState::class);
     }
 
     public function updateBrandLogo(UploadedFile $image)
