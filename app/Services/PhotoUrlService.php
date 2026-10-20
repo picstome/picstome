@@ -5,6 +5,11 @@ namespace App\Services;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Centralizes photo and photo-version URL generation, including CDN resizing.
+ * Keeping this logic here prevents divergence between current photos and
+ * historical versions.
+ */
 class PhotoUrlService
 {
     public function __construct(
@@ -116,6 +121,10 @@ class PhotoUrlService
         ]);
     }
 
+    /**
+     * Return the untouched storage URL, used by the full-resolution version
+     * comparison UI.
+     */
     public function original(): string
     {
         if (! $this->isImage()) {

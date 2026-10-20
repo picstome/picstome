@@ -67,6 +67,30 @@ gallery modal. Shared visitors can compare versions but cannot restore, delete
 or download historical versions. Watermarked galleries render the watermark in
 the comparison modal.
 
+## Feature flag and rollback
+
+`PICSTOME_FILE_VERSIONS_ENABLED=false` is the emergency deprecation mode. It:
+
+- hides the versions UI for owners and shared galleries;
+- ignores `is_share_versions_visible`;
+- blocks new versions from web and FTP uploads;
+- keeps existing history and files intact.
+
+To remove history explicitly, use the dry-run-first command:
+
+```bash
+php artisan photos:collapse-versions
+php artisan photos:collapse-versions --force
+php artisan photos:collapse-versions --force --delete-files
+```
+
+The command keeps the current photo/version fields and deletes historical rows.
+Historical files are only removed when `--delete-files` is explicit; files still
+referenced by the current photo are protected.
+
+`users.gallery_preferences` stores remembered gallery creation/share defaults.
+Passwords and description text are never stored there.
+
 ## Storage accounting
 
 - `photos.stored_size` and `photo_versions.stored_size` hold the bytes actually
@@ -87,15 +111,37 @@ php artisan storage:recalculate
 Restart queue workers after deployment so they load the new `ProcessPhoto`
 logic.
 
+## Deployment and rollback
+
+The schema is created by one consolidated migration. It is guarded so it can
+also be applied where the earlier split migrations were already run.
+
+After deploy, run:
+
+```bash
+php artisan migrate
+php artisan storage:recalculate --dry-run
+php artisan storage:recalculate
+```
+
+Restart queue workers after deploying so they load the new `ProcessPhoto`
+logic. The version files created after deploy are the one-way part of rollback:
+keep them or explicitly collapse/delete history. See
+`docs/development-rules.md` for the full deploy and rollback checklist.
+
 ## Tests
 
 Relevant suites:
 
 ```bash
 php artisan test --compact tests/Feature/PhotoIdentityTest.php
+php artisan test --compact tests/Feature/PhotoUrlServiceTest.php
+php artisan test --compact tests/Feature/PhotoVersionDownloadTest.php
 php artisan test --compact tests/Feature/StorageUsageTest.php
 php artisan test --compact tests/Feature/ProcessPhotoTest.php
 php artisan test --compact tests/Feature/DeleteFromDiskTest.php
 php artisan test --compact tests/Feature/RecalculateStoredSizesCommandTest.php
+php artisan test --compact tests/Feature/CollapsePhotoVersionsCommandTest.php
+php artisan test --compact tests/Feature/FileVersionsFeatureFlagTest.php
 php artisan test --compact resources/views/pages/shares/photos/
 ```

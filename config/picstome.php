@@ -49,6 +49,12 @@ return [
      */
     'upload_extensions' => ['jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr', 'pdf'],
 
+    /**
+     * Enable file versioning. Disabling it hides version UI and blocks new
+     * versions without deleting existing history.
+     */
+    'file_versions_enabled' => env('PICSTOME_FILE_VERSIONS_ENABLED', true),
+
     'disk' => 's3',
 
     // Number of days before expiration to send gallery reminder

@@ -372,7 +372,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             </div>
         </div>
 
-        <livewire:photo-versions :photo="$photo" :manageable="true" />
+        @if (config('picstome.file_versions_enabled'))
+            <livewire:photo-versions :photo="$photo" :manageable="true" />
+        @endif
     </div>
 
     <flux:modal name="add-comment" class="w-full sm:max-w-lg">

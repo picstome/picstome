@@ -487,7 +487,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             </div>
         </div>
 
-        @if ($photo->gallery->is_share_versions_visible)
+        @if (config('picstome.file_versions_enabled') && $photo->gallery->is_share_versions_visible)
             <livewire:photo-versions :photo="$photo" :manageable="false" />
         @endif
     </div>

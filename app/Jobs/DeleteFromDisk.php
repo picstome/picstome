@@ -8,6 +8,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Deletes a file from storage unless another photo or version still references
+ * it. The ignore IDs are used when the owning row is being deleted and may not
+ * have been removed from the database yet (for example with the sync queue).
+ */
 class DeleteFromDisk implements ShouldQueue
 {
     use Queueable;

@@ -114,7 +114,7 @@ new class extends Component
         </div>
     @endif
 
-    @if ($photo->version_count > 1)
+    @if (config('picstome.file_versions_enabled') && $photo->version_count > 1)
         <div class="absolute top-1.5 right-1.5 z-10 flex">
             <flux:badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
                 {{ $photo->version_count }}

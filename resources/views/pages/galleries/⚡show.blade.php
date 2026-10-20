@@ -96,7 +96,11 @@ new class extends Component
                         $fail(__('This file is not a valid PDF.'));
                     }
 
-                    $replacedSize = $action === 'replace' && $existingPhoto ? $existingPhoto->size : 0;
+                    if ($existingPhoto && $action === 'version' && ! config('picstome.file_versions_enabled')) {
+                        $fail(__('File versions are currently unavailable.'));
+                    }
+
+                    $replacedSize = $action === 'replace' && $existingPhoto ? ($existingPhoto->stored_size ?: $existingPhoto->size) : 0;
 
                     if (! $this->hasSufficientStorage($uploadedPhoto, $replacedSize)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
@@ -692,9 +696,11 @@ new class extends Component
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <span x-text="files.filter((fileObj) => fileObj.status === 'conflict').length + ' ' + {{ Js::from(__('files already exist. Choose what to do, or apply to all:')) }}"></span>
                         <div class="flex flex-wrap gap-2">
-                            <flux:button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
-                                {{ __('Version all') }}
-                            </flux:button>
+                            @if (config('picstome.file_versions_enabled'))
+                                <flux:button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
+                                    {{ __('Version all') }}
+                                </flux:button>
+                            @endif
                             <flux:button size="sm" variant="subtle" x-on:click="if (confirm({{ Js::from(__('Replace the current versions? Older versions will be kept.')) }})) resolveAllConflicts('replace')">
                                 {{ __('Replace all') }}
                             </flux:button>
@@ -749,13 +755,15 @@ new class extends Component
                                 ></flux:badge>
 
                                 <div class="flex flex-wrap items-center gap-2" x-show="fileObj.status === 'conflict'">
-                                    <flux:button
-                                        size="sm"
-                                        variant="primary"
-                                        x-on:click="resolveConflict(index, 'version')"
-                                    >
-                                        {{ __('Save as new version') }}
-                                    </flux:button>
+                                    @if (config('picstome.file_versions_enabled'))
+                                        <flux:button
+                                            size="sm"
+                                            variant="primary"
+                                            x-on:click="resolveConflict(index, 'version')"
+                                        >
+                                            {{ __('Save as new version') }}
+                                        </flux:button>
+                                    @endif
                                     <flux:button
                                         size="sm"
                                         variant="subtle"
@@ -811,10 +819,12 @@ new class extends Component
                 x-bind:disabled="$wire.shareForm.watermarked"
             />
 
-            <flux:switch
-                wire:model="shareForm.versionsVisible"
-                :label="__('Visitors can view and compare versions')"
-            />
+            @if (config('picstome.file_versions_enabled'))
+                <flux:switch
+                    wire:model="shareForm.versionsVisible"
+                    :label="__('Visitors can view and compare versions')"
+                />
+            @endif
 
             <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 

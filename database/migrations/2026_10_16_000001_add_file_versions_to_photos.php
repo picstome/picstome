@@ -6,6 +6,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Consolidated file-versioning schema, including all backfills and the repair
+ * for legacy rows that already contain a matching version path.
+ *
+ * Guarded so it can be applied to environments where the earlier split
+ * migrations were already executed during development.
+ */
 return new class extends Migration
 {
     public function up(): void
@@ -22,7 +29,7 @@ return new class extends Migration
         Schema::dropIfExists('photo_versions');
 
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('preferences');
+            $table->dropColumn('gallery_preferences');
         });
 
         Schema::table('galleries', function (Blueprint $table) {
@@ -30,6 +37,8 @@ return new class extends Migration
         });
 
         Schema::table('photos', function (Blueprint $table) {
+            $table->dropIndex(['current_version_id']);
+            $table->dropIndex(['identity_key']);
             $table->dropColumn([
                 'source_name',
                 'version_count',
@@ -41,6 +50,9 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Add logical identity, current-version and storage-size columns to photos.
+     */
     protected function addPhotoColumns(): void
     {
         Schema::table('photos', function (Blueprint $table) {
@@ -70,6 +82,9 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Create the historical version table or complete an existing table.
+     */
     protected function createPhotoVersionsTable(): void
     {
         if (! Schema::hasTable('photo_versions')) {
@@ -123,12 +138,15 @@ return new class extends Migration
     protected function addUserColumns(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'preferences')) {
-                $table->json('preferences')->nullable()->after('password');
+            if (! Schema::hasColumn('users', 'gallery_preferences')) {
+                $table->json('gallery_preferences')->nullable()->after('password');
             }
         });
     }
 
+    /**
+     * Backfill metadata and repair rows created by the previous split schema.
+     */
     protected function backfill(): void
     {
         DB::table('photos')->whereNull('source_name')->update(['source_name' => DB::raw('name')]);

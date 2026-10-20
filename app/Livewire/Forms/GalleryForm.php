@@ -51,6 +51,9 @@ class GalleryForm extends Form
         $this->photoshoot_id = $gallery->photoshoot_id;
     }
 
+    /**
+     * Create a gallery and remember its creation options for the next one.
+     */
     public function store()
     {
         $this->validate();

@@ -90,6 +90,9 @@ class Gallery extends Model
         return $this->hasMany(Photo::class);
     }
 
+    /**
+     * All historical versions across the gallery's logical photos.
+     */
     public function photoVersions()
     {
         return $this->hasManyThrough(PhotoVersion::class, Photo::class);
@@ -304,10 +307,14 @@ class Gallery extends Model
 
     /**
      * Add a new version of an existing logical photo, retaining all previous
-     * files on disk as PhotoVersion rows.
+     * files on disk as PhotoVersion rows. Disabled when the feature flag is off.
      */
     public function addVersion(UploadedFile $photo, Photo $existing): Photo
     {
+        if (! config('picstome.file_versions_enabled')) {
+            throw new \RuntimeException('File versions are currently disabled.');
+        }
+
         $team = $this->team;
 
         $photoSize = $photo->getSize();
@@ -340,7 +347,7 @@ class Gallery extends Model
 
     /**
      * Replace the current version in place without creating a new version.
-     * Older versions are retained.
+     * Older versions are retained and only unreferenced files are removed.
      */
     public function replaceCurrentVersion(UploadedFile $photo, Photo $existing): Photo
     {
@@ -396,6 +403,10 @@ class Gallery extends Model
         return $existing;
     }
 
+    /**
+     * Snapshot the current photo (when needed) and reserve the next version
+     * sequence number.
+     */
     protected function prepareNewVersion(Photo $existing): void
     {
         $previousCount = $existing->version_count ?: 1;
@@ -427,6 +438,9 @@ class Gallery extends Model
         return $photo->store(path: $this->storage_path, options: ['disk' => 's3']);
     }
 
+    /**
+     * Queue deletion only for paths no longer referenced by any version.
+     */
     protected function deleteUnreferencedPath(Photo $photo, ?string $path, ?string $rawPath, string $disk): void
     {
         foreach (array_filter([$path, $rawPath]) as $candidate) {
@@ -442,6 +456,9 @@ class Gallery extends Model
         }
     }
 
+    /**
+     * Find the newest logical photo matching a normalized upload identity.
+     */
     public function findLogicalPhotoBySourceName(string $clientName): ?Photo
     {
         $sourceName = static::sanitizeFileName($clientName);
@@ -462,11 +479,18 @@ class Gallery extends Model
             ->first();
     }
 
+    /**
+     * Normalize a client filename into the photo identity used for versioning.
+     */
     public static function identityKey(string $filename): string
     {
         return PhotoIdentityService::key($filename);
     }
 
+    /**
+     * Serialize version resolution for the same gallery + identity so parallel
+     * uploads cannot create duplicate logical photos.
+     */
     public function withPhotoIdentityLock(string $identityKey, \Closure $callback): mixed
     {
         return Cache::lock("gallery:{$this->id}:photo-identity:{$identityKey}", 60)
@@ -501,6 +525,10 @@ class Gallery extends Model
 
     public function addVersionFromStoredPath(Photo $existing, string $path, string $clientName, int $size): Photo
     {
+        if (! config('picstome.file_versions_enabled')) {
+            throw new \RuntimeException('File versions are currently disabled.');
+        }
+
         $team = $this->team;
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($size)) {

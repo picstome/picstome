@@ -10,6 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Historical representation of a logical gallery photo.
+ *
+ * The active file lives on photos; this table stores superseded files and the
+ * metadata needed for comparison, downloads and restoration.
+ */
 class PhotoVersion extends Model
 {
     /** @use HasFactory<\Database\Factories\PhotoVersionFactory> */
@@ -57,6 +63,10 @@ class PhotoVersion extends Model
         return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->largeThumbnail() : null);
     }
 
+    /**
+     * Queue deletion of this version's files. The owning photo ID can be
+     * ignored while a photo and its versions are being deleted together.
+     */
     public function deleteFromDisk(?int $ignorePhotoId = null)
     {
         if ($this->path) {
@@ -74,6 +84,10 @@ class PhotoVersion extends Model
         return $this;
     }
 
+    /**
+     * Delete files synchronously for an explicit version deletion, while
+     * preserving any path still referenced by another row.
+     */
     public function deleteFilesImmediately()
     {
         foreach (array_filter([$this->path, $this->raw_path, $this->thumb_path]) as $path) {

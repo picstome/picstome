@@ -48,7 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'preferences' => 'array',
+            'gallery_preferences' => 'array',
         ];
     }
 
@@ -56,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return array_merge([
             'keep_original_size' => false,
-        ], $this->preferences['gallery_defaults'] ?? []);
+        ], $this->gallery_preferences['gallery_defaults'] ?? []);
     }
 
     public function shareGalleryDefaults(): array
@@ -71,23 +71,23 @@ class User extends Authenticatable implements MustVerifyEmail
             'description_enabled' => false,
             'comments_enabled' => true,
             'versions_visible' => false,
-        ], $this->preferences['share_gallery_defaults'] ?? []);
+        ], $this->gallery_preferences['share_gallery_defaults'] ?? []);
     }
 
     public function rememberGalleryDefaults(array $defaults): void
     {
-        $preferences = $this->preferences ?? [];
+        $preferences = $this->gallery_preferences ?? [];
         $preferences['gallery_defaults'] = array_merge($this->galleryDefaults(), $defaults);
 
-        $this->forceFill(['preferences' => $preferences])->save();
+        $this->forceFill(['gallery_preferences' => $preferences])->save();
     }
 
     public function rememberShareGalleryDefaults(array $defaults): void
     {
-        $preferences = $this->preferences ?? [];
+        $preferences = $this->gallery_preferences ?? [];
         $preferences['share_gallery_defaults'] = array_merge($this->shareGalleryDefaults(), $defaults);
 
-        $this->forceFill(['preferences' => $preferences])->save();
+        $this->forceFill(['gallery_preferences' => $preferences])->save();
     }
 
     public function ownedTeams()

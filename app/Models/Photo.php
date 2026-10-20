@@ -67,16 +67,26 @@ class Photo extends Model
         return $this->belongsTo(Gallery::class);
     }
 
+    /**
+     * Older versions retained for this logical photo.
+     */
     public function versions()
     {
         return $this->hasMany(PhotoVersion::class);
     }
 
+    /**
+     * The version row currently represented by this photo, when restoring or
+     * otherwise pointing the current photo at a historical version.
+     */
     public function currentVersion()
     {
         return $this->belongsTo(PhotoVersion::class, 'current_version_id');
     }
 
+    /**
+     * Copy the current photo state into the version history.
+     */
     public function snapshotAsVersion(?int $versionNumber = null): PhotoVersion
     {
         return $this->versions()->create([
@@ -164,6 +174,9 @@ class Photo extends Model
         return $neighborId === null ? null : static::find($neighborId);
     }
 
+    /**
+     * Queue deletion for the current files and every retained version.
+     */
     public function deleteFromDisk()
     {
         foreach ($this->versions()->get() as $version) {

@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Image\Image;
 
+/**
+ * Processes the current photo or the specific historical version that was
+ * current when the job was dispatched.
+ *
+ * Expected version counts prevent a slow job for an older upload from
+ * overwriting a newer version that arrived while processing was in progress.
+ */
 class ProcessPhoto implements ShouldQueue
 {
     use Queueable;
@@ -23,10 +30,13 @@ class ProcessPhoto implements ShouldQueue
 
     public $temporaryPhotoRelativePath;
 
+    /** Historical version selected because the expected count is stale. */
     protected ?PhotoVersion $versionTarget = null;
 
+    /** Original RAW path retained by keep_original_size galleries. */
     protected ?string $processingRawPath = null;
 
+    /** Target metadata captured before processing to avoid mid-flight races. */
     protected string $processingPath;
 
     protected string $processingSourceName;
@@ -85,6 +95,9 @@ class ProcessPhoto implements ShouldQueue
         @unlink($this->temporaryPhotoPath);
     }
 
+    /**
+     * Resolve the historical version that matches a stale expected count.
+     */
     protected function resolveVersionTarget(): void
     {
         if ($this->expectedVersionCount === null || $this->photo->version_count === $this->expectedVersionCount) {

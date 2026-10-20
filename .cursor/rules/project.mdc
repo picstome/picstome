@@ -1,0 +1,6 @@
+---
+description: Picstome development, testing, migration and deploy rules
+alwaysApply: true
+---
+
+Read and follow `AGENTS.md` and `docs/development-rules.md` before changing this repository.

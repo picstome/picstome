@@ -6,6 +6,13 @@ use App\Models\Gallery;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Calculates billable storage for galleries and teams.
+ *
+ * Current files live on the photos row; historical files live on
+ * photo_versions. Rows referenced by photos.current_version_id are excluded
+ * from the version total because the current file is already counted once.
+ */
 class StorageUsageService
 {
     public static function forGallery(Gallery $gallery): int

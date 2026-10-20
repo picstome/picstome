@@ -30,10 +30,10 @@ jobs:
           cache: 'npm'
 
       - name: Install Node Dependencies
-        run: npm i
+        run: npm ci
 
       - name: Install Playwright
-        run: npm install playwright@latest && npx playwright install
+        run: npx playwright install --with-deps chromium
 
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
@@ -52,6 +52,13 @@ jobs:
 
       - name: Build Assets
         run: npm run build
+
+      - name: Verify migrations can be rolled back
+        run: |
+          touch database/database.sqlite
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=1 --force
+          php artisan migrate --force
 
       - name: Run Tests
         run: ./vendor/bin/pest

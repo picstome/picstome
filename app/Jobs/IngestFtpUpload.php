@@ -67,8 +67,14 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        $photo = $gallery->withPhotoIdentityLock(Gallery::identityKey($name), function () use ($gallery, $disk, $name, $size): Photo {
+        $photo = $gallery->withPhotoIdentityLock(Gallery::identityKey($name), function () use ($gallery, $disk, $name, $size): ?Photo {
             $existingPhoto = $gallery->findLogicalPhotoBySourceName($name);
+
+            if ($existingPhoto && ! config('picstome.file_versions_enabled')) {
+                Log::warning("FTP upload {$this->path} skipped: file versions are disabled.");
+
+                return null;
+            }
 
             $targetPath = $gallery->storage_path.'/'.Str::ulid().'-'.$name;
 
@@ -78,6 +84,10 @@ class IngestFtpUpload implements ShouldQueue
                 ? $gallery->addVersionFromStoredPath($existingPhoto, $targetPath, $name, $size)
                 : $gallery->addPhotoFromStoredPath($targetPath, $name, $size);
         });
+
+        if (! $photo) {
+            return;
+        }
 
         PhotoAdded::dispatch($photo);
 

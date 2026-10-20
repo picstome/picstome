@@ -6,6 +6,13 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
+/**
+ * Displays the version history for a photo.
+ *
+ * `manageable` enables owner-only restore/delete/download actions. It is a UI
+ * hint only; every action verifies authentication, team ownership and policy
+ * again on the server.
+ */
 new class extends Component
 {
     public Photo $photo;
@@ -18,9 +25,17 @@ new class extends Component
         $this->manageable = $manageable;
     }
 
+    /**
+     * Build the current + historical version list used by the comparison UI.
+     * Query work is skipped entirely when versioning is disabled or absent.
+     */
     #[Computed]
     public function versions()
     {
+        if (! config('picstome.file_versions_enabled')) {
+            return collect();
+        }
+
         if ($this->photo->version_count <= 1 && ! $this->photo->current_version_id) {
             return collect();
         }
@@ -136,8 +151,12 @@ new class extends Component
 
         $this->dispatch('version-deleted');
     }
+    /**
+     * Guard destructive actions independently of the public property value.
+     */
     protected function ensureCanManage(): void
     {
+        abort_unless(config('picstome.file_versions_enabled'), 403);
         abort_unless($this->manageable, 403);
         abort_unless(Auth::check(), 403);
         abort_unless($this->photo->gallery->team->is(Auth::user()->currentTeam), 403);
