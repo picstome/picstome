@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Cashier\Subscription;
 use Livewire\Livewire;
 
@@ -163,7 +165,7 @@ test('live shoot gallery names increment within the same day', function () {
     expect($names)->toContain('Shoot '.now()->format('Y-m-d').' (2)');
 
     // One stable team account, routing to the latest shoot.
-    expect(\App\Models\FtpAccount::count())->toBe(1);
+    expect(FtpAccount::count())->toBe(1);
     expect($this->team->ftpAccount->activeGallery->name)->toBe('Shoot '.now()->format('Y-m-d').' (2)');
 });
 
@@ -172,7 +174,7 @@ test('starting a live shoot requires a subscription', function () {
         ->call('startLiveShoot');
 
     expect($this->team->galleries()->count())->toBe(0);
-    expect(\App\Models\FtpAccount::count())->toBe(0);
+    expect(FtpAccount::count())->toBe(0);
 });
 
 test('starting a live shoot keeps the gallery when the upload server is unreachable', function () {
@@ -181,8 +183,8 @@ test('starting a live shoot keeps the gallery when the upload server is unreacha
         'picstome.ftp_uploads.sftpgo_api_key' => 'secret-key',
     ]);
 
-    \Illuminate\Support\Facades\Http::fake([
-        'sftpgo.test/*' => \Illuminate\Support\Facades\Http::response('boom', 500),
+    Http::fake([
+        'sftpgo.test/*' => Http::response('boom', 500),
     ]);
 
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
@@ -190,5 +192,5 @@ test('starting a live shoot keeps the gallery when the upload server is unreacha
     Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
 
     expect($this->team->galleries()->count())->toBe(1);
-    expect(\App\Models\FtpAccount::count())->toBe(0);
+    expect(FtpAccount::count())->toBe(0);
 });

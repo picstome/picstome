@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Traits\FormatsFileSize;
+use Database\Factories\PhotoshootFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Photoshoot extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotoshootFactory> */
+    /** @use HasFactory<PhotoshootFactory> */
     use FormatsFileSize, HasFactory;
 
     protected $guarded = [];

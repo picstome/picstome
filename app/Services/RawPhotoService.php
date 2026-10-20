@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Exception;
 use Illuminate\Support\Facades\Process;
+use Spatie\Image\Enums\Orientation;
 
 class RawPhotoService
 {
@@ -182,13 +183,13 @@ class RawPhotoService
     /**
      * Get Spatie Image Orientation enum from EXIF orientation value.
      */
-    public function getOrientationEnum(int $orientation): ?\Spatie\Image\Enums\Orientation
+    public function getOrientationEnum(int $orientation): ?Orientation
     {
         return match ($orientation) {
-            1 => \Spatie\Image\Enums\Orientation::Rotate0,
-            3 => \Spatie\Image\Enums\Orientation::Rotate180,
-            6 => \Spatie\Image\Enums\Orientation::Rotate90,
-            8 => \Spatie\Image\Enums\Orientation::Rotate270,
+            1 => Orientation::Rotate0,
+            3 => Orientation::Rotate180,
+            6 => Orientation::Rotate90,
+            8 => Orientation::Rotate270,
             default => null,
         };
     }

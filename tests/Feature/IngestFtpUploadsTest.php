@@ -6,6 +6,7 @@ use App\Jobs\ProcessPhoto;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -172,7 +173,7 @@ describe('ingest job', function () {
         expect($existing->fresh()->version_count)->toBe(2);
         expect($existing->fresh()->path)->not->toBe('old/path/DSC_0001.JPG');
         expect(Storage::disk('s3')->exists($existing->fresh()->path))->toBeTrue();
-        expect(\App\Models\PhotoVersion::where('photo_id', $existing->id)->count())->toBe(1);
+        expect(PhotoVersion::where('photo_id', $existing->id)->count())->toBe(1);
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 

@@ -3,6 +3,7 @@
 use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
 use App\Models\Customer;
+use App\Models\Photoshoot;
 use App\Models\Signature;
 use App\Models\Team;
 use App\Models\User;
@@ -210,7 +211,7 @@ test('signing updates photoshoot customer email and birthdate when not team owne
         'email' => 'old-email@example.com',
         'birthdate' => '1990-01-01',
     ]);
-    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+    $photoshoot = Photoshoot::factory()->for($team)->create([
         'customer_id' => $photoshootCustomer->id,
     ]);
     $contract = Contract::factory()->for($team)->for($photoshoot)->create();
@@ -243,7 +244,7 @@ test('signing does not update photoshoot customer when signer is team owner', fu
         'email' => 'old-email@example.com',
         'birthdate' => '1990-01-01',
     ]);
-    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+    $photoshoot = Photoshoot::factory()->for($team)->create([
         'customer_id' => $photoshootCustomer->id,
     ]);
     $contract = Contract::factory()->for($team)->for($photoshoot)->create();
@@ -275,7 +276,7 @@ test('signing does not update photoshoot customer when contract has only one sig
         'email' => 'old-email@example.com',
         'birthdate' => '1990-01-01',
     ]);
-    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+    $photoshoot = Photoshoot::factory()->for($team)->create([
         'customer_id' => $photoshootCustomer->id,
     ]);
     $contract = Contract::factory()->for($team)->for($photoshoot)->create();
@@ -307,7 +308,7 @@ test('signing does not duplicate the photoshoot customer when it has no email', 
         'email' => null,
         'birthdate' => null,
     ]);
-    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+    $photoshoot = Photoshoot::factory()->for($team)->create([
         'customer_id' => $photoshootCustomer->id,
     ]);
     $contract = Contract::factory()->for($team)->for($photoshoot)->create();
@@ -341,7 +342,7 @@ test('signing does not stamp the photoshoot customer when the signer email match
         'email' => null,
         'birthdate' => null,
     ]);
-    $photoshoot = \App\Models\Photoshoot::factory()->for($team)->create([
+    $photoshoot = Photoshoot::factory()->for($team)->create([
         'customer_id' => $photoshootCustomer->id,
     ]);
     $contract = Contract::factory()->for($team)->for($photoshoot)->create();

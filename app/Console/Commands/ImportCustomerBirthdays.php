@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Customer;
+use App\Models\Signature;
 use Illuminate\Console\Command;
 
 class ImportCustomerBirthdays extends Command
@@ -25,7 +27,7 @@ class ImportCustomerBirthdays extends Command
      */
     public function handle()
     {
-        \App\Models\Signature::whereNotNull('birthday')
+        Signature::whereNotNull('birthday')
             ->whereNotNull('email')
             ->chunk(100, function ($signatures) {
                 foreach ($signatures as $signature) {
@@ -37,7 +39,7 @@ class ImportCustomerBirthdays extends Command
                     if (! $teamId) {
                         continue;
                     }
-                    $customer = \App\Models\Customer::where('email', $signature->email)
+                    $customer = Customer::where('email', $signature->email)
                         ->where('team_id', $teamId)
                         ->first();
                     if ($customer && is_null($customer->birthdate)) {

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Database\Factories\PhotoCommentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 class PhotoComment extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotoCommentFactory> */
+    /** @use HasFactory<PhotoCommentFactory> */
     use HasFactory;
 
     protected $guarded = [];

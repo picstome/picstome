@@ -9,6 +9,7 @@ use App\Notifications\SelectionLimitReached;
 use App\Services\PhotoIdentityService;
 use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
+use Database\Factories\GalleryFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -28,7 +29,7 @@ use ZipStream\ZipStream;
 
 class Gallery extends Model
 {
-    /** @use HasFactory<\Database\Factories\GalleryFactory> */
+    /** @use HasFactory<GalleryFactory> */
     use FormatsFileSize, HasFactory;
 
     protected $guarded = [];
@@ -116,7 +117,7 @@ class Gallery extends Model
     /**
      * Cached, naturally sorted by name photo ids of the gallery.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
     public function photoIds(): Collection
     {
@@ -128,7 +129,7 @@ class Gallery extends Model
     /**
      * Cached, naturally sorted by name ids of the gallery's favorited photos.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
     public function favoritePhotoIds(): Collection
     {
@@ -140,7 +141,7 @@ class Gallery extends Model
     /**
      * Cached, naturally sorted by name ids of the gallery's commented photos.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
     public function commentedPhotoIds(): Collection
     {
@@ -152,8 +153,8 @@ class Gallery extends Model
     /**
      * Hydrate the photos for the given ids, in the given order, with comment counts.
      *
-     * @param  \Illuminate\Support\Collection<int, int>  $ids
-     * @return \Illuminate\Database\Eloquent\Collection<int, Photo>
+     * @param  Collection<int, int>  $ids
+     * @return EloquentCollection<int, Photo>
      */
     public function photosInOrder(Collection $ids): EloquentCollection
     {

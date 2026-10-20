@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\BioLink;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\BioLink>
+ * @extends Factory<BioLink>
  */
 class BioLinkFactory extends Factory
 {
