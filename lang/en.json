@@ -742,5 +742,8 @@
     "Client Communication": "Client Communication",
     "Learning": "Learning",
     "Marketing": "Marketing",
-    "Admin Tasks": "Admin Tasks"
+    "Admin Tasks": "Admin Tasks",
+    "Copy failed": "Copy failed",
+    "Reset calculator?": "Reset calculator?",
+    "This will replace all calculator settings and items with the defaults.": "This will replace all calculator settings and items with the defaults."
 }

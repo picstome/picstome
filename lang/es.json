@@ -824,5 +824,8 @@
     "Client Communication": "Comunicación con Cliente",
     "Learning": "Aprendizaje",
     "Marketing": "Marketing",
-    "Admin Tasks": "Tareas Administrativas"
+    "Admin Tasks": "Tareas Administrativas",
+    "Copy failed": "No se pudo copiar",
+    "Reset calculator?": "¿Restablecer la calculadora?",
+    "This will replace all calculator settings and items with the defaults.": "Esto reemplazará todos los ajustes y elementos de la calculadora por los valores predeterminados."
 }

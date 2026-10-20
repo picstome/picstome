@@ -184,6 +184,7 @@ new class extends Component
     public function resetCalculator(): void
     {
         $this->loadState(CalculatorService::reset(Auth::user()->currentTeam));
+        Flux::modal('reset-calculator')->close();
         Flux::toast(__('Calculator reset to defaults.'), variant: 'success');
     }
 
@@ -754,30 +755,107 @@ new class extends Component
                     class="mt-6 flex items-center gap-2"
                     x-data="{
                         copied: false,
+                        copyFailed: false,
                         summary: @js($this->copySummary),
                         copiedLabel: @js(__('Copied!')),
                         copyLabel: @js(__('Copy summary')),
+                        failedLabel: @js(__('Copy failed')),
+                        copy() {
+                            const finish = (success) => {
+                                this.copied = success;
+                                this.copyFailed = ! success;
+                                setTimeout(() => {
+                                    this.copied = false;
+                                    this.copyFailed = false;
+                                }, 2000);
+                            };
+
+                            try {
+                                if (navigator.clipboard?.writeText && window.isSecureContext) {
+                                    navigator.clipboard.writeText(this.summary)
+                                        .then(() => finish(true))
+                                        .catch(() => this.fallbackCopy());
+                                } else {
+                                    this.fallbackCopy();
+                                }
+                            } catch {
+                                this.fallbackCopy();
+                            }
+                        },
+                        fallbackCopy() {
+                            try {
+                                const textarea = document.createElement('textarea');
+                                textarea.value = this.summary;
+                                textarea.setAttribute('readonly', '');
+                                textarea.style.position = 'fixed';
+                                textarea.style.opacity = '0';
+                                document.body.appendChild(textarea);
+                                textarea.select();
+                                textarea.setSelectionRange(0, textarea.value.length);
+                                const copied = document.execCommand('copy');
+                                document.body.removeChild(textarea);
+
+                                if (! copied) {
+                                    throw new Error('Copy failed');
+                                }
+
+                                this.copied = true;
+                                this.copyFailed = false;
+                            } catch {
+                                this.copied = false;
+                                this.copyFailed = true;
+                            }
+
+                            setTimeout(() => {
+                                this.copied = false;
+                                this.copyFailed = false;
+                            }, 2000);
+                        },
                     }"
                 >
                     <flux:button
                         variant="primary"
                         icon="clipboard-document"
                         class="flex-1"
-                        x-on:click="navigator.clipboard.writeText(summary); copied = true; setTimeout(() => copied = false, 2000)"
+                        x-on:click="copy()"
                     >
-                        <span x-text="copied ? copiedLabel : copyLabel">{{ __('Copy summary') }}</span>
+                        <span x-text="copied ? copiedLabel : (copyFailed ? failedLabel : copyLabel)">{{ __('Copy summary') }}</span>
                     </flux:button>
 
-                    <flux:button
-                        variant="subtle"
-                        square
-                        icon="arrow-path"
-                        :tooltip="__('Reset to defaults')"
-                        wire:click="resetCalculator"
-                        wire:confirm="{{ __('Reset all calculator data to defaults?') }}"
-                    />
+                    <flux:modal.trigger name="reset-calculator">
+                        <flux:button
+                            variant="subtle"
+                            square
+                            icon="arrow-path"
+                            :tooltip="__('Reset to defaults')"
+                            :aria-label="__('Reset to defaults')"
+                        />
+                    </flux:modal.trigger>
                 </div>
             </div>
         </aside>
     </div>
+
+    <flux:modal name="reset-calculator" class="w-full sm:max-w-md">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Reset calculator?') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('This will replace all calculator settings and items with the defaults.') }}
+                </flux:subheading>
+            </div>
+
+            <div class="flex gap-2">
+                <flux:spacer />
+
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+
+                <flux:button variant="danger" wire:click="resetCalculator">
+                    {{ __('Reset') }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>
