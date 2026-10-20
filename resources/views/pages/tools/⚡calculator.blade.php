@@ -371,12 +371,17 @@ new class extends Component
                     />
                 </div>
 
-                <flux:checkbox
-                    wire:model.live="settings.income_tax_withholding"
-                    :label="__('Apply IRPF withholding')"
-                    :description="__('Only when the client is a company or professional.')"
-                    class="mt-4"
-                />
+                <div class="mt-5 flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700 dark:bg-zinc-900">
+                    <div>
+                        <flux:heading size="sm">{{ __('Apply IRPF withholding') }}</flux:heading>
+                        <flux:text size="sm">{{ __('Only when the client is a company or professional.') }}</flux:text>
+                    </div>
+
+                    <flux:switch
+                        wire:model.live="settings.income_tax_withholding"
+                        :aria-label="__('Apply IRPF withholding')"
+                    />
+                </div>
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
