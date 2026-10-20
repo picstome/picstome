@@ -48,7 +48,46 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'gallery_preferences' => 'array',
         ];
+    }
+
+    public function galleryDefaults(): array
+    {
+        return array_merge([
+            'keep_original_size' => false,
+        ], $this->gallery_preferences['gallery_defaults'] ?? []);
+    }
+
+    public function shareGalleryDefaults(): array
+    {
+        return array_merge([
+            'selectable' => false,
+            'downloadable' => false,
+            'limited_selection' => false,
+            'selection_limit' => null,
+            'password_protected' => false,
+            'watermarked' => false,
+            'description_enabled' => false,
+            'comments_enabled' => true,
+            'versions_visible' => false,
+        ], $this->gallery_preferences['share_gallery_defaults'] ?? []);
+    }
+
+    public function rememberGalleryDefaults(array $defaults): void
+    {
+        $preferences = $this->gallery_preferences ?? [];
+        $preferences['gallery_defaults'] = array_merge($this->galleryDefaults(), $defaults);
+
+        $this->forceFill(['gallery_preferences' => $preferences])->save();
+    }
+
+    public function rememberShareGalleryDefaults(array $defaults): void
+    {
+        $preferences = $this->gallery_preferences ?? [];
+        $preferences['share_gallery_defaults'] = array_merge($this->shareGalleryDefaults(), $defaults);
+
+        $this->forceFill(['gallery_preferences' => $preferences])->save();
     }
 
     public function ownedTeams()

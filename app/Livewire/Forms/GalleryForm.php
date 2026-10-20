@@ -51,11 +51,17 @@ class GalleryForm extends Form
         $this->photoshoot_id = $gallery->photoshoot_id;
     }
 
+    /**
+     * Create a gallery and remember its creation options for the next one.
+     */
     public function store()
     {
         $this->validate();
 
-        return Auth::user()->currentTeam->galleries()->create([
+        $user = Auth::user();
+        $user->rememberGalleryDefaults(['keep_original_size' => (bool) $this->keepOriginalSize]);
+
+        return $user->currentTeam->galleries()->create([
             'photoshoot_id' => $this->photoshoot?->id,
             'name' => $this->name ?? __('Untitled'),
             'keep_original_size' => $this->keepOriginalSize,

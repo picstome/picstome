@@ -2,6 +2,8 @@
 
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
+use App\Models\Photo;
+use App\Models\PhotoVersion;
 use Facades\App\Services\RawPhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -151,7 +153,7 @@ it('processes canon cr2 raw files by extracting jpg preview', function () {
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -175,7 +177,7 @@ it('skips processing when exiftool is not available', function () {
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(false);
 
     (new ProcessPhoto($photo))->handle();
@@ -194,7 +196,7 @@ it('skips processing when raw file has no extractable image', function () {
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(false);
     RawPhotoService::shouldReceive('cleanupTempFile');
@@ -215,7 +217,7 @@ it('resizes extracted jpg from raw files according to gallery settings', functio
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -238,7 +240,7 @@ it('keeps original size of extracted jpg when gallery setting is enabled', funct
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -262,7 +264,7 @@ it('keeps oversized extracted jpg when keep_original_size is enabled and raw_pat
     $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -285,7 +287,7 @@ it('cleans up temporary files after raw processing', function () {
     $rawFile = UploadedFile::fake()->image('photo.cr2', 300, 300);
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -307,7 +309,7 @@ it('uses raw file size when raw_path exists and keep_original_size is enabled', 
     $rawFile = UploadedFile::fake()->create('photo.cr2', 2048); // 2KB raw file
     $photo = $gallery->addPhoto($rawFile);
 
-    RawPhotoService::shouldReceive('isRawFile')->with($photo->path)->andReturn(true);
+    RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
     RawPhotoService::shouldReceive('extractJpgFromRaw')->andReturn(true);
     RawPhotoService::shouldReceive('getExifOrientation')->andReturn(1); // No rotation needed
@@ -332,4 +334,55 @@ it('sanitizes unsafe characters from uploaded file names', function () {
 
     $photo = $gallery->addPhoto(UploadedFile::fake()->createWithContent('shell; injection $(cmd).jpg', 'fake-image'));
     expect($photo->name)->toBe('shell__injection___cmd_.jpg');
+});
+
+it('processes the superseded version instead of corrupting the current one', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photo = $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg', 200, 200));
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'name' => 'photo1.jpg',
+        'source_name' => 'photo1.jpg',
+        'path' => $photo->path,
+        'size' => $photo->size,
+        'status' => 'pending',
+    ]);
+
+    $photo->update(['version_count' => 2]);
+
+    (new ProcessPhoto($photo, 1))->handle();
+
+    expect($version->fresh()->status)->toBe('processed');
+    expect($photo->fresh()->status)->toBe('pending');
+    expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+});
+
+it('does not delete retained version files while processing the current version', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $oldPath = 'galleries/1243ABC/old-version.jpg';
+
+    Storage::disk('s3')->put($oldPath, UploadedFile::fake()->image('old.jpg')->getContent());
+
+    $photo = Photo::factory()->for($gallery)->create([
+        'name' => 'photo1.jpg',
+        'source_name' => 'photo1.jpg',
+        'path' => $oldPath,
+        'size' => 1024,
+        'status' => 'processed',
+        'version_count' => 1,
+    ]);
+
+    $gallery->addVersion(UploadedFile::fake()->image('photo1.jpg', 200, 200), $photo);
+
+    (new ProcessPhoto($photo->fresh(), $photo->fresh()->version_count))->handle();
+
+    expect(Storage::disk('s3')->exists($oldPath))->toBeTrue();
+    expect($photo->fresh()->versions()->where('path', $oldPath)->exists())->toBeTrue();
 });

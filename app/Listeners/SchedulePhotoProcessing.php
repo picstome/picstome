@@ -20,6 +20,6 @@ class SchedulePhotoProcessing
      */
     public function handle(PhotoAdded $event): void
     {
-        ProcessPhoto::dispatch($event->photo);
+        ProcessPhoto::dispatch($event->photo, $event->photo->version_count);
     }
 }

@@ -5,9 +5,11 @@ namespace App\Jobs;
 use App\Events\PhotoAdded;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
+use App\Models\Photo;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class IngestFtpUpload implements ShouldQueue
 {
@@ -55,14 +57,6 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        if ($gallery->photos()->where('name', $name)->exists()) {
-            $disk->delete($this->path);
-
-            Log::info("FTP upload {$this->path} removed: a photo with this name already exists in gallery {$gallery->id}.");
-
-            return;
-        }
-
         $size = (int) $disk->size($this->path);
 
         if (! $gallery->team->canStoreFile($size)) {
@@ -71,19 +65,27 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        $targetPath = $gallery->storage_path.'/'.$name;
+        $photo = $gallery->withPhotoIdentityLock(Gallery::identityKey($name), function () use ($gallery, $disk, $name, $size): ?Photo {
+            $existingPhoto = $gallery->findLogicalPhotoBySourceName($name);
 
-        $disk->move($this->path, $targetPath);
+            if ($existingPhoto && ! config('picstome.file_versions_enabled')) {
+                Log::warning("FTP upload {$this->path} skipped: file versions are disabled.");
 
-        $photo = $gallery->photos()->create([
-            'name' => $name,
-            'size' => $size,
-            'path' => $targetPath,
-            'disk' => config('picstome.disk'),
-            'status' => 'pending',
-        ]);
+                return null;
+            }
 
-        ProcessPhoto::dispatch($photo);
+            $targetPath = $gallery->storage_path.'/'.Str::ulid().'-'.$name;
+
+            $disk->move($this->path, $targetPath);
+
+            return $existingPhoto
+                ? $gallery->addVersionFromStoredPath($existingPhoto, $targetPath, $name, $size)
+                : $gallery->addPhotoFromStoredPath($targetPath, $name, $size);
+        });
+
+        if (! $photo) {
+            return;
+        }
 
         PhotoAdded::dispatch($photo);
 

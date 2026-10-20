@@ -127,7 +127,6 @@ describe('ingest command', function () {
 describe('ingest job', function () {
     it('moves an uploaded photo into the receiving gallery and schedules processing', function () {
         Queue::fake();
-        Event::fake(PhotoAdded::class);
 
         $path = putUpload($this->account, 'DSC_0001.JPG');
 
@@ -139,14 +138,14 @@ describe('ingest job', function () {
             expect($photo->disk)->toBe('s3');
             expect($photo->status)->toBe('pending');
             expect($photo->size)->toBeGreaterThan(0);
-            expect($photo->path)->toBe($this->gallery->storage_path.'/DSC_0001.JPG');
+            expect(str_starts_with($photo->path, $this->gallery->storage_path.'/'))->toBeTrue();
+            expect($photo->path)->toContain('DSC_0001.JPG');
             expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
         });
 
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
 
         Queue::assertPushed(ProcessPhoto::class);
-        Event::assertDispatched(PhotoAdded::class);
         expect($this->account->fresh()->last_upload_at)->not->toBeNull();
     });
 
@@ -159,15 +158,21 @@ describe('ingest job', function () {
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 
-    it('removes duplicate uploads without touching the existing photo', function () {
-        $existing = Photo::factory()->for($this->gallery)->create(['name' => 'DSC_0001.JPG']);
+    it('records a duplicate upload as a new version without deleting the existing photo', function () {
+        Queue::fake();
+        Event::fake(PhotoAdded::class);
+
+        $existing = Photo::factory()->for($this->gallery)->create(['name' => 'DSC_0001.JPG', 'source_name' => 'DSC_0001.JPG', 'path' => 'old/path/DSC_0001.JPG', 'version_count' => 1]);
 
         $path = putUpload($this->account, 'DSC_0001.JPG');
 
         (new IngestFtpUpload($this->account->id, $path))->handle();
 
         expect($this->gallery->photos()->count())->toBe(1);
-        expect($existing->fresh()->name)->toBe('DSC_0001.JPG');
+        expect($existing->fresh()->version_count)->toBe(2);
+        expect($existing->fresh()->path)->not->toBe('old/path/DSC_0001.JPG');
+        expect(Storage::disk('s3')->exists($existing->fresh()->path))->toBeTrue();
+        expect(\App\Models\PhotoVersion::where('photo_id', $existing->id)->count())->toBe(1);
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 

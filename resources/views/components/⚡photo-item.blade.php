@@ -114,6 +114,14 @@ new class extends Component
         </div>
     @endif
 
+    @if (config('picstome.file_versions_enabled') && $photo->version_count > 1)
+        <div class="absolute top-1.5 right-1.5 z-10 flex">
+            <flux:badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
+                {{ $photo->version_count }}
+            </flux:badge>
+        </div>
+    @endif
+
     <div class="absolute right-1.5 bottom-1.5 flex flex-row-reverse gap-2" :class="showActions ? 'flex' : 'hidden'">
         <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
             @if ($photo->isFavorited())
