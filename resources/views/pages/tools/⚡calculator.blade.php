@@ -684,8 +684,8 @@ new class extends Component
                 <flux:heading size="lg">{{ __('Recommended price') }}</flux:heading>
 
                 <div class="mt-5 rounded-xl bg-zinc-900 px-5 py-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
-                    <div class="text-xs font-medium uppercase tracking-wide opacity-70">{{ __('Base price (before taxes)') }}</div>
-                    <div class="mt-1 text-3xl font-bold tabular-nums">{{ $this->formatMoney($summary['base_price']) }}</div>
+                    <div class="text-xs font-medium uppercase tracking-wide opacity-70">{{ __('Client pays') }}</div>
+                    <div class="mt-1 text-4xl font-bold tabular-nums">{{ $this->formatMoney($summary['client_pays']) }}</div>
                 </div>
 
                 <div class="mt-5 space-y-2 text-sm">
@@ -714,6 +714,10 @@ new class extends Component
                 <flux:separator class="my-4" />
 
                 <div class="space-y-2 text-sm">
+                    <div class="flex justify-between gap-3 font-semibold">
+                        <span>{{ __('Base price (before taxes)') }}</span>
+                        <span class="tabular-nums">{{ $this->formatMoney($summary['base_price']) }}</span>
+                    </div>
                     <div class="flex justify-between gap-3">
                         <span>{{ __('VAT') }} ({{ $summary['vat_percent'] }}%)</span>
                         <span class="tabular-nums">{{ $this->formatMoney($summary['vat_amount']) }}</span>
@@ -725,10 +729,6 @@ new class extends Component
                     <div class="flex justify-between gap-3">
                         <span>{{ __('IRPF withheld') }} ({{ $summary['income_tax_percent'] }}%)</span>
                         <span class="tabular-nums">-{{ $this->formatMoney($summary['income_tax_withheld']) }}</span>
-                    </div>
-                    <div class="flex justify-between gap-3 font-semibold">
-                        <span>{{ __('Client pays') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['client_pays']) }}</span>
                     </div>
                     <div class="flex justify-between gap-3 font-semibold">
                         <span>{{ __('You receive now') }}</span>
