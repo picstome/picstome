@@ -64,12 +64,16 @@ it('shows the admin navigation only to admins', function () {
     actingAs($user)
         ->get('/dashboard')
         ->assertOk()
-        ->assertDontSee(route('users'), false);
+        ->assertDontSee(route('users'), false)
+        ->assertDontSee(route('admin.stats'), false)
+        ->assertDontSee('Statistics');
 
     config(['picstome.admin_emails' => [$user->email]]);
 
     actingAs($user)
         ->get('/dashboard')
         ->assertOk()
-        ->assertSee(route('users'), false);
+        ->assertSee(route('users'), false)
+        ->assertSee(route('admin.stats'), false)
+        ->assertSee('Statistics');
 });

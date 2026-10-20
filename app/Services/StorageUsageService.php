@@ -47,6 +47,20 @@ class StorageUsageService
         return (int) $current + (int) $versions;
     }
 
+    /**
+     * Total billable storage across every team, including retained versions.
+     */
+    public static function total(): int
+    {
+        $current = DB::table('photos')->sum('stored_size');
+
+        $versions = DB::table('photo_versions')
+            ->whereNotIn('id', self::currentVersionIds())
+            ->sum('stored_size');
+
+        return (int) $current + (int) $versions;
+    }
+
     protected static function currentVersionIds(?int $galleryId = null)
     {
         return DB::table('photos')
