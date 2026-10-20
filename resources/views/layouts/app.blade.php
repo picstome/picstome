@@ -183,13 +183,31 @@
                             {{ __('Rater') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item
-                            href="https://picstome.com/blackscreen/"
-                            icon="computer-desktop"
-                            target="_blank"
-                        >
-                            {{ __('Black Screen') }}
-                        </flux:navlist.item>
+                        <span class="flex items-center gap-1">
+                            <flux:navlist.item
+                                :href="route('tools.black-screen')"
+                                icon="computer-desktop"
+                                wire:navigate
+                                :current="request()->routeIs('tools.black-screen')"
+                                class="min-w-0 flex-1"
+                            >
+                                {{ __('Black Screen') }}
+                            </flux:navlist.item>
+
+                            <flux:button
+                                x-data
+                                x-on:click="$dispatch('black-screen:start')"
+                                size="xs"
+                                square
+                                icon="computer-desktop"
+                                icon:variant="solid"
+                                tooltip:position="right"
+                                :tooltip="__('Turn screen black')"
+                                :aria-label="__('Turn screen black')"
+                                class="border-black! bg-black! text-white! hover:bg-zinc-800! dark:border-zinc-600! dark:bg-black!"
+                                data-black-screen-shortcut
+                            />
+                        </span>
                     </flux:navlist.group>
 
                     @if (auth()->user()?->is_admin)
@@ -237,6 +255,10 @@
         <flux:main :container="!($fullScreen ?? false) && !($isTool ?? false)" @class(['p-0!' => ($fullScreen ?? false) || ($isTool ?? false)])>
             {{ $slot }}
         </flux:main>
+
+        @auth
+            @include('partials.black-screen')
+        @endauth
 
         @guest
             <livewire:login-modal />
