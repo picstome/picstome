@@ -371,6 +371,10 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 />
             </div>
         </div>
+
+        @if (config('picstome.file_versions_enabled'))
+            <livewire:photo-versions :photo="$photo" :manageable="true" />
+        @endif
     </div>
 
     <flux:modal name="add-comment" class="w-full sm:max-w-lg">
@@ -435,7 +439,13 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             </form>
         </div>
     </flux:modal>
+
+
+
 </div>
+
+
+
 
 @assets
     <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>

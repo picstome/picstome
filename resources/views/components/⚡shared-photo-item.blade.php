@@ -113,6 +113,14 @@ new class extends Component
         </div>
     @endif
 
+    @if (config('picstome.file_versions_enabled') && $photo->gallery->is_share_versions_visible && $photo->version_count > 1)
+        <div class="absolute top-1.5 right-1.5 z-10 flex">
+            <flux:badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
+                {{ $photo->version_count }}
+            </flux:badge>
+        </div>
+    @endif
+
     <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
         @if ($photo->gallery->is_share_selectable)
             <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Photo;
+use App\Models\PhotoVersion;
 use Facades\App\Services\RawPhotoService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -12,6 +13,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Image\Image;
 
+/**
+ * Processes the current photo or the specific historical version that was
+ * current when the job was dispatched.
+ *
+ * Expected version counts prevent a slow job for an older upload from
+ * overwriting a newer version that arrived while processing was in progress.
+ */
 class ProcessPhoto implements ShouldQueue
 {
     use Queueable;
@@ -22,10 +30,25 @@ class ProcessPhoto implements ShouldQueue
 
     public $temporaryPhotoRelativePath;
 
+    /** Historical version selected because the expected count is stale. */
+    protected ?PhotoVersion $versionTarget = null;
+
+    /** Original RAW path retained by keep_original_size galleries. */
+    protected ?string $processingRawPath = null;
+
+    /** Target metadata captured before processing to avoid mid-flight races. */
+    protected string $processingPath;
+
+    protected string $processingSourceName;
+
+    protected string $processingName;
+
+    protected int $processingSize;
+
     /**
      * Create a new job instance.
      */
-    public function __construct(public Photo $photo) {}
+    public function __construct(public Photo $photo, public ?int $expectedVersionCount = null) {}
 
     /**
      * Execute the job.
@@ -38,16 +61,27 @@ class ProcessPhoto implements ShouldQueue
             return;
         }
 
+        $this->resolveVersionTarget();
+        $this->captureProcessingTarget();
+
+        if ($this->versionTarget?->status === 'processed') {
+            return;
+        }
+
+        if ($this->expectedVersionCount !== null && $this->photo->version_count !== $this->expectedVersionCount && ! $this->versionTarget) {
+            return;
+        }
+
         if (! $this->shouldProcess()) {
-            $this->photo->update(['status' => 'skipped']);
+            $this->markSkipped();
 
             return;
         }
 
-        if (! RawPhotoService::isRawFile($this->photo->path)) {
+        if (! RawPhotoService::isRawFile($this->targetSourceName())) {
             $this->prepareTemporaryPhoto();
         } elseif (! $this->processRawFile()) {
-            $this->photo->update(['status' => 'skipped']);
+            $this->markSkipped();
 
             return;
         }
@@ -61,12 +95,71 @@ class ProcessPhoto implements ShouldQueue
         @unlink($this->temporaryPhotoPath);
     }
 
+    /**
+     * Resolve the historical version that matches a stale expected count.
+     */
+    protected function resolveVersionTarget(): void
+    {
+        if ($this->expectedVersionCount === null || $this->photo->version_count === $this->expectedVersionCount) {
+            return;
+        }
+
+        $this->versionTarget = $this->photo->versions()
+            ->where('version_number', $this->expectedVersionCount)
+            ->first();
+    }
+
+    protected function captureProcessingTarget(): void
+    {
+        $this->processingPath = $this->versionTarget?->path ?? $this->photo->path;
+        $this->processingSourceName = $this->versionTarget?->source_name
+            ?: $this->versionTarget?->name
+            ?: $this->photo->source_name
+            ?: $this->photo->name
+            ?: $this->photo->path;
+        $this->processingName = $this->versionTarget?->name ?? $this->photo->name;
+        $this->processingSize = (int) ($this->versionTarget?->size ?? $this->photo->size);
+        $this->processingRawPath = $this->versionTarget?->raw_path ?? $this->photo->raw_path;
+    }
+
+    protected function markSkipped(): void
+    {
+        if ($this->versionTarget) {
+            $this->versionTarget->update(['status' => 'skipped']);
+
+            return;
+        }
+
+        $this->photo->update(['status' => 'skipped']);
+    }
+
+    protected function targetPath(): string
+    {
+        return $this->processingPath;
+    }
+
+    protected function targetSourceName(): string
+    {
+        return $this->processingSourceName;
+    }
+
+    protected function targetName(): string
+    {
+        return $this->processingName;
+    }
+
+    protected function targetSize(): int
+    {
+        return $this->processingSize;
+    }
+
     protected function shouldProcess(): bool
     {
-        $extension = strtolower(pathinfo($this->photo->path, PATHINFO_EXTENSION));
+        $filename = $this->targetSourceName();
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
 
-        return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($this->photo->path);
+        return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($filename);
     }
 
     protected function processRawFile(): bool
@@ -87,7 +180,7 @@ class ProcessPhoto implements ShouldQueue
         }
 
         if ($this->photo->gallery->keep_original_size) {
-            $this->photo->update(['raw_path' => $this->photo->path]);
+            $this->processingRawPath = $this->targetPath();
         }
 
         // Replace the temporary RAW file with the extracted JPG
@@ -139,7 +232,7 @@ class ProcessPhoto implements ShouldQueue
     {
         $tempDir = 'photo-processing-temp';
         $ulid = Str::ulid()->toBase32();
-        $tempFileName = $ulid.'_'.$this->photo->name;
+        $tempFileName = $ulid.'_'.$this->targetName();
         $tempFileRelativePath = $tempDir.'/'.$tempFileName;
 
         Storage::disk('local')->makeDirectory($tempDir);
@@ -148,7 +241,7 @@ class ProcessPhoto implements ShouldQueue
 
         file_put_contents(
             $this->temporaryPhotoPath,
-            Storage::disk('s3')->get($this->photo->path)
+            Storage::disk('s3')->get($this->targetPath())
         );
 
         $this->temporaryPhotoRelativePath = $tempFileRelativePath;
@@ -156,7 +249,7 @@ class ProcessPhoto implements ShouldQueue
 
     protected function resizePhoto()
     {
-        $previousPath = $this->photo->path;
+        $previousPath = $this->targetPath();
 
         if (! $this->photo->gallery->keep_original_size) {
             Image::load($this->temporaryPhotoPath)
@@ -165,10 +258,13 @@ class ProcessPhoto implements ShouldQueue
                 ->save();
         }
 
-        $fileSize = filesize($this->temporaryPhotoPath);
+        $processedSize = (int) filesize($this->temporaryPhotoPath);
+        $fileSize = $processedSize;
+        $storedSize = $processedSize;
 
-        if ($this->photo->gallery->keep_original_size && $this->photo->raw_path) {
-            $fileSize = $this->photo->size;
+        if ($this->photo->gallery->keep_original_size && $this->processingRawPath) {
+            $fileSize = $this->targetSize();
+            $storedSize = $this->targetSize() + $processedSize;
         }
 
         $newPath = Storage::disk('s3')->putFile(
@@ -179,17 +275,45 @@ class ProcessPhoto implements ShouldQueue
         $updateData = [
             'path' => $newPath,
             'size' => $fileSize,
+            'stored_size' => $storedSize,
+            'raw_path' => $this->processingRawPath,
             'disk' => 's3',
             'status' => 'processed',
         ];
 
-        if (RawPhotoService::isRawFile($previousPath) && ! $this->photo->gallery->keep_original_size) {
-            $updateData['name'] = pathinfo($this->photo->name, PATHINFO_FILENAME).'.jpg';
+        if (RawPhotoService::isRawFile($this->targetSourceName()) && ! $this->photo->gallery->keep_original_size) {
+            $updateData['name'] = pathinfo($this->targetName(), PATHINFO_FILENAME).'.jpg';
         }
 
-        $this->photo->update($updateData);
+        $version = $this->versionTarget;
 
-        if ($previousPath && ! $this->photo->raw_path) {
+        if (! $version && $this->expectedVersionCount !== null && $this->photo->version_count !== $this->expectedVersionCount) {
+            $version = $this->photo->versions()
+                ->where('version_number', $this->expectedVersionCount)
+                ->first();
+        }
+
+        if ($version) {
+            $version->update($updateData);
+        } else {
+            $this->photo->update($updateData);
+
+            if ($this->photo->current_version_id) {
+                $this->photo->versions()
+                    ->whereKey($this->photo->current_version_id)
+                    ->update($updateData);
+            }
+        }
+
+        $isVersionPath = $this->photo->versions()
+            ->where(function ($query) use ($previousPath) {
+                $query->where('path', $previousPath)->orWhere('raw_path', $previousPath);
+            })
+            ->exists()
+            || $this->photo->path === $previousPath
+            || $this->photo->raw_path === $previousPath;
+
+        if ($previousPath && $previousPath !== $newPath && ! $this->processingRawPath && ! $isVersionPath) {
             Storage::disk('s3')->delete($previousPath);
         }
     }
@@ -211,7 +335,44 @@ class ProcessPhoto implements ShouldQueue
             return false;
         }
 
-        if ($this->photo->raw_path) {
+        if ($this->processingRawPath) {
+            @unlink($this->temporaryPhotoPath);
+
+            return true;
+        }
+
+        if ($this->versionTarget) {
+            $this->versionTarget->update(['status' => 'skipped']);
+            @unlink($this->temporaryPhotoPath);
+
+            return true;
+        }
+
+        $previous = $this->photo->version_count > 1
+            ? $this->photo->versions()->orderByDesc('version_number')->first()
+            : null;
+
+        if ($previous) {
+            $currentPath = $this->photo->path;
+            $currentDisk = $this->photo->diskOrDefault();
+
+            $this->photo->update([
+                'name' => $previous->name,
+                'path' => $previous->path,
+                'raw_path' => $previous->raw_path,
+                'size' => $previous->size,
+                'stored_size' => $previous->stored_size ?: $previous->size,
+                'disk' => $previous->diskOrDefault(),
+                'status' => $previous->status,
+            ]);
+
+            $isStillReferenced = $currentPath
+                && ($currentPath === $previous->path || $this->photo->versions()->where('path', $currentPath)->exists());
+
+            if ($currentPath && ! $isStillReferenced) {
+                DeleteFromDisk::dispatch($currentPath, $currentDisk);
+            }
+
             @unlink($this->temporaryPhotoPath);
 
             return true;

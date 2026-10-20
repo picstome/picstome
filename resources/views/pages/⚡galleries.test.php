@@ -53,6 +53,17 @@ test('can create a team gallery that keeps photos at their original size', funct
     expect(Gallery::first()->keep_original_size)->toBeTrue();
 });
 
+test('remembers the keep original size option for new galleries', function () {
+    Livewire::actingAs($this->user)->test('pages::galleries')
+        ->set('form.name', 'First Gallery')
+        ->set('form.keepOriginalSize', true)
+        ->call('save');
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries');
+
+    expect($component->get('form.keepOriginalSize'))->toBeTrue();
+});
+
 test('can create a team gallery with no expiration date when subscribed', function () {
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 

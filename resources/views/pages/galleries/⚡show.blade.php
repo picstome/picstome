@@ -57,19 +57,31 @@ new class extends Component
         }
     }
 
-    public function save($index, $replace = false)
+    public function save($index, $action = 'version')
     {
         if (! isset($this->photos[$index])) {
             return;
         }
 
+        $action = match ($action) {
+            true => 'replace',
+            false => 'version',
+            'replace' => 'replace',
+            'skip' => 'skip',
+            default => 'version',
+        };
+
+        if ($action === 'skip') {
+            return;
+        }
+
         $uploadedPhoto = $this->photos[$index];
 
-        $existingPhoto = $replace ? $this->findPhotoByName($uploadedPhoto->getClientOriginalName()) : null;
+        $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
 
         $this->validate([
             "photos.{$index}" => [
-                function ($attribute, $value, $fail) use ($index, $existingPhoto) {
+                function ($attribute, $value, $fail) use ($index, $existingPhoto, $action) {
                     $uploadedPhoto = $this->photos[$index];
 
                     if (! in_array(strtolower($uploadedPhoto->getClientOriginalExtension()), config('picstome.upload_extensions'), true)) {
@@ -84,11 +96,13 @@ new class extends Component
                         $fail(__('This file is not a valid PDF.'));
                     }
 
-                    if ($existingPhoto === null && $this->findPhotoByName($uploadedPhoto->getClientOriginalName()) !== null) {
-                        $fail(__('A photo with this name already exists.'));
+                    if ($existingPhoto && $action === 'version' && ! config('picstome.file_versions_enabled')) {
+                        $fail(__('File versions are currently unavailable.'));
                     }
 
-                    if (! $this->hasSufficientStorage($uploadedPhoto, $existingPhoto?->size ?? 0)) {
+                    $replacedSize = $action === 'replace' && $existingPhoto ? ($existingPhoto->stored_size ?: $existingPhoto->size) : 0;
+
+                    if (! $this->hasSufficientStorage($uploadedPhoto, $replacedSize)) {
                         $fail(__('You do not have enough storage space to upload this photo.'));
                     }
                 },
@@ -96,12 +110,25 @@ new class extends Component
         ]);
 
         $uploadedPhoto = $this->photos[$index];
+        $identityKey = Gallery::identityKey($uploadedPhoto->getClientOriginalName());
 
-        if ($existingPhoto !== null) {
-            $this->replacePhotoInGallery($uploadedPhoto, $existingPhoto);
-        } else {
+        $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): void {
+            $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
+
+            if ($existingPhoto !== null && $action === 'replace') {
+                $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
+
+                return;
+            }
+
+            if ($existingPhoto !== null) {
+                $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
+
+                return;
+            }
+
             $this->addPhotoToGallery($uploadedPhoto);
-        }
+        });
     }
 
     /**
@@ -113,16 +140,17 @@ new class extends Component
      */
     public function findDuplicateNames(array $fileNames): array
     {
-        $sanitizedNames = array_map(
-            fn ($name) => Gallery::sanitizeFileName((string) $name),
-            $fileNames,
-        );
+        $identityKeys = collect($fileNames)
+            ->mapWithKeys(fn ($name) => [Gallery::identityKey((string) $name) => true]);
 
-        $existingNames = $this->gallery->photos()->whereIn('name', $sanitizedNames)->pluck('name');
+        $existingKeys = $this->gallery->photos()
+            ->whereIn('identity_key', $identityKeys->keys())
+            ->pluck('identity_key')
+            ->flip();
 
         return $this->existingPhotoNames = collect($fileNames)
             ->unique()
-            ->filter(fn ($name) => $existingNames->contains(Gallery::sanitizeFileName((string) $name)))
+            ->filter(fn ($name) => $existingKeys->has(Gallery::identityKey((string) $name)))
             ->values()
             ->map(fn ($name) => (string) $name)
             ->all();
@@ -130,9 +158,7 @@ new class extends Component
 
     protected function findPhotoByName(string $clientName): ?Photo
     {
-        return $this->gallery->photos()
-            ->where('name', Gallery::sanitizeFileName($clientName))
-            ->first();
+        return $this->gallery->findLogicalPhotoBySourceName($clientName);
     }
 
     protected function hasSufficientStorage(UploadedFile $uploadedPhoto, int $replacedSize = 0): bool
@@ -164,9 +190,16 @@ new class extends Component
         PhotoAdded::dispatch($photo);
     }
 
-    protected function replacePhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
+    protected function addVersionToGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
     {
-        $photo = $this->gallery->replacePhoto($uploadedPhoto, $existingPhoto);
+        $photo = $this->gallery->addVersion($uploadedPhoto, $existingPhoto);
+
+        PhotoAdded::dispatch($photo);
+    }
+
+    protected function replaceCurrentPhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
+    {
+        $photo = $this->gallery->replaceCurrentVersion($uploadedPhoto, $existingPhoto);
 
         PhotoAdded::dispatch($photo);
     }
@@ -656,6 +689,28 @@ new class extends Component
                     {{ __('remaining files.') }}
                 </div>
 
+                <div
+                    x-show="files.some((fileObj) => fileObj.status === 'conflict')"
+                    class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+                >
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <span x-text="files.filter((fileObj) => fileObj.status === 'conflict').length + ' ' + {{ Js::from(__('files already exist. Choose what to do, or apply to all:')) }}"></span>
+                        <div class="flex flex-wrap gap-2">
+                            @if (config('picstome.file_versions_enabled'))
+                                <flux:button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
+                                    {{ __('Version all') }}
+                                </flux:button>
+                            @endif
+                            <flux:button size="sm" variant="subtle" x-on:click="if (confirm({{ Js::from(__('Replace the current versions? Older versions will be kept.')) }})) resolveAllConflicts('replace')">
+                                {{ __('Replace all') }}
+                            </flux:button>
+                            <flux:button size="sm" variant="ghost" x-on:click="resolveAllConflicts('skip')">
+                                {{ __('Skip all') }}
+                            </flux:button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Upload Queue Display -->
                 <div class="space-y-2">
                     <template x-for="(fileObj, index) in files" :key="index">
@@ -699,13 +754,22 @@ new class extends Component
                                     color="zinc"
                                 ></flux:badge>
 
-                                <div class="flex items-center gap-2" x-show="fileObj.status === 'conflict'">
+                                <div class="flex flex-wrap items-center gap-2" x-show="fileObj.status === 'conflict'">
+                                    @if (config('picstome.file_versions_enabled'))
+                                        <flux:button
+                                            size="sm"
+                                            variant="primary"
+                                            x-on:click="resolveConflict(index, 'version')"
+                                        >
+                                            {{ __('Save as new version') }}
+                                        </flux:button>
+                                    @endif
                                     <flux:button
                                         size="sm"
-                                        variant="primary"
-                                        x-on:click="resolveConflict(index, 'replace')"
+                                        variant="subtle"
+                                        x-on:click="if (confirm({{ Js::from(__('Replace the current version? Older versions will be kept.')) }})) resolveConflict(index, 'replace')"
                                     >
-                                        {{ __('Replace') }}
+                                        {{ __('Replace current') }}
                                     </flux:button>
                                     <flux:button
                                         size="sm"
@@ -754,6 +818,13 @@ new class extends Component
                 :label="__('Visitors can download photos')"
                 x-bind:disabled="$wire.shareForm.watermarked"
             />
+
+            @if (config('picstome.file_versions_enabled'))
+                <flux:switch
+                    wire:model="shareForm.versionsVisible"
+                    :label="__('Visitors can view and compare versions')"
+                />
+            @endif
 
             <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 
@@ -1236,6 +1307,7 @@ new class extends Component
 
         Alpine.data('multiFileUploader', () => ({
             files: [],
+            rawExtensions: @js(\App\Services\PhotoIdentityService::RAW_EXTENSIONS),
             oversizedFiles: [],
             unsupportedFiles: [],
             dragActive: false,
@@ -1334,7 +1406,17 @@ new class extends Component
                     );
 
                     checkingFiles.forEach((fileObj) => {
-                        fileObj.status = duplicates.includes(fileObj.file.name) ? 'conflict' : 'pending';
+                        const duplicate = duplicates.includes(fileObj.file.name);
+                        const extension = fileObj.file.name.split('.').pop().toLowerCase();
+
+                        if (duplicate && this.rawExtensions.includes(extension)) {
+                            fileObj.conflictAction = 'version';
+                            fileObj.status = 'pending';
+
+                            return;
+                        }
+
+                        fileObj.status = duplicate ? 'conflict' : 'pending';
                     });
                 } catch (error) {
                     // Fail open: the server still rejects duplicates on save.
@@ -1348,8 +1430,8 @@ new class extends Component
             resolveConflict(index, action) {
                 const fileObj = this.files[index];
 
-                if (action === 'replace') {
-                    fileObj.conflictAction = 'replace';
+                if (action === 'version' || action === 'replace') {
+                    fileObj.conflictAction = action;
                     fileObj.status = 'pending';
                     this.processUploadQueue();
 
@@ -1357,6 +1439,24 @@ new class extends Component
                 }
 
                 fileObj.status = 'skipped';
+                this.closeIfAllResolved();
+            },
+
+            resolveAllConflicts(action) {
+                this.files.forEach((fileObj) => {
+                    if (fileObj.status !== 'conflict') {
+                        return;
+                    }
+
+                    if (action === 'skip') {
+                        fileObj.status = 'skipped';
+                    } else {
+                        fileObj.conflictAction = action;
+                        fileObj.status = 'pending';
+                    }
+                });
+
+                this.processUploadQueue();
                 this.closeIfAllResolved();
             },
 
@@ -1371,7 +1471,7 @@ new class extends Component
                     uploadName,
                     fileObj.file,
                     () => {
-                        $wire.save(index, fileObj.conflictAction === 'replace').then((result) => {
+                        $wire.save(index, fileObj.conflictAction || 'version').then((result) => {
                             if (result && result.errors && result.errors['photos.' + index]) {
                                 const error = result.errors['photos.' + index];
                                 fileObj.error = typeof error === 'string' ? error : null;
@@ -1400,84 +1500,31 @@ new class extends Component
             },
 
             processFiles(files) {
-                const rawExtensions = [
-                    'cr2',
-                    'cr3',
-                    'nef',
-                    'arw',
-                    'dng',
-                    'orf',
-                    'rw2',
-                    'pef',
-                    'srw',
-                    'mos',
-                    'mrw',
-                    '3fr',
-                ];
-                const jpgExtensions = ['jpg', 'jpeg'];
-                const keepOriginalSize = {{ Js::from($gallery->keep_original_size) }};
                 const allowedExtensions = {{ Js::from(config('picstome.upload_extensions')) }};
-
-                const fileGroups = {};
                 const maxSize = 5 * 1024 * 1024 * 1024;
+
                 files.forEach((file) => {
                     const name = file.name;
                     const lastDot = name.lastIndexOf('.');
-                    const baseName = lastDot !== -1 ? name.substring(0, lastDot) : name;
                     const extension = lastDot !== -1 ? name.substring(lastDot + 1).toLowerCase() : '';
 
                     if (file.size > maxSize) {
                         this.oversizedFiles.push({ name: file.name, size: file.size });
+
                         return;
                     }
 
                     if (!allowedExtensions.includes(extension)) {
                         this.unsupportedFiles.push({ name: file.name });
+
                         return;
                     }
 
-                    if (!fileGroups[baseName]) {
-                        fileGroups[baseName] = [];
-                    }
-                    fileGroups[baseName].push({ file, extension });
-                });
-
-                Object.values(fileGroups).forEach((group) => {
-                    const hasJpg = group.some((item) => jpgExtensions.includes(item.extension));
-                    const hasRaw = group.some((item) => rawExtensions.includes(item.extension));
-
-                    if (!hasJpg || !hasRaw) {
-                        group.forEach((item) => {
-                            this.files.push({
-                                file: item.file,
-                                progress: 0,
-                                status: 'checking',
-                            });
-                        });
-                        return;
-                    }
-
-                    if (keepOriginalSize) {
-                        group
-                            .filter((item) => rawExtensions.includes(item.extension))
-                            .forEach((item) => {
-                                this.files.push({
-                                    file: item.file,
-                                    progress: 0,
-                                    status: 'pending',
-                                });
-                            });
-                    } else {
-                        group
-                            .filter((item) => jpgExtensions.includes(item.extension))
-                            .forEach((item) => {
-                                this.files.push({
-                                    file: item.file,
-                                    progress: 0,
-                                    status: 'pending',
-                                });
-                            });
-                    }
+                    this.files.push({
+                        file,
+                        progress: 0,
+                        status: 'checking',
+                    });
                 });
             },
 

@@ -3,13 +3,19 @@
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use App\Models\PhotoVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Storage::fake('s3');
+});
 
 test('photo can be viewed when the gallery is shared', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create(['ulid' => '0123ABC']);
@@ -246,4 +252,75 @@ test('only the team owner can delete any comment', function () {
         ->assertStatus(403);
 
     expect($photo->comments()->find($anotherComment->id))->not()->toBeNull();
+});
+
+test('shared gallery can show and compare versions when enabled', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'is_share_versions_visible' => true,
+    ]);
+
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 2]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+    ]);
+
+    $response = get('/shares/0123ABC/photos/1');
+
+    $response->assertStatus(200);
+    $response->assertSee('Compare versions');
+    $response->assertSee('Versions');
+    $response->assertDontSee('Restore');
+});
+
+test('shared gallery hides versions by default', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 2]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+    ]);
+
+    $response = get('/shares/0123ABC/photos/1');
+
+    $response->assertStatus(200);
+    $response->assertDontSee('Compare versions');
+});
+
+test('shared viewers cannot restore versions', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $photo = Photo::factory()->for($gallery)->create([
+        'path' => 'galleries/current.jpg',
+        'version_count' => 2,
+    ]);
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+    ]);
+
+    Livewire::test('photo-versions', ['photo' => $photo, 'manageable' => false])
+        ->call('restoreVersion', $version->id);
+
+    expect($photo->fresh()->path)->toBe('galleries/current.jpg');
+});
+
+test('guests cannot manage versions even with a tampered manageable flag', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $photo = Photo::factory()->for($gallery)->create([
+        'path' => 'galleries/current.jpg',
+        'version_count' => 2,
+    ]);
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.jpg',
+    ]);
+
+    Livewire::test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('restoreVersion', $version->id);
+
+    expect($photo->fresh()->path)->toBe('galleries/current.jpg');
 });

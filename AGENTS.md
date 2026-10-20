@@ -264,3 +264,24 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - IMPORTANT: Always use `search-docs` tool for version-specific Tailwind CSS documentation and updated code examples. Never rely on training data.
 - IMPORTANT: Activate `tailwindcss-development` every time you're working with a Tailwind CSS or styling-related task.
 </laravel-boost-guidelines>
+
+=== project rules ===
+
+# Picstome project rules
+
+The canonical project rules live in `docs/development-rules.md`. Follow them for every change.
+
+Minimum checklist:
+- Work on a feature/fix branch and open a PR; never commit directly to `main`.
+- Link the related issue and include UI evidence when relevant.
+- Document non-obvious code inline (PHPDoc/services/jobs/migrations/components).
+- Review DRY: reuse existing services, components and traits.
+- Add feature and regression tests; fake S3/FTP/queues in tests.
+- Run `vendor/bin/pint --dirty` and `php artisan test --compact`.
+- Migrations need a working `down()` and fresh + rollback verification.
+- Destructive data operations require dry-run and explicit `--force`.
+- Update `docs/` for operational, migration or rollback requirements.
+
+Deploy rules, checklist and rollback steps are maintained in
+`docs/development-rules.md`.
+

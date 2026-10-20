@@ -135,6 +135,32 @@
                         </flux:navlist.item>
                     </flux:navlist.group>
 
+                    <flux:navlist.group :heading="__('Apps')" class="mt-4">
+                        <flux:navlist.item
+                            :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/descargar/' : 'https://picstome.com/download/'"
+                            icon="device-phone-mobile"
+                            target="_blank"
+                        >
+                            {{ __('Picstome APP') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item
+                            :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/photo-stats/' : 'https://picstome.com/photostats/'"
+                            icon="chart-bar"
+                            target="_blank"
+                        >
+                            {{ __('Picstome Photo Stats') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item
+                            href="https://github.com/picstome/picstome-rater/releases/latest"
+                            icon="star"
+                            target="_blank"
+                        >
+                            {{ __('Picstome Rater') }}
+                        </flux:navlist.item>
+                    </flux:navlist.group>
+
                     @if (auth()->user()?->is_admin)
                         <flux:navlist.group :heading="__('Admin')" class="mt-4">
                             <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
@@ -162,6 +188,8 @@
                             {{ __('Branding') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
+
+
                 </flux:navlist>
 
                 <livewire:profile-dropdown />
