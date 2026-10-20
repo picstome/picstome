@@ -8,6 +8,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Models\Photoshoot;
+use App\Models\PhotoVersion;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -235,7 +236,7 @@ describe('Photo Upload', function () {
         $photo->refresh();
         expect($gallery->photos()->count())->toBe(1);
         expect($photo->version_count)->toBe(2);
-        expect(\App\Models\PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
+        expect(PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
         expect($photo->path)->not->toBe('old/path/photo1.jpg');
     });
 
@@ -271,7 +272,7 @@ describe('Photo Upload', function () {
         expect($photo->size)->toBeGreaterThan(0);
         expect($photo->status)->toBe('pending');
         expect($photo->version_count)->toBe(2);
-        expect(\App\Models\PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
+        expect(PhotoVersion::where('photo_id', $photo->id)->count())->toBe(1);
 
         Queue::assertPushed(ProcessPhoto::class);
         Queue::assertNotPushed(function (DeleteFromDisk $job) {
@@ -292,7 +293,7 @@ describe('Photo Upload', function () {
             'status' => 'processed',
             'version_count' => 2,
         ]);
-        $oldVersion = \App\Models\PhotoVersion::factory()->for($photo)->create([
+        $oldVersion = PhotoVersion::factory()->for($photo)->create([
             'version_number' => 1,
             'path' => 'old/history.jpg',
         ]);

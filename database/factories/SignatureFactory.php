@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Models\Contract;
+use App\Models\Signature;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Signature>
+ * @extends Factory<Signature>
  */
 class SignatureFactory extends Factory
 {

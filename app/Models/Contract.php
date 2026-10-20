@@ -6,6 +6,7 @@ use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPdfContract;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
+use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 
 class Contract extends Model
 {
-    /** @use HasFactory<\Database\Factories\ContractFactory> */
+    /** @use HasFactory<ContractFactory> */
     use HasFactory;
 
     protected $guarded = [];
@@ -83,7 +84,7 @@ class Contract extends Model
         return $this->executed_at !== null;
     }
 
-    public function updatePdfFile(Pdf $pdf)
+    public function updatePdfFile(PDF $pdf)
     {
         $file_name = Str::random(40);
         $path = "{$this->storage_path}/{$file_name}.pdf";

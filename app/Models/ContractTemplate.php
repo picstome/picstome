@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ContractTemplateFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 
 class ContractTemplate extends Model
 {
-    /** @use HasFactory<\Database\Factories\ContractTemplateFactory> */
+    /** @use HasFactory<ContractTemplateFactory> */
     use HasFactory;
 
     protected $guarded = [];

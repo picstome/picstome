@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\FtpAccount;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class SftpgoService
@@ -89,7 +90,7 @@ class SftpgoService
      *
      * @param  array<string, mixed>|null  $data
      */
-    protected function request(string $method, string $endpoint, ?array $data = null): ?\Illuminate\Http\Client\Response
+    protected function request(string $method, string $endpoint, ?array $data = null): ?Response
     {
         if (! $this->isEnabled()) {
             return null;

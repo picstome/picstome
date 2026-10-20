@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Gallery;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Gallery>
+ * @extends Factory<Gallery>
  */
 class GalleryFactory extends Factory
 {

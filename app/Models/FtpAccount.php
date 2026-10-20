@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use App\Services\SftpgoService;
+use Database\Factories\FtpAccountFactory;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
 class FtpAccount extends Model
 {
-    /** @use HasFactory<\Database\Factories\FtpAccountFactory> */
+    /** @use HasFactory<FtpAccountFactory> */
     use HasFactory;
 
     protected $guarded = [];
@@ -203,7 +205,7 @@ class FtpAccount extends Model
     /**
      * The disk the camera uploads are written to.
      */
-    public static function disk(): \Illuminate\Contracts\Filesystem\Filesystem
+    public static function disk(): Filesystem
     {
         return Storage::disk(config('picstome.ftp_uploads.disk') ?: config('picstome.disk'));
     }

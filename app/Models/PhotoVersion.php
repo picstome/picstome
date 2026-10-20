@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
+use Database\Factories\PhotoVersionFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class PhotoVersion extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotoVersionFactory> */
+    /** @use HasFactory<PhotoVersionFactory> */
     use FormatsFileSize, HasFactory;
 
     protected $guarded = [];
@@ -70,15 +72,15 @@ class PhotoVersion extends Model
     public function deleteFromDisk(?int $ignorePhotoId = null)
     {
         if ($this->path) {
-            \App\Jobs\DeleteFromDisk::dispatch($this->path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
+            DeleteFromDisk::dispatch($this->path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
         }
 
         if ($this->raw_path) {
-            \App\Jobs\DeleteFromDisk::dispatch($this->raw_path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
+            DeleteFromDisk::dispatch($this->raw_path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
         }
 
         if ($this->thumb_path) {
-            \App\Jobs\DeleteFromDisk::dispatch($this->thumb_path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
+            DeleteFromDisk::dispatch($this->thumb_path, $this->diskOrDefault(), $ignorePhotoId, $this->id);
         }
 
         return $this;

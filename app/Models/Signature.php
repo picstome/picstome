@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
 use Carbon\Carbon;
+use Database\Factories\SignatureFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 
 class Signature extends Model
 {
-    /** @use HasFactory<\Database\Factories\SignatureFactory> */
+    /** @use HasFactory<SignatureFactory> */
     use HasFactory;
 
     protected $guarded = [];

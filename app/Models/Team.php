@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\StorageUsageService;
+use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ class Team extends Model
 {
     use Billable;
 
-    /** @use HasFactory<\Database\Factories\TeamFactory> */
+    /** @use HasFactory<TeamFactory> */
     use HasFactory;
 
     protected $guarded = [];

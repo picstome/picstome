@@ -6,6 +6,7 @@ use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
 use Carbon\Carbon;
+use Database\Factories\PhotoFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Photo extends Model
 {
-    /** @use HasFactory<\Database\Factories\PhotoFactory> */
+    /** @use HasFactory<PhotoFactory> */
     use FormatsFileSize, HasFactory;
 
     protected $guarded = [];
@@ -159,7 +160,7 @@ class Photo extends Model
      * Find the neighbor photo offset positions away within the given
      * naturally sorted photo id list.
      *
-     * @param  \Illuminate\Support\Collection<int, int>  $photoIds
+     * @param  Collection<int, int>  $photoIds
      */
     protected function navigationNeighbor(Collection $photoIds, int $offset): ?Photo
     {

@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Webhooks\SftpgoWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoVersion;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -102,7 +104,7 @@ Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
 })->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
 Route::livewire('/galleries/{gallery}/photos/{photo}', 'pages::galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
 
-Route::get('/galleries/{gallery}/photos/{photo}/versions/{version}/download', function (Gallery $gallery, Photo $photo, \App\Models\PhotoVersion $version) {
+Route::get('/galleries/{gallery}/photos/{photo}/versions/{version}/download', function (Gallery $gallery, Photo $photo, PhotoVersion $version) {
     abort_unless(config('picstome.file_versions_enabled'), 404);
     abort_unless($photo->gallery_id === $gallery->id, 404);
     abort_unless($version->photo_id === $photo->id, 404);
@@ -204,5 +206,5 @@ Route::get('/galleries/{gallery}/photos/{photo}/pdf', function (Gallery $gallery
     return $photo->inline();
 })->name('galleries.photos.inline')->middleware(['auth', 'verified', 'can:view,photo']);
 
-Route::post('/webhooks/sftpgo', App\Http\Controllers\Webhooks\SftpgoWebhookController::class)
+Route::post('/webhooks/sftpgo', SftpgoWebhookController::class)
     ->name('webhooks.sftpgo');

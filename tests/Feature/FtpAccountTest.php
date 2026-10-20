@@ -67,7 +67,7 @@ it('encrypts passwords at rest', function () {
 
     expect($account->password)->toBe('12345678');
 
-    $rawPassword = \DB::table('ftp_accounts')->where('id', $account->id)->value('password');
+    $rawPassword = DB::table('ftp_accounts')->where('id', $account->id)->value('password');
 
     expect($rawPassword)->not->toBe('12345678');
     expect($rawPassword)->not->toContain('12345678');

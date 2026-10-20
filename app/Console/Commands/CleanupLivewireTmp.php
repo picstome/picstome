@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 
 class CleanupLivewireTmp extends Command
@@ -28,7 +29,7 @@ class CleanupLivewireTmp extends Command
     public function handle()
     {
         // Import Storage and Carbon
-        /** @var \Illuminate\Contracts\Filesystem\Filesystem $disk */
+        /** @var Filesystem $disk */
         $disk = Storage::disk('s3');
         $folder = 'livewire-tmp';
         $now = Carbon::now();
