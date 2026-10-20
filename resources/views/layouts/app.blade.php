@@ -197,6 +197,15 @@
                             <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
                                 {{ __('Users') }}
                             </flux:navlist.item>
+
+                            <flux:navlist.item
+                                :href="route('admin.stats')"
+                                icon="chart-bar"
+                                wire:navigate
+                                :current="request()->routeIs('admin.stats')"
+                            >
+                                {{ __('Statistics') }}
+                            </flux:navlist.item>
                         </flux:navlist.group>
                     @endif
                 </flux:navlist>

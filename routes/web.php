@@ -168,6 +168,7 @@ Route::livewire('/public-profile', 'pages::public-profile')->name('public-profil
 Route::livewire('/register', 'pages::register')->name('register')->middleware('guest');
 Route::livewire('/subscribe', 'pages::subscribe')->name('subscribe')->middleware(['auth', 'verified']);
 Route::livewire('/users', 'pages::users')->name('users')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
+Route::livewire('/admin/stats', 'pages::admin.stats')->name('admin.stats')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/verify-email', 'pages::verify-email')->name('verification.notice')->middleware('auth');
 
 Route::get('/billing-portal', function (Request $request) {
