@@ -34,6 +34,13 @@ describe('Viewing contracts', function () {
         expect($component->contracts->contains($contractB))->toBeFalse();
         expect($component->contracts->contains($contractC))->toBeTrue();
     });
+
+    it('links to contract templates from the page header', function () {
+        actingAs($this->user)
+            ->get('/contracts')
+            ->assertOk()
+            ->assertSee(route('contract-templates'), false);
+    });
 });
 
 describe('Creating contracts', function () {

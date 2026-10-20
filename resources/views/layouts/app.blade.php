@@ -68,74 +68,97 @@
                         {{ __('Dashboard') }}
                     </flux:navlist.item>
 
-                    <flux:navlist.item :href="route('customers')" icon="user-group" wire:navigate>
-                        {{ __('Customers') }}
+                    <flux:navlist.item
+                        :href="route('public-profile')"
+                        icon="at-symbol"
+                        wire:navigate
+                        :current="request()->routeIs('public-profile')"
+                    >
+                        {{ __('Public Profile') }}
                     </flux:navlist.item>
                 </flux:navlist>
 
                 <flux:navlist variant="outline">
                     <flux:navlist.group :heading="__('Photos')">
-                        <flux:navlist.item :href="route('galleries')" icon="photo" wire:navigate>
+                        <flux:navlist.item
+                            :href="route('galleries')"
+                            icon="photo"
+                            wire:navigate
+                            :current="request()->routeIs('galleries*')"
+                        >
                             {{ __('Galleries') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item :href="route('photoshoots')" icon="camera" wire:navigate>
+                        <flux:navlist.item
+                            :href="route('photoshoots')"
+                            icon="camera"
+                            wire:navigate
+                            :current="request()->routeIs('photoshoots*')"
+                        >
                             {{ __('Photoshoots') }}
                         </flux:navlist.item>
-                    </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('Contracts')" class="mt-4">
-                        <flux:navlist.item :href="route('contracts')" icon="document-text" wire:navigate>
-                            {{ __('Contracts') }}
-                        </flux:navlist.item>
                         <flux:navlist.item
-                            :href="route('contract-templates')"
-                            icon="clipboard-document-list"
+                            :href="route('portfolio')"
+                            icon="briefcase"
                             wire:navigate
+                            :current="request()->routeIs('portfolio*')"
                         >
-                            {{ __('Templates') }}
-                        </flux:navlist.item>
-                    </flux:navlist.group>
-
-                    <flux:navlist.group :heading="__('Public Profile')" class="mt-4">
-                        <flux:navlist.item :href="route('public-profile')" icon="at-symbol" wire:navigate wire:navigate>
-                            {{ __('Configure') }}
-                        </flux:navlist.item>
-
-                        <flux:navlist.item :href="route('portfolio')" icon="briefcase" wire:navigate wire:navigate>
                             {{ __('Portfolio') }}
                         </flux:navlist.item>
+                    </flux:navlist.group>
+
+                    <flux:navlist.group :heading="__('Manage')" class="mt-4">
+                        <flux:navlist.item
+                            :href="route('customers')"
+                            icon="user-group"
+                            wire:navigate
+                            :current="request()->routeIs('customers*') || request()->routeIs('clients*')"
+                        >
+                            {{ __('Customers') }}
+                        </flux:navlist.item>
 
                         <flux:navlist.item
-                            :href="route('handle.show', ['handle' => auth()->user()->currentTeam->handle])"
-                            icon="arrow-top-right-on-square"
-                            target="_blank"
+                            :href="route('contracts')"
+                            icon="document-text"
+                            wire:navigate
+                            :current="request()->routeIs('contracts*') || request()->routeIs('contract-templates*')"
                         >
-                            {{ __('View Profile') }}
+                            {{ __('Contracts') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item
+                            :href="route('payments')"
+                            icon="banknotes"
+                            wire:navigate
+                            :current="request()->routeIs('payments*') || request()->routeIs('stripe.connect*')"
+                        >
+                            {{ __('Payments') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('Finance')" class="mt-4">
-                        <flux:navlist.item :href="route('payments')" icon="banknotes" wire:navigate>
-                            {{ __('Payments') }}
-                        </flux:navlist.item>
-
-                        @unless (auth()->user()->currentTeam->hasCompletedOnboarding())
-                            <flux:navlist.item :href="route('stripe.connect')" icon="credit-card">
-                                {{ __('Connect with Stripe') }}
-                            </flux:navlist.item>
-                        @endunless
-
-                        <flux:navlist.item href="/tools/invoice-generator" icon="document-plus">
+                    <flux:navlist.group
+                        :heading="__('Tools')"
+                        class="mt-4 [&>div.relative]:ps-0 [&>div.relative>div]:hidden"
+                        expandable
+                        :expanded="request()->routeIs('tools.*')"
+                    >
+                        <flux:navlist.item
+                            :href="route('tools.invoice-generator')"
+                            icon="document-plus"
+                            wire:navigate
+                        >
                             {{ __('Invoice Generator') }}
                         </flux:navlist.item>
 
-                        <flux:navlist.item href="/tools/calculator" icon="calculator">
+                        <flux:navlist.item
+                            :href="route('tools.calculator')"
+                            icon="calculator"
+                            wire:navigate
+                        >
                             {{ __('Calculator') }}
                         </flux:navlist.item>
-                    </flux:navlist.group>
 
-                    <flux:navlist.group :heading="__('Apps')" class="mt-4">
                         <flux:navlist.item
                             :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/descargar/' : 'https://picstome.com/download/'"
                             icon="device-phone-mobile"
@@ -149,7 +172,7 @@
                             icon="chart-bar"
                             target="_blank"
                         >
-                            {{ __('Picstome Photo Stats') }}
+                            {{ __('Photo Stats') }}
                         </flux:navlist.item>
 
                         <flux:navlist.item
@@ -157,7 +180,15 @@
                             icon="star"
                             target="_blank"
                         >
-                            {{ __('Picstome Rater') }}
+                            {{ __('Rater') }}
+                        </flux:navlist.item>
+
+                        <flux:navlist.item
+                            href="https://picstome.com/blackscreen/"
+                            icon="computer-desktop"
+                            target="_blank"
+                        >
+                            {{ __('Black Screen') }}
                         </flux:navlist.item>
                     </flux:navlist.group>
 
@@ -181,16 +212,6 @@
                         </flux:button>
                     @endunless
                 @endauth
-
-                <flux:navlist variant="outline">
-                    <flux:navlist.group :heading="__('Studio')" class="mt-4">
-                        <flux:navlist.item :href="route('branding')" icon="paint-brush" wire:navigate>
-                            {{ __('Branding') }}
-                        </flux:navlist.item>
-                    </flux:navlist.group>
-
-
-                </flux:navlist>
 
                 <livewire:profile-dropdown />
             </flux:sidebar>

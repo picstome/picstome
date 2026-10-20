@@ -9,6 +9,16 @@ use function Pest\Laravel\assertGuest;
 
 uses(RefreshDatabase::class);
 
+test('account menu links to branding', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    actingAs($user);
+
+    Livewire::test('profile-dropdown')
+        ->assertSee(route('branding'), false)
+        ->assertDontSee('Install the app');
+});
+
 test('users can logout', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
