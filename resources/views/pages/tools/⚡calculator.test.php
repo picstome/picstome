@@ -21,11 +21,13 @@ it('creates the default calculator state on first visit', function () {
 
     $component->assertHasNoErrors()
         ->assertSee('Session price calculator')
+        ->assertSee('Apply IRPF withholding')
         ->assertSee('Base price');
 
     $state = $team->fresh()->calculatorState->state;
 
-    expect($state['fixed_expenses'])->toHaveCount(4)
+    expect($state['settings']['income_tax_withholding'])->toBeFalse()
+        ->and($state['fixed_expenses'])->toHaveCount(4)
         ->and($state['session_expenses'])->toHaveCount(3)
         ->and($state['equipment'])->toHaveCount(2)
         ->and($state['session_tasks'])->toHaveCount(3)
@@ -40,14 +42,16 @@ it('persists quick setting changes', function () {
         ->set('settings.hourly_rate', 80)
         ->set('settings.sessions_per_month', 8)
         ->set('settings.vat_percent', 10)
-        ->set('settings.income_tax_percent', 5);
+        ->set('settings.income_tax_percent', 5)
+        ->set('settings.income_tax_withholding', true);
 
     $settings = $team->fresh()->calculatorState->state['settings'];
 
     expect($settings['hourly_rate'])->toEqual(80)
         ->and($settings['sessions_per_month'])->toBe(8)
         ->and($settings['vat_percent'])->toEqual(10)
-        ->and($settings['income_tax_percent'])->toEqual(5);
+        ->and($settings['income_tax_percent'])->toEqual(5)
+        ->and($settings['income_tax_withholding'])->toBeTrue();
 });
 
 it('adds and deletes a fixed expense', function () {
@@ -135,7 +139,8 @@ it('resets the calculator to defaults', function () {
     $state = $team->fresh()->calculatorState->state;
     $summary = CalculatorService::summary($state);
 
-    expect($state['fixed_expenses'])->toHaveCount(4)
+    expect($state['settings']['income_tax_withholding'])->toBeFalse()
+        ->and($state['fixed_expenses'])->toHaveCount(4)
         ->and($summary['base_price'])->toBe(545.0);
 });
 

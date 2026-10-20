@@ -12,7 +12,7 @@ class CalculatorState extends Model
     /** @use HasFactory<CalculatorStateFactory> */
     use HasFactory;
 
-    public const SCHEMA_VERSION = 1;
+    public const SCHEMA_VERSION = 2;
 
     protected $guarded = [];
 

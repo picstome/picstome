@@ -27,10 +27,24 @@ it('calculates the default calculator scenario', function () {
         ->and($summary['base_price'])->toBe(545.0)
         ->and($summary['vat_amount'])->toBe(114.45)
         ->and($summary['invoice_total'])->toBe(659.45)
+        ->and($summary['income_tax_withholding'])->toBeFalse()
+        ->and($summary['income_tax_withheld'])->toBe(0.0)
+        ->and($summary['client_pays'])->toBe(659.45)
+        ->and($summary['net_received'])->toBe(545.0)
+        ->and($summary['effective_gross_hourly'])->toBe(65.66)
+        ->and($summary['effective_net_hourly'])->toBe(65.66);
+});
+
+it('applies IRPF withholding only when enabled', function () {
+    $state = CalculatorService::defaults();
+    $state['settings']['income_tax_withholding'] = true;
+
+    $summary = CalculatorService::summary($state);
+
+    expect($summary['income_tax_withholding'])->toBeTrue()
         ->and($summary['income_tax_withheld'])->toBe(81.75)
         ->and($summary['client_pays'])->toBe(577.7)
         ->and($summary['net_received'])->toBe(463.25)
-        ->and($summary['effective_gross_hourly'])->toBe(65.66)
         ->and($summary['effective_net_hourly'])->toBe(55.81);
 });
 

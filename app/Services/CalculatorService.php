@@ -110,6 +110,10 @@ class CalculatorService
                 'sessions_per_month' => max(1, min(1000, (int) ($settings['sessions_per_month'] ?? 10))),
                 'vat_percent' => self::percent($settings['vat_percent'] ?? 21),
                 'income_tax_percent' => self::percent($settings['income_tax_percent'] ?? 15),
+                'income_tax_withholding' => filter_var(
+                    $settings['income_tax_withholding'] ?? false,
+                    FILTER_VALIDATE_BOOLEAN
+                ),
                 'guide_dismissed_at' => is_string($settings['guide_dismissed_at'] ?? null)
                     ? $settings['guide_dismissed_at']
                     : null,
@@ -124,7 +128,7 @@ class CalculatorService
 
     /**
      * @param  array<string, mixed>  $state
-     * @return array<string, float|int>
+     * @return array<string, float|int|bool>
      */
     public static function summary(array $state): array
     {
@@ -158,7 +162,10 @@ class CalculatorService
         $basePrice = $baseCost + $timeCost;
         $vatAmount = $basePrice * ($settings['vat_percent'] / 100);
         $invoiceTotal = $basePrice + $vatAmount;
-        $incomeTaxWithheld = $basePrice * ($settings['income_tax_percent'] / 100);
+        $incomeTaxWithholding = $settings['income_tax_withholding'];
+        $incomeTaxWithheld = $incomeTaxWithholding
+            ? $basePrice * ($settings['income_tax_percent'] / 100)
+            : 0.0;
         $clientPays = $invoiceTotal - $incomeTaxWithheld;
         $netReceived = $basePrice - $incomeTaxWithheld;
 
@@ -182,6 +189,7 @@ class CalculatorService
             'vat_amount' => round($vatAmount, 2),
             'invoice_total' => round($invoiceTotal, 2),
             'income_tax_percent' => $settings['income_tax_percent'],
+            'income_tax_withholding' => $incomeTaxWithholding,
             'income_tax_withheld' => round($incomeTaxWithheld, 2),
             'client_pays' => round($clientPays, 2),
             'net_received' => round($netReceived, 2),

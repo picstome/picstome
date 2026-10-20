@@ -217,13 +217,19 @@ new class extends Component
     {
         $summary = $this->summary;
 
-        return implode(PHP_EOL, [
+        $lines = [
             __('Base price').': '.$this->formatMoney($summary['base_price']),
             __('VAT').' ('.$summary['vat_percent'].'%): '.$this->formatMoney($summary['vat_amount']),
-            __('Invoice total').': '.$this->formatMoney($summary['invoice_total']),
-            __('IRPF withheld').' ('.$summary['income_tax_percent'].'%): -'.$this->formatMoney($summary['income_tax_withheld']),
-            __('Client pays').': '.$this->formatMoney($summary['client_pays']),
-        ]);
+        ];
+
+        if ($summary['income_tax_withholding']) {
+            $lines[] = __('Invoice total').': '.$this->formatMoney($summary['invoice_total']);
+            $lines[] = __('IRPF withheld').' ('.$summary['income_tax_percent'].'%): -'.$this->formatMoney($summary['income_tax_withheld']);
+        }
+
+        $lines[] = __('Client pays').': '.$this->formatMoney($summary['client_pays']);
+
+        return implode(PHP_EOL, $lines);
     }
 
     public function formatMoney(float $value): string
@@ -300,7 +306,7 @@ new class extends Component
                     <ul class="mt-3 list-disc space-y-1 ps-4 text-sm text-zinc-600 dark:text-zinc-400">
                         <li>{{ __('Fixed expenses and monthly time are split across your sessions per month.') }}</li>
                         <li>{{ __('Equipment is depreciated after its resale value over its useful life.') }}</li>
-                        <li>{{ __('VAT is added to the invoice and remitted; IRPF is withheld from your base price and credited against your income tax.') }}</li>
+                        <li>{{ __('VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.') }}</li>
                     </ul>
                 </div>
 
@@ -359,10 +365,18 @@ new class extends Component
                         step="0.01"
                         min="0"
                         max="100"
+                        :disabled="! ($settings['income_tax_withholding'] ?? false)"
                         :label="__('IRPF (%)')"
                         :description="__('Withheld from your base price and credited against your income tax. Set it to 0 when it does not apply.')"
                     />
                 </div>
+
+                <flux:checkbox
+                    wire:model.live="settings.income_tax_withholding"
+                    :label="__('Apply IRPF withholding')"
+                    :description="__('Only when the client is a company or professional.')"
+                    class="mt-4"
+                />
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
@@ -685,7 +699,9 @@ new class extends Component
                 <div class="mt-5 rounded-xl bg-zinc-900 px-5 py-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
                     <div class="text-xs font-medium uppercase tracking-wide opacity-70">{{ __('Client pays') }}</div>
                     <div class="mt-1 text-4xl font-bold tabular-nums">{{ $this->formatMoney($summary['client_pays']) }}</div>
-                    <div class="mt-1 text-sm opacity-70">{{ __('After IRPF withholding') }}</div>
+                    <div class="mt-1 text-sm opacity-70">
+                        {{ $summary['income_tax_withholding'] ? __('After IRPF withholding') : __('VAT included') }}
+                    </div>
                 </div>
 
                 <div class="mt-5 space-y-2 text-sm">
@@ -722,17 +738,19 @@ new class extends Component
                         <span>{{ __('VAT') }} ({{ $summary['vat_percent'] }}%)</span>
                         <span class="tabular-nums">{{ $this->formatMoney($summary['vat_amount']) }}</span>
                     </div>
-                    <div class="flex justify-between gap-3 font-semibold">
-                        <span>{{ __('Invoice total') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['invoice_total']) }}</span>
-                    </div>
-                    <div class="flex justify-between gap-3">
-                        <span>{{ __('IRPF withheld') }} ({{ $summary['income_tax_percent'] }}%)</span>
-                        <span class="tabular-nums">-{{ $this->formatMoney($summary['income_tax_withheld']) }}</span>
-                    </div>
-                    <div class="text-xs text-zinc-500 dark:text-zinc-400">
-                        {{ __('IRPF is credited against your income tax return.') }}
-                    </div>
+                    @if ($summary['income_tax_withholding'])
+                        <div class="flex justify-between gap-3 font-semibold">
+                            <span>{{ __('Invoice total') }}</span>
+                            <span class="tabular-nums">{{ $this->formatMoney($summary['invoice_total']) }}</span>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <span>{{ __('IRPF withheld') }} ({{ $summary['income_tax_percent'] }}%)</span>
+                            <span class="tabular-nums">-{{ $this->formatMoney($summary['income_tax_withheld']) }}</span>
+                        </div>
+                        <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ __('IRPF is credited against your income tax return.') }}
+                        </div>
+                    @endif
                 </div>
 
                 <div class="mt-5 rounded-lg bg-zinc-50 p-4 text-sm dark:bg-zinc-800">
@@ -754,11 +772,12 @@ new class extends Component
                     x-data="{
                         copied: false,
                         copyFailed: false,
-                        summary: @js($this->copySummary),
                         copiedLabel: @js(__('Copied!')),
                         copyLabel: @js(__('Copy summary')),
                         failedLabel: @js(__('Copy failed')),
-                        copy() {
+                        copy(text) {
+                            text = text.trim();
+
                             const finish = (success) => {
                                 this.copied = success;
                                 this.copyFailed = ! success;
@@ -770,20 +789,20 @@ new class extends Component
 
                             try {
                                 if (navigator.clipboard?.writeText && window.isSecureContext) {
-                                    navigator.clipboard.writeText(this.summary)
+                                    navigator.clipboard.writeText(text)
                                         .then(() => finish(true))
-                                        .catch(() => this.fallbackCopy());
+                                        .catch(() => this.fallbackCopy(text));
                                 } else {
-                                    this.fallbackCopy();
+                                    this.fallbackCopy(text);
                                 }
                             } catch {
-                                this.fallbackCopy();
+                                this.fallbackCopy(text);
                             }
                         },
-                        fallbackCopy() {
+                        fallbackCopy(text) {
                             try {
                                 const textarea = document.createElement('textarea');
-                                textarea.value = this.summary;
+                                textarea.value = text;
                                 textarea.setAttribute('readonly', '');
                                 textarea.style.position = 'fixed';
                                 textarea.style.opacity = '0';
@@ -811,11 +830,13 @@ new class extends Component
                         },
                     }"
                 >
+                    <span x-ref="summary" class="hidden">{{ $this->copySummary }}</span>
+
                     <flux:button
                         variant="primary"
                         icon="clipboard-document"
                         class="flex-1"
-                        x-on:click="copy()"
+                        x-on:click="copy($refs.summary.textContent)"
                     >
                         <span x-text="copied ? copiedLabel : (copyFailed ? failedLabel : copyLabel)">{{ __('Copy summary') }}</span>
                     </flux:button>

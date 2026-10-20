@@ -15,6 +15,8 @@ it('shows the calculator to authenticated users', function () {
         ->get(route('tools.calculator'))
         ->assertOk()
         ->assertSee('Session price calculator')
+        ->assertSee('Apply IRPF withholding')
+        ->assertSee('Base price (without taxes)')
         ->assertSee('Recommended price')
         ->assertDontSee('<iframe', false);
 });
@@ -39,8 +41,10 @@ it('localizes the calculator in Spanish', function () {
         ->get(route('tools.calculator'))
         ->assertOk()
         ->assertSee('Calculadora de precios de sesiones')
-        ->assertSee('Gastos fijos')
-        ->assertSee('Tiempo por sesión');
+        ->assertSee('Aplicar retención de IRPF')
+        ->assertSee('Gastos de sesión')
+        ->assertSee('Tiempo total de sesión')
+        ->assertSee('Se usa para repartir los costes y el tiempo.');
 
     expect($user->currentTeam->calculatorState->state['fixed_expenses'][0]['name'])
         ->toBe('Cuota de Autónomos');

@@ -7,6 +7,7 @@ return [
             'sessions_per_month' => 10,
             'vat_percent' => 21,
             'income_tax_percent' => 15,
+            'income_tax_withholding' => false,
             'guide_dismissed_at' => null,
         ],
 

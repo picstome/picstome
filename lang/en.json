@@ -723,7 +723,7 @@
     "Useful life (years)": "Useful life (years)",
     "VAT": "VAT",
     "VAT (%)": "VAT (%)",
-    "VAT is added to the invoice and remitted; IRPF is withheld from your base price and credited against your income tax.": "VAT is added to the invoice and remitted; IRPF is withheld from your base price and credited against your income tax.",
+    "VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.": "VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.",
     "Value of one hour of your time, before taxes.": "Value of one hour of your time, before taxes.",
     "Variable costs for each session.": "Variable costs for each session.",
     "Withheld from your base price and credited against your income tax. Set it to 0 when it does not apply.": "Withheld from your base price and credited against your income tax. Set it to 0 when it does not apply.",
@@ -749,5 +749,8 @@
     "After IRPF withholding": "After IRPF withholding",
     "IRPF is credited against your income tax return.": "IRPF is credited against your income tax return.",
     "Effective hourly rate": "Effective hourly rate",
-    "Base price ÷ total time per session": "Base price ÷ total time per session"
+    "Base price ÷ total time per session": "Base price ÷ total time per session",
+    "Apply IRPF withholding": "Apply IRPF withholding",
+    "Only when the client is a company or professional.": "Only when the client is a company or professional.",
+    "VAT included": "VAT included"
 }

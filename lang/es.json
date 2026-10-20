@@ -801,11 +801,11 @@
     "Total fixed costs": "Total de gastos fijos",
     "Total per session": "Total por sesión",
     "Total time per session": "Tiempo total de sesión",
-    "Used to split monthly costs and monthly time.": "Se usa para repartir los costes y el tiempo mensual.",
+    "Used to split monthly costs and monthly time.": "Se usa para repartir los costes y el tiempo.",
     "Useful life (years)": "Vida útil (años)",
     "VAT": "IVA",
     "VAT (%)": "IVA (%)",
-    "VAT is added to the invoice and remitted; IRPF is withheld from your base price and credited against your income tax.": "El IVA se añade a la factura y se declara; el IRPF se retiene de tu precio base y se compensa con tu impuesto sobre la renta.",
+    "VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.": "El IVA se añade a la factura y se declara. Cuando facturas a una empresa o profesional, el IRPF se retiene de tu precio base y se compensa con tu impuesto sobre la renta.",
     "Value of one hour of your time, before taxes.": "Valor de una hora de tu tiempo, sin impuestos.",
     "Variable costs for each session.": "Gastos variables de cada sesión.",
     "Withheld from your base price and credited against your income tax. Set it to 0 when it does not apply.": "Se retiene de tu precio base y se compensa con tu IRPF. Pon 0 si no corresponde.",
@@ -831,5 +831,8 @@
     "After IRPF withholding": "Después de retener IRPF",
     "IRPF is credited against your income tax return.": "El IRPF se compensa en tu declaración de la renta.",
     "Effective hourly rate": "Tarifa horaria efectiva",
-    "Base price ÷ total time per session": "Precio base ÷ tiempo total por sesión"
+    "Base price ÷ total time per session": "Precio base ÷ tiempo total por sesión",
+    "Apply IRPF withholding": "Aplicar retención de IRPF",
+    "Only when the client is a company or professional.": "Solo cuando el cliente sea una empresa o profesional.",
+    "VAT included": "IVA incluido"
 }
