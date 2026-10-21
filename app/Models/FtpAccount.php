@@ -171,7 +171,11 @@ class FtpAccount extends Model
         $name = static::shootNameFor($this->team);
 
         $gallery = $this->team->galleries()->where('name', $name)->first()
-            ?? $this->team->galleries()->create(['name' => $name, 'is_public' => false]);
+            ?? $this->team->galleries()->create([
+                'name' => $name,
+                'is_public' => false,
+                'keep_original_size' => (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true),
+            ]);
 
         $this->update(['active_gallery_id' => $gallery->id]);
 

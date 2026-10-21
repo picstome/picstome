@@ -18,7 +18,7 @@ class GalleryForm extends Form
 
     public $expirationDate = null;
 
-    public $keepOriginalSize = false;
+    public $keepOriginalSize = true;
 
     public ?int $photoshoot_id = null;
 
@@ -49,6 +49,7 @@ class GalleryForm extends Form
         $this->name = $gallery->name;
         $this->expirationDate = $gallery->expiration_date?->format('Y-m-d');
         $this->photoshoot_id = $gallery->photoshoot_id;
+        $this->keepOriginalSize = (bool) $gallery->keep_original_size;
     }
 
     /**
@@ -77,6 +78,7 @@ class GalleryForm extends Form
             'photoshoot_id' => $this->photoshoot_id ?: null,
             'name' => $this->name ?? __('Untitled'),
             'expiration_date' => $this->gallery->is_public ? null : ($this->expirationDate ?: null),
+            'keep_original_size' => (bool) $this->keepOriginalSize,
         ]);
     }
 

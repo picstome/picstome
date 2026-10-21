@@ -29,6 +29,10 @@ class extends Component
     }
 }; ?>
 
+<x-slot name="font">{{ $team->brand_font }}</x-slot>
+
+<x-slot name="color">{{ $team->brand_color }}</x-slot>
+
 <div class="min-h-screen bg-white dark:bg-zinc-900">
     <div class="h-full">
         <div class="space-y-4 text-center">
@@ -39,6 +43,8 @@ class extends Component
                     <flux:heading size="xl">{{ $team->name }}</flux:heading>
                 @endif
             </a>
+
+            <div class="bg-(--color-accent) mx-auto mt-3 h-1 w-10 rounded-full"></div>
         </div>
 
         @if($galleries->isNotEmpty())

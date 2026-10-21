@@ -65,33 +65,45 @@ new class extends Component
     }
 }; ?>
 
-<div class="max-w-lg mx-auto">
-    <div class="flex flex-wrap items-end justify-between gap-4 mb-4 w-full">
+<div class="mx-auto max-w-lg">
+    <div class="mb-4 flex w-full flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-        <div class="flex items-center gap-2">
-            <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
-            @if ($this->team->portfolio_public_disabled)
-                <flux:badge size="sm">{{ __('Public portfolio is disabled') }}</flux:badge>
-            @endif
+            <div class="flex items-center gap-2">
+                <flux:heading size="xl" level="1">{{ __('Portfolio') }}</flux:heading>
+                @if ($this->team->portfolio_public_disabled)
+                    <flux:badge size="sm">{{ __('Public portfolio is disabled') }}</flux:badge>
+                @endif
+            </div>
+            <flux:subheading size="lg">
+                {{ __('Manage your public portfolio galleries.') }}
+            </flux:subheading>
         </div>
-        <flux:subheading size="lg">
-            {{ __('Manage your public portfolio galleries.') }}
-        </flux:subheading>
-        </div>
-        <div>
+        <div class="flex flex-wrap items-center gap-2">
             @if ($this->team->portfolio_public_disabled)
                 <flux:button
                     icon="lock-open"
                     :tooltip="__('Enable Public Portfolio')"
                     wire:click="enablePortfolioPage"
+                    variant="primary"
                 >
                     {{ __('Enable') }}
                 </flux:button>
             @else
                 <flux:button
+                    :href="route('portfolio.index', ['handle' => $this->team->handle])"
+                    target="_blank"
+                    icon:trailing="arrow-top-right-on-square"
+                    variant="primary"
+                >
+                    {{ __('View Portfolio') }}
+                </flux:button>
+
+                <flux:button
                     icon="lock-closed"
                     :tooltip="__('Disable Public Portfolio')"
                     wire:click="disablePortfolioPage"
+                    variant="primary"
+                    class="btn-ink"
                 >
                     {{ __('Disable') }}
                 </flux:button>
@@ -102,19 +114,30 @@ new class extends Component
 
     <div class="space-y-4">
         @if ($this->portfolioGalleries?->isNotEmpty())
-            <ul x-data="{
-                handleReorder: (item, position) => {
-                    $wire.call('reorderGallery', item, position);
-                }
-            }" x-sort="handleReorder">
+            <ul
+                x-data="{
+                    handleReorder: (item, position) => {
+                        $wire.call('reorderGallery', item, position)
+                    },
+                }"
+                x-sort="handleReorder"
+            >
                 @foreach ($this->portfolioGalleries as $gallery)
                     <li x-sort:item="{{ $gallery->id }}">
-                        @if (!$loop->first)
+                        @if (! $loop->first)
                             <flux:separator variant="subtle" />
                         @endif
+
                         <div class="flex items-center justify-between py-6">
                             <div class="flex items-center gap-4">
-                                <flux:button x-sort:handle variant="subtle" size="sm" inset="top bottom" class="cursor-move touch-manipulation" square>
+                                <flux:button
+                                    x-sort:handle
+                                    variant="subtle"
+                                    size="sm"
+                                    inset="top bottom"
+                                    class="cursor-move touch-manipulation"
+                                    square
+                                >
                                     <flux:icon.bars-2 variant="mini" />
                                 </flux:button>
                                 <img
@@ -124,85 +147,98 @@ new class extends Component
                                 />
                                 <div>
                                     <flux:heading>{{ $gallery->name }}</flux:heading>
-                                     <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
+                                    <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
                                 </div>
                             </div>
-                        <flux:button wire:click="removeFromPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
-                            <flux:icon.x-mark variant="mini" />
-                        </flux:button>
+                            <flux:button
+                                wire:click="removeFromPortfolio({{ $gallery->id }})"
+                                variant="subtle"
+                                size="sm"
+                                square
+                            >
+                                <flux:icon.x-mark variant="mini" />
+                            </flux:button>
                         </div>
                     </li>
                 @endforeach
-             </ul>
+            </ul>
 
-             <div>
-                 <flux:modal.trigger name="available-galleries">
-                     <flux:button icon="plus" variant="filled">{{ __('Add Galleries') }}</flux:button>
-                 </flux:modal.trigger>
-             </div>
-         @else
-             <flux:callout icon="briefcase" variant="secondary">
-                 <flux:callout.heading>{{ __('Add Galleries to Portfolio') }}</flux:callout.heading>
-                 <flux:callout.text>
-                     {{ __('Add galleries to your portfolio to showcase your work to visitors.') }}
-                 </flux:callout.text>
-                 <x-slot name="actions">
-                     <flux:modal.trigger name="available-galleries">
-                         <flux:button>{{ __('Add Galleries') }}</flux:button>
-                     </flux:modal.trigger>
-                 </x-slot>
-             </flux:callout>
-         @endif
-     </div>
+            <div>
+                <flux:modal.trigger name="available-galleries">
+                    <flux:button icon="plus" variant="primary" class="btn-ink">{{ __('Add Galleries') }}</flux:button>
+                </flux:modal.trigger>
+            </div>
+        @else
+            <flux:callout icon="briefcase" variant="secondary">
+                <flux:callout.heading>{{ __('Add Galleries to Portfolio') }}</flux:callout.heading>
+                <flux:callout.text>
+                    {{ __('Add galleries to your portfolio to showcase your work to visitors.') }}
+                </flux:callout.text>
+                <x-slot name="actions">
+                    <flux:modal.trigger name="available-galleries">
+                        <flux:button variant="primary" class="btn-ink">{{ __('Add Galleries') }}</flux:button>
+                    </flux:modal.trigger>
+                </x-slot>
+            </flux:callout>
+        @endif
+    </div>
 
-     <flux:modal name="available-galleries" class="md:w-[32rem]">
-         <div class="space-y-6">
-             <div>
-                 <flux:heading size="lg">{{ __('Add Galleries to Portfolio') }}</flux:heading>
-                 <flux:text class="mt-2">{{ __('Select galleries to add to your public portfolio.') }}</flux:text>
-             </div>
+    <flux:modal name="available-galleries" class="md:w-[32rem]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('Add Galleries to Portfolio') }}</flux:heading>
+                <flux:text class="mt-2">{{ __('Select galleries to add to your public portfolio.') }}</flux:text>
+            </div>
 
-             @if ($this->availableGalleries?->isNotEmpty())
-                 <ul>
-                     @foreach ($this->availableGalleries as $gallery)
-                         <li>
-                             @if (!$loop->first)
-                                 <flux:separator variant="subtle" />
-                             @endif
-                             <div class="flex items-center justify-between py-6">
-                                 <div class="flex items-center gap-4">
-                                      <img
-                                          src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->photos()->first()?->small_thumbnail_url }}"
-                                          alt=""
-                                          class="size-16 rounded-lg object-cover"
-                                      />
-                                     <div>
-                                         <flux:heading size="sm">{{ $gallery->name }}</flux:heading>
-                                         <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
-                                     </div>
-                                 </div>
-                                 <flux:button wire:click="addToPortfolio({{ $gallery->id }})" variant="subtle" size="sm" square>
-                                     <flux:icon.plus variant="mini" />
-                                 </flux:button>
-                             </div>
-                         </li>
-                     @endforeach
-                 </ul>
-             @else
-                 <flux:callout variant="secondary">
-                     <flux:callout.heading>{{ __('No Available Galleries') }}</flux:callout.heading>
-                     <flux:callout.text>{{ __('All your galleries are already in your portfolio.') }}</flux:callout.text>
-                 </flux:callout>
-             @endif
+            @if ($this->availableGalleries?->isNotEmpty())
+                <ul>
+                    @foreach ($this->availableGalleries as $gallery)
+                        <li>
+                            @if (! $loop->first)
+                                <flux:separator variant="subtle" />
+                            @endif
 
-             @if ($this->availableGalleries->hasPages())
-                 <div class="pt-4">
-                     <flux:pagination :paginator="$this->availableGalleries" />
-                 </div>
-             @endif
-         </div>
-     </flux:modal>
- </div>
- @assets
+                            <div class="flex items-center justify-between py-6">
+                                <div class="flex items-center gap-4">
+                                    <img
+                                        src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->photos()->first()?->small_thumbnail_url }}"
+                                        alt=""
+                                        class="size-16 rounded-lg object-cover"
+                                    />
+                                    <div>
+                                        <flux:heading size="sm">{{ $gallery->name }}</flux:heading>
+                                        <flux:text>{{ $gallery->photos()->count() }} {{ __('photos') }}</flux:text>
+                                    </div>
+                                </div>
+                                <flux:button
+                                    wire:click="addToPortfolio({{ $gallery->id }})"
+                                    variant="subtle"
+                                    size="sm"
+                                    square
+                                >
+                                    <flux:icon.plus variant="mini" />
+                                </flux:button>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <flux:callout variant="secondary">
+                    <flux:callout.heading>{{ __('No Available Galleries') }}</flux:callout.heading>
+                    <flux:callout.text>
+                        {{ __('All your galleries are already in your portfolio.') }}
+                    </flux:callout.text>
+                </flux:callout>
+            @endif
+
+            @if ($this->availableGalleries->hasPages())
+                <div class="pt-4">
+                    <flux:pagination :paginator="$this->availableGalleries" />
+                </div>
+            @endif
+        </div>
+    </flux:modal>
+</div>
+@assets
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
- @endassets
+@endassets

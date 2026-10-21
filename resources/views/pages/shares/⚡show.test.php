@@ -25,6 +25,16 @@ test('shared gallery can be viewed', function () {
     $response->assertStatus(200);
 });
 
+test('shared gallery applies the team brand color', function () {
+    $this->team->update(['brand_color' => 'violet']);
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
+
+    get('/shares/0123ABC/'.$gallery->slug)
+        ->assertOk()
+        ->assertSee('--color-violet-500', false)
+        ->assertSee('bg-(--color-accent)', false);
+});
+
 test('bare share URL redirects to the slug URL', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
 

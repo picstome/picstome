@@ -48,7 +48,9 @@ new class extends Component
 
             <div class="mt-5 w-full max-w-lg">
                 <form wire:submit="save" class="space-y-6">
-                    <flux:select wire:model="form.color" :label="__('Accent color')" class="flex-wrap">
+                    <flux:select wire:model.live="form.color" :label="__('Accent color')" class="flex-wrap">
+                        <option value="">{{ __('Picstome (default)') }}</option>
+                        <option value="zinc">{{ __('Zinc') }}</option>
                         <option value="red">{{ __('Red') }}</option>
                         <option value="orange">{{ __('Orange') }}</option>
                         <option value="amber">{{ __('Amber') }}</option>
@@ -66,8 +68,41 @@ new class extends Component
                         <option value="fuchsia">{{ __('Fuchsia') }}</option>
                         <option value="pink">{{ __('Pink') }}</option>
                         <option value="rose">{{ __('Rose') }}</option>
-                        <option value="">{{ __('Zinc') }}</option>
                     </flux:select>
+
+                    <div class="border-brand-green/10 dark:border-white/10 rounded-xl border bg-white p-4 dark:bg-white/5">
+                        <flux:text class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase">
+                            {{ __('Preview') }}
+                        </flux:text>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-3">
+                            @if ($form->color)
+                                <flux:button
+                                    variant="primary"
+                                    :color="$form->color"
+                                    :href="route('handle.show', ['handle' => $team->handle])"
+                                    target="_blank"
+                                    icon:trailing="arrow-top-right-on-square"
+                                >
+                                    {{ __('View Profile') }}
+                                </flux:button>
+                            @else
+                                <flux:button
+                                    variant="primary"
+                                    class="[--color-accent:var(--color-brand-green)] [--color-accent-content:var(--color-brand-green)] [--color-accent-foreground:white]"
+                                    :href="route('handle.show', ['handle' => $team->handle])"
+                                    target="_blank"
+                                    icon:trailing="arrow-top-right-on-square"
+                                >
+                                    {{ __('View Profile') }}
+                                </flux:button>
+                            @endif
+
+                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 text-sm font-medium">
+                                {{ __('Applies to your public pages. The Picstome dashboard keeps its own theme.') }}
+                            </flux:text>
+                        </div>
+                    </div>
 
                     <flux:select wire:model="form.font" :label="__('Font')">
                         <option value="">System sans-serif</option>

@@ -51,9 +51,11 @@ new class extends Component
             </div>
         </div>
         <div class="flex gap-4">
-            <flux:button wire:click="delete" variant="subtle" wire:confirm="{{ __('Are you sure?') }}">
-                {{ __('Delete') }}
-            </flux:button>
+            <flux:modal.trigger name="delete-contract-template">
+                <flux:button variant="subtle">
+                    {{ __('Delete') }}
+                </flux:button>
+            </flux:modal.trigger>
 
             <flux:modal.trigger name="edit">
                 <flux:button>{{ __('Edit') }}</flux:button>
@@ -105,6 +107,13 @@ new class extends Component
             </div>
         </form>
     </flux:modal>
+
+    <x-confirm-modal
+        name="delete-contract-template"
+        :title="__('Delete template?')"
+        :message="__('This action cannot be undone.')"
+        method="delete"
+    />
 </div>
 
 @assets

@@ -96,7 +96,9 @@ new class extends Component
                 Your browser does not support the video tag.
             </video>
         @elseif ($photo->isPdf())
-            <div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10">
+            <div
+                class="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10"
+            >
                 <flux:icon.document-text class="size-10 text-zinc-400" />
                 <flux:text class="w-full truncate text-center text-xs text-zinc-500 dark:text-white/70">
                     {{ $photo->name }}
@@ -172,8 +174,7 @@ new class extends Component
                 @endif
 
                 <flux:menu.item
-                    wire:click="$parent.deletePhoto({{ $photo->id }})"
-                    wire:confirm="{{ __('Are you sure?') }}"
+                    wire:click="$dispatch('request-delete-photo', { id: {{ $photo->id }} })"
                     icon="trash"
                     variant="danger"
                 >

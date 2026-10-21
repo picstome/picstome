@@ -16,7 +16,9 @@ beforeEach(function () {
 it('allows users to see the styling branding page', function () {
     $response = actingAs($this->user)->get('/branding/styling');
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertSee('Picstome (default)')
+        ->assertSee(route('handle.show', ['handle' => $this->team->handle]), false);
 });
 
 it('can change brand color', function () {

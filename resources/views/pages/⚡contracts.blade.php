@@ -60,7 +60,13 @@ new class extends Component
             <x-subheading>{{ __('View, create, and manage your contracts.') }}</x-subheading>
         </div>
         <div class="flex flex-wrap gap-2">
-            <flux:button :href="route('contract-templates')" icon="clipboard-document-list" wire:navigate>
+            <flux:button
+                :href="route('contract-templates')"
+                icon="clipboard-document-list"
+                wire:navigate
+                variant="primary"
+                class="btn-ink"
+            >
                 {{ __('Templates') }}
             </flux:button>
             <flux:modal.trigger :name="auth()->check() ? 'create-contract' : 'login'">
@@ -192,14 +198,17 @@ new class extends Component
                     <flux:label>{{ __('Terms') }}</flux:label>
 
                     <flux:modal.trigger name="templates">
-                        <flux:button size="sm">{{ __('Use template') }}</flux:button>
+                        <flux:button size="sm" variant="primary" class="btn-ink">{{ __('Use template') }}</flux:button>
                     </flux:modal.trigger>
                 </div>
 
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                     x-on:trix-change="$wire.form.body = $event.target.value"
-                    x-on:template-selected.window="element = document.querySelector('trix-editor'); element.editor.insertHTML($wire.form.body)"
+                    x-on:template-selected.window="
+                        element = document.querySelector('trix-editor')
+                        element.editor.insertHTML($wire.form.body)
+                    "
                     input="trix"
                 ></trix-editor>
 

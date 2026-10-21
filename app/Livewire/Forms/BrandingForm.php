@@ -25,7 +25,7 @@ class BrandingForm extends Form
     #[Validate(['in:top,bottom,middle'])]
     public $watermarkPosition;
 
-    #[Validate(['nullable', 'in:red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose'])]
+    #[Validate(['nullable', 'in:red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,zinc'])]
     public $color;
 
     #[Validate(['nullable', 'integer', 'min:0', 'max:100'])]

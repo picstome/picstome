@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\BioLink;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,6 +14,23 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
+});
+
+it('links to the styling page from the public profile', function () {
+    actingAs($this->user)
+        ->get('/public-profile')
+        ->assertOk()
+        ->assertSee(route('branding.styling'), false);
+});
+
+it('asks for confirmation before deleting a bio link', function () {
+    $link = BioLink::factory()->for($this->team)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::public-profile')
+        ->call('requestDeleteLink', $link->id);
+
+    expect($component->get('pendingLinkId'))->toBe($link->id);
+    expect($this->team->bioLinks()->count())->toBe(1);
 });
 
 it('allows user to update handle successfully', function () {

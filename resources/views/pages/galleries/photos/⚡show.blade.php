@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -76,6 +77,15 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         ]);
 
         $this->commentText = '';
+    }
+
+    public ?int $pendingCommentId = null;
+
+    public function requestDeleteComment(int $id): void
+    {
+        $this->pendingCommentId = $id;
+
+        Flux::modal('delete-comment')->show();
     }
 
     public function deleteComment(PhotoComment $comment)
@@ -311,14 +321,11 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                                 </flux:menu.item>
                             @endif
                         @endif
-                        <flux:menu.item
-                            wire:click="delete"
-                            wire:confirm="{{ __('Are you sure?') }}"
-                            icon="trash"
-                            variant="danger"
-                        >
-                            {{ __('Delete') }}
-                        </flux:menu.item>
+                        <flux:modal.trigger name="delete-photo">
+                            <flux:menu.item icon="trash" variant="danger">
+                                {{ __('Delete') }}
+                            </flux:menu.item>
+                        </flux:modal.trigger>
                     </flux:menu>
                 </flux:dropdown>
 
@@ -411,8 +418,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                                         {{ $comment->created_at->diffForHumans() }}
                                     </flux:text>
                                     <flux:button
-                                        wire:click="deleteComment({{ $comment->id }})"
-                                        wire:confirm="{{ __('Are you sure?') }}"
+                                        wire:click="requestDeleteComment({{ $comment->id }})"
                                         icon="x-mark"
                                         variant="subtle"
                                         size="xs"
@@ -440,8 +446,19 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         </div>
     </flux:modal>
 
+    <x-confirm-modal
+        name="delete-photo"
+        :title="__('Delete photo?')"
+        :message="__('This action cannot be undone.')"
+        method="delete"
+    />
 
-
+    <x-confirm-modal
+        name="delete-comment"
+        :title="__('Delete comment?')"
+        :message="__('This action cannot be undone.')"
+        :method="$this->pendingCommentId ? 'deleteComment(' . $this->pendingCommentId . ')' : null"
+    />
 </div>
 
 

@@ -66,6 +66,25 @@ new class extends Component
         return Cashier::formatAmount($this->team->payments()->where('completed_at', '>=', $start)->sum('amount'), $this->team->stripe_currency);
     }
 
+    /**
+     * Progress is based on the full checklist, including steps the user dismissed.
+     *
+     * @return array{completed: int, total: int, percent: int}
+     */
+    #[Computed]
+    public function setupProgress(): array
+    {
+        $steps = collect($this->steps);
+        $completed = $steps->where('complete', true)->count();
+        $total = $steps->count();
+
+        return [
+            'completed' => $completed,
+            'total' => $total,
+            'percent' => $total > 0 ? (int) round(($completed / $total) * 100) : 0,
+        ];
+    }
+
     #[Computed]
     public function steps()
     {
@@ -277,9 +296,18 @@ new class extends Component
 } ?>
 
 <div>
-    <flux:heading size="xl" level="1">
-        {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
-    </flux:heading>
+    <div class="flex items-center gap-3">
+        <span class="bg-brand-coral h-10 w-1 rounded-full"></span>
+
+        <div>
+            <flux:heading size="xl" level="1" class="text-brand-ink dark:text-brand-cream font-semibold">
+                {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
+            </flux:heading>
+            <flux:text class="text-brand-ink/75 dark:text-brand-sage/85 mt-0.5 font-medium">
+                {{ __('A quick look at your studio.') }}
+            </flux:text>
+        </div>
+    </div>
 
     <flux:spacer class="my-6" />
 
@@ -290,61 +318,107 @@ new class extends Component
     <flux:spacer class="my-6" />
 
     @if (! $this->team->subscribed())
-        <flux:callout icon="shield-check" color="teal" inline>
-            <flux:callout.heading>
-                <flux:text variant="strong">
-                    {{ __('Get More With Picstome Pro') }}
-                </flux:text>
-            </flux:callout.heading>
-            <flux:callout.text>
-                <flux:text variant="strong" class="font-medium">
-                    {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
-                </flux:text>
-            </flux:callout.text>
-            <x-slot name="actions">
-                <flux:button :href="route('subscribe')" variant="primary" color="teal">
+        <section
+            class="border-brand-green/15 bg-brand-sage/20 dark:bg-brand-sage/5 relative overflow-hidden rounded-2xl border px-6 py-6 sm:px-8 dark:border-white/10"
+        >
+            <div
+                class="bg-brand-sage/40 dark:bg-brand-green/20 pointer-events-none absolute -top-16 -right-12 size-48 rounded-full blur-3xl"
+            ></div>
+
+            <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="text-brand-green dark:text-brand-sage flex size-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs dark:bg-white/10"
+                    >
+                        <flux:icon.shield-check class="size-5" />
+                    </div>
+
+                    <div class="max-w-2xl">
+                        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                            {{ __('Get More With Picstome Pro') }}
+                        </flux:heading>
+                        <flux:text class="text-brand-ink/80 dark:text-brand-sage/85 mt-2 font-medium">
+                            {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
+                        </flux:text>
+                    </div>
+                </div>
+
+                <flux:button :href="route('subscribe')" variant="primary" class="shrink-0">
                     {{ __('Upgrade to Pro') }}
                 </flux:button>
-            </x-slot>
-        </flux:callout>
+            </div>
+        </section>
     @endif
 
     <flux:spacer class="my-6" />
 
     @if ($this->incompleteSteps->count())
         <section>
-            <flux:heading size="lg">
-                {{ __('Complete Your Account Setup') }}
-            </flux:heading>
-            <flux:spacer class="my-4" />
-            <div class="space-y-2">
-                @foreach ($this->incompleteSteps as $step)
-                    @if (! $step['complete'])
-                        <flux:callout
-                            wire:key="{{ $step['key'] }}"
-                            icon="{{ $step['icon'] }}"
-                            variant="secondary"
-                            inline
+            <div
+                class="border-brand-green/10 overflow-hidden rounded-2xl border bg-white shadow-xs dark:border-white/10 dark:bg-white/5"
+            >
+                <div class="border-brand-green/10 border-b px-5 py-4 dark:border-white/10">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                            {{ __('Complete Your Account Setup') }}
+                        </flux:heading>
+
+                        <span
+                            class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium tabular-nums"
                         >
-                            <flux:callout.heading>
-                                {{ $step['label'] }}
-                            </flux:callout.heading>
-                            <x-slot name="actions">
-                                <flux:button size="sm" :href="$step['route']">
+                            {{ $this->setupProgress['completed'] }}/{{ $this->setupProgress['total'] }}
+                        </span>
+                    </div>
+
+                    <div class="bg-brand-sage/30 mt-3 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10">
+                        <div
+                            class="bg-brand-green dark:bg-brand-sage h-full rounded-full transition-all duration-300"
+                            style="width: {{ $this->setupProgress['percent'] }}%"
+                        ></div>
+                    </div>
+                </div>
+
+                <div class="divide-brand-green/10 divide-y dark:divide-white/10">
+                    @foreach ($this->incompleteSteps as $step)
+                        <div
+                            class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center"
+                            wire:key="setup-{{ $step['key'] }}"
+                        >
+                            <div
+                                class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage flex size-10 shrink-0 items-center justify-center rounded-xl"
+                            >
+                                <flux:icon :icon="$step['icon']" class="size-5" />
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <flux:text variant="strong" class="font-medium">{{ $step['label'] }}</flux:text>
+                                <flux:text class="text-brand-ink/75 dark:text-brand-sage/80 mt-0.5 text-xs font-medium">
+                                    {{ $step['desc'] }}
+                                </flux:text>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <flux:button
+                                    size="sm"
+                                    :href="$step['route']"
+                                    variant="ghost"
+                                    icon:trailing="arrow-right"
+                                    class="text-brand-green! hover:bg-brand-green/5! dark:text-brand-sage! dark:hover:bg-white/10!"
+                                >
                                     {{ $step['action'] }}
                                 </flux:button>
-                            </x-slot>
-                            <x-slot name="controls">
+
                                 <flux:button
                                     icon="x-mark"
                                     variant="subtle"
-                                    wire:click="dismissStep('{{ $step['key'] }}')"
                                     size="sm"
+                                    wire:click="dismissStep('{{ $step['key'] }}')"
+                                    :aria-label="__('Dismiss')"
                                 />
-                            </x-slot>
-                        </flux:callout>
-                    @endif
-                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </section>
 
@@ -353,49 +427,107 @@ new class extends Component
 
     <section>
         <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Account Overview') }}</flux:heading>
+            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                {{ __('Account Overview') }}
+            </flux:heading>
+
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <a
-                    href="{{ route('customers') }}"
-                    wire:navigate
-                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
+                @foreach ([
+                              [
+                                  'label' => __('Customers'),
+                                  'value' => $this->customersCount,
+                                  'icon' => 'user-group',
+                                  'route' => route('customers'),
+                                  'tone' => 'bg-brand-sage/35 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage',
+                              ],
+                              [
+                                  'label' => __('Galleries'),
+                                  'value' => $this->galleriesCount,
+                                  'icon' => 'photo',
+                                  'route' => route('galleries'),
+                                  'tone' => 'bg-brand-coral/15 text-brand-coral-deep dark:bg-brand-coral/10 dark:text-brand-coral',
+                              ],
+                              [
+                                  'label' => __('Revenue (30d)'),
+                                  'value' => $this->revenue30Days,
+                                  'icon' => 'banknotes',
+                                  'route' => route('payments'),
+                                  'tone' => 'bg-brand-ink text-brand-cream',
+                              ],
+                          ] as $card)
+                    <a
+                        href="{{ $card['route'] }}"
+                        wire:navigate
+                        class="group border-brand-green/10 hover:border-brand-green/25 relative flex flex-col rounded-xl border bg-white p-5 shadow-xs transition duration-200 hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10"
+                    >
+                        <div class="flex items-start justify-between gap-4">
+                            <span class="{{ $card['tone'] }} flex size-10 items-center justify-center rounded-xl">
+                                <flux:icon :icon="$card['icon']" class="size-5" />
+                            </span>
+
+                            <flux:icon.arrow-up-right
+                                class="text-brand-green/40 group-hover:text-brand-green dark:text-brand-sage/50 dark:group-hover:text-brand-sage size-4 transition"
+                            />
+                        </div>
+
+                        <div class="mt-5">
+                            <flux:text
+                                class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase"
+                            >
+                                {{ $card['label'] }}
+                            </flux:text>
+                            <flux:heading size="xl" class="mt-1 tabular-nums">
+                                {{ $card['value'] }}
+                            </flux:heading>
+                        </div>
+                    </a>
+                @endforeach
+
+                <div
+                    class="border-brand-green/10 flex flex-col rounded-xl border bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5"
                 >
-                    <flux:subheading>{{ __('Customers') }}</flux:subheading>
-                    <flux:heading size="xl">{{ $this->customersCount }}</flux:heading>
-                </a>
-                <a
-                    href="{{ route('galleries') }}"
-                    wire:navigate
-                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                >
-                    <flux:subheading>{{ __('Galleries') }}</flux:subheading>
-                    <flux:heading size="xl">{{ $this->galleriesCount }}</flux:heading>
-                </a>
-                <a
-                    href="{{ route('payments') }}"
-                    wire:navigate
-                    class="block rounded-lg bg-zinc-50 p-4 transition hover:bg-zinc-100 dark:bg-zinc-700 dark:hover:bg-zinc-600"
-                >
-                    <flux:subheading>{{ __('Revenue (30d)') }}</flux:subheading>
-                    <flux:heading size="xl">{{ $this->revenue30Days }}</flux:heading>
-                </a>
-                <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-700">
-                    <flux:subheading>{{ __('Storage Used') }}</flux:subheading>
-                    <flux:heading size="xl">{{ $this->usedGb }}</flux:heading>
-                    <flux:spacer class="mt-2" />
-                    <div class="space-y-2">
+                    <div class="flex items-start justify-between gap-4">
+                        <span
+                            class="bg-brand-green text-brand-cream flex size-10 items-center justify-center rounded-xl"
+                        >
+                            <flux:icon.server class="size-5" />
+                        </span>
+
+                        @if ($this->team->hasUnlimitedStorage)
+                            <span
+                                class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage rounded-full px-2 py-1 text-[11px] font-medium"
+                            >
+                                {{ __('Unlimited') }}
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="mt-5">
+                        <flux:text
+                            class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase"
+                        >
+                            {{ __('Storage Used') }}
+                        </flux:text>
+                        <flux:heading size="xl" class="mt-1 tabular-nums">{{ $this->usedGb }}</flux:heading>
+                    </div>
+
+                    <div class="mt-auto pt-4">
                         @if (! $this->team->hasUnlimitedStorage)
-                            <div class="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                            @php
+                                $storageTone = $this->usagePercent > 90 ? 'bg-brand-coral' : ($this->usagePercent > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage');
+                            @endphp
+
+                            <div class="bg-brand-sage/30 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10">
                                 <div
-                                    class="{{ $this->usagePercent > 90 ? 'bg-red-500' : ($this->usagePercent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
+                                    class="{{ $storageTone }} h-full rounded-full transition-all duration-300"
                                     style="width: {{ min($this->usagePercent, 100) }}%"
                                 ></div>
                             </div>
-                            <flux:text class="mt-2 text-[11px]">
+                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-2 text-[11px] font-medium">
                                 {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
                             </flux:text>
                         @else
-                            <flux:text class="text-[11px]">
+                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 text-[11px] font-medium">
                                 {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
                             </flux:text>
                         @endif
@@ -407,12 +539,16 @@ new class extends Component
 
     @if ($this->hasUpcomingEventsOrReminders())
         <section class="mt-8 mb-8">
-            <flux:heading size="lg">{{ __('Upcoming Events & Reminders') }}</flux:heading>
+            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                {{ __('Upcoming Events & Reminders') }}
+            </flux:heading>
             <flux:separator class="mt-3" />
             <x-table>
                 <x-table.rows>
                     @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                        <x-table.row :class="!empty($event['is_today']) && $event['is_today'] ? 'bg-yellow-50 dark:bg-yellow-900/30' : ''">
+                        <x-table.row
+                            :class="! empty($event['is_today']) && $event['is_today'] ? 'bg-brand-sage/20 dark:bg-brand-sage/10' : ''"
+                        >
                             <x-table.cell variant="strong" class="relative w-full">
                                 <a
                                     href="{{ $event['link'] }}"
@@ -421,26 +557,43 @@ new class extends Component
                                 ></a>
                                 <div class="flex flex-wrap items-center gap-2">
                                     {{ $event['label'] }}
-@if ($event['type'] === 'birthday')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}" inset="top bottom" icon="cake" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }} ({{ $event['age'] }})
-    </flux:badge>
-@elseif ($event['type'] === 'photoshoot')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}" inset="top bottom" icon="camera" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
-    </flux:badge>
-@elseif ($event['type'] === 'gallery')
-    <flux:badge color="{{ !empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}" inset="top bottom" icon="clock" size="sm">
-        {{ !empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
-    </flux:badge>
-@elseif ($event['type'] === 'contract')
-    <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
-        {{ __('Awaiting signature') }}
-    </flux:badge>
-@endif
+
+                                    @if ($event['type'] === 'birthday')
+                                        <flux:badge
+                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}"
+                                            inset="top bottom"
+                                            icon="cake"
+                                            size="sm"
+                                        >
+                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
+                                            ({{ $event['age'] }})
+                                        </flux:badge>
+                                    @elseif ($event['type'] === 'photoshoot')
+                                        <flux:badge
+                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}"
+                                            inset="top bottom"
+                                            icon="camera"
+                                            size="sm"
+                                        >
+                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
+                                        </flux:badge>
+                                    @elseif ($event['type'] === 'gallery')
+                                        <flux:badge
+                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}"
+                                            inset="top bottom"
+                                            icon="clock"
+                                            size="sm"
+                                        >
+                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
+                                        </flux:badge>
+                                    @elseif ($event['type'] === 'contract')
+                                        <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
+                                            {{ __('Awaiting signature') }}
+                                        </flux:badge>
+                                    @endif
                                 </div>
                             </x-table.cell>
-                            <x-table.cell class="relative" align="end">
+                            <x-table.cell class="text-brand-ink/70 dark:text-brand-sage/80 relative" align="end">
                                 <a
                                     href="{{ $event['link'] }}"
                                     wire:navigate

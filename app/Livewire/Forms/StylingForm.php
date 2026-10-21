@@ -10,7 +10,7 @@ class StylingForm extends Form
 {
     public Team $team;
 
-    #[Validate(['nullable', 'in:red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose'])]
+    #[Validate(['nullable', 'in:red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,zinc'])]
     public $color;
 
     #[Validate(['nullable', 'in:Roboto Flex,Raleway,Montserrat,Work Sans,Source Sans 3,Nunito Sans,Source Serif 4,Roboto Serif,Playfair Display'])]

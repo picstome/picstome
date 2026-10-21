@@ -54,6 +54,10 @@ class extends Component
     }
 }; ?>
 
+<x-slot name="font">{{ $photo->gallery->team->brand_font }}</x-slot>
+
+<x-slot name="color">{{ $photo->gallery->team->brand_color }}</x-slot>
+
 <x-slot name="head">
     @if(app()->environment('production'))
         @include('partials.google-analytics')

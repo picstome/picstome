@@ -53,22 +53,14 @@ new #[Layout('layouts.guest')] class extends Component
     {
         return $this->gallery->photosInOrder($this->gallery->photoIds());
     }
-
-    public function with()
-    {
-        return [
-            'font' => $this->gallery->team->brand_font,
-            'color' => $this->gallery->team->brand_color,
-        ];
-    }
 };
 ?>
 
-<div
-    x-data
-    x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
-    class="h-full"
->
+<x-slot name="font">{{ $gallery->team->brand_font }}</x-slot>
+
+<x-slot name="color">{{ $gallery->team->brand_color }}</x-slot>
+
+<div x-data x-on:selection-limit-reached.window="$flux.modal('selection-limit').show()" class="h-full">
     @if ($this->allPhotos->isNotEmpty())
         <div class="relative">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
@@ -92,6 +84,9 @@ new #[Layout('layouts.guest')] class extends Component
             <div class="flex items-center gap-4">
                 <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
             </div>
+
+            <div class="mt-3 h-1 w-10 rounded-full bg-(--color-accent)"></div>
+
             @if ($gallery->share_description)
                 <x-subheading class="mt-2">
                     {{ $gallery->share_description }}
@@ -196,6 +191,8 @@ new #[Layout('layouts.guest')] class extends Component
             @include('partials.powered-by')
         </div>
     @endsubscribed
+
+    <x-selection-limit-modal />
 </div>
 @script
     <script>

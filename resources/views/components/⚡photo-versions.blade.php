@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use App\Services\PhotoUrlService;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -18,6 +19,8 @@ new class extends Component
     public Photo $photo;
 
     public bool $manageable = false;
+
+    public ?int $pendingVersionId = null;
 
     public function mount(Photo $photo, bool $manageable = false)
     {
@@ -127,6 +130,28 @@ new class extends Component
 
         $this->photo->unsetRelation('currentVersion');
         unset($this->versions);
+    }
+
+    /**
+     * Deleting a version is confirmed through the modal below, so the
+     * deletion only runs once the user confirms it.
+     */
+    public function requestDeleteVersion(int $versionId): void
+    {
+        $this->pendingVersionId = $versionId;
+
+        Flux::modal('delete-version-'.$this->photo->id)->show();
+    }
+
+    public function deletePendingVersion(): void
+    {
+        if (! $this->pendingVersionId) {
+            return;
+        }
+
+        $this->deleteVersion($this->pendingVersionId);
+
+        $this->pendingVersionId = null;
     }
 
     public function deleteVersion(int $versionId)
@@ -321,9 +346,9 @@ new class extends Component
                                         </flux:button>
                                         <flux:button
                                             size="sm"
-                                            variant="danger"
-                                            wire:click="deleteVersion({{ (int) $version['id'] }})"
-                                            wire:confirm="{{ __('Delete this version permanently?') }}"
+                                            variant="primary"
+                                            class="btn-coral"
+                                            wire:click="requestDeleteVersion({{ (int) $version['id'] }})"
                                         >
                                             {{ __('Delete') }}
                                         </flux:button>
@@ -335,5 +360,12 @@ new class extends Component
                 @endif
             </div>
         </flux:modal>
+
+        <x-confirm-modal
+            name="delete-version-{{ $photo->id }}"
+            :title="__('Delete version?')"
+            :message="__('This action cannot be undone.')"
+            method="deletePendingVersion"
+        />
     @endif
 </div>

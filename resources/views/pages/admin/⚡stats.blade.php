@@ -145,8 +145,10 @@ new class extends Component
 <div x-data="{ chart: null, titles: @js($this->chartTitles) }">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <flux:heading size="xl">{{ __('Usage stats') }}</flux:heading>
-            <flux:text class="mt-1">
+            <flux:heading size="xl" class="text-brand-green dark:text-brand-cream font-semibold">
+                {{ __('Usage stats') }}
+            </flux:heading>
+            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Photos, storage, and growth across Picstome.') }}
             </flux:text>
         </div>
@@ -170,7 +172,13 @@ new class extends Component
                 />
             @endif
 
-            <flux:button wire:click="refreshStats" icon="arrow-path" wire:loading.attr="disabled">
+            <flux:button
+                wire:click="refreshStats"
+                icon="arrow-path"
+                variant="primary"
+                wire:loading.attr="disabled"
+                class="btn-ink"
+            >
                 {{ __('Refresh') }}
             </flux:button>
         </div>
@@ -178,9 +186,11 @@ new class extends Component
 
     <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
         <div>
-            <flux:heading size="lg">{{ __('New in period') }}</flux:heading>
+            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                {{ __('New in period') }}
+            </flux:heading>
 
-            <flux:text class="mt-1">{{ $this->periodLabel }}</flux:text>
+            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">{{ $this->periodLabel }}</flux:text>
         </div>
     </div>
 
@@ -189,6 +199,7 @@ new class extends Component
             :label="__('Photos')"
             :value="number_format($this->rangeStats['photos'])"
             data-test="photos-card"
+            tone="ink"
             clickable
             x-on:click="chart = 'photos'; $flux.modal('usage-chart').show()"
         />
@@ -196,6 +207,7 @@ new class extends Component
         <x-stat-card
             :label="__('Galleries')"
             :value="number_format($this->rangeStats['galleries'])"
+            tone="ink"
             clickable
             x-on:click="chart = 'galleries'; $flux.modal('usage-chart').show()"
         />
@@ -203,6 +215,7 @@ new class extends Component
         <x-stat-card
             :label="__('Contracts')"
             :value="number_format($this->rangeStats['contracts'])"
+            tone="ink"
             clickable
             x-on:click="chart = 'contracts'; $flux.modal('usage-chart').show()"
         />
@@ -210,6 +223,7 @@ new class extends Component
         <x-stat-card
             :label="__('Users')"
             :value="number_format($this->rangeStats['users'])"
+            tone="ink"
             clickable
             x-on:click="chart = 'users'; $flux.modal('usage-chart').show()"
         />
@@ -218,6 +232,7 @@ new class extends Component
             :label="__('Paid users')"
             :value="number_format($this->rangeStats['paid_users'])"
             :hint="__('Subscription started')"
+            tone="ink"
             clickable
             x-on:click="chart = 'paid_users'; $flux.modal('usage-chart').show()"
         />
@@ -226,15 +241,18 @@ new class extends Component
             :label="__('Lifetime users')"
             :value="number_format($this->rangeStats['lifetime_users'])"
             :hint="__('Purchased or granted')"
+            tone="ink"
             clickable
             x-on:click="chart = 'lifetime_users'; $flux.modal('usage-chart').show()"
         />
     </div>
 
     <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
-        <flux:heading size="lg">{{ __('Current totals') }}</flux:heading>
+        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+            {{ __('Current totals') }}
+        </flux:heading>
 
-        <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+        <div class="text-brand-ink/70 dark:text-brand-sage/80 flex items-center gap-2 text-sm font-medium">
             <flux:icon.clock class="size-4" />
             <span>{{ __('Updated :time', ['time' => $this->updatedLabel]) }}</span>
         </div>
@@ -245,26 +263,30 @@ new class extends Component
             :label="__('Photos stored')"
             :value="number_format($this->snapshot['photos'])"
             :hint="__('Current photo files')"
+            tone="green"
         />
 
         <x-stat-card
             :label="__('S3 storage used')"
             :value="$this->formatFileSize($this->snapshot['storage_bytes'])"
             :hint="__('Includes retained versions')"
+            tone="green"
         />
 
-        <x-stat-card :label="__('Galleries')" :value="number_format($this->snapshot['galleries'])" />
+        <x-stat-card :label="__('Galleries')" :value="number_format($this->snapshot['galleries'])" tone="green" />
 
-        <x-stat-card :label="__('Contracts')" :value="number_format($this->snapshot['contracts'])" />
+        <x-stat-card :label="__('Contracts')" :value="number_format($this->snapshot['contracts'])" tone="green" />
 
-        <x-stat-card :label="__('Users')" :value="number_format($this->snapshot['users'])" />
+        <x-stat-card :label="__('Users')" :value="number_format($this->snapshot['users'])" tone="green" />
     </div>
 
     <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
         <div>
-            <flux:heading size="lg">{{ __('Average photos per user') }}</flux:heading>
+            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                {{ __('Average photos per user') }}
+            </flux:heading>
 
-            <flux:text class="mt-1">
+            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Paid users have an active subscription. Lifetime includes purchased plans and admin grants.') }}
             </flux:text>
         </div>

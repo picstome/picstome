@@ -7,4 +7,6 @@
 
         <flux:heading size="xl">{{ $team->name }}</flux:heading>
     </a>
+
+    <div class="bg-(--color-accent) mx-auto h-1 w-10 rounded-full"></div>
 </div>

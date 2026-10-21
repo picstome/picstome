@@ -158,6 +158,31 @@ new class extends Component
         $this->persist();
     }
 
+    public ?string $pendingDeleteType = null;
+
+    public ?string $pendingDeleteId = null;
+
+    public function requestDeleteItem(string $type, string $id): void
+    {
+        $this->pendingDeleteType = $type;
+        $this->pendingDeleteId = $id;
+
+        Flux::modal('delete-calculator-item')->show();
+    }
+
+    /**
+     * Confirmation copy for the item type that is about to be deleted.
+     */
+    #[Computed]
+    public function pendingDeleteTitle(): string
+    {
+        return match ($this->pendingDeleteType) {
+            'fixed', 'session' => __('Delete this expense?'),
+            'equipment' => __('Delete this equipment?'),
+            default => __('Delete this time entry?'),
+        };
+    }
+
     public function deleteItem(string $type, string $id): void
     {
         $property = match ($type) {
@@ -289,24 +314,28 @@ new class extends Component
             </flux:subheading>
         </div>
 
-        <flux:badge icon="banknotes" color="zinc">
-            {{ __('Currency') }}: {{ $this->currency }}
-        </flux:badge>
+        <flux:badge icon="banknotes" color="zinc">{{ __('Currency') }}: {{ $this->currency }}</flux:badge>
     </div>
 
     @if (! $this->guideDismissed)
-        <div class="relative mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5 dark:border-blue-500/30 dark:bg-blue-500/10">
+        <div
+            class="border-brand-sage/70 bg-brand-sage/20 dark:border-brand-sage/20 dark:bg-brand-sage/5 relative mb-6 rounded-xl border p-5"
+        >
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <flux:heading size="sm">{{ __('How this calculator works') }}</flux:heading>
-                    <flux:text size="sm" class="mt-1">
+                    <flux:heading size="sm" class="text-brand-green dark:text-brand-sage">
+                        {{ __('How this calculator works') }}
+                    </flux:heading>
+                    <flux:text size="sm" class="text-brand-ink/75 dark:text-brand-sage/85 mt-1">
                         {{ __('It adds your costs and the value of your time, then applies VAT and IRPF transparently.') }}
                     </flux:text>
 
-                    <ul class="mt-3 list-disc space-y-1 ps-4 text-sm text-zinc-600 dark:text-zinc-400">
+                    <ul class="text-brand-ink/75 dark:text-brand-sage/85 mt-3 list-disc space-y-1 ps-4 text-sm">
                         <li>{{ __('Fixed expenses and monthly time are split across your sessions per month.') }}</li>
                         <li>{{ __('Equipment is depreciated after its resale value over its useful life.') }}</li>
-                        <li>{{ __('VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.') }}</li>
+                        <li>
+                            {{ __('VAT is added to the invoice and remitted. When you invoice a company or professional, IRPF is withheld from your base price and credited against your income tax.') }}
+                        </li>
                     </ul>
                 </div>
 
@@ -371,7 +400,9 @@ new class extends Component
                     />
                 </div>
 
-                <div class="mt-5 flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700 dark:bg-zinc-900">
+                <div
+                    class="mt-5 flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700 dark:bg-zinc-900"
+                >
                     <div>
                         <flux:heading size="sm">{{ __('Apply IRPF withholding') }}</flux:heading>
                         <flux:text size="sm">{{ __('Only when the client is a company or professional.') }}</flux:text>
@@ -394,11 +425,16 @@ new class extends Component
                     </flux:tabs>
 
                     <flux:tab.panel name="fixed">
-                        <flux:text size="sm" class="mb-4">{{ __('Monthly costs that do not change per session.') }}</flux:text>
+                        <flux:text size="sm" class="mb-4">
+                            {{ __('Monthly costs that do not change per session.') }}
+                        </flux:text>
 
                         <div class="space-y-2">
                             @forelse ($fixed_expenses as $index => $item)
-                                <div class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700" wire:key="fixed-{{ $item['id'] }}">
+                                <div
+                                    class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
+                                    wire:key="fixed-{{ $item['id'] }}"
+                                >
                                     <flux:input
                                         wire:model.live.debounce.500ms="fixed_expenses.{{ $index }}.name"
                                         :aria-label="__('Expense name')"
@@ -422,8 +458,7 @@ new class extends Component
                                         icon="trash"
                                         :tooltip="__('Delete')"
                                         class="self-end sm:self-auto"
-                                        wire:click="deleteItem('fixed', '{{ $item['id'] }}')"
-                                        wire:confirm="{{ __('Delete this expense?') }}"
+                                        wire:click="requestDeleteItem('fixed', '{{ $item['id'] }}')"
                                     />
                                 </div>
                             @empty
@@ -433,8 +468,19 @@ new class extends Component
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input wire:model="newFixedName" :placeholder="__('Expense name')" :aria-label="__('Expense name')" />
-                                <flux:input wire:model="newFixedAmount" type="number" step="0.01" min="0" :placeholder="__('Amount')" :aria-label="__('Amount')" />
+                                <flux:input
+                                    wire:model="newFixedName"
+                                    :placeholder="__('Expense name')"
+                                    :aria-label="__('Expense name')"
+                                />
+                                <flux:input
+                                    wire:model="newFixedAmount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :placeholder="__('Amount')"
+                                    :aria-label="__('Amount')"
+                                />
                                 <flux:button variant="primary" icon="plus" wire:click="addFixedExpense">
                                     {{ __('Add expense') }}
                                 </flux:button>
@@ -443,9 +489,17 @@ new class extends Component
                             <flux:error name="newFixedAmount" />
                         </div>
 
-                        <div class="mt-4 flex flex-wrap justify-between gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm dark:bg-zinc-900">
-                            <span>{{ __('Total fixed costs') }}: <strong>{{ $this->formatMoney($summary['fixed_total']) }}</strong></span>
-                            <span>{{ __('Fixed costs per session') }}: <strong>{{ $this->formatMoney($summary['fixed_per_session']) }}</strong></span>
+                        <div
+                            class="mt-4 flex flex-wrap justify-between gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm dark:bg-zinc-900"
+                        >
+                            <span>
+                                {{ __('Total fixed costs') }}:
+                                <strong>{{ $this->formatMoney($summary['fixed_total']) }}</strong>
+                            </span>
+                            <span>
+                                {{ __('Fixed costs per session') }}:
+                                <strong>{{ $this->formatMoney($summary['fixed_per_session']) }}</strong>
+                            </span>
                         </div>
                     </flux:tab.panel>
 
@@ -454,7 +508,10 @@ new class extends Component
 
                         <div class="space-y-2">
                             @forelse ($session_expenses as $index => $item)
-                                <div class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700" wire:key="session-{{ $item['id'] }}">
+                                <div
+                                    class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
+                                    wire:key="session-{{ $item['id'] }}"
+                                >
                                     <flux:input
                                         wire:model.live.debounce.500ms="session_expenses.{{ $index }}.name"
                                         :aria-label="__('Expense name')"
@@ -478,8 +535,7 @@ new class extends Component
                                         icon="trash"
                                         :tooltip="__('Delete')"
                                         class="self-end sm:self-auto"
-                                        wire:click="deleteItem('session', '{{ $item['id'] }}')"
-                                        wire:confirm="{{ __('Delete this expense?') }}"
+                                        wire:click="requestDeleteItem('session', '{{ $item['id'] }}')"
                                     />
                                 </div>
                             @empty
@@ -489,8 +545,19 @@ new class extends Component
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input wire:model="newSessionName" :placeholder="__('Expense name')" :aria-label="__('Expense name')" />
-                                <flux:input wire:model="newSessionAmount" type="number" step="0.01" min="0" :placeholder="__('Amount')" :aria-label="__('Amount')" />
+                                <flux:input
+                                    wire:model="newSessionName"
+                                    :placeholder="__('Expense name')"
+                                    :aria-label="__('Expense name')"
+                                />
+                                <flux:input
+                                    wire:model="newSessionAmount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :placeholder="__('Amount')"
+                                    :aria-label="__('Amount')"
+                                />
                                 <flux:button variant="primary" icon="plus" wire:click="addSessionExpense">
                                     {{ __('Add expense') }}
                                 </flux:button>
@@ -510,7 +577,10 @@ new class extends Component
 
                         <div class="space-y-2">
                             @forelse ($equipment as $index => $item)
-                                <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" wire:key="equipment-{{ $item['id'] }}">
+                                <div
+                                    class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"
+                                    wire:key="equipment-{{ $item['id'] }}"
+                                >
                                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
                                         <flux:input
                                             wire:model.live.debounce.500ms="equipment.{{ $index }}.name"
@@ -553,8 +623,7 @@ new class extends Component
                                             icon="trash"
                                             :tooltip="__('Delete')"
                                             class="self-end sm:self-auto"
-                                            wire:click="deleteItem('equipment', '{{ $item['id'] }}')"
-                                            wire:confirm="{{ __('Delete this equipment?') }}"
+                                            wire:click="requestDeleteItem('equipment', '{{ $item['id'] }}')"
                                         />
                                     </div>
                                 </div>
@@ -564,11 +633,32 @@ new class extends Component
                         </div>
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
-                            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_auto] lg:items-end">
+                            <div
+                                class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_auto] lg:items-end"
+                            >
                                 <flux:input wire:model="newEquipmentName" :label="__('Equipment name')" />
-                                <flux:input wire:model="newEquipmentPrice" type="number" step="0.01" min="0" :label="__('Price')" />
-                                <flux:input wire:model="newEquipmentResale" type="number" step="0.01" min="0" :label="__('Resale value')" />
-                                <flux:input wire:model="newEquipmentLife" type="number" step="1" min="1" max="50" :label="__('Useful life (years)')" />
+                                <flux:input
+                                    wire:model="newEquipmentPrice"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :label="__('Price')"
+                                />
+                                <flux:input
+                                    wire:model="newEquipmentResale"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    :label="__('Resale value')"
+                                />
+                                <flux:input
+                                    wire:model="newEquipmentLife"
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    max="50"
+                                    :label="__('Useful life (years)')"
+                                />
                                 <flux:button variant="primary" icon="plus" wire:click="addEquipment">
                                     {{ __('Add equipment') }}
                                 </flux:button>
@@ -579,21 +669,37 @@ new class extends Component
                             <flux:error name="newEquipmentLife" />
                         </div>
 
-                        <div class="mt-4 grid gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm sm:grid-cols-3 dark:bg-zinc-900">
-                            <span>{{ __('Total equipment value') }}: <strong>{{ $this->formatMoney($summary['equipment_total']) }}</strong></span>
-                            <span>{{ __('Monthly depreciation') }}: <strong>{{ $this->formatMoney($summary['monthly_depreciation']) }}</strong></span>
-                            <span>{{ __('Depreciation per session') }}: <strong>{{ $this->formatMoney($summary['depreciation_per_session']) }}</strong></span>
+                        <div
+                            class="mt-4 grid gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm sm:grid-cols-3 dark:bg-zinc-900"
+                        >
+                            <span>
+                                {{ __('Total equipment value') }}:
+                                <strong>{{ $this->formatMoney($summary['equipment_total']) }}</strong>
+                            </span>
+                            <span>
+                                {{ __('Monthly depreciation') }}:
+                                <strong>{{ $this->formatMoney($summary['monthly_depreciation']) }}</strong>
+                            </span>
+                            <span>
+                                {{ __('Depreciation per session') }}:
+                                <strong>{{ $this->formatMoney($summary['depreciation_per_session']) }}</strong>
+                            </span>
                         </div>
                     </flux:tab.panel>
 
                     <flux:tab.panel name="time">
-                        <flux:text size="sm" class="mb-4">{{ __('Hours spent on each session and on recurring monthly tasks.') }}</flux:text>
+                        <flux:text size="sm" class="mb-4">
+                            {{ __('Hours spent on each session and on recurring monthly tasks.') }}
+                        </flux:text>
 
                         <flux:heading size="sm" class="mb-2">{{ __('Time per session') }}</flux:heading>
 
                         <div class="space-y-2">
                             @forelse ($session_tasks as $index => $item)
-                                <div class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700" wire:key="session-task-{{ $item['id'] }}">
+                                <div
+                                    class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
+                                    wire:key="session-task-{{ $item['id'] }}"
+                                >
                                     <flux:input
                                         wire:model.live.debounce.500ms="session_tasks.{{ $index }}.name"
                                         :aria-label="__('Task name')"
@@ -617,8 +723,7 @@ new class extends Component
                                         icon="trash"
                                         :tooltip="__('Delete')"
                                         class="self-end sm:self-auto"
-                                        wire:click="deleteItem('session_task', '{{ $item['id'] }}')"
-                                        wire:confirm="{{ __('Delete this time entry?') }}"
+                                        wire:click="requestDeleteItem('session_task', '{{ $item['id'] }}')"
                                     />
                                 </div>
                             @empty
@@ -628,8 +733,19 @@ new class extends Component
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input wire:model="newSessionTaskName" :placeholder="__('Task name')" :aria-label="__('Task name')" />
-                                <flux:input wire:model="newSessionTaskHours" type="number" step="0.5" min="0" :placeholder="__('Hours')" :aria-label="__('Hours')" />
+                                <flux:input
+                                    wire:model="newSessionTaskName"
+                                    :placeholder="__('Task name')"
+                                    :aria-label="__('Task name')"
+                                />
+                                <flux:input
+                                    wire:model="newSessionTaskHours"
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    :placeholder="__('Hours')"
+                                    :aria-label="__('Hours')"
+                                />
                                 <flux:button variant="primary" icon="plus" wire:click="addSessionTask">
                                     {{ __('Add time') }}
                                 </flux:button>
@@ -642,7 +758,10 @@ new class extends Component
 
                         <div class="space-y-2">
                             @forelse ($monthly_tasks as $index => $item)
-                                <div class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700" wire:key="monthly-task-{{ $item['id'] }}">
+                                <div
+                                    class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
+                                    wire:key="monthly-task-{{ $item['id'] }}"
+                                >
                                     <flux:input
                                         wire:model.live.debounce.500ms="monthly_tasks.{{ $index }}.name"
                                         :aria-label="__('Task name')"
@@ -666,8 +785,7 @@ new class extends Component
                                         icon="trash"
                                         :tooltip="__('Delete')"
                                         class="self-end sm:self-auto"
-                                        wire:click="deleteItem('monthly_task', '{{ $item['id'] }}')"
-                                        wire:confirm="{{ __('Delete this time entry?') }}"
+                                        wire:click="requestDeleteItem('monthly_task', '{{ $item['id'] }}')"
                                     />
                                 </div>
                             @empty
@@ -677,8 +795,19 @@ new class extends Component
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input wire:model="newMonthlyTaskName" :placeholder="__('Task name')" :aria-label="__('Task name')" />
-                                <flux:input wire:model="newMonthlyTaskHours" type="number" step="0.5" min="0" :placeholder="__('Hours per month')" :aria-label="__('Hours per month')" />
+                                <flux:input
+                                    wire:model="newMonthlyTaskName"
+                                    :placeholder="__('Task name')"
+                                    :aria-label="__('Task name')"
+                                />
+                                <flux:input
+                                    wire:model="newMonthlyTaskHours"
+                                    type="number"
+                                    step="0.5"
+                                    min="0"
+                                    :placeholder="__('Hours per month')"
+                                    :aria-label="__('Hours per month')"
+                                />
                                 <flux:button variant="primary" icon="plus" wire:click="addMonthlyTask">
                                     {{ __('Add time') }}
                                 </flux:button>
@@ -687,10 +816,21 @@ new class extends Component
                             <flux:error name="newMonthlyTaskHours" />
                         </div>
 
-                        <div class="mt-4 grid gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm sm:grid-cols-3 dark:bg-zinc-900">
-                            <span>{{ __('Session hours') }}: <strong>{{ $this->formatHours($summary['session_hours']) }}</strong></span>
-                            <span>{{ __('Monthly hours') }}: <strong>{{ $this->formatHours($summary['monthly_hours']) }}</strong></span>
-                            <span>{{ __('Monthly time cost per session') }}: <strong>{{ $this->formatMoney($summary['monthly_time_per_session']) }}</strong></span>
+                        <div
+                            class="mt-4 grid gap-2 rounded-lg bg-zinc-50 px-4 py-3 text-sm sm:grid-cols-3 dark:bg-zinc-900"
+                        >
+                            <span>
+                                {{ __('Session hours') }}:
+                                <strong>{{ $this->formatHours($summary['session_hours']) }}</strong>
+                            </span>
+                            <span>
+                                {{ __('Monthly hours') }}:
+                                <strong>{{ $this->formatHours($summary['monthly_hours']) }}</strong>
+                            </span>
+                            <span>
+                                {{ __('Monthly time cost per session') }}:
+                                <strong>{{ $this->formatMoney($summary['monthly_time_per_session']) }}</strong>
+                            </span>
                         </div>
                     </flux:tab.panel>
                 </flux:tab.group>
@@ -698,13 +838,21 @@ new class extends Component
         </div>
 
         <aside class="lg:sticky lg:top-6">
-            <div class="rounded-xl border-2 border-zinc-900 bg-white p-6 dark:border-zinc-100 dark:bg-zinc-900">
-                <flux:heading size="lg">{{ __('Recommended price') }}</flux:heading>
+            <div
+                class="border-brand-green/30 dark:border-brand-sage/30 rounded-xl border-2 bg-white p-6 dark:bg-white/5"
+            >
+                <flux:heading size="lg" class="text-brand-green dark:text-brand-sage">
+                    {{ __('Recommended price') }}
+                </flux:heading>
 
-                <div class="mt-5 rounded-xl bg-zinc-900 px-5 py-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
-                    <div class="text-xs font-medium uppercase tracking-wide opacity-70">{{ __('Client pays') }}</div>
-                    <div class="mt-1 text-4xl font-bold tabular-nums">{{ $this->formatMoney($summary['client_pays']) }}</div>
-                    <div class="mt-1 text-sm opacity-70">
+                <div class="bg-brand-coral text-brand-cream mt-5 rounded-xl px-5 py-4">
+                    <div class="text-brand-cream text-xs font-semibold tracking-wide uppercase">
+                        {{ __('Client pays') }}
+                    </div>
+                    <div class="mt-1 text-4xl font-bold tabular-nums">
+                        {{ $this->formatMoney($summary['client_pays']) }}
+                    </div>
+                    <div class="text-brand-cream mt-1 text-sm font-semibold">
                         {{ $summary['income_tax_withholding'] ? __('After IRPF withholding') : __('VAT included') }}
                     </div>
                 </div>
@@ -720,7 +868,9 @@ new class extends Component
                     </div>
                     <div class="flex justify-between gap-3">
                         <span>{{ __('Depreciation per session') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['depreciation_per_session']) }}</span>
+                        <span class="tabular-nums">
+                            {{ $this->formatMoney($summary['depreciation_per_session']) }}
+                        </span>
                     </div>
                     <div class="flex justify-between gap-3">
                         <span>{{ __('Session time cost') }}</span>
@@ -728,7 +878,9 @@ new class extends Component
                     </div>
                     <div class="flex justify-between gap-3">
                         <span>{{ __('Monthly time cost per session') }}</span>
-                        <span class="tabular-nums">{{ $this->formatMoney($summary['monthly_time_per_session']) }}</span>
+                        <span class="tabular-nums">
+                            {{ $this->formatMoney($summary['monthly_time_per_session']) }}
+                        </span>
                     </div>
                 </div>
 
@@ -750,7 +902,9 @@ new class extends Component
                         </div>
                         <div class="flex justify-between gap-3">
                             <span>{{ __('IRPF withheld') }} ({{ $summary['income_tax_percent'] }}%)</span>
-                            <span class="tabular-nums">-{{ $this->formatMoney($summary['income_tax_withheld']) }}</span>
+                            <span class="tabular-nums">
+                                -{{ $this->formatMoney($summary['income_tax_withheld']) }}
+                            </span>
                         </div>
                         <div class="text-xs text-zinc-500 dark:text-zinc-400">
                             {{ __('IRPF is credited against your income tax return.') }}
@@ -781,57 +935,58 @@ new class extends Component
                         copyLabel: @js(__('Copy summary')),
                         failedLabel: @js(__('Copy failed')),
                         copy(text) {
-                            text = text.trim();
+                            text = text.trim()
 
                             const finish = (success) => {
-                                this.copied = success;
-                                this.copyFailed = ! success;
+                                this.copied = success
+                                this.copyFailed = ! success
                                 setTimeout(() => {
-                                    this.copied = false;
-                                    this.copyFailed = false;
-                                }, 2000);
-                            };
+                                    this.copied = false
+                                    this.copyFailed = false
+                                }, 2000)
+                            }
 
                             try {
                                 if (navigator.clipboard?.writeText && window.isSecureContext) {
-                                    navigator.clipboard.writeText(text)
+                                    navigator.clipboard
+                                        .writeText(text)
                                         .then(() => finish(true))
-                                        .catch(() => this.fallbackCopy(text));
+                                        .catch(() => this.fallbackCopy(text))
                                 } else {
-                                    this.fallbackCopy(text);
+                                    this.fallbackCopy(text)
                                 }
                             } catch {
-                                this.fallbackCopy(text);
+                                this.fallbackCopy(text)
                             }
                         },
                         fallbackCopy(text) {
                             try {
-                                const textarea = document.createElement('textarea');
-                                textarea.value = text;
-                                textarea.setAttribute('readonly', '');
-                                textarea.style.position = 'fixed';
-                                textarea.style.opacity = '0';
-                                document.body.appendChild(textarea);
-                                textarea.select();
-                                textarea.setSelectionRange(0, textarea.value.length);
-                                const copied = document.execCommand('copy');
-                                document.body.removeChild(textarea);
+                                const textarea = document.createElement('textarea')
+                                textarea.value = text
+                                textarea.setAttribute('readonly', '')
+                                textarea.style.position = 'fixed'
+                                textarea.style.opacity = '0'
+                                document.body.appendChild(textarea)
+                                textarea.select()
+                                textarea.setSelectionRange(0, textarea.value.length)
+                                const copied = document.execCommand('copy')
+                                document.body.removeChild(textarea)
 
                                 if (! copied) {
-                                    throw new Error('Copy failed');
+                                    throw new Error('Copy failed')
                                 }
 
-                                this.copied = true;
-                                this.copyFailed = false;
+                                this.copied = true
+                                this.copyFailed = false
                             } catch {
-                                this.copied = false;
-                                this.copyFailed = true;
+                                this.copied = false
+                                this.copyFailed = true
                             }
 
                             setTimeout(() => {
-                                this.copied = false;
-                                this.copyFailed = false;
-                            }, 2000);
+                                this.copied = false
+                                this.copyFailed = false
+                            }, 2000)
                         },
                     }"
                 >
@@ -843,7 +998,9 @@ new class extends Component
                         class="flex-1"
                         x-on:click="copy($refs.summary.textContent)"
                     >
-                        <span x-text="copied ? copiedLabel : (copyFailed ? failedLabel : copyLabel)">{{ __('Copy summary') }}</span>
+                        <span x-text="copied ? copiedLabel : copyFailed ? failedLabel : copyLabel">
+                            {{ __('Copy summary') }}
+                        </span>
                     </flux:button>
 
                     <flux:modal.trigger name="reset-calculator">
@@ -860,6 +1017,13 @@ new class extends Component
         </aside>
     </div>
 
+    <x-confirm-modal
+        name="delete-calculator-item"
+        :title="$this->pendingDeleteTitle"
+        :message="__('This action cannot be undone.')"
+        :method="$this->pendingDeleteType && $this->pendingDeleteId ? 'deleteItem(\''.$this->pendingDeleteType.'\', \''.$this->pendingDeleteId.'\')' : null"
+    />
+
     <flux:modal name="reset-calculator" class="w-full sm:max-w-md">
         <div class="space-y-6">
             <div>
@@ -873,10 +1037,10 @@ new class extends Component
                 <flux:spacer />
 
                 <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                    <flux:button variant="outline" class="btn-outline-brand">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
 
-                <flux:button variant="danger" wire:click="resetCalculator">
+                <flux:button variant="primary" class="btn-coral" wire:click="resetCalculator">
                     {{ __('Reset') }}
                 </flux:button>
             </div>

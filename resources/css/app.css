@@ -15,4 +15,195 @@
     --font-sans:
         Inter, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
+
+    --color-brand-green: #316d61;
+    --color-brand-green-deep: #27564c;
+    --color-brand-ink: #322f30;
+    --color-brand-ink-strong: #2a2625;
+    --color-brand-coral: #ee6958;
+    --color-brand-coral-deep: #d95746;
+    --color-brand-sage: #c6d8af;
+    --color-brand-sage-soft: #eef4e6;
+    --color-brand-cream: #fff9ec;
+    --color-brand-paper: #fbfcf9;
+    --color-brand-night: #1b2320;
+    --color-brand-night-deep: #161e1b;
+}
+
+/*
+ * The authenticated shell uses the Picstome palette. Guest and public pages are
+ * intentionally excluded so each team keeps its own branding accent.
+ */
+.app-shell {
+    --color-accent: var(--color-brand-green);
+    --color-accent-content: var(--color-brand-green);
+    --color-accent-foreground: white;
+}
+
+.dark .app-shell {
+    --color-accent: var(--color-brand-sage);
+    --color-accent-content: var(--color-brand-sage);
+    --color-accent-foreground: var(--color-brand-ink-strong);
+}
+
+.btn-ink {
+    --color-accent: var(--color-brand-ink);
+    --color-accent-content: var(--color-brand-ink);
+    --color-accent-foreground: var(--color-brand-cream);
+}
+
+.dark .btn-ink {
+    --color-accent: var(--color-brand-sage);
+    --color-accent-content: var(--color-brand-sage);
+    --color-accent-foreground: var(--color-brand-ink-strong);
+}
+
+/*
+ * Destructive actions use the brand coral instead of the harsh red so they
+ * read as part of the palette rather than as an emergency.
+ */
+.btn-coral {
+    --color-accent: var(--color-brand-coral);
+    --color-accent-content: var(--color-brand-coral);
+    --color-accent-foreground: var(--color-brand-cream);
+}
+
+.dark .btn-coral {
+    --color-accent: var(--color-brand-coral);
+    --color-accent-content: var(--color-brand-coral);
+    --color-accent-foreground: var(--color-brand-cream);
+}
+
+/*
+ * Secondary actions keep a visible outline so they never disappear against
+ * a white dialog.
+ */
+.btn-outline-brand {
+    border-color: color-mix(in oklab, var(--color-brand-green) 30%, transparent);
+    color: var(--color-brand-ink);
+}
+
+.btn-outline-brand:hover {
+    background-color: color-mix(in oklab, var(--color-brand-sage) 35%, transparent);
+    border-color: color-mix(in oklab, var(--color-brand-green) 45%, transparent);
+}
+
+.dark .btn-outline-brand {
+    border-color: color-mix(in oklab, white 22%, transparent);
+    color: var(--color-brand-cream);
+}
+
+.dark .btn-outline-brand:hover {
+    background-color: color-mix(in oklab, white 8%, transparent);
+    border-color: color-mix(in oklab, white 35%, transparent);
+}
+
+[data-flux-sidebar] [data-flux-navlist-item] {
+    color: var(--color-brand-ink);
+    font-weight: 500;
+}
+
+[data-flux-sidebar] [data-flux-navlist-item] svg {
+    color: var(--color-brand-coral);
+}
+
+[data-flux-sidebar] [data-flux-navlist-item]:hover {
+    color: var(--color-brand-ink);
+    background-color: color-mix(in oklab, var(--color-brand-sage-soft) 80%, transparent);
+}
+
+[data-flux-sidebar] [data-flux-navlist-item][data-current] {
+    color: var(--color-brand-cream);
+    background-color: var(--color-brand-green);
+    border-color: var(--color-brand-green);
+}
+
+[data-flux-sidebar] [data-flux-navlist-item][data-current] svg,
+[data-flux-sidebar] [data-flux-navlist-item][data-current] > div:first-child svg {
+    color: var(--color-brand-cream);
+}
+
+[data-flux-sidebar] [data-flux-navlist-group] > div:first-child > div,
+[data-flux-sidebar] [data-flux-navlist-group] > button {
+    color: var(--color-brand-green-deep);
+    font-weight: 600;
+}
+
+[data-flux-sidebar] [data-flux-navlist-group] > button:hover {
+    color: var(--color-brand-ink);
+    background-color: color-mix(in oklab, var(--color-brand-sage-soft) 80%, transparent);
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-item] {
+    color: color-mix(in oklab, white 90%, transparent);
+    font-weight: 500;
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-item] svg {
+    color: var(--color-brand-coral);
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-item]:hover {
+    color: white;
+    background-color: color-mix(in oklab, white 7%, transparent);
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] {
+    color: var(--color-brand-cream);
+    background-color: var(--color-brand-green);
+    border-color: var(--color-brand-green);
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] svg,
+.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] > div:first-child svg {
+    color: var(--color-brand-cream);
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-group] > div:first-child > div,
+.dark [data-flux-sidebar] [data-flux-navlist-group] > button {
+    color: color-mix(in oklab, var(--color-brand-sage) 90%, transparent);
+    font-weight: 600;
+}
+
+.dark [data-flux-sidebar] [data-flux-navlist-group] > button:hover {
+    color: white;
+    background-color: color-mix(in oklab, white 7%, transparent);
+}
+
+/*
+ * Sidebar navigation scrolls on its own so the logo, search and account
+ * footer stay pinned while the menu is long.
+ */
+[data-sidebar-scroll] {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--color-brand-green) 35%, transparent) transparent;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar {
+    width: 6px;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-brand-green) 30%, transparent);
+    border-radius: 9999px;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--color-brand-green) 50%, transparent);
+}
+
+.dark [data-sidebar-scroll] {
+    scrollbar-color: color-mix(in oklab, var(--color-brand-sage) 30%, transparent) transparent;
+}
+
+.dark [data-sidebar-scroll]::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-brand-sage) 25%, transparent);
+}
+
+.dark [data-sidebar-scroll]::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--color-brand-sage) 45%, transparent);
 }

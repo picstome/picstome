@@ -51,6 +51,7 @@ new class extends Component
         $this->getFavorites();
         $this->getCommentedPhotos();
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
+        $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
         if (request()->boolean('live')) {
             Flux::modal('live-upload')->show();
@@ -239,6 +240,16 @@ new class extends Component
         $this->dispatch('gallery-public-changed');
     }
 
+    public ?int $pendingPhotoId = null;
+
+    #[On('request-delete-photo')]
+    public function requestDeletePhoto(int $id): void
+    {
+        $this->pendingPhotoId = $id;
+
+        Flux::modal('delete-photo')->show();
+    }
+
     public function deletePhoto(Photo $photo)
     {
         $this->authorize('delete', $photo);
@@ -253,6 +264,9 @@ new class extends Component
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
+
+        // The camera upload modal shows the same gallery setting.
+        $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
         $this->modal('edit')->close();
     }
@@ -324,6 +338,12 @@ new class extends Component
 
     public bool $showFtpPassword = false;
 
+    /**
+     * Mirrors the "keep original size" preference used when creating a
+     * gallery, so live sessions honour the last chosen setting.
+     */
+    public bool $keepOriginalSize = true;
+
     #[Computed]
     public function ftpAccount(): ?FtpAccount
     {
@@ -357,9 +377,35 @@ new class extends Component
             }
         }
 
-        $account->routeTo($account->routesTo($this->gallery) ? null : $this->gallery);
+        $routed = $account->routesTo($this->gallery);
+
+        $account->routeTo($routed ? null : $this->gallery);
+
+        if (! $routed) {
+            // Live sessions deliver camera originals, so they follow the same
+            // preference used when creating a gallery.
+            $this->gallery->update(['keep_original_size' => $this->keepOriginalSize]);
+        }
 
         unset($this->ftpAccount);
+    }
+
+    /**
+     * Live sessions upload camera originals, so the gallery stores them at
+     * their original size unless the photographer turns it off. The choice is
+     * remembered as the default for the next gallery as well, so the create
+     * gallery modal keeps showing the same preference.
+     */
+    public function updatedKeepOriginalSize(bool $value): void
+    {
+        $this->authorize('update', $this->gallery);
+
+        $this->gallery->update(['keep_original_size' => $value]);
+
+        // Keep the edit gallery modal in sync so it never shows a stale value.
+        $this->form->keepOriginalSize = $value;
+
+        Auth::user()?->rememberGalleryDefaults(['keep_original_size' => $value]);
     }
 }; ?>
 
@@ -427,7 +473,7 @@ new class extends Component
                     @endif
 
                     <flux:modal.trigger name="live-upload">
-                        <flux:menu.item icon="camera">{{ __('Live upload') }}</flux:menu.item>
+                        <flux:menu.item icon="camera">{{ __('Camera upload') }}</flux:menu.item>
                     </flux:modal.trigger>
 
                     <flux:modal.trigger name="edit">
@@ -440,22 +486,21 @@ new class extends Component
 
                     <flux:menu.separator />
 
-                    <flux:menu.item
-                        wire:click="delete"
-                        wire:confirm="{{ __('Are you sure?') }}"
-                        variant="danger"
-                        icon="trash"
-                    >
-                        {{ __('Delete') }}
-                    </flux:menu.item>
+                    <flux:modal.trigger name="delete-gallery">
+                        <flux:menu.item variant="danger" icon="trash">
+                            {{ __('Delete') }}
+                        </flux:menu.item>
+                    </flux:modal.trigger>
                 </flux:menu>
             </flux:dropdown>
 
             @if ($gallery->is_shared)
                 <flux:button.group>
-                    <flux:button wire:click="disableSharing">{{ __('Stop sharing') }}</flux:button>
+                    <flux:button wire:click="disableSharing" variant="primary" class="btn-ink">
+                        {{ __('Stop sharing') }}
+                    </flux:button>
                     <flux:dropdown align="end">
-                        <flux:button icon="chevron-down" />
+                        <flux:button icon="chevron-down" variant="primary" class="btn-ink" />
 
                         <flux:menu>
                             <flux:modal.trigger name="share-link">
@@ -469,7 +514,7 @@ new class extends Component
                 </flux:button.group>
             @else
                 <flux:modal.trigger name="share">
-                    <flux:button>{{ __('Share') }}</flux:button>
+                    <flux:button variant="primary" class="btn-ink">{{ __('Share') }}</flux:button>
                 </flux:modal.trigger>
             @endif
 
@@ -482,10 +527,7 @@ new class extends Component
     @if ($this->allPhotos?->isNotEmpty())
         <div class="mt-8 max-sm:-mx-5">
             <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                <flux:navbar.item
-                    @click="$wire.activeTab = 'all'"
-                    x-bind:data-current="$wire.activeTab === 'all'"
-                >
+                <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">
                     {{ __('All photos') }}
                 </flux:navbar.item>
                 <flux:navbar.item
@@ -614,6 +656,8 @@ new class extends Component
                 x-on:dragover.prevent="dragActive = true"
                 x-on:dragleave.prevent="dragActive = false"
                 x-on:drop.prevent="handleDrop($event)"
+                x-on:confirm-replace-all.window="confirmReplaceAll()"
+                x-on:confirm-replace-conflict.window="confirmReplaceConflict()"
                 :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}"
             >
                 <!-- File Input -->
@@ -694,14 +738,21 @@ new class extends Component
                     class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                 >
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <span x-text="files.filter((fileObj) => fileObj.status === 'conflict').length + ' ' + {{ Js::from(__('files already exist. Choose what to do, or apply to all:')) }}"></span>
+                        <span
+                            x-text="
+                                files.filter((fileObj) => fileObj.status === 'conflict').length +
+                                    ' ' +
+                                    {{ Js::from(__('files already exist. Choose what to do, or apply to all:')) }}
+                            "
+                        ></span>
                         <div class="flex flex-wrap gap-2">
                             @if (config('picstome.file_versions_enabled'))
                                 <flux:button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
                                     {{ __('Version all') }}
                                 </flux:button>
                             @endif
-                            <flux:button size="sm" variant="subtle" x-on:click="if (confirm({{ Js::from(__('Replace the current versions? Older versions will be kept.')) }})) resolveAllConflicts('replace')">
+
+                            <flux:button size="sm" variant="subtle" x-on:click="askReplaceAll()">
                                 {{ __('Replace all') }}
                             </flux:button>
                             <flux:button size="sm" variant="ghost" x-on:click="resolveAllConflicts('skip')">
@@ -754,7 +805,10 @@ new class extends Component
                                     color="zinc"
                                 ></flux:badge>
 
-                                <div class="flex flex-wrap items-center gap-2" x-show="fileObj.status === 'conflict'">
+                                <div
+                                    class="flex flex-wrap items-center gap-2"
+                                    x-show="fileObj.status === 'conflict'"
+                                >
                                     @if (config('picstome.file_versions_enabled'))
                                         <flux:button
                                             size="sm"
@@ -764,11 +818,8 @@ new class extends Component
                                             {{ __('Save as new version') }}
                                         </flux:button>
                                     @endif
-                                    <flux:button
-                                        size="sm"
-                                        variant="subtle"
-                                        x-on:click="if (confirm({{ Js::from(__('Replace the current version? Older versions will be kept.')) }})) resolveConflict(index, 'replace')"
-                                    >
+
+                                    <flux:button size="sm" variant="subtle" x-on:click="askReplaceConflict(index)">
                                         {{ __('Replace current') }}
                                     </flux:button>
                                     <flux:button
@@ -833,11 +884,7 @@ new class extends Component
             </div>
 
             <div x-show="$wire.shareForm.limitedSelection">
-                <flux:input
-                    wire:model="shareForm.selectionLimit"
-                    :label="__('Limit photo selection')"
-                    type="number"
-                />
+                <flux:input wire:model="shareForm.selectionLimit" :label="__('Limit photo selection')" type="number" />
             </div>
 
             @if (! $this->team->subscribed())
@@ -915,15 +962,17 @@ new class extends Component
     <flux:modal name="live-upload" class="w-full sm:max-w-lg">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Live camera upload') }}</flux:heading>
-                <flux:subheading>{{ __('Set your camera up once — every shot lands in the gallery receiving uploads.') }}</flux:subheading>
+                <flux:heading size="lg">{{ __('Camera upload') }}</flux:heading>
+                <flux:subheading>
+                    {{ __('Set your camera up once — every shot lands in the gallery receiving uploads.') }}
+                </flux:subheading>
             </div>
 
             @if (! $this->team->subscribed())
                 <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Unlock live camera upload') }}</flux:callout.heading>
+                    <flux:callout.heading>{{ __('Unlock camera upload') }}</flux:callout.heading>
                     <flux:callout.text>
-                        {{ __('Subscribe to shoot live: your camera uploads photos straight to this gallery over FTP/SFTP while you shoot.') }}
+                        {{ __('Subscribe to connect your camera: it uploads photos straight to this gallery over FTP/SFTP while you shoot.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
                         <flux:button :href="route('subscribe')" variant="primary">
@@ -948,14 +997,15 @@ new class extends Component
                 :disabled="!$this->team->subscribed()"
             />
 
+            <flux:switch
+                wire:model.live="keepOriginalSize"
+                :label="__('Keep photos at their original size')"
+                :description="__('Applies to photos uploaded from now on. Photos already uploaded keep their current size.')"
+            />
+
             @if ($this->ftpAccount)
                 <div class="space-y-4">
-                    <flux:input
-                        :value="config('picstome.ftp_uploads.host')"
-                        :label="__('Host')"
-                        readonly
-                        copyable
-                    />
+                    <flux:input :value="config('picstome.ftp_uploads.host')" :label="__('Host')" readonly copyable />
 
                     <div class="grid grid-cols-2 gap-4">
                         <flux:input
@@ -973,12 +1023,7 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:input
-                        :value="$this->ftpAccount->username"
-                        :label="__('Username')"
-                        readonly
-                        copyable
-                    />
+                    <flux:input :value="$this->ftpAccount->username" :label="__('Username')" readonly copyable />
 
                     <flux:field>
                         <flux:label>{{ __('Password') }}</flux:label>
@@ -1024,7 +1069,9 @@ new class extends Component
 
                                 <flux:timeline.content>
                                     <flux:heading size="xs">{{ __('Connect to Wi-Fi') }}</flux:heading>
-                                    <flux:text size="sm">{{ __('Use a network with internet. A phone hotspot works best.') }}</flux:text>
+                                    <flux:text size="sm">
+                                        {{ __('Use a network with internet. A phone hotspot works best.') }}
+                                    </flux:text>
                                 </flux:timeline.content>
                             </flux:timeline.item>
 
@@ -1035,7 +1082,9 @@ new class extends Component
 
                                 <flux:timeline.content>
                                     <flux:heading size="xs">{{ __('Add the FTP server') }}</flux:heading>
-                                    <flux:text size="sm">{{ __('In your camera network menu, add a server with the settings above.') }}</flux:text>
+                                    <flux:text size="sm">
+                                        {{ __('In your camera network menu, add a server with the settings above.') }}
+                                    </flux:text>
                                 </flux:timeline.content>
                             </flux:timeline.item>
 
@@ -1046,7 +1095,9 @@ new class extends Component
 
                                 <flux:timeline.content>
                                     <flux:heading size="xs">{{ __('Send JPEGs automatically') }}</flux:heading>
-                                    <flux:text size="sm">{{ __('Enable auto send. Shoot RAW+JPEG and send the JPEG only for the fastest uploads.') }}</flux:text>
+                                    <flux:text size="sm">
+                                        {{ __('Enable auto send. Shoot RAW+JPEG and send the JPEG only for the fastest uploads.') }}
+                                    </flux:text>
                                 </flux:timeline.content>
                             </flux:timeline.item>
 
@@ -1057,7 +1108,9 @@ new class extends Component
 
                                 <flux:timeline.content>
                                     <flux:heading size="xs">{{ __('Take a test shot') }}</flux:heading>
-                                    <flux:text size="sm">{{ __('New photos appear in this gallery automatically within a minute.') }}</flux:text>
+                                    <flux:text size="sm">
+                                        {{ __('New photos appear in this gallery automatically within a minute.') }}
+                                    </flux:text>
                                 </flux:timeline.content>
                             </flux:timeline.item>
                         </flux:timeline>
@@ -1095,10 +1148,18 @@ new class extends Component
             <flux:input
                 wire:model="form.expirationDate"
                 :label="__('Expiration date')"
-                :badge="__('Optional')"
+                :badge="$this->team?->subscribed() ? __('Optional') : null"
                 type="date"
                 clearable
                 :disabled="$gallery->is_public"
+            />
+
+            <flux:error name="form.expirationDate" />
+
+            <flux:switch
+                wire:model="form.keepOriginalSize"
+                :label="__('Keep photos at their original size')"
+                :description="__('Applies to photos uploaded from now on. Photos already uploaded keep their current size.')"
             />
 
             @if ($gallery->is_public)
@@ -1158,15 +1219,17 @@ new class extends Component
 
                     <flux:text class="mt-1">
                         {{ __("Don't have the app?") }}
-                        <flux:link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">{{ __('Download Picstome Rater') }}</flux:link>
+                        <flux:link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">
+                            {{ __('Download Picstome Rater') }}
+                        </flux:link>
                     </flux:text>
                 </flux:tab.panel>
 
                 <flux:tab.panel name="lightroom" class="pt-4!">
                     <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(', ', $favorites->pluck('name')->map(function($name) {
-                            return pathinfo($name, PATHINFO_FILENAME);
+                            implode(', ', $favorites->pluck('name')->map(function ($name) {
+                                return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
@@ -1186,8 +1249,8 @@ new class extends Component
                 <flux:tab.panel name="captureone" class="pt-4!">
                     <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(' ', $favorites->pluck('name')->map(function($name) {
-                            return pathinfo($name, PATHINFO_FILENAME);
+                            implode(' ', $favorites->pluck('name')->map(function ($name) {
+                                return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
@@ -1207,8 +1270,8 @@ new class extends Component
                 <flux:tab.panel name="finder" class="pt-4!">
                     <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(' OR ', $favorites->pluck('name')->map(function($name) {
-                            return pathinfo($name, PATHINFO_FILENAME);
+                            implode(' OR ', $favorites->pluck('name')->map(function ($name) {
+                                return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
@@ -1270,6 +1333,34 @@ new class extends Component
             </div>
         </form>
     </flux:modal>
+
+    <x-confirm-modal
+        name="replace-conflict"
+        :title="__('Replace the current version? Older versions will be kept.')"
+        alpine-action="$dispatch(`confirm-replace-conflict`)"
+        :confirm-label="__('Replace')"
+    />
+
+    <x-confirm-modal
+        name="replace-conflicts"
+        :title="__('Replace the current versions? Older versions will be kept.')"
+        alpine-action="$dispatch(`confirm-replace-all`)"
+        :confirm-label="__('Replace all')"
+    />
+
+    <x-confirm-modal
+        name="delete-gallery"
+        :title="__('Delete gallery?')"
+        :message="__('This action cannot be undone.')"
+        method="delete"
+    />
+
+    <x-confirm-modal
+        name="delete-photo"
+        :title="__('Delete photo?')"
+        :message="__('This action cannot be undone.')"
+        :method="$this->pendingPhotoId ? 'deletePhoto('.$this->pendingPhotoId.')' : null"
+    />
 </div>
 
 @script
@@ -1296,7 +1387,7 @@ new class extends Component
                     textarea.select();
                     document.execCommand('copy');
 
-                    button.textContent = '{{ __("Copied!") }}';
+                    button.textContent = '{{ __('Copied!') }}';
 
                     setTimeout(() => {
                         button.textContent = originalText;
@@ -1307,6 +1398,7 @@ new class extends Component
 
         Alpine.data('multiFileUploader', () => ({
             files: [],
+            pendingConflictIndex: null,
             rawExtensions: @js(\App\Services\PhotoIdentityService::RAW_EXTENSIONS),
             oversizedFiles: [],
             unsupportedFiles: [],
@@ -1319,9 +1411,7 @@ new class extends Component
             init() {
                 setInterval(() => {
                     const oneMinuteAgo = Date.now() - 60000;
-                    this.uploadTimestamps = this.uploadTimestamps.filter(
-                        (timestamp) => timestamp > oneMinuteAgo,
-                    );
+                    this.uploadTimestamps = this.uploadTimestamps.filter((timestamp) => timestamp > oneMinuteAgo);
                     this.processUploadQueue();
                 }, 1000);
             },
@@ -1354,15 +1444,9 @@ new class extends Component
             },
 
             async processUploadQueue() {
-                const availableFiles = this.files.filter(
-                    (f) => f.status === 'pending' || f.status === 'queued',
-                );
+                const availableFiles = this.files.filter((f) => f.status === 'pending' || f.status === 'queued');
 
-                while (
-                    this.activeUploads < this.maxParallelUploads &&
-                    availableFiles.length > 0 &&
-                    this.canUpload()
-                ) {
+                while (this.activeUploads < this.maxParallelUploads && availableFiles.length > 0 && this.canUpload()) {
                     const fileObj = availableFiles.shift();
                     const fileIndex = this.files.indexOf(fileObj);
                     fileObj.status = 'pending';
@@ -1381,9 +1465,8 @@ new class extends Component
 
             checkAllUploadsComplete() {
                 return (
-                    this.files.every(
-                        (file) => file.status === 'completed' || file.status === 'skipped',
-                    ) && this.activeUploads === 0
+                    this.files.every((file) => file.status === 'completed' || file.status === 'skipped') &&
+                    this.activeUploads === 0
                 );
             },
 
@@ -1401,9 +1484,7 @@ new class extends Component
                 }
 
                 try {
-                    const duplicates = await $wire.findDuplicateNames(
-                        checkingFiles.map((f) => f.file.name),
-                    );
+                    const duplicates = await $wire.findDuplicateNames(checkingFiles.map((f) => f.file.name));
 
                     checkingFiles.forEach((fileObj) => {
                         const duplicate = duplicates.includes(fileObj.file.name);
@@ -1425,6 +1506,30 @@ new class extends Component
                         fileObj.status = 'pending';
                     });
                 }
+            },
+
+            askReplaceAll() {
+                this.$flux.modal('replace-conflicts').show();
+            },
+
+            askReplaceConflict(index) {
+                this.pendingConflictIndex = index;
+
+                this.$flux.modal('replace-conflict').show();
+            },
+
+            confirmReplaceAll() {
+                this.resolveAllConflicts('replace');
+            },
+
+            confirmReplaceConflict() {
+                if (this.pendingConflictIndex === null) {
+                    return;
+                }
+
+                this.resolveConflict(this.pendingConflictIndex, 'replace');
+
+                this.pendingConflictIndex = null;
             },
 
             resolveConflict(index, action) {

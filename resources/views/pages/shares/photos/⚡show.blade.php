@@ -4,6 +4,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Notifications\GuestPhotoCommented;
+use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -91,6 +92,15 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         }
 
         $this->commentText = '';
+    }
+
+    public ?int $pendingCommentId = null;
+
+    public function requestDeleteComment(int $id): void
+    {
+        $this->pendingCommentId = $id;
+
+        Flux::modal('delete-comment')->show();
     }
 
     public function deleteComment(PhotoComment $comment)
@@ -199,18 +209,18 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     // Tile watermark as background
                     const url = '{{ $photo->gallery->team->brand_watermark_url }}'
                     this.repeatedWatermarkStyle = `
-                            left: ${(containerWidth - renderedWidth) / 2}px;
-                            top: ${(containerHeight - renderedHeight) / 2}px;
-                            width: ${renderedWidth}px;
-                            height: ${renderedHeight}px;
-                            max-width: ${renderedWidth}px;
-                            max-height: ${renderedHeight}px;
-                            background-image: url('${url}');
-                            background-repeat: repeat;
-                            opacity: ${this.watermarkTransparency};
-                            pointer-events: none;
-                            position: absolute;
-                        `
+                                left: ${(containerWidth - renderedWidth) / 2}px;
+                                top: ${(containerHeight - renderedHeight) / 2}px;
+                                width: ${renderedWidth}px;
+                                height: ${renderedHeight}px;
+                                max-width: ${renderedWidth}px;
+                                max-height: ${renderedHeight}px;
+                                background-image: url('${url}');
+                                background-repeat: repeat;
+                                opacity: ${this.watermarkTransparency};
+                                pointer-events: none;
+                                position: absolute;
+                            `
                 }
                 this.watermarkStyle = style
                 this.showWatermark = true
@@ -227,7 +237,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             updateDimensions()
         })()
     "
-    x-on:selection-limit-reached.window="alert('{{ __('You have reached the limit for photo selection.') }}')"
+    x-on:selection-limit-reached.window="$flux.modal('selection-limit').show()"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
@@ -525,8 +535,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                                     </flux:text>
                                     @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
                                         <flux:button
-                                            wire:click="deleteComment({{ $comment->id }})"
-                                            wire:confirm="{{ __('Are you sure?') }}"
+                                            wire:click="requestDeleteComment({{ $comment->id }})"
                                             icon="x-mark"
                                             variant="subtle"
                                             size="xs"
@@ -560,6 +569,15 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             @include('partials.powered-by')
         </div>
     @endsubscribed
+
+    <x-confirm-modal
+        name="delete-comment"
+        :title="__('Delete comment?')"
+        :message="__('This action cannot be undone.')"
+        :method="$this->pendingCommentId ? 'deleteComment('.$this->pendingCommentId.')' : null"
+    />
+
+    <x-selection-limit-modal />
 </div>
 
 @assets

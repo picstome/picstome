@@ -77,6 +77,21 @@ it('adds and deletes a fixed expense', function () {
     expect($component->get('fixed_expenses'))->toHaveCount(4);
 });
 
+it('asks for confirmation before deleting a calculator item', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    $component = Livewire::actingAs($user)->test('pages::tools.calculator');
+
+    $id = $component->get('fixed_expenses')[0]['id'];
+    $before = count($component->get('fixed_expenses'));
+
+    $component->call('requestDeleteItem', 'fixed', $id);
+
+    expect($component->get('pendingDeleteType'))->toBe('fixed')
+        ->and($component->get('pendingDeleteId'))->toBe($id)
+        ->and($component->get('fixed_expenses'))->toHaveCount($before);
+});
+
 it('validates new fixed expenses', function () {
     $user = User::factory()->withPersonalTeam()->create();
 

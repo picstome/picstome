@@ -30,16 +30,34 @@
 
         @vite('resources/css/app.css')
 
-        @if (! empty($color))
+        @php
+            $accentColor = trim((string) ($color ?? ''));
+        @endphp
+
+        @if (! empty($accentColor))
             <style>
                 :root {
-                    --color-accent: var(--color-{{ $color }}-500);
-                    --color-accent-content: var(--color-{{ $color }}-600);
+                    --color-accent: var(--color-{{ $accentColor }}-500);
+                    --color-accent-content: var(--color-{{ $accentColor }}-600);
                 }
 
                 .dark {
-                    --color-accent: var(--color-{{ $color }}-500);
-                    --color-accent-content: var(--color-{{ $color }}-400);
+                    --color-accent: var(--color-{{ $accentColor }}-500);
+                    --color-accent-content: var(--color-{{ $accentColor }}-400);
+                }
+            </style>
+        @else
+            <style>
+                :root {
+                    --color-accent: var(--color-brand-green);
+                    --color-accent-content: var(--color-brand-green);
+                    --color-accent-foreground: white;
+                }
+
+                .dark {
+                    --color-accent: var(--color-brand-sage);
+                    --color-accent-content: var(--color-brand-sage);
+                    --color-accent-foreground: var(--color-brand-ink-strong);
                 }
             </style>
         @endif
@@ -50,7 +68,13 @@
 
         @stack('head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
+    <body
+        @class([
+            'min-h-screen',
+            'bg-brand-paper dark:bg-brand-night' => empty($accentColor),
+            'bg-white dark:bg-zinc-800' => ! empty($accentColor),
+        ])
+    >
         <flux:main :container="! ($fullScreen ?? false)" @class(['p-0!' => ($fullScreen) ?? false])>
             {{ $slot }}
         </flux:main>

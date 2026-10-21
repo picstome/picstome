@@ -725,6 +725,25 @@ describe('Photo Deletion', function () {
         expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeFalse();
     });
 
+    it('asks for confirmation before deleting a photo', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create([
+            'name' => 'photo1.jpg',
+            'disk' => 's3',
+            'path' => UploadedFile::fake()
+                ->image('photo1.jpg')
+                ->storeAs('galleries/1/photos', 'photo1.jpg', 's3'),
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('requestDeletePhoto', $photo->id);
+
+        expect($component->get('pendingPhotoId'))->toBe($photo->id);
+        expect($gallery->photos()->count())->toBe(1);
+    });
+
     it('prevents users from deleting another team\'s photo', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $photo = Photo::factory()->for(Gallery::factory()->for(Team::factory()))->create();
@@ -1143,6 +1162,51 @@ describe('Cover Photo', function () {
     });
 });
 
+describe('Live Session Original Size', function () {
+    it('keeps the original size switch in sync with the gallery', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->get('keepOriginalSize'))->toBeTrue();
+    });
+
+    it('syncs the edit gallery modal with the camera upload modal', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => true]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('keepOriginalSize', false);
+
+        expect($gallery->fresh()->keep_original_size)->toBeFalse();
+        expect($component->get('form')->keepOriginalSize)->toBeFalse();
+    });
+
+    it('syncs the camera upload modal when the gallery is edited', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'keep_original_size' => true,
+            'expiration_date' => now()->addMonth()->startOfDay(),
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.keepOriginalSize', false)
+            ->call('update')
+            ->assertHasNoErrors();
+
+        expect($gallery->fresh()->keep_original_size)->toBeFalse();
+        expect($component->get('keepOriginalSize'))->toBeFalse();
+    });
+
+    it('stores the choice on the gallery and remembers it for new galleries', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['keep_original_size' => false]);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('keepOriginalSize', true);
+
+        expect($gallery->fresh()->keep_original_size)->toBeTrue();
+        expect($this->user->fresh()->galleryDefaults()['keep_original_size'])->toBeTrue();
+    });
+});
+
 describe('Gallery Public Access', function () {
     it('dispatches photo processing and disables keep_original_size when toggling gallery to public', function () {
         Queue::fake();
@@ -1290,7 +1354,7 @@ describe('Live Camera Upload', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->assertSee('Unlock live camera upload');
+            ->assertSee('Unlock camera upload');
     });
 
     it('does not create an ftp account when the team is not subscribed', function () {
