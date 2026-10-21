@@ -92,3 +92,19 @@ it('deletes a draft invoice', function () {
 
     expect(Invoice::whereKey($invoice->id)->exists())->toBeFalse();
 });
+
+it('allows editing a draft invoice', function () {
+    $invoice = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertSee(route('invoices.create', ['invoice' => $invoice->ulid]), false);
+});
+
+it('does not allow editing an issued invoice', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertDontSee(route('invoices.create', ['invoice' => $invoice->ulid]), false);
+});

@@ -39,7 +39,7 @@ new class extends Component
     <flux:subheading>{{ __('Your fiscal data, tax defaults and invoice numbering.') }}</flux:subheading>
 
     <form wire:submit="save" class="mt-8 space-y-10">
-        <section>
+        <section class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
             <flux:heading level="2" size="lg">{{ __('Issuer') }}</flux:heading>
             <flux:subheading>{{ __('The data that identifies you as the invoice issuer.') }}</flux:subheading>
 
@@ -61,9 +61,7 @@ new class extends Component
             </div>
         </section>
 
-        <flux:separator variant="subtle" />
-
-        <section>
+        <section class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
             <flux:heading level="2" size="lg">{{ __('Taxes and currency') }}</flux:heading>
             <flux:subheading>{{ __('Default values applied to every new invoice.') }}</flux:subheading>
 
@@ -101,14 +99,16 @@ new class extends Component
                 </flux:select>
 
                 <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
+            </div>
 
-                <flux:checkbox
-                    wire:model="form.apply_irpf"
-                    :label="__('Apply IRPF withholding by default')"
-                    :description="__('The withholding is applied to the taxable base and deducted from the amount the client pays.')"
-                    class="sm:col-span-2"
-                />
+            <flux:checkbox
+                wire:model="form.apply_irpf"
+                :label="__('Apply IRPF withholding by default')"
+                :description="__('The withholding is applied to the taxable base and deducted from the amount the client pays.')"
+                class="mt-4"
+            />
 
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <flux:input
                     wire:model="form.simplified_invoice_limit"
                     :label="__('Simplified invoice limit')"
@@ -120,9 +120,7 @@ new class extends Component
             </div>
         </section>
 
-        <flux:separator variant="subtle" />
-
-        <section>
+        <section class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
             <flux:heading level="2" size="lg">{{ __('Numbering') }}</flux:heading>
             <flux:subheading>{{ __('Invoices are numbered by series, exercise and consecutive number.') }}</flux:subheading>
 
@@ -140,9 +138,7 @@ new class extends Component
             </div>
         </section>
 
-        <flux:separator variant="subtle" />
-
-        <section>
+        <section class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
             <flux:heading level="2" size="lg">{{ __('Payment terms and notes') }}</flux:heading>
             <flux:subheading>{{ __('Default values printed on your invoices.') }}</flux:subheading>
 
@@ -152,6 +148,8 @@ new class extends Component
             </div>
         </section>
 
-        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+        <div class="flex items-center justify-end gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-white/5">
+            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+        </div>
     </form>
 </div>

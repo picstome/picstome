@@ -2,10 +2,12 @@
 
 use App\Livewire\Forms\CustomerForm;
 use App\Livewire\Forms\InvoiceForm;
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePlanLimitService;
+use App\Services\InvoiceService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -20,6 +22,8 @@ new class extends Component
     public int $step = 1;
 
     public string $customerSearch = '';
+
+    public bool $editingCustomer = false;
 
     public function mount(): void
     {
@@ -44,7 +48,7 @@ new class extends Component
 
         $this->form->setInvoice($invoice);
 
-        $this->step = $invoice->isRectificative() ? 3 : 2;
+        $this->step = $invoice->isRectificative() ? 3 : ($invoice->customer_id ? 2 : 1);
     }
 
     #[Computed]
@@ -71,6 +75,35 @@ new class extends Component
         return app(InvoicePlanLimitService::class)->canIssue(Auth::user()->currentTeam);
     }
 
+    #[Computed]
+    public function selectedCustomer(): ?Customer
+    {
+        if (! $this->form->customer_id) {
+            return null;
+        }
+
+        return Auth::user()->currentTeam->customers()->find($this->form->customer_id);
+    }
+
+    /**
+     * Fiscal fields the selected client is still missing.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function missingCustomerFields(): array
+    {
+        $customer = $this->selectedCustomer();
+
+        if (! $customer) {
+            return [];
+        }
+
+        $snapshots = app(InvoiceService::class);
+
+        return $snapshots->missingCustomerFields($snapshots->customerSnapshot($customer));
+    }
+
     public function selectCustomer(int $customerId): void
     {
         $this->form->customer_id = $customerId;
@@ -80,13 +113,48 @@ new class extends Component
 
     public function addCustomer(): void
     {
-        $customer = $this->customerForm->store();
+        $this->editingCustomer = false;
 
-        $this->form->customer_id = $customer->id;
+        $this->customerForm->reset();
 
-        $this->modal('create-customer')->close();
+        $this->modal('customer')->show();
+    }
 
-        $this->nextStep();
+    /**
+     * Open the form to complete the fiscal data of the selected client.
+     */
+    public function editCustomer(): void
+    {
+        $customer = $this->selectedCustomer();
+
+        if (! $customer) {
+            return;
+        }
+
+        $this->editingCustomer = true;
+
+        $this->customerForm->setCustomer($customer);
+
+        $this->modal('customer')->show();
+    }
+
+    public function saveCustomer(): void
+    {
+        if ($this->editingCustomer) {
+            $this->customerForm->update();
+        } else {
+            $customer = $this->customerForm->store();
+
+            $this->form->customer_id = $customer->id;
+        }
+
+        $this->modal('customer')->close();
+
+        Flux::toast(__('The client details have been saved.'), variant: 'success');
+
+        if (! $this->editingCustomer) {
+            $this->nextStep();
+        }
     }
 
     public function addLine(): void
@@ -144,13 +212,29 @@ new class extends Component
 
 <div>
     <div class="mb-6 flex items-center gap-2">
-        <flux:button variant="ghost" icon="chevron-left" :href="route('invoices')" wire:navigate class="-ml-2">
+        <flux:button
+            variant="ghost"
+            icon="chevron-left"
+            :href="$this->form->invoice ? route('invoices.show', $this->form->invoice) : route('invoices')"
+            wire:navigate
+            class="-ml-2"
+        >
             {{ __('Invoices') }}
         </flux:button>
     </div>
 
-    <x-heading level="1" size="xl">{{ __('New invoice') }}</x-heading>
+    <x-heading level="1" size="xl">
+        {{ $this->form->invoice ? __('Edit invoice') : __('New invoice') }}
+    </x-heading>
     <x-subheading>{{ __('Step :step of 3', ['step' => $this->step]) }}</x-subheading>
+
+    @if ($this->form->invoice && ! $this->form->invoice->isRectificative())
+        <flux:callout icon="information-circle" variant="outline" class="mt-6">
+            <flux:callout.text>
+                {{ __('You are editing a draft invoice. It keeps no number until you issue it.') }}
+            </flux:callout.text>
+        </flux:callout>
+    @endif
 
     @if ($this->form->invoice?->isRectificative())
         <flux:callout icon="information-circle" variant="outline" class="mt-6">
@@ -163,12 +247,26 @@ new class extends Component
         </flux:callout>
     @endif
 
+    @if ($this->selectedCustomer() && $this->missingCustomerFields() !== [])
+        <flux:callout icon="exclamation-triangle" variant="outline" class="mt-6">
+            <flux:callout.heading>{{ __('The client is missing fiscal data') }}</flux:callout.heading>
+            <flux:callout.text>
+                {{ __('A complete invoice needs the legal name, the tax ID and the address of the client.') }}
+            </flux:callout.text>
+            <x-slot name="actions">
+                <flux:button variant="primary" wire:click="editCustomer">
+                    {{ __('Complete the client data') }}
+                </flux:button>
+            </x-slot>
+        </flux:callout>
+    @endif
+
     <div class="mt-8 grid gap-2 sm:grid-cols-3">
         @foreach ([1 => __('Client'), 2 => __('Line items'), 3 => __('Review and issue')] as $index => $label)
             <div @class([
                 'rounded-lg border px-3 py-2 text-sm',
-                'border-zinc-200 bg-white text-zinc-500 dark:border-white/10 dark:bg-white/5',
-                'border-brand-green/40 bg-brand-green/5 text-brand-ink dark:border-brand-green/40 dark:text-white' => $this->step === $index,
+                'border-zinc-200 bg-white text-zinc-500 dark:border-white/10 dark:bg-white/5' => $this->step !== $index,
+                'border-brand-green/50 bg-brand-green/10 font-medium text-brand-ink dark:border-brand-green/40 dark:bg-brand-green/10 dark:text-white' => $this->step === $index,
             ])>
                 <span class="font-medium">{{ $index }}.</span> {{ $label }}
             </div>
@@ -191,6 +289,12 @@ new class extends Component
 
             <div class="mt-4 space-y-2">
                 @forelse ($this->customers as $customer)
+                    @php
+                        $missing = app(InvoiceService::class)->missingCustomerFields(
+                            app(InvoiceService::class)->customerSnapshot($customer)
+                        );
+                    @endphp
+
                     <button
                         type="button"
                         wire:key="customer-{{ $customer->id }}"
@@ -202,6 +306,11 @@ new class extends Component
                             @if ($customer->tax_id)
                                 <span class="ms-2 text-zinc-500">{{ $customer->tax_id }}</span>
                             @endif
+                            @if ($missing !== [])
+                                <flux:badge color="yellow" inset size="sm" class="ms-2">
+                                    {{ __('Missing fiscal data') }}
+                                </flux:badge>
+                            @endif
                         </span>
                         <flux:icon.chevron-right class="size-4 text-zinc-400" />
                     </button>
@@ -210,15 +319,15 @@ new class extends Component
                 @endforelse
             </div>
 
-            <flux:modal.trigger name="create-customer">
-                <flux:button variant="outline" icon="plus" class="mt-6">{{ __('Add a new client') }}</flux:button>
-            </flux:modal.trigger>
+            <flux:button variant="outline" icon="plus" class="mt-6" wire:click="addCustomer">
+                {{ __('Add a new client') }}
+            </flux:button>
         </section>
     @elseif ($this->step === 2)
         <section class="mt-8">
             <div class="space-y-3">
                 @foreach ($this->form->lineItems as $index => $lineItem)
-                    <div wire:key="line-item-{{ $index }}" class="grid gap-3 rounded-lg border border-zinc-200 p-4 sm:grid-cols-[1fr_6rem_8rem_auto] dark:border-white/10">
+                    <div wire:key="line-item-{{ $index }}" class="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs sm:grid-cols-[1fr_6rem_8rem_auto] dark:border-white/10 dark:bg-white/5">
                         <flux:input
                             wire:model="form.lineItems.{{ $index }}.description"
                             :label="__('Description')"
@@ -312,7 +421,7 @@ new class extends Component
             </div>
 
             <div>
-                <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                     <flux:heading level="3" size="sm">{{ __('Summary') }}</flux:heading>
 
                     <dl class="mt-4 space-y-2 text-sm">
@@ -378,13 +487,15 @@ new class extends Component
         </div>
     </div>
 
-    <flux:modal name="create-customer" class="w-full sm:max-w-lg">
-        <form wire:submit="addCustomer" class="space-y-6">
+    <flux:modal name="customer" class="w-full sm:max-w-lg">
+        <form wire:submit="saveCustomer" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Add a new client') }}</flux:heading>
+                <flux:heading size="lg">
+                    {{ $this->editingCustomer ? __('Edit client') : __('Add a new client') }}
+                </flux:heading>
                 <flux:subheading>{{ __('Please enter your client details.') }}</flux:subheading>
             </div>
-            <x-customer-form-fields />
+            <x-customer-form-fields prefix="customerForm" />
             <div class="flex">
                 <flux:spacer />
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>

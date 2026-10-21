@@ -82,7 +82,11 @@ new class extends Component
             <x-heading level="1" size="xl">{{ __('Invoices') }}</x-heading>
             <x-subheading>{{ __('Create invoices and share them with your clients.') }}</x-subheading>
         </div>
-        <div>
+        <div class="flex items-center gap-2">
+            <flux:button variant="outline" icon="cog" :href="route('invoices.settings')" wire:navigate>
+                {{ __('Invoice settings') }}
+            </flux:button>
+
             <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
                 {{ __('New invoice') }}
             </flux:button>
@@ -105,34 +109,59 @@ new class extends Component
     @endif
 
     @if ($this->invoices->isNotEmpty())
-        <x-table id="table" class="mt-8">
-            <x-table.columns>
-                <x-table.column>{{ __('Number') }}</x-table.column>
-                <x-table.column>{{ __('Client') }}</x-table.column>
-                <x-table.column>{{ __('Issue date') }}</x-table.column>
-                <x-table.column align="end">{{ __('Total') }}</x-table.column>
-                <x-table.column align="end">{{ __('Status') }}</x-table.column>
-            </x-table.columns>
+        <div class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&_table]:table-auto [&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4 dark:border-white/10 dark:bg-white/5">
+            <x-table id="table">
+                <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
+                    <x-table.column>{{ __('Number') }}</x-table.column>
+                    <x-table.column>{{ __('Client') }}</x-table.column>
+                    <x-table.column>{{ __('Issue date') }}</x-table.column>
+                    <x-table.column align="end">{{ __('Total') }}</x-table.column>
+                    <x-table.column align="end">{{ __('Status') }}</x-table.column>
+                </x-table.columns>
 
-            <x-table.rows>
-                @foreach ($this->invoices as $invoice)
-                    <x-table.row wire:key="invoice-{{ $invoice->id }}">
-                        <x-table.cell variant="strong" class="relative w-full">
-                            <a
-                                href="{{ route('invoices.show', $invoice) }}"
-                                wire:navigate
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
-                            {{ $invoice->full_number ?? __('Draft') }}
-                        </x-table.cell>
-                        <x-table.cell>{{ $invoice->customer?->name ?? '—' }}</x-table.cell>
-                        <x-table.cell>{{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}</x-table.cell>
-                        <x-table.cell align="end">{{ number_format((float) $invoice->total, 2) }} {{ $invoice->currency }}</x-table.cell>
-                        <x-table.cell align="end">{{ $invoice->status_label }}</x-table.cell>
-                    </x-table.row>
-                @endforeach
-            </x-table.rows>
-        </x-table>
+                <x-table.rows>
+                    @foreach ($this->invoices as $invoice)
+                        <x-table.row
+                            wire:key="invoice-{{ $invoice->id }}"
+                            class="transition hover:bg-zinc-50 dark:hover:bg-white/5"
+                        >
+                            <x-table.cell variant="strong" class="relative">
+                                <a
+                                    href="{{ route('invoices.show', $invoice) }}"
+                                    wire:navigate
+                                    class="absolute inset-0 focus:outline-hidden"
+                                ></a>
+                                <span @class(['font-mono' => filled($invoice->full_number)])>
+                                    {{ $invoice->full_number ?? __('Draft') }}
+                                </span>
+                            </x-table.cell>
+                            <x-table.cell variant="muted">
+                                {{ $invoice->customer?->name ?? '—' }}
+                            </x-table.cell>
+                            <x-table.cell variant="muted">
+                                {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
+                            </x-table.cell>
+                            <x-table.cell variant="strong" align="end">
+                                {{ number_format((float) $invoice->total, 2) }}
+                                <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
+                            </x-table.cell>
+                            <x-table.cell align="end">
+                                <flux:badge
+                                    :color="match ($invoice->status) {
+                                        'issued' => 'green',
+                                        'rectified' => 'orange',
+                                        default => 'zinc',
+                                    }"
+                                    inset
+                                >
+                                    {{ $invoice->status_label }}
+                                </flux:badge>
+                            </x-table.cell>
+                        </x-table.row>
+                    @endforeach
+                </x-table.rows>
+            </x-table>
+        </div>
 
         <div class="mt-6">
             <flux:pagination :paginator="$this->invoices" />
@@ -144,9 +173,14 @@ new class extends Component
             <flux:subheading class="mb-6 max-w-72 text-center">
                 {{ __('Create your first invoice and share it with your client.') }}
             </flux:subheading>
-            <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
-                {{ __('New invoice') }}
-            </flux:button>
+            <div class="flex items-center gap-3">
+                <flux:button variant="outline" icon="cog" :href="route('invoices.settings')" wire:navigate>
+                    {{ __('Invoice settings') }}
+                </flux:button>
+                <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
+                    {{ __('New invoice') }}
+                </flux:button>
+            </div>
         </div>
     @endif
 

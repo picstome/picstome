@@ -141,6 +141,10 @@ new class extends Component
             @endif
 
             @if ($this->invoice->isDraft())
+                <flux:button variant="outline" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
+                    {{ __('Edit') }}
+                </flux:button>
+
                 <flux:modal.trigger name="delete-invoice">
                     <flux:button variant="danger" icon="trash">{{ __('Delete') }}</flux:button>
                 </flux:modal.trigger>
@@ -169,7 +173,7 @@ new class extends Component
 
     <div class="mt-8 grid gap-8 lg:grid-cols-2">
         <div class="space-y-6">
-            <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                 <flux:heading level="3" size="sm">{{ __('Issuer') }}</flux:heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['issuer']['legal_name'] ?? '' }}</div>
@@ -186,7 +190,7 @@ new class extends Component
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                 <flux:heading level="3" size="sm">{{ __('Client') }}</flux:heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['customer']['legal_name'] ?? ($this->invoice->customer?->name ?? '—') }}</div>
@@ -204,7 +208,7 @@ new class extends Component
             </div>
 
             @if (filled($this->invoice->public_token))
-                <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                     <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
                     <flux:input
                         icon="link"
@@ -221,10 +225,10 @@ new class extends Component
         </div>
 
         <div class="space-y-6">
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-white/10">
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-white/10 dark:bg-white/5">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="border-b border-zinc-200 text-left dark:border-white/10">
+                        <tr class="border-b border-zinc-200 bg-zinc-50 text-left text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
                             <th class="px-4 py-3 font-medium">{{ __('Description') }}</th>
                             <th class="px-4 py-3 text-right font-medium">{{ __('Qty') }}</th>
                             <th class="px-4 py-3 text-right font-medium">{{ __('Price') }}</th>
@@ -235,9 +239,9 @@ new class extends Component
                         @foreach ($this->invoice->invoice_data['line_items'] ?? [] as $lineItem)
                             <tr wire:key="line-{{ $loop->index }}" class="border-b border-zinc-100 last:border-0 dark:border-white/5">
                                 <td class="px-4 py-3">{{ $lineItem['description'] ?? '' }}</td>
-                                <td class="px-4 py-3 text-right">{{ $lineItem['quantity'] ?? 0 }}</td>
-                                <td class="px-4 py-3 text-right">{{ number_format((float) ($lineItem['unit_price'] ?? 0), 2) }}</td>
-                                <td class="px-4 py-3 text-right">
+                                <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ $lineItem['quantity'] ?? 0 }}</td>
+                                <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ number_format((float) ($lineItem['unit_price'] ?? 0), 2) }}</td>
+                                <td class="px-4 py-3 text-right font-medium">
                                     {{ number_format((float) ($lineItem['quantity'] ?? 0) * (float) ($lineItem['unit_price'] ?? 0), 2) }}
                                 </td>
                             </tr>
@@ -246,7 +250,7 @@ new class extends Component
                 </table>
             </div>
 
-            <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('Subtotal') }}</dt>
@@ -290,7 +294,7 @@ new class extends Component
             </div>
 
             @if (filled($this->invoice->fingerprint))
-                <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                     <flux:heading level="3" size="sm">{{ __('Traceability') }}</flux:heading>
                     <dl class="mt-3 space-y-1 text-xs text-zinc-500">
                         <div class="break-all font-mono">{{ $this->invoice->fingerprint }}</div>
@@ -307,7 +311,7 @@ new class extends Component
                 </div>
             @endif
 
-            <div class="rounded-xl border border-zinc-200 p-5 dark:border-white/10">
+            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                 <flux:heading level="3" size="sm">{{ __('Activity') }}</flux:heading>
                 <ul class="mt-3 space-y-2 text-sm">
                     @forelse ($this->events as $event)
