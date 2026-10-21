@@ -42,19 +42,29 @@ new class extends Component
 
         $ulid = request()->get('invoice');
 
-        if (blank($ulid)) {
-            return;
+        $invoice = $ulid
+            ? Auth::user()->currentTeam->invoices()->where('ulid', $ulid)->first()
+            : null;
+
+        if ($invoice?->isDraft()) {
+            $this->form->setInvoice($invoice);
+
+            $this->step = $invoice->isRectificative() ? 3 : ($invoice->customer_id ? 2 : 1);
         }
 
-        $invoice = Auth::user()->currentTeam->invoices()->where('ulid', $ulid)->first();
+        $this->ensureLineItem();
+    }
 
-        if (! $invoice || ! $invoice->isDraft()) {
-            return;
+    /**
+     * A new invoice always starts with one line item.
+     */
+    private function ensureLineItem(): void
+    {
+        if ($this->form->lineItems === []) {
+            $this->form->lineItems = [
+                ['description' => '', 'quantity' => 1, 'unit_price' => 0],
+            ];
         }
-
-        $this->form->setInvoice($invoice);
-
-        $this->step = $invoice->isRectificative() ? 3 : ($invoice->customer_id ? 2 : 1);
     }
 
     #[Computed]
@@ -371,6 +381,7 @@ new class extends Component
                             variant="ghost"
                             icon="trash"
                             class="sm:mt-6"
+                            :disabled="count($this->form->lineItems) <= 1"
                             wire:click="removeLine({{ $index }})"
                         />
                     </div>

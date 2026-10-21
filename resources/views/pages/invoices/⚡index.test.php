@@ -2,6 +2,7 @@
 
 use App\Models\InvoiceSetting;
 use App\Models\User;
+use App\Services\InvoiceIssuanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -54,7 +55,7 @@ it('requires authentication', function () {
 it('shows the links to the pdf and the public page of an issued invoice', function () {
     config(['picstome.personal_team_monthly_invoice_limit' => 10]);
 
-    $invoice = app(App\Services\InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+    $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices')

@@ -34,8 +34,7 @@ it('creates and issues an invoice from the guided flow', function () {
         ->call('nextStep')
         ->assertSet('step', 2);
 
-    $component->call('addLine')
-        ->set('form.lineItems.0.description', 'Photo session')
+    $component->set('form.lineItems.0.description', 'Photo session')
         ->set('form.lineItems.0.quantity', 2)
         ->set('form.lineItems.0.unit_price', 150)
         ->call('nextStep')
@@ -58,7 +57,6 @@ it('saves a draft without consuming a number', function () {
     $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
 
     $component->set('form.customer_id', $this->customer->id)
-        ->call('addLine')
         ->set('form.lineItems.0.description', 'Photo session')
         ->set('form.lineItems.0.quantity', 1)
         ->set('form.lineItems.0.unit_price', 150)
@@ -72,6 +70,14 @@ it('saves a draft without consuming a number', function () {
         ->and($invoice->pdf_path)->toBeNull();
 });
 
+it('starts a new invoice with one line item', function () {
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertSet('form.lineItems', [
+            ['description' => '', 'quantity' => 1, 'unit_price' => 0],
+        ]);
+});
+
 it('requires a client', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
@@ -83,7 +89,6 @@ it('requires at least one line item', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
         ->set('form.customer_id', $this->customer->id)
-        ->call('addLine')
         ->set('form.lineItems.0.description', '')
         ->call('saveDraft')
         ->assertHasErrors(['form.lineItems.0.description' => 'required']);
@@ -218,7 +223,6 @@ it('records the creation and the update of a draft in the audit trail', function
     $component = Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
         ->set('form.customer_id', $this->customer->id)
-        ->call('addLine')
         ->set('form.lineItems.0.description', 'Sesión de fotos')
         ->set('form.lineItems.0.quantity', 1)
         ->set('form.lineItems.0.unit_price', 100)

@@ -101,12 +101,13 @@ new class extends Component
                 <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
             </div>
 
-            <flux:checkbox
-                wire:model="form.apply_irpf"
-                :label="__('Apply IRPF withholding by default')"
-                :description="__('The withholding is applied to the taxable base and deducted from the amount the client pays.')"
-                class="mt-4"
-            />
+            <div class="mt-6 rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-white/10 dark:bg-white/5">
+                <flux:switch
+                    wire:model="form.apply_irpf"
+                    :label="__('Apply IRPF withholding by default')"
+                    :description="__('The withholding is applied to the taxable base and deducted from the amount the client pays.')"
+                />
+            </div>
 
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
                 <flux:input
