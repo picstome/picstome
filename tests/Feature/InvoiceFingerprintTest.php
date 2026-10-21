@@ -40,6 +40,17 @@ it('verifies a complete chain', function () {
         ->and($verification['broken_at'])->toBeNull();
 });
 
+it('reports the position of the invoice in the chain', function () {
+    $this->issuance->issue(draftInvoice($this->team));
+    $second = $this->issuance->issue(draftInvoice($this->team));
+
+    $verification = $this->fingerprints->verify($second->fresh());
+
+    expect($verification['position'])->toBe(2)
+        ->and($verification['total'])->toBe(2)
+        ->and($verification['valid'])->toBeTrue();
+});
+
 it('detects a manipulated invoice', function () {
     $this->issuance->issue(draftInvoice($this->team));
     $invoice = $this->issuance->issue(draftInvoice($this->team));

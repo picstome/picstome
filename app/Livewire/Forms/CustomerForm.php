@@ -9,7 +9,7 @@ use Livewire\Form;
 
 class CustomerForm extends Form
 {
-    public ?Customer $customer;
+    public ?Customer $customer = null;
 
     public ?string $name = '';
 

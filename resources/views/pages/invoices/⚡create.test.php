@@ -71,11 +71,15 @@ it('saves a draft without consuming a number', function () {
 });
 
 it('starts a new invoice with one line item', function () {
-    Livewire::actingAs($this->user)
-        ->test('pages::invoices.create')
-        ->assertSet('form.lineItems', [
-            ['description' => '', 'quantity' => 1, 'unit_price' => 0],
-        ]);
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $lineItems = $component->get('form.lineItems');
+
+    expect($lineItems)->toHaveCount(1)
+        ->and($lineItems[0]['description'])->toBe('')
+        ->and($lineItems[0]['quantity'])->toBe(1)
+        ->and($lineItems[0]['unit_price'])->toBe(0)
+        ->and($lineItems[0]['id'])->not->toBeEmpty();
 });
 
 it('requires a client', function () {
@@ -92,6 +96,18 @@ it('requires at least one line item', function () {
         ->set('form.lineItems.0.description', '')
         ->call('saveDraft')
         ->assertHasErrors(['form.lineItems.0.description' => 'required']);
+});
+
+it('does not leave the line items step with an invalid line', function () {
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->assertSet('step', 2)
+        ->call('nextStep')
+        ->assertHasErrors(['form.lineItems.0.description' => 'required'])
+        ->assertSet('step', 2)
+        ->assertSee('field is required');
 });
 
 it('does not allow a client from another team', function () {

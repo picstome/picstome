@@ -12,6 +12,7 @@ use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -62,14 +63,19 @@ new class extends Component
     {
         if ($this->form->lineItems === []) {
             $this->form->lineItems = [
-                ['description' => '', 'quantity' => 1, 'unit_price' => 0],
+                ['id' => (string) Str::uuid(), 'description' => '', 'quantity' => 1, 'unit_price' => 0],
             ];
         }
     }
 
+    /**
+     * The clients of the team, flagged when they miss fiscal data.
+     */
     #[Computed]
     public function customers()
     {
+        $snapshots = app(InvoiceService::class);
+
         return Auth::user()->currentTeam
             ->customers()
             ->when($this->customerSearch !== '', function ($query) {
@@ -82,13 +88,35 @@ new class extends Component
             })
             ->orderBy('name')
             ->limit(10)
-            ->get();
+            ->get()
+            ->each(function (Customer $customer) use ($snapshots) {
+                $customer->setAttribute(
+                    'missing_fiscal_data',
+                    $snapshots->missingCustomerFields($snapshots->customerSnapshot($customer)) !== []
+                );
+            });
     }
 
     #[Computed]
     public function canIssue(): bool
     {
         return app(InvoicePlanLimitService::class)->canIssue(Auth::user()->currentTeam);
+    }
+
+    #[Computed]
+    public function settings(): InvoiceSetting
+    {
+        return Auth::user()->currentTeam->invoiceSetting;
+    }
+
+    /**
+     * The amounts of the invoice, calculated live.
+     *
+     * @return array<string, float>
+     */
+    public function summary(): array
+    {
+        return $this->form->totals();
     }
 
     #[Computed]
@@ -176,6 +204,7 @@ new class extends Component
     public function addLine(): void
     {
         $this->form->lineItems[] = [
+            'id' => (string) Str::uuid(),
             'description' => '',
             'quantity' => 1,
             'unit_price' => 0,
@@ -191,11 +220,65 @@ new class extends Component
 
     public function nextStep(): void
     {
-        if ($this->step === 1) {
-            $this->form->validateOnly('customer_id');
-        }
+        match ($this->step) {
+            1 => $this->form->validateOnly('customer_id'),
+            2 => $this->validateLineItems(),
+            default => null,
+        };
 
         $this->step = min($this->step + 1, 3);
+    }
+
+    /**
+     * Validate every field of the line items, so the step is not left with
+     * an incomplete line.
+     */
+    protected function validateLineItems(): void
+    {
+        foreach (['lineItems.*.description', 'lineItems.*.quantity', 'lineItems.*.unit_price'] as $field) {
+            $this->form->validateOnly($field);
+        }
+    }
+
+    /**
+     * Errors that are not visible in the current step, so the user is told
+     * what is missing instead of pressing a button that does nothing.
+     *
+     * @return list<string>
+     */
+    #[Computed]
+    public function hiddenErrorMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->getErrorBag()->getMessages() as $key => $errors) {
+            if ($this->isErrorVisible($key)) {
+                continue;
+            }
+
+            foreach ($errors as $error) {
+                $messages[] = $error;
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
+
+    /**
+     * Whether the field of an error is rendered in the current step.
+     */
+    protected function isErrorVisible(string $key): bool
+    {
+        // Errors raised by the services are never bound to a field.
+        if (! str_starts_with($key, 'form.') && ! str_starts_with($key, 'customerForm.')) {
+            return false;
+        }
+
+        return match ($this->step) {
+            1 => str_starts_with($key, 'form.customer_id') || str_starts_with($key, 'customerForm.'),
+            2 => str_starts_with($key, 'form.lineItems'),
+            default => ! str_starts_with($key, 'form.lineItems') && ! str_starts_with($key, 'form.customer_id'),
+        };
     }
 
     public function previousStep(): void
@@ -295,16 +378,11 @@ new class extends Component
         @endforeach
     </div>
 
-    @php
-        $issuanceErrors = collect(['invoice', 'customer', 'issue_date', 'exchange_rate', 'vat_exemption_reason'])
-            ->flatMap(fn (string $key) => $errors->get($key));
-    @endphp
-
-    @if ($issuanceErrors->isNotEmpty())
+    @if ($this->hiddenErrorMessages !== [])
         <flux:callout icon="exclamation-triangle" variant="danger" class="mt-6">
             <flux:callout.text>
-                @foreach ($issuanceErrors as $issuanceError)
-                    <div>{{ $issuanceError }}</div>
+                @foreach ($this->hiddenErrorMessages as $hiddenError)
+                    <div>{{ $hiddenError }}</div>
                 @endforeach
             </flux:callout.text>
         </flux:callout>
@@ -320,12 +398,6 @@ new class extends Component
 
             <div class="mt-4 space-y-2">
                 @forelse ($this->customers as $customer)
-                    @php
-                        $missing = app(InvoiceService::class)->missingCustomerFields(
-                            app(InvoiceService::class)->customerSnapshot($customer)
-                        );
-                    @endphp
-
                     <button
                         type="button"
                         wire:key="customer-{{ $customer->id }}"
@@ -337,7 +409,7 @@ new class extends Component
                             @if ($customer->tax_id)
                                 <span class="ms-2 text-zinc-500">{{ $customer->tax_id }}</span>
                             @endif
-                            @if ($missing !== [])
+                            @if ($customer->missing_fiscal_data)
                                 <flux:badge color="yellow" inset size="sm" class="ms-2">
                                     {{ __('Missing fiscal data') }}
                                 </flux:badge>
@@ -350,7 +422,7 @@ new class extends Component
                 @endforelse
             </div>
 
-            <flux:button variant="primary" class="btn-ink" icon="plus" class="mt-6" wire:click="addCustomer">
+            <flux:button variant="primary" class="btn-ink mt-6" icon="plus" wire:click="addCustomer">
                 {{ __('Add a new client') }}
             </flux:button>
         </section>
@@ -358,7 +430,7 @@ new class extends Component
         <section class="mt-8">
             <div class="space-y-3">
                 @foreach ($this->form->lineItems as $index => $lineItem)
-                    <div wire:key="line-item-{{ $index }}" class="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs sm:grid-cols-[1fr_6rem_8rem_auto] dark:border-white/10 dark:bg-white/5">
+                    <div wire:key="line-item-{{ $lineItem['id'] ?? $index }}" class="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs sm:grid-cols-[1fr_6rem_8rem_auto] dark:border-white/10 dark:bg-white/5">
                         <flux:input
                             wire:model="form.lineItems.{{ $index }}.description"
                             :label="__('Description')"
@@ -382,13 +454,14 @@ new class extends Component
                             icon="trash"
                             class="sm:mt-6"
                             :disabled="count($this->form->lineItems) <= 1"
+                            :aria-label="__('Remove line item')"
                             wire:click="removeLine({{ $index }})"
                         />
                     </div>
                 @endforeach
             </div>
 
-            <flux:button variant="primary" class="btn-ink" icon="plus" class="mt-4" wire:click="addLine">
+            <flux:button variant="primary" class="btn-ink mt-4" icon="plus" wire:click="addLine">
                 {{ __('Add line item') }}
             </flux:button>
         </section>
@@ -432,7 +505,7 @@ new class extends Component
                     />
                 @endif
 
-                @if (Auth::user()->currentTeam->invoiceSetting?->country === 'ES' && Auth::user()->currentTeam->invoiceSetting?->currency !== 'EUR')
+                @if ($this->settings->country === 'ES' && $this->settings->currency !== 'EUR')
                     <flux:input
                         wire:model="form.exchange_rate"
                         :label="__('Exchange rate to euros')"
@@ -464,31 +537,31 @@ new class extends Component
                     <dl class="mt-4 space-y-2 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Subtotal') }}</dt>
-                            <dd>{{ $this->money($this->form->totals()['subtotal']) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
+                            <dd>{{ $this->money($this->summary()['subtotal']) }} {{ $this->settings->currency }}</dd>
                         </div>
-                        @if ($this->form->totals()['discount_total'] > 0)
+                        @if ($this->summary()['discount_total'] > 0)
                             <div class="flex justify-between">
                                 <dt class="text-zinc-500">{{ __('Discount') }}</dt>
-                                <dd>-{{ $this->money($this->form->totals()['discount_total']) }}</dd>
+                                <dd>-{{ $this->money($this->summary()['discount_total']) }}</dd>
                             </div>
                         @endif
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Taxable base') }}</dt>
-                            <dd>{{ $this->money($this->form->totals()['base_amount']) }}</dd>
+                            <dd>{{ $this->money($this->summary()['base_amount']) }}</dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('VAT') }}</dt>
-                            <dd>{{ $this->money($this->form->totals()['vat_amount']) }}</dd>
+                            <dd>{{ $this->money($this->summary()['vat_amount']) }}</dd>
                         </div>
                         @if ($this->form->apply_irpf)
                             <div class="flex justify-between">
                                 <dt class="text-zinc-500">{{ __('IRPF withheld') }}</dt>
-                                <dd>-{{ $this->money($this->form->totals()['irpf_amount']) }}</dd>
+                                <dd>-{{ $this->money($this->summary()['irpf_amount']) }}</dd>
                             </div>
                         @endif
                         <div class="flex justify-between border-t border-zinc-200 pt-2 text-base font-semibold dark:border-white/10">
                             <dt>{{ $this->form->apply_irpf ? __('Amount to pay') : __('Total') }}</dt>
-                            <dd>{{ $this->money($this->form->apply_irpf ? $this->form->totals()['amount_due'] : $this->form->totals()['total']) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
+                            <dd>{{ $this->money($this->form->apply_irpf ? $this->summary()['amount_due'] : $this->summary()['total']) }} {{ $this->settings->currency }}</dd>
                         </div>
                     </dl>
                 </div>

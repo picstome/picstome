@@ -63,7 +63,7 @@ class InvoiceSettingsForm extends Form
             'email' => ['nullable', 'email', 'max:255'],
             'currency' => ['required', 'string', Rule::in(array_keys(config('invoices.currencies')))],
             'timezone' => ['required', 'timezone'],
-            'vat_percent' => ['required', 'numeric', 'in:0,4,10,21'],
+            'vat_percent' => ['required', 'numeric', Rule::in($this->vatRates())],
             'irpf_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'apply_irpf' => ['boolean'],
             'series' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z0-9_-]+$/'],
@@ -97,6 +97,19 @@ class InvoiceSettingsForm extends Form
         $this->simplified_invoice_limit = $this->decimal($settings->simplified_invoice_limit);
         $this->payment_terms = (string) $settings->payment_terms;
         $this->notes = (string) $settings->notes;
+    }
+
+    /**
+     * The VAT rates that can be applied, as they are sent by the form.
+     *
+     * @return list<string>
+     */
+    protected function vatRates(): array
+    {
+        return array_map(
+            fn ($rate) => rtrim(rtrim(number_format((float) $rate, 2, '.', ''), '0'), '.'),
+            config('invoices.vat_rates')
+        );
     }
 
     /**

@@ -26,15 +26,43 @@ new #[Layout('layouts.guest')] class extends Component
             404
         );
 
-        $this->invoice = $invoice;
+        $this->invoice = $invoice->load(['rectifiesInvoice', 'rectification']);
 
-        $invoice->recordEvent(InvoiceEvent::PUBLIC_VIEWED);
+        $this->recordView();
     }
 
     #[Computed]
     public function chain()
     {
         return app(InvoiceFingerprintService::class)->verify($this->invoice);
+    }
+
+    /**
+     * Record the visit, at most once a day, so a crawler cannot grow the
+     * audit trail without bound.
+     */
+    protected function recordView(): void
+    {
+        $viewedToday = $this->invoice->events()
+            ->where('event', InvoiceEvent::PUBLIC_VIEWED)
+            ->where('created_at', '>=', now()->subDay())
+            ->exists();
+
+        if ($viewedToday) {
+            return;
+        }
+
+        $this->invoice->recordEvent(InvoiceEvent::PUBLIC_VIEWED);
+    }
+
+    /**
+     * Whether the public page of an invoice can be opened.
+     */
+    protected function hasPublicLink(?Invoice $invoice): bool
+    {
+        return $invoice !== null
+            && filled($invoice->public_token)
+            && $invoice->public_token_revoked_at === null;
     }
 }; ?>
 
@@ -68,7 +96,7 @@ new #[Layout('layouts.guest')] class extends Component
                 @if (filled($this->invoice->rectification_reason))
                     {{ __('Reason: :reason', ['reason' => $this->invoice->rectification_reason]) }}
                 @endif
-                @if (filled($this->invoice->rectifiesInvoice->public_token))
+                @if ($this->hasPublicLink($this->invoice->rectifiesInvoice))
                     <a href="{{ route('invoices.public.show', $this->invoice->rectifiesInvoice->public_token) }}" class="font-medium underline">
                         {{ __('View the original invoice') }}
                     </a>
@@ -81,7 +109,7 @@ new #[Layout('layouts.guest')] class extends Component
         <flux:callout icon="check-circle" variant="outline" class="mt-6">
             <flux:callout.text>
                 {{ __('This invoice was corrected by :number.', ['number' => $this->invoice->rectification->full_number]) }}
-                @if (filled($this->invoice->rectification->public_token))
+                @if ($this->hasPublicLink($this->invoice->rectification))
                     <a href="{{ route('invoices.public.show', $this->invoice->rectification->public_token) }}" class="font-medium underline">
                         {{ __('View the corrective invoice') }}
                     </a>

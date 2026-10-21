@@ -36,6 +36,15 @@ it('records the public view', function () {
     expect($invoice->events()->pluck('event'))->toContain(InvoiceEvent::PUBLIC_VIEWED);
 });
 
+it('records the public view once a day', function () {
+    $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    $this->get('/i/'.$invoice->public_token)->assertOk();
+    $this->get('/i/'.$invoice->public_token)->assertOk();
+
+    expect($invoice->events()->where('event', InvoiceEvent::PUBLIC_VIEWED)->count())->toBe(1);
+});
+
 it('does not show an unknown token', function () {
     $this->get('/i/'.str_repeat('a', 40))->assertNotFound();
 });

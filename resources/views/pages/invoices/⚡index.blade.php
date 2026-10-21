@@ -44,9 +44,28 @@ new class extends Component
     }
 
     #[Computed]
-    public function settings(): InvoiceSetting
+    public function settings(): ?InvoiceSetting
     {
         return Auth::user()->currentTeam->invoiceSetting;
+    }
+
+    /**
+     * Whether the issuer data is still incomplete, so no invoice can be
+     * issued yet.
+     */
+    #[Computed]
+    public function needsSetup(): bool
+    {
+        return ! $this->settings?->hasCompleteIssuerData();
+    }
+
+    /**
+     * Whether the guided setup was never completed.
+     */
+    #[Computed]
+    public function setupPending(): bool
+    {
+        return $this->settings?->setup_completed_at === null;
     }
 
     public function openSetup(): void
@@ -58,6 +77,12 @@ new class extends Component
 
     public function nextSetupStep(): void
     {
+        match ($this->setupStep) {
+            1 => $this->validateSetupFields(['legal_name', 'tax_id']),
+            2 => $this->validateSetupFields(['address', 'city', 'postal_code', 'country']),
+            default => null,
+        };
+
         $this->setupStep = min($this->setupStep + 1, 3);
     }
 
@@ -79,6 +104,40 @@ new class extends Component
     {
         $this->modal('invoice-setup')->close();
     }
+
+    /**
+     * Validate the fields of a step of the guided setup.
+     *
+     * @param  list<string>  $fields
+     */
+    protected function validateSetupFields(array $fields): void
+    {
+        foreach ($fields as $field) {
+            $this->form->validateOnly($field);
+        }
+    }
+
+    /**
+     * The setup fields that are rendered in the current step.
+     *
+     * @return list<string>
+     */
+    public function visibleSetupFields(): array
+    {
+        return match ($this->setupStep) {
+            1 => ['form.legal_name', 'form.tax_id'],
+            2 => ['form.address', 'form.city', 'form.postal_code', 'form.country'],
+            default => [
+                'form.currency',
+                'form.vat_percent',
+                'form.irpf_percent',
+                'form.series',
+                'form.rectification_series',
+                'form.payment_terms',
+                'form.notes',
+            ],
+        };
+    }
 }; ?>
 
 <div>
@@ -98,14 +157,17 @@ new class extends Component
         </div>
     </div>
 
-    @if (! $this->settings->hasCompleteIssuerData())
+    @if ($this->needsSetup)
         <flux:callout icon="information-circle" variant="outline" class="mt-6">
             <flux:callout.heading>{{ __('Complete your invoicing settings') }}</flux:callout.heading>
             <flux:callout.text>
                 {{ __('Add your legal name, tax ID and address before issuing your first invoice.') }}
             </flux:callout.text>
             <x-slot name="actions">
-                <flux:button variant="primary" wire:click="openSetup">{{ __('Set up now') }}</flux:button>
+                @if ($this->setupPending)
+                    <flux:button variant="primary" wire:click="openSetup">{{ __('Set up now') }}</flux:button>
+                @endif
+
                 <flux:button variant="ghost" :href="route('invoices.settings')" wire:navigate>
                     {{ __('Invoice settings') }}
                 </flux:button>
@@ -120,9 +182,9 @@ new class extends Component
                     <x-table.column>{{ __('Number') }}</x-table.column>
                     <x-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-table.column>
                     <x-table.column class="hidden sm:table-cell">{{ __('Issue date') }}</x-table.column>
-                    <x-table.column align="end">{{ __('Total') }}</x-table.column>
-                    <x-table.column align="end" class="hidden sm:table-cell">{{ __('Status') }}</x-table.column>
-                    <x-table.column align="end">{{ __('Links') }}</x-table.column>
+                    <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
+                    <x-table.column class="group/right-align hidden sm:table-cell">{{ __('Status') }}</x-table.column>
+                    <x-table.column class="group/right-align">{{ __('Links') }}</x-table.column>
                 </x-table.columns>
 
                 <x-table.rows>
@@ -166,11 +228,11 @@ new class extends Component
                             <x-table.cell variant="muted" class="hidden sm:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
                             </x-table.cell>
-                            <x-table.cell variant="strong" align="end" class="whitespace-nowrap">
+                            <x-table.cell variant="strong" class="whitespace-nowrap text-end">
                                 {{ $this->money($invoice->total) }}
                                 <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
                             </x-table.cell>
-                            <x-table.cell align="end" class="hidden sm:table-cell">
+                            <x-table.cell class="hidden text-end sm:table-cell">
                                 <flux:badge
                                     :color="match ($invoice->status) {
                                         'issued' => 'green',
@@ -182,7 +244,7 @@ new class extends Component
                                     {{ $invoice->status_label }}
                                 </flux:badge>
                             </x-table.cell>
-                            <x-table.cell align="end" class="whitespace-nowrap">
+                            <x-table.cell class="whitespace-nowrap text-end">
                                 <div class="flex items-center justify-end gap-1">
                                     @if ($invoice->pdf_path)
                                         <flux:button
@@ -244,6 +306,22 @@ new class extends Component
                 <flux:heading size="lg">{{ __('Set up your invoicing') }}</flux:heading>
                 <flux:subheading>{{ __('Step :step of 3', ['step' => $this->setupStep]) }}</flux:subheading>
             </div>
+
+            @php
+                $setupErrors = collect($this->getErrorBag()->getMessages())
+                    ->filter(fn ($messages, $key) => ! in_array($key, $this->visibleSetupFields(), true))
+                    ->flatten();
+            @endphp
+
+            @if ($setupErrors->isNotEmpty())
+                <flux:callout icon="exclamation-triangle" variant="danger">
+                    <flux:callout.text>
+                        @foreach ($setupErrors as $setupError)
+                            <div>{{ $setupError }}</div>
+                        @endforeach
+                    </flux:callout.text>
+                </flux:callout>
+            @endif
 
             @if ($this->setupStep === 1)
                 <div class="grid gap-4 sm:grid-cols-2">

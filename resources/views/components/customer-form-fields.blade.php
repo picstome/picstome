@@ -11,7 +11,7 @@
 
     <flux:heading size="sm">{{ __('Fiscal data') }}</flux:heading>
     <flux:subheading size="sm">
-        {{ __('Needed to issue a complete invoice. The data is copied to the invoice when it is issued.') }}
+        {{ __('These details are copied to the invoices you issue.') }}
     </flux:subheading>
 
     <flux:input wire:model="{{ $prefix }}.legal_name" :label="__('Legal name')" :required="false" />

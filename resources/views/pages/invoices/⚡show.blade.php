@@ -8,6 +8,7 @@ use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -23,7 +24,7 @@ new class extends Component
     {
         $this->authorize('view', $invoice);
 
-        $this->invoice = $invoice;
+        $this->invoice = $invoice->load(['rectifiesInvoice', 'rectification']);
     }
 
     #[Computed]
@@ -80,6 +81,12 @@ new class extends Component
     public function rectify(bool $review = false): void
     {
         $this->authorize('rectify', $this->invoice);
+
+        if ($this->invoice->rectifications()->exists()) {
+            throw ValidationException::withMessages([
+                'invoice' => __('This invoice has already been rectified.'),
+            ]);
+        }
 
         $this->validate([
             'rectificationReason' => ['required', 'string', 'max:1000'],
@@ -170,7 +177,7 @@ new class extends Component
                 </flux:button>
             @endif
 
-            @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative())
+            @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative() && ! $this->invoice->rectifications()->exists())
                 <flux:modal.trigger name="rectify-invoice">
                     <flux:button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</flux:button>
                 </flux:modal.trigger>
@@ -246,55 +253,55 @@ new class extends Component
             @if (! $this->invoice->isDraft())
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                     <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
-                <flux:subheading size="sm">
-                    {{ __('Share it with your client so they can check the invoice online.') }}
-                </flux:subheading>
+                    <flux:subheading size="sm">
+                        {{ __('Share it with your client so they can check the invoice online.') }}
+                    </flux:subheading>
 
-                @if (filled($this->invoice->public_token))
-                    <flux:input
-                        icon="link"
-                        :value="route('invoices.public.show', $this->invoice->public_token)"
-                        readonly
-                        copyable
-                        class="mt-3"
-                    />
+                    @if (filled($this->invoice->public_token))
+                        <flux:input
+                            icon="link"
+                            :value="route('invoices.public.show', $this->invoice->public_token)"
+                            readonly
+                            copyable
+                            class="mt-3"
+                        />
 
-                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                        <flux:button
-                            size="sm"
-                            variant="primary"
-                            class="btn-ink"
-                            icon="arrow-top-right-on-square"
-                            :href="route('invoices.public.show', $this->invoice->public_token)"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            {{ __('View invoice') }}
-                        </flux:button>
-
-                        <flux:modal.trigger name="revoke-link">
-                            <flux:button size="sm" variant="ghost" icon="link-slash">
-                                {{ __('Deactivate link') }}
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <flux:button
+                                size="sm"
+                                variant="primary"
+                                class="btn-ink"
+                                icon="arrow-top-right-on-square"
+                                :href="route('invoices.public.show', $this->invoice->public_token)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {{ __('View invoice') }}
                             </flux:button>
-                        </flux:modal.trigger>
-                    </div>
-                @else
-                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                        <flux:button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
-                            {{ __('Generate a new link') }}
-                        </flux:button>
 
-                        @if ($this->invoice->public_token_revoked_at)
-                            <flux:text size="sm" class="text-zinc-500">
-                                {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
-                            </flux:text>
-                        @endif
-                    </div>
+                            <flux:modal.trigger name="revoke-link">
+                                <flux:button size="sm" variant="ghost" icon="link-slash">
+                                    {{ __('Deactivate link') }}
+                                </flux:button>
+                            </flux:modal.trigger>
+                        </div>
+                    @else
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <flux:button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
+                                {{ __('Generate a new link') }}
+                            </flux:button>
 
-                        <flux:text size="sm" class="mt-3 text-zinc-500">
-                            {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
-                        </flux:text>
+                            @if ($this->invoice->public_token_revoked_at)
+                                <flux:text size="sm" class="text-zinc-500">
+                                    {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
+                                </flux:text>
+                            @endif
+                        </div>
                     @endif
+
+                    <flux:text size="sm" class="mt-3 text-zinc-500">
+                        {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
+                    </flux:text>
                 </div>
             @endif
         </div>

@@ -168,6 +168,14 @@ class Invoice extends Model
         return $this->hasOne(self::class, 'rectifies_invoice_id');
     }
 
+    /**
+     * Every corrective invoice of this invoice, issued or still a draft.
+     */
+    public function rectifications(): HasMany
+    {
+        return $this->hasMany(self::class, 'rectifies_invoice_id');
+    }
+
     public function isDraft(): bool
     {
         return $this->status === self::STATUS_DRAFT;

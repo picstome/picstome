@@ -140,6 +140,37 @@ it('copies the exchange rate to the corrective invoice', function () {
         ->and($rectificative->exchange_rate_date->toDateString())->toBe(now()->toDateString());
 });
 
+it('does not offer to rectify an invoice that is already rectified', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->set('rectificationReason', 'Wrong client name')
+        ->call('rectify')
+        ->assertHasNoErrors();
+
+    expect($invoice->fresh()->status)->toBe(Invoice::STATUS_RECTIFIED)
+        ->and($this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->count())->toBe(1);
+});
+
+it('does not rectify an invoice twice while a corrective draft is pending', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->set('rectificationReason', 'Wrong client name')
+        ->call('rectify', true)
+        ->assertHasNoErrors();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice->fresh()])
+        ->set('rectificationReason', 'Another correction')
+        ->call('rectify')
+        ->assertHasErrors(['invoice' => 'This invoice has already been rectified.']);
+
+    expect($this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->count())->toBe(1);
+});
+
 it('requires a reason to rectify an invoice', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

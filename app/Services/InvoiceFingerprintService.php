@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Invoice;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Builds and verifies the fingerprint chain of the invoices.
@@ -112,11 +113,45 @@ class InvoiceFingerprintService
     }
 
     /**
-     * Verify the whole chain of the series and exercise of an invoice.
+     * Verify the chain of the series and exercise of an invoice.
+     *
+     * The integrity of the chain is cached, because hashing every invoice of
+     * the series on each page view does not scale. The position and the
+     * total are always counted live, since a new invoice changes them.
      *
      * @return array{valid: bool, position: int, total: int, broken_at: ?int}
      */
     public function verify(Invoice $invoice): array
+    {
+        $chain = Cache::remember(
+            'invoice-chain:'.$invoice->id,
+            now()->addMinutes(10),
+            fn () => $this->verifyChain($invoice),
+        );
+
+        $query = Invoice::query()
+            ->where('team_id', $invoice->team_id)
+            ->where('series', $invoice->series)
+            ->where('year', $invoice->year)
+            ->whereNotNull('number');
+
+        $position = (int) (clone $query)->where('number', '<=', $invoice->number)->count();
+        $total = (int) $query->count();
+
+        return [
+            'valid' => $chain['valid'],
+            'position' => $position,
+            'total' => $total,
+            'broken_at' => $chain['broken_at'],
+        ];
+    }
+
+    /**
+     * Walk the chain of the series and check every fingerprint.
+     *
+     * @return array{valid: bool, broken_at: ?int}
+     */
+    protected function verifyChain(Invoice $invoice): array
     {
         $invoices = Invoice::query()
             ->where('team_id', $invoice->team_id)
@@ -127,12 +162,9 @@ class InvoiceFingerprintService
             ->get();
 
         $previous = null;
-        $position = 0;
         $brokenAt = null;
 
         foreach ($invoices as $current) {
-            $position++;
-
             if ($current->previous_fingerprint !== $previous) {
                 $brokenAt = (int) $current->number;
 
@@ -161,8 +193,6 @@ class InvoiceFingerprintService
 
         return [
             'valid' => $valid,
-            'position' => $position,
-            'total' => $invoices->count(),
             'broken_at' => $brokenAt,
         ];
     }
