@@ -26,6 +26,7 @@ new class extends Component
         <flux:menu>
             <flux:menu.group :heading="__('Account')">
                 <flux:menu.item :href="route('settings.profile')" wire:navigate>{{ __('Profile') }}</flux:menu.item>
+                <flux:menu.item :href="route('invoices.settings')" wire:navigate>{{ __('Invoice settings') }}</flux:menu.item>
                 <flux:menu.item :href="route('branding')" wire:navigate>{{ __('Branding') }}</flux:menu.item>
                 <flux:menu.item :href="route('billing-portal')">{{ __('Billing') }}</flux:menu.item>
             </flux:menu.group>
