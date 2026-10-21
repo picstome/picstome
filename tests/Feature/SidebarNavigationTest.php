@@ -23,14 +23,24 @@ it('shows the reorganized main navigation', function () {
         ->assertSee(route('portfolio'), false)
         ->assertSee(route('customers'), false)
         ->assertSee(route('contracts'), false)
+        ->assertSee(route('invoices'), false)
         ->assertSee(route('payments'), false)
-        ->assertSee(route('tools.invoice-generator'), false)
         ->assertSee(route('tools.calculator'), false)
         ->assertSee(route('tools.black-screen'), false)
         ->assertSee('data-black-screen-shortcut', false)
         ->assertDontSee('https://picstome.com/blackscreen/', false)
         ->assertDontSee(route('stripe.connect'), false)
         ->assertDontSee('Install the app');
+});
+
+it('does not show the external invoice generator anymore', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    actingAs($user)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertDontSee('picstome.com/invoice-generator/', false)
+        ->assertDontSee('Invoice Generator');
 });
 
 it('collapses the tools group by default and expands it on tool pages', function () {

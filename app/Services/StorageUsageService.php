@@ -44,7 +44,11 @@ class StorageUsageService
             ->whereNotIn('photo_versions.id', self::currentVersionIds())
             ->sum('photo_versions.stored_size');
 
-        return (int) $current + (int) $versions;
+        $invoices = DB::table('invoices')
+            ->where('team_id', $team->id)
+            ->sum('pdf_size');
+
+        return (int) $current + (int) $versions + (int) $invoices;
     }
 
     /**
@@ -58,7 +62,9 @@ class StorageUsageService
             ->whereNotIn('id', self::currentVersionIds())
             ->sum('stored_size');
 
-        return (int) $current + (int) $versions;
+        $invoices = DB::table('invoices')->sum('pdf_size');
+
+        return (int) $current + (int) $versions + (int) $invoices;
     }
 
     protected static function currentVersionIds(?int $galleryId = null)

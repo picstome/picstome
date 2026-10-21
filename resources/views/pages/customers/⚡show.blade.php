@@ -380,11 +380,7 @@ new class extends Component
                 <flux:heading size="lg">{{ __('Edit customer') }}</flux:heading>
                 <flux:subheading>{{ __('Please enter your customer details.') }}</flux:subheading>
             </div>
-            <flux:input wire:model="form.name" :label="__('Name')" type="text" />
-            <flux:input wire:model="form.email" :label="__('Email')" type="email" :required="false" />
-            <flux:input wire:model="form.phone" :label="__('Phone')" type="text" />
-            <flux:input wire:model="form.birthdate" :label="__('Birthdate')" type="date" />
-            <flux:textarea wire:model="form.notes" :label="__('Notes')" rows="3" />
+            <x-customer-form-fields />
             <div class="flex">
                 <flux:spacer />
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>

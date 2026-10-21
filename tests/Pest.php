@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\Customer;
+use App\Models\Invoice;
+use App\Models\InvoiceSetting;
+use App\Models\Team;
+use App\Services\InvoiceService;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /*
@@ -46,4 +52,64 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Build a draft invoice with the snapshots an issued invoice needs.
+ *
+ * @param  array<string, mixed>  $attributes
+ */
+function draftInvoice(Team $team, array $attributes = []): Invoice
+{
+    Storage::fake(config('picstome.disk'));
+
+    $settings = InvoiceSetting::firstOrCreate(
+        ['team_id' => $team->id],
+        array_merge(config('invoices.defaults'), [
+            'legal_name' => 'Acme Studio SL',
+            'tax_id' => 'B12345678',
+            'address' => 'Calle Mayor 1',
+            'city' => 'Madrid',
+            'state' => 'Madrid',
+            'postal_code' => '28001',
+            'country' => 'ES',
+            'email' => 'billing@acme.test',
+            'phone' => '+34 600 000 000',
+        ])
+    );
+
+    $customer = Customer::firstOrCreate(
+        ['team_id' => $team->id, 'tax_id' => 'B12345678'],
+        [
+            'name' => 'Acme Studio SL',
+            'legal_name' => 'Acme Studio SL',
+            'address' => 'Calle Mayor 1',
+            'city' => 'Madrid',
+            'postal_code' => '28001',
+            'country' => 'ES',
+        ]
+    );
+
+    $snapshots = app(InvoiceService::class);
+
+    return Invoice::create(array_merge([
+        'team_id' => $team->id,
+        'customer_id' => $customer->id,
+        'invoice_type' => Invoice::TYPE_FULL,
+        'currency' => $settings->currency,
+        'issue_date' => now()->toDateString(),
+        'vat_percent' => 21,
+        'subtotal' => 100,
+        'base_amount' => 100,
+        'vat_amount' => 21,
+        'total' => 121,
+        'amount_due' => 121,
+        'invoice_data' => [
+            'line_items' => [
+                ['description' => 'Photo session', 'quantity' => 1, 'unit_price' => 100],
+            ],
+            'issuer' => $snapshots->issuerSnapshot($settings),
+            'customer' => $snapshots->customerSnapshot($customer),
+        ],
+    ], $attributes));
 }

@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\NoIndex;
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
@@ -97,6 +100,28 @@ Route::livewire('/customers', 'pages::customers')->name('customers')->middleware
 
 Route::livewire('/customers/{customer}', 'pages::customers.show')->name('customers.show')->middleware(['auth', 'verified']);
 
+Route::livewire('/invoices', 'pages::invoices')->name('invoices')->middleware(['auth', 'verified']);
+
+Route::livewire('/invoices/create', 'pages::invoices.create')->name('invoices.create')->middleware(['auth', 'verified']);
+
+Route::livewire('/invoices/settings', 'pages::invoices.settings')->name('invoices.settings')->middleware(['auth', 'verified']);
+
+Route::livewire('/invoices/{invoice:ulid}', 'pages::invoices.show')->name('invoices.show')->middleware(['auth', 'verified']);
+
+Route::get('/invoices/{invoice:ulid}/pdf', InvoicePdfController::class)
+    ->name('invoices.pdf')
+    ->middleware(['auth', 'verified']);
+
+Route::livewire('/i/{token}', 'pages::invoices.public.show')
+    ->name('invoices.public.show')
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->middleware([NoIndex::class, 'throttle:60,1']);
+
+Route::get('/i/{token}/pdf', PublicInvoicePdfController::class)
+    ->name('invoices.public.pdf')
+    ->where('token', '[A-Za-z0-9]{40}')
+    ->middleware([NoIndex::class, 'throttle:60,1']);
+
 Route::livewire('/galleries', 'pages::galleries')->name('galleries')->middleware(['auth', 'verified']);
 Route::livewire('/galleries/{gallery}', 'pages::galleries.show')->name('galleries.show')->middleware(['auth', 'verified']);
 Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
@@ -131,8 +156,6 @@ Route::livewire('/settings/profile', 'pages::settings.profile')->name('settings.
 Route::livewire('/tools/black-screen', 'pages::tools.black-screen')->name('tools.black-screen')->middleware(['auth', 'verified']);
 
 Route::livewire('/tools/calculator', 'pages::tools.calculator')->name('tools.calculator')->middleware(['auth', 'verified']);
-
-Route::livewire('/tools/invoice-generator', 'pages::tools.invoice-generator')->name('tools.invoice-generator')->middleware(['auth', 'verified']);
 
 Route::livewire('/stripe-connect', 'pages::stripe-connect.index')->name('stripe.connect')->middleware(['auth', 'verified']);
 

@@ -181,6 +181,15 @@
                             </flux:navlist.item>
 
                             <flux:navlist.item
+                                :href="route('invoices')"
+                                icon="document-plus"
+                                wire:navigate
+                                :current="request()->routeIs('invoices*')"
+                            >
+                                {{ __('Invoices') }}
+                            </flux:navlist.item>
+
+                            <flux:navlist.item
                                 :href="route('payments')"
                                 icon="banknotes"
                                 wire:navigate
@@ -196,14 +205,6 @@
                             expandable
                             :expanded="request()->routeIs('tools.*')"
                         >
-                            <flux:navlist.item
-                                :href="route('tools.invoice-generator')"
-                                icon="document-plus"
-                                wire:navigate
-                            >
-                                {{ __('Invoice Generator') }}
-                            </flux:navlist.item>
-
                             <flux:navlist.item :href="route('tools.calculator')" icon="calculator" wire:navigate>
                                 {{ __('Calculator') }}
                             </flux:navlist.item>

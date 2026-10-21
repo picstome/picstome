@@ -45,6 +45,11 @@ class Customer extends Model
         return $this->hasManyThrough(Gallery::class, Photoshoot::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     protected function email(): Attribute
     {
         return Attribute::set(function (?string $value) {
