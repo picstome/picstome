@@ -149,6 +149,25 @@ it('does not count rectificative invoices against the limit', function () {
         ->and($original->fresh()->rectification?->id)->toBe($rectificative->id);
 });
 
+it('does not allow rectifying an invoice twice', function () {
+    $original = $this->issuance->issue(draftInvoice($this->team));
+
+    $this->issuance->issue(draftInvoice($this->team, [
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong client name',
+    ]));
+
+    $second = draftInvoice($this->team, [
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Another correction',
+    ]);
+
+    expect(fn () => $this->issuance->issue($second))
+        ->toThrow(ValidationException::class, 'not available for rectification');
+});
+
 it('marks the original invoice as rectified in the audit trail', function () {
     $original = $this->issuance->issue(draftInvoice($this->team), $this->user);
 

@@ -8,13 +8,17 @@ use App\Models\InvoiceSetting;
 use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePlanLimitService;
 use App\Services\InvoiceService;
+use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
+    use FormatsMoney;
+
     public InvoiceForm $form;
 
     public CustomerForm $customerForm;
@@ -27,6 +31,8 @@ new class extends Component
 
     public function mount(): void
     {
+        $this->authorize('create', Invoice::class);
+
         $settings = InvoiceSetting::firstOrCreate(
             ['team_id' => Auth::user()->currentTeam->id],
             config('invoices.defaults')
@@ -204,6 +210,12 @@ new class extends Component
 
         $invoice = $this->form->persist(Auth::user()->currentTeam);
 
+        if (Gate::forUser(Auth::user())->denies('issue', $invoice)) {
+            $this->addError('invoice', __('You have reached the monthly invoice limit of your plan.'));
+
+            return;
+        }
+
         app(InvoiceIssuanceService::class)->issue($invoice, Auth::user());
 
         $this->redirect(route('invoices.show', $invoice), navigate: true);
@@ -273,11 +285,20 @@ new class extends Component
         @endforeach
     </div>
 
-    @error('invoice')
+    @php
+        $issuanceErrors = collect(['invoice', 'customer', 'issue_date', 'exchange_rate', 'vat_exemption_reason'])
+            ->flatMap(fn (string $key) => $errors->get($key));
+    @endphp
+
+    @if ($issuanceErrors->isNotEmpty())
         <flux:callout icon="exclamation-triangle" variant="danger" class="mt-6">
-            <flux:callout.text>{{ $message }}</flux:callout.text>
+            <flux:callout.text>
+                @foreach ($issuanceErrors as $issuanceError)
+                    <div>{{ $issuanceError }}</div>
+                @endforeach
+            </flux:callout.text>
         </flux:callout>
-    @enderror
+    @endif
 
     @if ($this->step === 1)
         <section class="mt-8">
@@ -363,7 +384,12 @@ new class extends Component
     @else
         <section class="mt-8 grid gap-8 lg:grid-cols-2">
             <div class="space-y-4">
-                <flux:select wire:model="form.invoice_type" :label="__('Invoice type')">
+                <flux:select
+                    wire:model="form.invoice_type"
+                    :label="__('Invoice type')"
+                    :disabled="$this->form->invoice?->isRectificative() ?? false"
+                    :description="$this->form->invoice?->isRectificative() ? __('A corrective invoice keeps the type of the original invoice.') : null"
+                >
                     <option value="full">{{ __('Complete invoice') }}</option>
                     <option value="simplified">{{ __('Simplified invoice') }}</option>
                 </flux:select>
@@ -427,31 +453,31 @@ new class extends Component
                     <dl class="mt-4 space-y-2 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Subtotal') }}</dt>
-                            <dd>{{ number_format($this->form->totals()['subtotal'], 2) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
+                            <dd>{{ $this->money($this->form->totals()['subtotal']) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
                         </div>
                         @if ($this->form->totals()['discount_total'] > 0)
                             <div class="flex justify-between">
                                 <dt class="text-zinc-500">{{ __('Discount') }}</dt>
-                                <dd>-{{ number_format($this->form->totals()['discount_total'], 2) }}</dd>
+                                <dd>-{{ $this->money($this->form->totals()['discount_total']) }}</dd>
                             </div>
                         @endif
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Taxable base') }}</dt>
-                            <dd>{{ number_format($this->form->totals()['base_amount'], 2) }}</dd>
+                            <dd>{{ $this->money($this->form->totals()['base_amount']) }}</dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('VAT') }}</dt>
-                            <dd>{{ number_format($this->form->totals()['vat_amount'], 2) }}</dd>
+                            <dd>{{ $this->money($this->form->totals()['vat_amount']) }}</dd>
                         </div>
                         @if ($this->form->apply_irpf)
                             <div class="flex justify-between">
                                 <dt class="text-zinc-500">{{ __('IRPF withheld') }}</dt>
-                                <dd>-{{ number_format($this->form->totals()['irpf_amount'], 2) }}</dd>
+                                <dd>-{{ $this->money($this->form->totals()['irpf_amount']) }}</dd>
                             </div>
                         @endif
                         <div class="flex justify-between border-t border-zinc-200 pt-2 text-base font-semibold dark:border-white/10">
                             <dt>{{ $this->form->apply_irpf ? __('Amount to pay') : __('Total') }}</dt>
-                            <dd>{{ number_format($this->form->apply_irpf ? $this->form->totals()['amount_due'] : $this->form->totals()['total'], 2) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
+                            <dd>{{ $this->money($this->form->apply_irpf ? $this->form->totals()['amount_due'] : $this->form->totals()['total']) }} {{ Auth::user()->currentTeam->invoiceSetting?->currency }}</dd>
                         </div>
                     </dl>
                 </div>

@@ -73,6 +73,25 @@ it('creates a corrective invoice with the reason', function () {
         ->and($rectificative->customer_id)->toBe($invoice->customer_id);
 });
 
+it('copies the exchange rate to the corrective invoice', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team, [
+        'currency' => 'USD',
+        'exchange_rate' => 0.92,
+        'exchange_rate_date' => now()->toDateString(),
+    ]));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->set('rectificationReason', 'Wrong amount')
+        ->call('rectify')
+        ->assertHasNoErrors();
+
+    $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
+
+    expect((float) $rectificative->exchange_rate)->toBe(0.92)
+        ->and($rectificative->exchange_rate_date->toDateString())->toBe(now()->toDateString());
+});
+
 it('requires a reason to rectify an invoice', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

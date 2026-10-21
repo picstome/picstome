@@ -125,7 +125,7 @@ class InvoiceIssuanceService
     {
         return InvoiceSetting::firstOrCreate(
             ['team_id' => $invoice->team_id],
-            []
+            config('invoices.defaults')
         );
     }
 
@@ -171,6 +171,16 @@ class InvoiceIssuanceService
             throw ValidationException::withMessages([
                 'invoice' => __('Complete your fiscal data in the invoicing settings before issuing an invoice.'),
             ]);
+        }
+
+        if ($invoice->isRectificative()) {
+            $original = $invoice->rectifiesInvoice()->first();
+
+            if (! $original || ! $original->isIssued()) {
+                throw ValidationException::withMessages([
+                    'invoice' => __('The original invoice is not available for rectification.'),
+                ]);
+            }
         }
 
         if (! $invoice->isRectificative() && ! $this->limits->canIssue($invoice->team)) {

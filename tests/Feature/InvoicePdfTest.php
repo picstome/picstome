@@ -4,6 +4,7 @@ use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
 use App\Models\User;
 use App\Services\InvoiceIssuanceService;
+use App\Services\InvoicePdfService;
 use App\Services\StorageUsageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,34 @@ it('downloads the pdf of an issued invoice', function () {
         ->assertDownload($invoice->pdf_file_name);
 
     expect($invoice->events()->pluck('event'))->toContain(InvoiceEvent::PDF_DOWNLOADED);
+});
+
+it('returns 404 when the pdf file is missing', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Storage::disk(config('picstome.disk'))->delete($invoice->pdf_path);
+
+    $this->actingAs($this->user)
+        ->get(route('invoices.pdf', $invoice))
+        ->assertNotFound();
+
+    $this->get('/i/'.$invoice->public_token.'/pdf')->assertNotFound();
+});
+
+it('embeds the team logo in the pdf', function () {
+    $logo = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lw0M9wAAAABJRU5ErkJggg==');
+
+    $draft = draftInvoice($this->team->fresh());
+
+    Storage::disk(config('picstome.disk'))->put('teams/logo.png', $logo);
+
+    $this->team->update(['brand_logo_path' => 'teams/logo.png']);
+
+    $pdf = app(InvoicePdfService::class);
+    $invoice = $this->issuance->issue($draft);
+
+    expect($pdf->logo($invoice))->toStartWith('data:image/png;base64,')
+        ->and(Storage::disk(config('picstome.disk'))->get($invoice->pdf_path))->toStartWith('%PDF');
 });
 
 it('does not allow downloading the pdf of an invoice of another team', function () {

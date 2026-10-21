@@ -3,12 +3,15 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Services\InvoiceFingerprintService;
+use App\Traits\FormatsMoney;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use FormatsMoney;
+
     public Invoice $invoice;
 
     public function mount(string $token)
@@ -36,13 +39,56 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
-    <x-heading level="1" size="xl">
-        {{ $this->invoice->full_number }}
-    </x-heading>
+    <div class="flex flex-wrap items-center gap-3">
+        <x-heading level="1" size="xl">
+            {{ $this->invoice->full_number }}
+        </x-heading>
+
+        <flux:badge
+            :color="match ($this->invoice->status) {
+                'issued' => 'green',
+                'rectified' => 'orange',
+                default => 'zinc',
+            }"
+            inset
+        >
+            {{ $this->invoice->status_label }}
+        </flux:badge>
+    </div>
+
     <x-subheading>
         {{ $this->invoice->isRectificative() ? __('Corrective invoice') : ($this->invoice->isSimplified() ? __('Simplified invoice') : __('Invoice')) }}
         · {{ $this->invoice->issue_date?->format('Y-m-d') }}
     </x-subheading>
+
+    @if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice)
+        <flux:callout icon="information-circle" variant="outline" class="mt-6">
+            <flux:callout.text>
+                {{ __('This invoice corrects :number.', ['number' => $this->invoice->rectifiesInvoice->full_number]) }}
+                @if (filled($this->invoice->rectification_reason))
+                    {{ __('Reason: :reason', ['reason' => $this->invoice->rectification_reason]) }}
+                @endif
+                @if (filled($this->invoice->rectifiesInvoice->public_token))
+                    <a href="{{ route('invoices.public.show', $this->invoice->rectifiesInvoice->public_token) }}" class="font-medium underline">
+                        {{ __('View the original invoice') }}
+                    </a>
+                @endif
+            </flux:callout.text>
+        </flux:callout>
+    @endif
+
+    @if ($this->invoice->rectification)
+        <flux:callout icon="check-circle" variant="outline" class="mt-6">
+            <flux:callout.text>
+                {{ __('This invoice was corrected by :number.', ['number' => $this->invoice->rectification->full_number]) }}
+                @if (filled($this->invoice->rectification->public_token))
+                    <a href="{{ route('invoices.public.show', $this->invoice->rectification->public_token) }}" class="font-medium underline">
+                        {{ __('View the corrective invoice') }}
+                    </a>
+                @endif
+            </flux:callout.text>
+        </flux:callout>
+    @endif
 
     <div class="mt-8 grid gap-6 lg:grid-cols-2">
         <div class="space-y-6">
@@ -106,7 +152,7 @@ new #[Layout('layouts.guest')] class extends Component
                                 <td class="px-4 py-3">{{ $lineItem['description'] ?? '' }}</td>
                                 <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ $lineItem['quantity'] ?? 0 }}</td>
                                 <td class="px-4 py-3 text-right font-medium">
-                                    {{ number_format((float) ($lineItem['quantity'] ?? 0) * (float) ($lineItem['unit_price'] ?? 0), 2) }}
+                                    {{ $this->money(($lineItem['quantity'] ?? 0) * ($lineItem['unit_price'] ?? 0)) }}
                                 </td>
                             </tr>
                         @endforeach
@@ -118,34 +164,34 @@ new #[Layout('layouts.guest')] class extends Component
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('Subtotal') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->subtotal, 2) }} {{ $this->invoice->currency }}</dd>
+                        <dd>{{ $this->money($this->invoice->subtotal) }} {{ $this->invoice->currency }}</dd>
                     </div>
                     @if ((float) $this->invoice->discount_total > 0)
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Discount') }}</dt>
-                            <dd>-{{ number_format((float) $this->invoice->discount_total, 2) }}</dd>
+                            <dd>-{{ $this->money($this->invoice->discount_total) }}</dd>
                         </div>
                     @endif
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('Taxable base') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->base_amount, 2) }}</dd>
+                        <dd>{{ $this->money($this->invoice->base_amount) }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('VAT') }} {{ (float) $this->invoice->vat_percent }}%</dt>
-                        <dd>{{ number_format((float) $this->invoice->vat_amount, 2) }}</dd>
+                        <dd>{{ $this->money($this->invoice->vat_amount) }}</dd>
                     </div>
                     <div class="flex justify-between border-t border-zinc-200 pt-2 text-base font-semibold dark:border-white/10">
                         <dt>{{ __('Total') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->total, 2) }} {{ $this->invoice->currency }}</dd>
+                        <dd>{{ $this->money($this->invoice->total) }} {{ $this->invoice->currency }}</dd>
                     </div>
                     @if ((float) $this->invoice->irpf_amount > 0)
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('IRPF withheld') }} {{ (float) $this->invoice->irpf_percent }}%</dt>
-                            <dd>-{{ number_format((float) $this->invoice->irpf_amount, 2) }}</dd>
+                            <dd>-{{ $this->money($this->invoice->irpf_amount) }}</dd>
                         </div>
                         <div class="flex justify-between font-semibold">
                             <dt>{{ __('Amount to pay') }}</dt>
-                            <dd>{{ number_format((float) $this->invoice->amount_due, 2) }} {{ $this->invoice->currency }}</dd>
+                            <dd>{{ $this->money($this->invoice->amount_due) }} {{ $this->invoice->currency }}</dd>
                         </div>
                     @endif
                 </dl>
@@ -158,6 +204,21 @@ new #[Layout('layouts.guest')] class extends Component
             @endif
         </div>
     </div>
+
+    @if (filled($this->invoice->invoice_data['payment_terms'] ?? null) || filled($this->invoice->invoice_data['notes'] ?? null))
+        <div class="mt-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+            @if (filled($this->invoice->invoice_data['payment_terms'] ?? null))
+                <div class="text-sm">
+                    <span class="font-medium">{{ __('Payment terms') }}</span>
+                    <p class="mt-1 text-zinc-600 dark:text-zinc-300">{{ $this->invoice->invoice_data['payment_terms'] }}</p>
+                </div>
+            @endif
+
+            @if (filled($this->invoice->invoice_data['notes'] ?? null))
+                <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-300">{{ $this->invoice->invoice_data['notes'] }}</p>
+            @endif
+        </div>
+    @endif
 
     <p class="mt-8 text-xs text-zinc-500">
         {{ __('This invoice was issued with Picstome. The verification above relies on the fingerprint chain stored by the issuer.') }}

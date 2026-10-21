@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Forms\InvoiceSettingsForm;
+use App\Models\Invoice;
 use App\Models\InvoiceSetting;
+use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -10,6 +12,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use FormatsMoney;
     use WithPagination;
 
     public InvoiceSettingsForm $form;
@@ -18,6 +21,8 @@ new class extends Component
 
     public function mount(): void
     {
+        $this->authorize('viewAny', Invoice::class);
+
         $team = Auth::user()->currentTeam;
 
         $settings = InvoiceSetting::firstOrCreate(
@@ -113,10 +118,11 @@ new class extends Component
             <x-table id="table">
                 <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
                     <x-table.column>{{ __('Number') }}</x-table.column>
-                    <x-table.column>{{ __('Client') }}</x-table.column>
-                    <x-table.column>{{ __('Issue date') }}</x-table.column>
+                    <x-table.column class="hidden sm:table-cell">{{ __('Client') }}</x-table.column>
+                    <x-table.column class="hidden sm:table-cell">{{ __('Issue date') }}</x-table.column>
                     <x-table.column align="end">{{ __('Total') }}</x-table.column>
-                    <x-table.column align="end">{{ __('Status') }}</x-table.column>
+                    <x-table.column align="end" class="hidden sm:table-cell">{{ __('Status') }}</x-table.column>
+                    <x-table.column align="end">{{ __('Links') }}</x-table.column>
                 </x-table.columns>
 
                 <x-table.rows>
@@ -131,21 +137,40 @@ new class extends Component
                                     wire:navigate
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
-                                <span @class(['font-mono' => filled($invoice->full_number)])>
-                                    {{ $invoice->full_number ?? __('Draft') }}
-                                </span>
+                                <div class="flex flex-col">
+                                    <span @class(['font-mono' => filled($invoice->full_number)])>
+                                        {{ $invoice->full_number ?? __('Draft') }}
+                                    </span>
+                                    <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 sm:hidden">
+                                        <span>{{ $invoice->customer?->name }}</span>
+                                        @if ($invoice->issue_date)
+                                            <span>· {{ $invoice->issue_date->format('Y-m-d') }}</span>
+                                        @endif
+                                        <flux:badge
+                                            size="sm"
+                                            :color="match ($invoice->status) {
+                                                'issued' => 'green',
+                                                'rectified' => 'orange',
+                                                default => 'zinc',
+                                            }"
+                                            inset
+                                        >
+                                            {{ $invoice->status_label }}
+                                        </flux:badge>
+                                    </span>
+                                </div>
                             </x-table.cell>
-                            <x-table.cell variant="muted">
+                            <x-table.cell variant="muted" class="hidden sm:table-cell">
                                 {{ $invoice->customer?->name ?? '—' }}
                             </x-table.cell>
-                            <x-table.cell variant="muted">
+                            <x-table.cell variant="muted" class="hidden sm:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
                             </x-table.cell>
-                            <x-table.cell variant="strong" align="end">
-                                {{ number_format((float) $invoice->total, 2) }}
+                            <x-table.cell variant="strong" align="end" class="whitespace-nowrap">
+                                {{ $this->money($invoice->total) }}
                                 <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
                             </x-table.cell>
-                            <x-table.cell align="end">
+                            <x-table.cell align="end" class="hidden sm:table-cell">
                                 <flux:badge
                                     :color="match ($invoice->status) {
                                         'issued' => 'green',
@@ -156,6 +181,31 @@ new class extends Component
                                 >
                                     {{ $invoice->status_label }}
                                 </flux:badge>
+                            </x-table.cell>
+                            <x-table.cell align="end" class="whitespace-nowrap">
+                                <div class="flex items-center justify-end gap-1">
+                                    @if ($invoice->pdf_path)
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="document-arrow-down"
+                                            :href="route('invoices.pdf', $invoice)"
+                                            :aria-label="__('Download PDF')"
+                                        />
+                                    @endif
+
+                                    @if (filled($invoice->public_token))
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="arrow-top-right-on-square"
+                                            :href="route('invoices.public.show', $invoice->public_token)"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            :aria-label="__('Public view')"
+                                        />
+                                    @endif
+                                </div>
                             </x-table.cell>
                         </x-table.row>
                     @endforeach

@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Services\InvoiceFingerprintService;
+use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use FormatsMoney;
+
     public Invoice $invoice;
 
     public string $rectificationReason = '';
@@ -66,6 +69,8 @@ new class extends Component
             'invoice_type' => $original->invoice_type,
             'issue_date' => now()->toDateString(),
             'currency' => $original->currency,
+            'exchange_rate' => $original->exchange_rate,
+            'exchange_rate_date' => $original->exchange_rate_date,
             'vat_percent' => $original->vat_percent,
             'vat_exemption_reason' => $original->vat_exemption_reason,
             'irpf_percent' => $original->irpf_percent,
@@ -217,9 +222,22 @@ new class extends Component
                         copyable
                         class="mt-3"
                     />
-                    <flux:button variant="ghost" size="sm" class="mt-3" wire:click="revokeLink">
-                        {{ __('Revoke link') }}
-                    </flux:button>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="arrow-top-right-on-square"
+                            :href="route('invoices.public.show', $this->invoice->public_token)"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {{ __('Open public page') }}
+                        </flux:button>
+
+                        <flux:button variant="ghost" size="sm" wire:click="revokeLink">
+                            {{ __('Revoke link') }}
+                        </flux:button>
+                    </div>
                 </div>
             @endif
         </div>
@@ -240,9 +258,9 @@ new class extends Component
                             <tr wire:key="line-{{ $loop->index }}" class="border-b border-zinc-100 last:border-0 dark:border-white/5">
                                 <td class="px-4 py-3">{{ $lineItem['description'] ?? '' }}</td>
                                 <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ $lineItem['quantity'] ?? 0 }}</td>
-                                <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ number_format((float) ($lineItem['unit_price'] ?? 0), 2) }}</td>
+                                <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-300">{{ $this->money($lineItem['unit_price'] ?? 0) }}</td>
                                 <td class="px-4 py-3 text-right font-medium">
-                                    {{ number_format((float) ($lineItem['quantity'] ?? 0) * (float) ($lineItem['unit_price'] ?? 0), 2) }}
+                                    {{ $this->money(($lineItem['quantity'] ?? 0) * ($lineItem['unit_price'] ?? 0)) }}
                                 </td>
                             </tr>
                         @endforeach
@@ -254,40 +272,40 @@ new class extends Component
                 <dl class="space-y-2 text-sm">
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('Subtotal') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->subtotal, 2) }} {{ $this->invoice->currency }}</dd>
+                        <dd>{{ $this->money($this->invoice->subtotal) }} {{ $this->invoice->currency }}</dd>
                     </div>
                     @if ((float) $this->invoice->discount_total > 0)
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('Discount') }}</dt>
-                            <dd>-{{ number_format((float) $this->invoice->discount_total, 2) }}</dd>
+                            <dd>-{{ $this->money($this->invoice->discount_total) }}</dd>
                         </div>
                     @endif
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('Taxable base') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->base_amount, 2) }}</dd>
+                        <dd>{{ $this->money($this->invoice->base_amount) }}</dd>
                     </div>
                     <div class="flex justify-between">
                         <dt class="text-zinc-500">{{ __('VAT') }} {{ (float) $this->invoice->vat_percent }}%</dt>
-                        <dd>{{ number_format((float) $this->invoice->vat_amount, 2) }}</dd>
+                        <dd>{{ $this->money($this->invoice->vat_amount) }}</dd>
                     </div>
                     @if ($this->invoice->vat_amount_eur !== null && $this->invoice->currency !== 'EUR')
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('VAT in euros') }}</dt>
-                            <dd>{{ number_format((float) $this->invoice->vat_amount_eur, 2) }} EUR</dd>
+                            <dd>{{ $this->money($this->invoice->vat_amount_eur) }} EUR</dd>
                         </div>
                     @endif
                     <div class="flex justify-between border-t border-zinc-200 pt-2 text-base font-semibold dark:border-white/10">
                         <dt>{{ __('Total') }}</dt>
-                        <dd>{{ number_format((float) $this->invoice->total, 2) }} {{ $this->invoice->currency }}</dd>
+                        <dd>{{ $this->money($this->invoice->total) }} {{ $this->invoice->currency }}</dd>
                     </div>
                     @if ((float) $this->invoice->irpf_amount > 0)
                         <div class="flex justify-between">
                             <dt class="text-zinc-500">{{ __('IRPF withheld') }} {{ (float) $this->invoice->irpf_percent }}%</dt>
-                            <dd>-{{ number_format((float) $this->invoice->irpf_amount, 2) }}</dd>
+                            <dd>-{{ $this->money($this->invoice->irpf_amount) }}</dd>
                         </div>
                         <div class="flex justify-between font-semibold">
                             <dt>{{ __('Amount to pay') }}</dt>
-                            <dd>{{ number_format((float) $this->invoice->amount_due, 2) }} {{ $this->invoice->currency }}</dd>
+                            <dd>{{ $this->money($this->invoice->amount_due) }} {{ $this->invoice->currency }}</dd>
                         </div>
                     @endif
                 </dl>

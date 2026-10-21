@@ -19,9 +19,12 @@ class InvoicePdfController extends Controller
 
         abort_if(blank($invoice->pdf_path), 404);
 
+        $disk = Storage::disk(config('picstome.disk'));
+
+        abort_unless($disk->exists($invoice->pdf_path), 404);
+
         $invoice->recordEvent(InvoiceEvent::PDF_DOWNLOADED, $request->user());
 
-        return Storage::disk(config('picstome.disk'))
-            ->download($invoice->pdf_path, $invoice->pdf_file_name);
+        return $disk->download($invoice->pdf_path, $invoice->pdf_file_name);
     }
 }

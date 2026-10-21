@@ -3,8 +3,8 @@
 namespace App\Livewire\Forms;
 
 use App\Models\InvoiceSetting;
-use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class InvoiceSettingsForm extends Form
@@ -61,7 +61,7 @@ class InvoiceSettingsForm extends Form
             'country' => ['required', 'string', 'size:2'],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:255'],
-            'currency' => ['required', 'string', 'size:3'],
+            'currency' => ['required', 'string', Rule::in(array_keys(config('invoices.currencies')))],
             'timezone' => ['required', 'timezone'],
             'vat_percent' => ['required', 'numeric', 'in:0,4,10,21'],
             'irpf_percent' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -147,10 +147,5 @@ class InvoiceSettingsForm extends Form
         $this->update();
 
         $this->settings?->update(['setup_completed_at' => now()]);
-    }
-
-    public function team(): Team
-    {
-        return Auth::user()->currentTeam;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Invoice;
+use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
 use App\Models\Team;
 use App\Services\InvoiceService;
@@ -168,12 +169,20 @@ class InvoiceForm extends Form
         ];
 
         if ($this->invoice) {
+            if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice) {
+                $data['invoice_type'] = $this->invoice->rectifiesInvoice->invoice_type;
+            }
+
             $this->invoice->update($data);
+
+            $this->invoice->recordEvent(InvoiceEvent::UPDATED, Auth::user());
 
             return $this->invoice;
         }
 
         $this->invoice = $team->invoices()->create($data);
+
+        $this->invoice->recordEvent(InvoiceEvent::CREATED, Auth::user());
 
         return $this->invoice;
     }

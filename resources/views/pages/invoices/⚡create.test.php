@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
 use App\Models\User;
 use App\Services\InvoiceIssuanceService;
@@ -211,6 +212,25 @@ it('completes the fiscal data of the client from the invoice', function () {
     expect($customer->legal_name)->toBe('Nova Studio SL')
         ->and($customer->tax_id)->toBe('B87654321')
         ->and($customer->country)->toBe('ES');
+});
+
+it('records the creation and the update of a draft in the audit trail', function () {
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->set('form.customer_id', $this->customer->id)
+        ->call('addLine')
+        ->set('form.lineItems.0.description', 'Sesión de fotos')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 100)
+        ->call('saveDraft');
+
+    $draft = $this->team->invoices()->first();
+
+    expect($draft->events()->pluck('event'))->toContain(InvoiceEvent::CREATED);
+
+    $component->set('form.lineItems.0.unit_price', 120)->call('saveDraft');
+
+    expect($draft->fresh()->events()->pluck('event'))->toContain(InvoiceEvent::UPDATED);
 });
 
 it('binds the client form of the invoice to the client form', function () {

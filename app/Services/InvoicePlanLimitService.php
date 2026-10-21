@@ -20,8 +20,10 @@ class InvoicePlanLimitService
     {
         $timezone = $team->invoiceSetting?->timezone ?? config('app.timezone');
 
-        $start = now($timezone)->startOfMonth();
-        $end = now($timezone)->endOfMonth();
+        // Timestamps are stored in the application timezone, so the range of
+        // the team's month is converted to it before querying.
+        $start = now($timezone)->startOfMonth()->setTimezone(config('app.timezone'));
+        $end = now($timezone)->endOfMonth()->setTimezone(config('app.timezone'));
 
         return $team->invoices()
             ->whereNotNull('issued_at')

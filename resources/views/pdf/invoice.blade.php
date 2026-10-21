@@ -1,3 +1,5 @@
+@use('Illuminate\Support\Number')
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,9 +138,9 @@
         @forelse ($lineItems as $lineItem)
             <tr>
                 <td style="padding: 6px 0; vertical-align: top;">{{ $lineItem['description'] ?? '' }}</td>
-                <td style="text-align: right; padding: 6px 0;">{{ rtrim(rtrim(number_format((float) ($lineItem['quantity'] ?? 0), 2, ',', ''), '0'), ',') }}</td>
-                <td style="text-align: right; padding: 6px 0;">{{ number_format((float) ($lineItem['unit_price'] ?? 0), 2, ',', '.') }}</td>
-                <td style="text-align: right; padding: 6px 0;">{{ number_format((float) ($lineItem['quantity'] ?? 0) * (float) ($lineItem['unit_price'] ?? 0), 2, ',', '.') }}</td>
+                <td style="text-align: right; padding: 6px 0;">{{ rtrim(rtrim(Number::format((float) ($lineItem['quantity'] ?? 0), 2), '0'), ',.') }}</td>
+                <td style="text-align: right; padding: 6px 0;">{{ Number::format((float) ($lineItem['unit_price'] ?? 0), 2) }}</td>
+                <td style="text-align: right; padding: 6px 0;">{{ Number::format((float) ($lineItem['quantity'] ?? 0) * (float) ($lineItem['unit_price'] ?? 0), 2) }}</td>
             </tr>
         @empty
             <tr>
@@ -151,30 +153,30 @@
 <table class="totals" style="margin-top: 14px; width: 55%; margin-left: 45%;">
     <tr>
         <td class="muted">{{ __('Subtotal') }}</td>
-        <td class="right">{{ number_format((float) $invoice->subtotal, 2, ',', '.') }} {{ $invoice->currency }}</td>
+        <td class="right">{{ Number::format((float) $invoice->subtotal, 2) }} {{ $invoice->currency }}</td>
     </tr>
 
     @if ((float) $invoice->discount_total > 0)
         <tr>
             <td class="muted">{{ __('Discount') }}</td>
-            <td class="right">-{{ number_format((float) $invoice->discount_total, 2, ',', '.') }} {{ $invoice->currency }}</td>
+            <td class="right">-{{ Number::format((float) $invoice->discount_total, 2) }} {{ $invoice->currency }}</td>
         </tr>
     @endif
 
     <tr>
         <td class="muted">{{ __('Taxable base') }}</td>
-        <td class="right">{{ number_format((float) $invoice->base_amount, 2, ',', '.') }} {{ $invoice->currency }}</td>
+        <td class="right">{{ Number::format((float) $invoice->base_amount, 2) }} {{ $invoice->currency }}</td>
     </tr>
 
     <tr>
-        <td class="muted">{{ __('VAT') }} {{ rtrim(rtrim(number_format((float) $invoice->vat_percent, 2, ',', ''), '0'), ',') }}%</td>
-        <td class="right">{{ number_format((float) $invoice->vat_amount, 2, ',', '.') }} {{ $invoice->currency }}</td>
+        <td class="muted">{{ __('VAT') }} {{ rtrim(rtrim(Number::format((float) $invoice->vat_percent, 2), '0'), ',.') }}%</td>
+        <td class="right">{{ Number::format((float) $invoice->vat_amount, 2) }} {{ $invoice->currency }}</td>
     </tr>
 
     @if ($invoice->vat_amount_eur !== null && $invoice->currency !== 'EUR')
         <tr>
             <td class="muted">{{ __('VAT in euros') }}</td>
-            <td class="right">{{ number_format((float) $invoice->vat_amount_eur, 2, ',', '.') }} EUR</td>
+            <td class="right">{{ Number::format((float) $invoice->vat_amount_eur, 2) }} EUR</td>
         </tr>
     @endif
 
@@ -186,18 +188,18 @@
 
     <tr class="grand">
         <td>{{ __('Total') }}</td>
-        <td class="right">{{ number_format((float) $invoice->total, 2, ',', '.') }} {{ $invoice->currency }}</td>
+        <td class="right">{{ Number::format((float) $invoice->total, 2) }} {{ $invoice->currency }}</td>
     </tr>
 
     @if ((float) $invoice->irpf_amount > 0)
         <tr>
-            <td class="muted">{{ __('IRPF withheld') }} {{ rtrim(rtrim(number_format((float) $invoice->irpf_percent, 2, ',', ''), '0'), ',') }}%</td>
-            <td class="right">-{{ number_format((float) $invoice->irpf_amount, 2, ',', '.') }} {{ $invoice->currency }}</td>
+            <td class="muted">{{ __('IRPF withheld') }} {{ rtrim(rtrim(Number::format((float) $invoice->irpf_percent, 2), '0'), ',.') }}%</td>
+            <td class="right">-{{ Number::format((float) $invoice->irpf_amount, 2) }} {{ $invoice->currency }}</td>
         </tr>
 
         <tr>
             <td><strong>{{ __('Amount to pay') }}</strong></td>
-            <td class="right"><strong>{{ number_format((float) $invoice->amount_due, 2, ',', '.') }} {{ $invoice->currency }}</strong></td>
+            <td class="right"><strong>{{ Number::format((float) $invoice->amount_due, 2) }} {{ $invoice->currency }}</strong></td>
         </tr>
     @endif
 </table>

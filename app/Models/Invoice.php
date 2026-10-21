@@ -46,10 +46,6 @@ class Invoice extends Model
         'status',
         'public_token',
         'public_token_revoked_at',
-        'pdf_path',
-        'pdf_size',
-        'pdf_hash',
-        'pdf_generated_at',
         'updated_at',
     ];
 

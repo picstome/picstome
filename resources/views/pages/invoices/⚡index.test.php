@@ -50,3 +50,23 @@ it('does not warn when the issuer data is complete', function () {
 it('requires authentication', function () {
     $this->get(route('invoices'))->assertRedirect(route('login'));
 });
+
+it('shows the links to the pdf and the public page of an issued invoice', function () {
+    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
+
+    $invoice = app(App\Services\InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee(route('invoices.pdf', $invoice), false)
+        ->assertSee(route('invoices.public.show', $invoice->public_token), false);
+});
+
+it('does not show the links for a draft invoice', function () {
+    draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertDontSee(route('invoices.pdf', ['invoice' => 'x']), false)
+        ->assertSee('Draft');
+});
