@@ -273,6 +273,7 @@ The canonical project rules live in `docs/development-rules.md`. Follow them for
 
 Minimum checklist:
 - Work on a feature/fix branch and open a PR; never commit directly to `main`.
+- **Never commit, push, open a PR, merge or deploy without asking the maintainer first.** Green checks are a requirement to publish, not a permission to publish.
 - Link the related issue and include UI evidence when relevant.
 - Document non-obvious code inline (PHPDoc/services/jobs/migrations/components).
 - Review DRY: reuse existing services, components and traits.

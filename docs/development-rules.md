@@ -10,6 +10,26 @@ version for coding agents; this document is the source of truth.
 - Keep PRs reviewable; include screenshots or a short video for UI changes.
 - `main` must require the `ci` and `quality` checks before merging.
 
+## Ask before publishing
+
+**Never commit, push, open a pull request, merge or deploy without asking
+the maintainer first.** Working on a branch and running the checks locally is
+always fine, but publishing to the remote is a decision of the maintainer.
+
+- Ask for permission before the first `git commit` of a change.
+- Ask for permission before every `git push`, including to a feature branch.
+- Ask for permission before opening a pull request, and say which branch it
+  targets and which issue it closes.
+- Ask for permission before merging a pull request, even when `ci` and
+  `quality` are green. Green checks are a requirement to merge, not a
+  permission to merge.
+- Ask for permission before deploying, running a destructive command against
+  a production database or applying a migration outside the development
+  environment.
+
+The maintainer reviews the diff, decides when the work is published and
+decides when it reaches `main`. Report the state of the work and wait.
+
 ## Definition of done
 
 - Code follows Laravel, Livewire and Flux conventions already used in the app.
