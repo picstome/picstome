@@ -32,6 +32,8 @@ class InvoiceEvent extends Model
 
     public const LINK_REVOKED = 'link_revoked';
 
+    public const LINK_REGENERATED = 'link_regenerated';
+
     public const UPDATED_AT = null;
 
     protected $guarded = [];

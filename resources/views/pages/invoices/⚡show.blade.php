@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Services\InvoiceFingerprintService;
+use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -38,7 +39,7 @@ new class extends Component
 
     public function revokeLink(): void
     {
-        $this->authorize('revokeLink', $this->invoice);
+        $this->authorize('managePublicLink', $this->invoice);
 
         if (blank($this->invoice->public_token)) {
             return;
@@ -51,7 +52,24 @@ new class extends Component
 
         $this->invoice->recordEvent(InvoiceEvent::LINK_REVOKED, Auth::user());
 
-        Flux::toast(__('The public link has been revoked.'), variant: 'success');
+        Flux::toast(__('The public link has been deactivated.'), variant: 'success');
+    }
+
+    /**
+     * Create a new public link for an invoice whose link was revoked.
+     */
+    public function regenerateLink(): void
+    {
+        $this->authorize('managePublicLink', $this->invoice);
+
+        $this->invoice->update([
+            'public_token' => app(InvoicePdfService::class)->newPublicToken(),
+            'public_token_revoked_at' => null,
+        ]);
+
+        $this->invoice->recordEvent(InvoiceEvent::LINK_REGENERATED, Auth::user());
+
+        Flux::toast(__('A new public link has been generated.'), variant: 'success');
     }
 
     public function rectify(): void
@@ -212,9 +230,13 @@ new class extends Component
                 </dl>
             </div>
 
-            @if (filled($this->invoice->public_token))
-                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
+            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+                <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
+                <flux:subheading size="sm">
+                    {{ __('Share it with your client so they can check the invoice online.') }}
+                </flux:subheading>
+
+                @if (filled($this->invoice->public_token))
                     <flux:input
                         icon="link"
                         :value="route('invoices.public.show', $this->invoice->public_token)"
@@ -222,24 +244,43 @@ new class extends Component
                         copyable
                         class="mt-3"
                     />
+
                     <div class="mt-3 flex flex-wrap items-center gap-2">
                         <flux:button
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                             icon="arrow-top-right-on-square"
                             :href="route('invoices.public.show', $this->invoice->public_token)"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            {{ __('Open public page') }}
+                            {{ __('View invoice') }}
                         </flux:button>
 
-                        <flux:button variant="ghost" size="sm" wire:click="revokeLink">
-                            {{ __('Revoke link') }}
-                        </flux:button>
+                        <flux:modal.trigger name="revoke-link">
+                            <flux:button size="sm" variant="ghost" icon="link-slash">
+                                {{ __('Deactivate link') }}
+                            </flux:button>
+                        </flux:modal.trigger>
                     </div>
-                </div>
-            @endif
+                @else
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <flux:button size="sm" variant="outline" icon="link" wire:click="regenerateLink">
+                            {{ __('Generate a new link') }}
+                        </flux:button>
+
+                        @if ($this->invoice->public_token_revoked_at)
+                            <flux:text size="sm" class="text-zinc-500">
+                                {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
+                            </flux:text>
+                        @endif
+                    </div>
+
+                    <flux:text size="sm" class="mt-3 text-zinc-500">
+                        {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
+                    </flux:text>
+                @endif
+            </div>
         </div>
 
         <div class="space-y-6">
@@ -369,5 +410,13 @@ new class extends Component
         :message="__('Draft invoices can be deleted without any trace. Issued invoices can never be deleted.')"
         :confirm-label="__('Delete')"
         method="delete"
+    />
+
+    <x-confirm-modal
+        name="revoke-link"
+        :title="__('Deactivate the public link?')"
+        :message="__('Whoever has the link will stop seeing the invoice. The invoice and its PDF do not change.')"
+        :confirm-label="__('Deactivate link')"
+        method="revokeLink"
     />
 </div>

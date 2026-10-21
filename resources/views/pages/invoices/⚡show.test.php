@@ -55,6 +55,33 @@ it('revokes the public link', function () {
         ->and($invoice->events()->pluck('event'))->toContain(InvoiceEvent::LINK_REVOKED);
 });
 
+it('generates a new link after deactivating it', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+    $oldToken = $invoice->public_token;
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->call('revokeLink')
+        ->assertHasNoErrors();
+
+    expect($invoice->fresh()->public_token)->toBeNull();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice->fresh()])
+        ->call('regenerateLink')
+        ->assertHasNoErrors();
+
+    $invoice = $invoice->fresh();
+
+    expect($invoice->public_token)->toHaveLength(40)
+        ->and($invoice->public_token)->not->toBe($oldToken)
+        ->and($invoice->public_token_revoked_at)->toBeNull()
+        ->and($invoice->events()->pluck('event'))->toContain(InvoiceEvent::LINK_REGENERATED);
+
+    $this->get('/i/'.$invoice->public_token)->assertOk();
+    $this->get('/i/'.$oldToken)->assertNotFound();
+});
+
 it('creates a corrective invoice with the reason', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

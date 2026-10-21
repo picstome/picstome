@@ -66,9 +66,9 @@ class InvoicePolicy
     }
 
     /**
-     * Determine whether the user can revoke the public link of the invoice.
+     * Determine whether the user can revoke or regenerate the public link.
      */
-    public function revokeLink(User $user, Invoice $invoice): bool
+    public function managePublicLink(User $user, Invoice $invoice): bool
     {
         return $invoice->team->is($user->currentTeam);
     }

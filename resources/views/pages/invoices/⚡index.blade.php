@@ -118,7 +118,7 @@ new class extends Component
             <x-table id="table">
                 <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
                     <x-table.column>{{ __('Number') }}</x-table.column>
-                    <x-table.column class="hidden sm:table-cell">{{ __('Client') }}</x-table.column>
+                    <x-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-table.column>
                     <x-table.column class="hidden sm:table-cell">{{ __('Issue date') }}</x-table.column>
                     <x-table.column align="end">{{ __('Total') }}</x-table.column>
                     <x-table.column align="end" class="hidden sm:table-cell">{{ __('Status') }}</x-table.column>
@@ -160,7 +160,7 @@ new class extends Component
                                     </span>
                                 </div>
                             </x-table.cell>
-                            <x-table.cell variant="muted" class="hidden sm:table-cell">
+                            <x-table.cell variant="muted" class="hidden w-full sm:table-cell">
                                 {{ $invoice->customer?->name ?? '—' }}
                             </x-table.cell>
                             <x-table.cell variant="muted" class="hidden sm:table-cell">
@@ -191,7 +191,9 @@ new class extends Component
                                             icon="document-arrow-down"
                                             :href="route('invoices.pdf', $invoice)"
                                             :aria-label="__('Download PDF')"
-                                        />
+                                        >
+                                            <span class="hidden sm:inline">{{ __('PDF') }}</span>
+                                        </flux:button>
                                     @endif
 
                                     @if (filled($invoice->public_token))
@@ -202,8 +204,10 @@ new class extends Component
                                             :href="route('invoices.public.show', $invoice->public_token)"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            :aria-label="__('Public view')"
-                                        />
+                                            :aria-label="__('View invoice')"
+                                        >
+                                            <span class="hidden sm:inline">{{ __('View invoice') }}</span>
+                                        </flux:button>
                                     @endif
                                 </div>
                             </x-table.cell>

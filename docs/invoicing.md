@@ -164,9 +164,12 @@ so the document a client received always matches the data of the invoice.
 ## Public verification
 
 Every issued invoice gets a public link `/i/{token}` with a random token of 40
-characters. The link can be revoked, and the page and the PDF return a 404
-afterwards. The public pages are not indexed (`X-Robots-Tag`) and do not leak
-the link through the referrer (`Referrer-Policy: no-referrer`).
+characters. The link can be deactivated, and the page and the public PDF return
+a 404 afterwards; a new link can be generated later from the invoice detail.
+The link printed in the PDF is never changed, so the already delivered
+documents keep the previous one. The public pages are not indexed
+(`X-Robots-Tag`) and do not leak the link through the referrer
+(`Referrer-Policy: no-referrer`).
 
 The public page shows the data of the invoice, the breakdown of the VAT and
 the IRPF, the fingerprint, the position in the chain, the state and the
