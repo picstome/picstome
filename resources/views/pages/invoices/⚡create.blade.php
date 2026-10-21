@@ -350,7 +350,7 @@ new class extends Component
                 @endforelse
             </div>
 
-            <flux:button variant="outline" icon="plus" class="mt-6" wire:click="addCustomer">
+            <flux:button variant="primary" class="btn-ink" icon="plus" class="mt-6" wire:click="addCustomer">
                 {{ __('Add a new client') }}
             </flux:button>
         </section>
@@ -388,7 +388,7 @@ new class extends Component
                 @endforeach
             </div>
 
-            <flux:button variant="outline" icon="plus" class="mt-4" wire:click="addLine">
+            <flux:button variant="primary" class="btn-ink" icon="plus" class="mt-4" wire:click="addLine">
                 {{ __('Add line item') }}
             </flux:button>
         </section>
@@ -512,7 +512,7 @@ new class extends Component
         </flux:button>
 
         <div class="flex items-center gap-3">
-            <flux:button variant="outline" wire:click="saveDraft">{{ __('Save draft') }}</flux:button>
+            <flux:button variant="primary" class="btn-ink" wire:click="saveDraft">{{ __('Save draft') }}</flux:button>
 
             @if ($this->step < 3)
                 <flux:button variant="primary" wire:click="nextStep">{{ __('Continue') }}</flux:button>

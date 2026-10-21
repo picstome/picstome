@@ -88,7 +88,7 @@ new class extends Component
             <x-subheading>{{ __('Create invoices and share them with your clients.') }}</x-subheading>
         </div>
         <div class="flex items-center gap-2">
-            <flux:button variant="outline" icon="cog" :href="route('invoices.settings')" wire:navigate>
+            <flux:button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
                 {{ __('Invoice settings') }}
             </flux:button>
 
@@ -228,7 +228,7 @@ new class extends Component
                 {{ __('Create your first invoice and share it with your client.') }}
             </flux:subheading>
             <div class="flex items-center gap-3">
-                <flux:button variant="outline" icon="cog" :href="route('invoices.settings')" wire:navigate>
+                <flux:button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
                     {{ __('Invoice settings') }}
                 </flux:button>
                 <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
@@ -289,7 +289,7 @@ new class extends Component
 
                 <div class="flex items-center gap-3">
                     @if ($this->setupStep > 1)
-                        <flux:button type="button" variant="outline" wire:click="previousSetupStep">
+                        <flux:button type="button" variant="outline" class="btn-outline-brand" wire:click="previousSetupStep">
                             {{ __('Back') }}
                         </flux:button>
                     @endif

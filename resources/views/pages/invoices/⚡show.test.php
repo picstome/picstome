@@ -139,6 +139,15 @@ it('deletes a draft invoice', function () {
     expect(Invoice::whereKey($invoice->id)->exists())->toBeFalse();
 });
 
+it('does not show the public link of a draft invoice', function () {
+    $invoice = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertDontSee('Public link')
+        ->assertDontSee('Generate a new link');
+});
+
 it('allows editing a draft invoice', function () {
     $invoice = draftInvoice($this->team);
 

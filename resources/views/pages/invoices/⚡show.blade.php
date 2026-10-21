@@ -152,24 +152,24 @@ new class extends Component
             </flux:badge>
 
             @if ($this->invoice->pdf_path)
-                <flux:button variant="outline" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
+                <flux:button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
                     {{ __('Download PDF') }}
                 </flux:button>
             @endif
 
             @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative())
                 <flux:modal.trigger name="rectify-invoice">
-                    <flux:button variant="outline" icon="pencil-square">{{ __('Rectify') }}</flux:button>
+                    <flux:button variant="primary" class="btn-ink" icon="pencil-square">{{ __('Rectify') }}</flux:button>
                 </flux:modal.trigger>
             @endif
 
             @if ($this->invoice->isDraft())
-                <flux:button variant="outline" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
+                <flux:button variant="primary" class="btn-ink" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
                     {{ __('Edit') }}
                 </flux:button>
 
                 <flux:modal.trigger name="delete-invoice">
-                    <flux:button variant="danger" icon="trash">{{ __('Delete') }}</flux:button>
+                    <flux:button variant="primary" class="btn-coral" icon="trash">{{ __('Delete') }}</flux:button>
                 </flux:modal.trigger>
             @endif
         </div>
@@ -230,8 +230,9 @@ new class extends Component
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
+            @if (! $this->invoice->isDraft())
+                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+                    <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
                 <flux:subheading size="sm">
                     {{ __('Share it with your client so they can check the invoice online.') }}
                 </flux:subheading>
@@ -248,7 +249,8 @@ new class extends Component
                     <div class="mt-3 flex flex-wrap items-center gap-2">
                         <flux:button
                             size="sm"
-                            variant="outline"
+                            variant="primary"
+                            class="btn-ink"
                             icon="arrow-top-right-on-square"
                             :href="route('invoices.public.show', $this->invoice->public_token)"
                             target="_blank"
@@ -265,7 +267,7 @@ new class extends Component
                     </div>
                 @else
                     <div class="mt-3 flex flex-wrap items-center gap-2">
-                        <flux:button size="sm" variant="outline" icon="link" wire:click="regenerateLink">
+                        <flux:button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
                             {{ __('Generate a new link') }}
                         </flux:button>
 
@@ -276,11 +278,12 @@ new class extends Component
                         @endif
                     </div>
 
-                    <flux:text size="sm" class="mt-3 text-zinc-500">
-                        {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
-                    </flux:text>
-                @endif
-            </div>
+                        <flux:text size="sm" class="mt-3 text-zinc-500">
+                            {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
+                        </flux:text>
+                    @endif
+                </div>
+            @endif
         </div>
 
         <div class="space-y-6">

@@ -198,7 +198,7 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
 
             @if ($this->invoice->pdf_path)
-                <flux:button variant="outline" icon="document-arrow-down" :href="route('invoices.public.pdf', $this->invoice->public_token)">
+                <flux:button variant="primary" icon="document-arrow-down" :href="route('invoices.public.pdf', $this->invoice->public_token)">
                     {{ __('Download PDF') }}
                 </flux:button>
             @endif
