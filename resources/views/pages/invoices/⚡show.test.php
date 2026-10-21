@@ -82,7 +82,7 @@ it('generates a new link after deactivating it', function () {
     $this->get('/i/'.$oldToken)->assertNotFound();
 });
 
-it('creates a corrective invoice with the reason', function () {
+it('issues the corrective invoice with the reason', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 
     Livewire::actingAs($this->user)
@@ -94,10 +94,31 @@ it('creates a corrective invoice with the reason', function () {
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
 
     expect($rectificative)->not->toBeNull()
-        ->and($rectificative->status)->toBe(Invoice::STATUS_DRAFT)
+        ->and($rectificative->status)->toBe(Invoice::STATUS_ISSUED)
+        ->and($rectificative->series)->toBe('R')
         ->and($rectificative->rectification_type)->toBe(Invoice::RECTIFICATION_SUBSTITUTION)
         ->and($rectificative->rectification_reason)->toBe('Wrong client name')
-        ->and($rectificative->customer_id)->toBe($invoice->customer_id);
+        ->and($rectificative->customer_id)->toBe($invoice->customer_id)
+        ->and($rectificative->pdf_path)->not->toBeNull()
+        ->and($invoice->fresh()->status)->toBe(Invoice::STATUS_RECTIFIED);
+});
+
+it('can review the corrective invoice before issuing it', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->set('rectificationReason', 'Wrong amount')
+        ->call('rectify', true)
+        ->assertHasNoErrors()
+        ->assertRedirect(route('invoices.create', [
+            'invoice' => $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first()->ulid,
+        ]));
+
+    $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
+
+    expect($rectificative->status)->toBe(Invoice::STATUS_DRAFT)
+        ->and($invoice->fresh()->status)->toBe(Invoice::STATUS_ISSUED);
 });
 
 it('copies the exchange rate to the corrective invoice', function () {

@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Services\InvoiceFingerprintService;
+use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
 use Flux\Flux;
@@ -72,7 +73,11 @@ new class extends Component
         Flux::toast(__('A new public link has been generated.'), variant: 'success');
     }
 
-    public function rectify(): void
+    /**
+     * Create the corrective invoice. It is issued straight away, unless the
+     * user prefers to review it first.
+     */
+    public function rectify(bool $review = false): void
     {
         $this->authorize('rectify', $this->invoice);
 
@@ -113,7 +118,15 @@ new class extends Component
             'rectifies' => $original->full_number,
         ]);
 
-        $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
+        if ($review) {
+            $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
+
+            return;
+        }
+
+        app(InvoiceIssuanceService::class)->issue($draft, Auth::user());
+
+        $this->redirect(route('invoices.show', $draft), navigate: true);
     }
 
     public function delete()
@@ -159,7 +172,7 @@ new class extends Component
 
             @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative())
                 <flux:modal.trigger name="rectify-invoice">
-                    <flux:button variant="primary" class="btn-ink" icon="pencil-square">{{ __('Rectify') }}</flux:button>
+                    <flux:button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</flux:button>
                 </flux:modal.trigger>
             @endif
 
@@ -394,15 +407,34 @@ new class extends Component
             <div>
                 <flux:heading size="lg">{{ __('Rectify invoice') }}</flux:heading>
                 <flux:subheading>
-                    {{ __('A corrective invoice is created with the same client and line items. The original invoice keeps its number and its PDF.') }}
+                    {{ __('The corrective invoice is issued with the same client and line items. The original invoice keeps its number and its PDF.') }}
                 </flux:subheading>
             </div>
 
             <flux:textarea wire:model="rectificationReason" :label="__('Reason')" rows="3" />
 
-            <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="primary">{{ __('Create corrective invoice') }}</flux:button>
+            @php
+                $rectificationErrors = $errors->get('invoice');
+            @endphp
+
+            @if ($rectificationErrors !== [])
+                <flux:callout icon="exclamation-triangle" variant="danger">
+                    <flux:callout.text>
+                        @foreach ($rectificationErrors as $rectificationError)
+                            <div>{{ $rectificationError }}</div>
+                        @endforeach
+                    </flux:callout.text>
+                </flux:callout>
+            @endif
+
+            <div class="flex flex-wrap items-center justify-end gap-2">
+                <flux:button type="button" variant="outline" class="btn-outline-brand" wire:click="rectify(true)">
+                    {{ __('Review before issuing') }}
+                </flux:button>
+
+                <flux:button type="submit" variant="primary" class="btn-coral">
+                    {{ __('Issue corrective invoice') }}
+                </flux:button>
             </div>
         </form>
     </flux:modal>

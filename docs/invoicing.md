@@ -181,7 +181,9 @@ An issued invoice is never voided: it is **rectified** (article 15 of RD
 1619/2012).
 
 - The rectification creates a new invoice that references the original, with
-  the same client and line items and a mandatory reason.
+  the same client and line items and a mandatory reason. It is issued straight
+  away, although the detail offers to review it first when the amounts have to
+  be adjusted.
 - The corrective invoice is issued in the rectification series and continues
   its own chain. The original keeps its number, its PDF and its chain, and
   moves to the `rectified` state.
