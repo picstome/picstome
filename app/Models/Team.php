@@ -124,6 +124,16 @@ class Team extends Model
         return $this->hasMany(ContractTemplate::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function invoiceSetting()
+    {
+        return $this->hasOne(InvoiceSetting::class);
+    }
+
     public function bioLinks()
     {
         return $this->hasMany(BioLink::class)->orderBy('order');

@@ -33,6 +33,12 @@ return [
     'personal_team_monthly_contract_limit' => 5,
 
     /**
+     * Maximum number of invoices a free team can issue per month.
+     * Rectificative invoices do not consume this limit.
+     */
+    'personal_team_monthly_invoice_limit' => 1,
+
+    /**
      * Maximum allowed pixels for original size images (width * height).
      * This limit is set because wsrv.nl cannot process images larger than this.
      */
