@@ -49,6 +49,15 @@ new class extends Component
         $this->selectedPayment = null;
     }
 
+    public ?int $pendingPaymentId = null;
+
+    public function requestDeletePayment(int $id): void
+    {
+        $this->pendingPaymentId = $id;
+
+        Flux::modal('delete-payment')->show();
+    }
+
     public function deletePayment(Payment $payment)
     {
         $this->authorize('delete', $payment);
@@ -125,7 +134,7 @@ new class extends Component
                 <x-subheading>{{ __('Generate payment links and manage payments.') }}</x-subheading>
             </div>
             <div class="flex gap-2">
-                <flux:button :href="route('branding.payments')">
+                <flux:button :href="route('branding.payments')" variant="primary" class="btn-ink">
                     {{ __('Settings') }}
                 </flux:button>
                 @if ($this->onboardingComplete)
@@ -182,8 +191,7 @@ new class extends Component
                                                 {{ __('Edit') }}
                                             </flux:menu.item>
                                             <flux:menu.item
-                                                wire:click="deletePayment({{ $payment->id }})"
-                                                wire:confirm="{{ __('Are you sure you want to delete this payment?') }}"
+                                                wire:click="requestDeletePayment({{ $payment->id }})"
                                                 icon="trash"
                                                 variant="danger"
                                             >
@@ -242,12 +250,7 @@ new class extends Component
                         </flux:input.group>
                         <flux:error name="linkForm.amount" />
                     </flux:field>
-                    <flux:input
-                        wire:model="linkForm.description"
-                        :label="__('Description')"
-                        type="text"
-                        required
-                    />
+                    <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
 
                     <flux:switch wire:model.live="linkForm.booking" :label="__('Booking')" />
 
@@ -350,5 +353,11 @@ new class extends Component
             </flux:callout>
         @endif
     @endif
-</div>
 
+    <x-confirm-modal
+        name="delete-payment"
+        :title="__('Delete payment?')"
+        :message="__('This action cannot be undone.')"
+        :method="$this->pendingPaymentId ? 'deletePayment('.$this->pendingPaymentId.')' : null"
+    />
+</div>

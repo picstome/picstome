@@ -51,6 +51,24 @@ it('does not resize photo when keep original size is enabled', function () {
     expect($photo->status)->toBe('processed');
 });
 
+it('resizes photos when the gallery stops keeping the original size', function () {
+    config(['picstome.photo_resize' => 128]);
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => false]);
+    $photoFile = UploadedFile::fake()->image('photo1.jpg', 129, 129);
+    $photo = $gallery->addPhoto($photoFile);
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+    $resizedImage = Storage::disk('s3')->get($photo->path);
+    [$width, $height] = getimagesizefromstring($resizedImage);
+    expect($width)->toBe(128);
+    expect($height)->toBe(128);
+});
+
 it('deletes the original photo from public disk after processing', function () {
     config(['picstome.photo_resize' => 128]);
     config(['picstome.photo_thumb_resize' => 64]);

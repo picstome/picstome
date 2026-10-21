@@ -21,6 +21,23 @@ it('returns 404 for non-existent handle', function () {
         ->assertStatus(404);
 });
 
+it('uses the picstome palette when the team has no accent color', function () {
+    Team::factory()->create(['handle' => 'defaultbrand', 'brand_color' => null]);
+
+    get('/@defaultbrand')
+        ->assertOk()
+        ->assertSee('--color-brand-green', false)
+        ->assertSee('bg-brand-paper', false);
+});
+
+it('uses the team accent color on public pages when set', function () {
+    Team::factory()->create(['handle' => 'redbrand', 'brand_color' => 'red']);
+
+    get('/@redbrand')
+        ->assertOk()
+        ->assertSee('--color-red-500', false);
+});
+
 it('is case insensitive', function () {
     $team = Team::factory()->create(['handle' => 'testuser', 'name' => 'Test User Studio']);
 

@@ -56,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function galleryDefaults(): array
     {
         return array_merge([
-            'keep_original_size' => false,
+            'keep_original_size' => true,
         ], $this->gallery_preferences['gallery_defaults'] ?? []);
     }
 

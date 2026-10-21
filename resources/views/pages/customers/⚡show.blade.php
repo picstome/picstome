@@ -128,13 +128,15 @@ new class extends Component
         </div>
         <div class="flex gap-4">
             <flux:modal.trigger name="client-link">
-                <flux:button icon="link">{{ __('Client link') }}</flux:button>
+                <flux:button icon="link" variant="primary">{{ __('Client link') }}</flux:button>
             </flux:modal.trigger>
-            <flux:button wire:click="delete" variant="subtle" wire:confirm="{{ __('Are you sure?') }}">
-                {{ __('Delete') }}
-            </flux:button>
+            <flux:modal.trigger name="delete-customer">
+                <flux:button variant="primary" class="btn-coral">
+                    {{ __('Delete') }}
+                </flux:button>
+            </flux:modal.trigger>
             <flux:modal.trigger name="edit">
-                <flux:button>{{ __('Edit') }}</flux:button>
+                <flux:button variant="primary" class="btn-ink">{{ __('Edit') }}</flux:button>
             </flux:modal.trigger>
         </div>
     </div>
@@ -191,8 +193,12 @@ new class extends Component
                             <flux:error name="editedNotes" />
                         </flux:field>
                         <div class="flex gap-2">
-                            <flux:button wire:click="saveNotes" variant="primary" size="sm">{{ __('Save') }}</flux:button>
-                            <flux:button wire:click="cancelEditingNotes" variant="subtle" size="sm">{{ __('Cancel') }}</flux:button>
+                            <flux:button wire:click="saveNotes" variant="primary" size="sm">
+                                {{ __('Save') }}
+                            </flux:button>
+                            <flux:button wire:click="cancelEditingNotes" variant="subtle" size="sm">
+                                {{ __('Cancel') }}
+                            </flux:button>
                         </div>
                     </div>
                 @else
@@ -202,7 +208,16 @@ new class extends Component
                         @else
                             <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
                         @endif
-                        <flux:button wire:click="startEditingNotes" icon="pencil" icon:variant="micro" variant="subtle" size="sm" square class="shrink-0" inset="top" />
+                        <flux:button
+                            wire:click="startEditingNotes"
+                            icon="pencil"
+                            icon:variant="micro"
+                            variant="subtle"
+                            size="sm"
+                            square
+                            class="shrink-0"
+                            inset="top"
+                        />
                     </div>
                 @endif
             </x-description.details>
@@ -394,4 +409,11 @@ new class extends Component
             </flux:text>
         </div>
     </flux:modal>
+
+    <x-confirm-modal
+        name="delete-customer"
+        :title="__('Delete customer?')"
+        :message="__('This action cannot be undone.')"
+        method="delete"
+    />
 </div>

@@ -174,7 +174,7 @@ new class extends Component
             />
         </div>
         <div>
-            <flux:button wire:click="exportCsv" icon="arrow-down-tray">
+            <flux:button wire:click="exportCsv" icon="arrow-down-tray" variant="primary" class="btn-ink">
                 {{ __('Export CSV') }}
             </flux:button>
         </div>
@@ -256,6 +256,7 @@ new class extends Component
                             @php
                                 $team = $user->personalTeam();
                             @endphp
+
                             @if ($team?->has_unlimited_storage)
                                 <div class="text-xs tabular-nums">
                                     {{ $team->storage_used_gb }} / {{ __('Unlimited') }}
@@ -266,12 +267,12 @@ new class extends Component
                                         {{ $team->storage_used_gb }} /
                                         {{ $team->storage_limit_gb }}
                                     </div>
-                                    <div class="mt-1 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                    <div
+                                        class="bg-brand-sage/30 mt-1 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10"
+                                    >
                                         <div
-                                            class="{{ $team->storage_used_percent > 90 ? 'bg-red-500' : ($team->storage_used_percent > 75 ? 'bg-yellow-500' : 'bg-blue-500') }} h-1.5 rounded-full transition-all duration-300"
-                                            style="
-                                                width: {{ min($team->storage_used_percent, 100) }}%;
-                                            "
+                                            class="{{ $team->storage_used_percent > 90 ? 'bg-brand-coral' : ($team->storage_used_percent > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
+                                            style="width: {{ min($team->storage_used_percent, 100) }}%"
                                         ></div>
                                     </div>
                                 </div>
@@ -284,6 +285,7 @@ new class extends Component
                             @php
                                 $team = $user->personalTeam();
                             @endphp
+
                             @if ($team?->lifetime_at)
                                 {{ $team->lifetime_at->format('M j, Y') }}
                             @elseif ($team?->subscribed() && $subscription = $team->subscriptions->first())

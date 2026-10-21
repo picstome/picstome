@@ -104,6 +104,17 @@ test('can delete a photo', function () {
     Storage::disk('public')->assertMissing(['galleries/1/photos/photo1_thumb.jpg']);
 });
 
+test('asks for confirmation before deleting a comment', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    $comment = PhotoComment::factory()->for($photo)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('requestDeleteComment', $comment->id);
+
+    expect($component->get('pendingCommentId'))->toBe($comment->id);
+    expect($photo->comments()->count())->toBe(1);
+});
+
 test('can favorite a photo', function () {
     $photo = Photo::factory()->unfavorited()->for(Gallery::factory()->for($this->team))->create();
     expect($photo->isFavorited())->toBeFalse();

@@ -55,6 +55,8 @@ class extends Component
 
 <x-slot name="font">{{ $team->brand_font }}</x-slot>
 
+<x-slot name="color">{{ $team->brand_color }}</x-slot>
+
 <x-slot name="fullScreen">{{ true }}</x-slot>
 
 <x-slot name="head">

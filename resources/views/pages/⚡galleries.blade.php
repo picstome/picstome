@@ -18,7 +18,7 @@ new class extends Component
     public function mount()
     {
         $this->form->expirationDate = now()->addMonth()->format('Y-m-d');
-        $this->form->keepOriginalSize = (bool) (Auth::user()?->galleryDefaults()['keep_original_size'] ?? false);
+        $this->form->keepOriginalSize = (bool) (Auth::user()?->galleryDefaults()['keep_original_size'] ?? true);
     }
 
     public function save()
@@ -51,6 +51,7 @@ new class extends Component
         $gallery = $this->team->galleries()->create([
             'name' => $name,
             'is_public' => false,
+            'keep_original_size' => (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true),
         ]);
 
         if (! $account = $this->team->ftpAccount()->first()) {
@@ -94,10 +95,11 @@ new class extends Component
         </div>
         <div class="flex gap-4">
             @if ($this->team?->subscribed())
-                <flux:button icon="camera" wire:click="startLiveShoot">
-                    {{ __('Start live shoot') }}
+                <flux:button icon="camera" wire:click="startLiveShoot" variant="primary" class="btn-ink">
+                    {{ __('Connect camera') }}
                 </flux:button>
             @endif
+
             <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
                 <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
             </flux:modal.trigger>
@@ -111,11 +113,7 @@ new class extends Component
                     <flux:card
                         class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
                     >
-                        <a
-                            href="{{ route('galleries.show', ['gallery' => $gallery]) }}"
-                            class="block"
-                            wire:navigate
-                        >
+                        <a href="{{ route('galleries.show', ['gallery' => $gallery]) }}" class="block" wire:navigate>
                             @if ($gallery->coverPhoto && $gallery->coverPhoto->isImage())
                                 <img
                                     src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
@@ -227,7 +225,11 @@ new class extends Component
                 </flux:callout>
             @endif
 
-            <flux:switch wire:model="form.keepOriginalSize" :label="__('Keep photos at their original size')" />
+            <flux:switch
+                wire:model="form.keepOriginalSize"
+                :label="__('Keep photos at their original size')"
+                :description="__('This setting is shared with the create gallery modal.')"
+            />
 
             <div class="flex">
                 <flux:spacer />

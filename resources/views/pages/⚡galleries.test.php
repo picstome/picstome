@@ -41,18 +41,18 @@ test('can create a team gallery', function () {
     $component->assertRedirect('/galleries/1');
     expect($this->team->galleries()->count())->toBe(1);
     expect($this->team->galleries()->first()->name)->toBe('Just a Photo Gallery');
-    expect($this->team->galleries()->first()->keep_original_size)->toBeFalse();
+    expect($this->team->galleries()->first()->keep_original_size)->toBeTrue();
 });
 
-test('can create a team gallery that keeps photos at their original size', function () {
+test('can create a team gallery that does not keep photos at their original size', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Just a Photo Gallery')
-        ->set('form.keepOriginalSize', true)
+        ->set('form.keepOriginalSize', false)
         ->call('save');
 
     expect(Gallery::count())->toBe(1);
     expect(Gallery::first()->name)->toBe('Just a Photo Gallery');
-    expect(Gallery::first()->keep_original_size)->toBeTrue();
+    expect(Gallery::first()->keep_original_size)->toBeFalse();
 });
 
 test('remembers the keep original size option for new galleries', function () {
@@ -150,6 +150,37 @@ test('subscribed users can start a live shoot', function () {
     expect($account)->not->toBeNull();
     expect($account->routesTo($gallery))->toBeTrue();
     expect($account->password)->toMatch('/^\d{8}$/');
+});
+
+test('live shoot galleries keep the original size preference', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    $this->user->rememberGalleryDefaults(['keep_original_size' => true]);
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->first()->keep_original_size)->toBeTrue();
+});
+
+test('camera galleries keep the original size by default', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->first()->keep_original_size)->toBeTrue();
+});
+
+test('live shoot galleries follow the last chosen original size preference', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    $this->user->rememberGalleryDefaults(['keep_original_size' => false]);
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->first()->keep_original_size)->toBeFalse();
 });
 
 test('live shoot gallery names increment within the same day', function () {

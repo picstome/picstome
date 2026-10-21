@@ -32,6 +32,10 @@ class extends Component
     }
 }; ?>
 
+<x-slot name="font">{{ $team->brand_font }}</x-slot>
+
+<x-slot name="color">{{ $team->brand_color }}</x-slot>
+
 <x-slot name="head">
     @if(app()->environment('production'))
         @include('partials.google-analytics')
@@ -48,6 +52,8 @@ class extends Component
                     <flux:heading size="xl">{{ $team->name }}</flux:heading>
                 @endif
             </a>
+
+            <div class="bg-(--color-accent) mx-auto mt-3 h-1 w-10 rounded-full"></div>
         </div>
 
         @if($photos->isNotEmpty())

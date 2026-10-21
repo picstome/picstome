@@ -112,12 +112,11 @@ new class extends Component
                         <flux:separator class="my-8" />
 
                         <div>
-                            <flux:button
-                                wire:click="disconnectStripe"
-                                wire:confirm="{{ __('Are you sure you want to disconnect your Stripe account?') }}"
-                            >
-                                {{ __('Disconnect Stripe') }}
-                            </flux:button>
+                            <flux:modal.trigger name="disconnect-stripe">
+                                <flux:button>
+                                    {{ __('Disconnect Stripe') }}
+                                </flux:button>
+                            </flux:modal.trigger>
 
                             <flux:description class="mt-2">
                                 {{ __('Disconnecting will remove your Stripe account for current mode (test or live). You can reconnect at any time.') }}
@@ -128,4 +127,12 @@ new class extends Component
             @endif
         </div>
     </div>
+
+    <x-confirm-modal
+        name="disconnect-stripe"
+        :title="__('Disconnect Stripe?')"
+        :message="__('Are you sure you want to disconnect your Stripe account?')"
+        :confirm-label="__('Disconnect Stripe')"
+        method="disconnectStripe"
+    />
 </section>

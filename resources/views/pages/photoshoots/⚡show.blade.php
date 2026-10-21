@@ -44,6 +44,7 @@ new class extends Component
 
         $this->galleryForm->setPhotoshoot($this->photoshoot);
         $this->galleryForm->expirationDate = now()->addMonth()->format('Y-m-d');
+        $this->galleryForm->keepOriginalSize = (bool) (Auth::user()?->galleryDefaults()['keep_original_size'] ?? true);
 
         $this->contractForm->setPhotoshoot($this->photoshoot);
 
@@ -142,25 +143,21 @@ new class extends Component
                 <flux:button icon-trailing="chevron-down" variant="subtle">{{ __('Delete') }}</flux:button>
 
                 <flux:menu>
-                    <flux:menu.item
-                        wire:click="delete"
-                        wire:confirm="{{ __('Are you sure?') }}"
-                        variant="danger"
-                    >
-                        {{ __('Delete') }}
-                    </flux:menu.item>
-                    <flux:menu.item
-                        wire:click="deletePreservingGalleries"
-                        wire:confirm="{{ __('Are you sure?') }}"
-                        variant="danger"
-                    >
-                        {{ __('Delete (keep galleries)') }}
-                    </flux:menu.item>
+                    <flux:modal.trigger name="delete-photoshoot">
+                        <flux:menu.item variant="danger">
+                            {{ __('Delete') }}
+                        </flux:menu.item>
+                    </flux:modal.trigger>
+                    <flux:modal.trigger name="delete-photoshoot-keeping-galleries">
+                        <flux:menu.item variant="danger">
+                            {{ __('Delete (keep galleries)') }}
+                        </flux:menu.item>
+                    </flux:modal.trigger>
                 </flux:menu>
             </flux:dropdown>
 
             <flux:modal.trigger name="edit">
-                <flux:button>{{ __('Edit') }}</flux:button>
+                <flux:button variant="primary" class="btn-ink">{{ __('Edit') }}</flux:button>
             </flux:modal.trigger>
 
             <flux:button.group>
@@ -326,10 +323,7 @@ new class extends Component
                 @foreach ($photoshoot->contracts as $contract)
                     <x-table.row>
                         <x-table.cell variant="strong" class="relative">
-                            <a
-                                href="/contracts/{{ $contract->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
+                            <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             <div class="flex items-end gap-2">
                                 {{ $contract->title }}
 
@@ -342,24 +336,15 @@ new class extends Component
                             <flux:text>{{ $contract->description }}</flux:text>
                         </x-table.cell>
                         <x-table.cell class="relative">
-                            <a
-                                href="/contracts/{{ $contract->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
+                            <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->location }}
                         </x-table.cell>
                         <x-table.cell class="relative">
-                            <a
-                                href="/contracts/{{ $contract->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
+                            <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->formatted_shooting_date }}
                         </x-table.cell>
                         <x-table.cell class="relative">
-                            <a
-                                href="/contracts/{{ $contract->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
+                            <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
                         </x-table.cell>
                     </x-table.row>
@@ -402,6 +387,7 @@ new class extends Component
             <flux:switch
                 wire:model="galleryForm.keepOriginalSize"
                 :label="__('Keep photos at their original size')"
+                :description="__('This setting is shared with the create gallery modal.')"
             />
 
             <div class="flex">
@@ -428,11 +414,7 @@ new class extends Component
                 <flux:input wire:model="contractForm.shootingDate" :label="__('Shooting date')" type="date" />
             </div>
 
-            <flux:input
-                wire:model="contractForm.signature_quantity"
-                :label="__('Signatures required')"
-                type="number"
-            />
+            <flux:input wire:model="contractForm.signature_quantity" :label="__('Signatures required')" type="number" />
 
             <flux:field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
@@ -448,7 +430,10 @@ new class extends Component
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2"
                     x-on:trix-change="$wire.contractForm.body = $event.target.value"
-                    x-on:template-selected.window="element = document.querySelector('trix-editor'); element.editor.insertHTML($wire.contractForm.body)"
+                    x-on:template-selected.window="
+                        element = document.querySelector('trix-editor')
+                        element.editor.insertHTML($wire.contractForm.body)
+                    "
                     input="trix"
                 ></trix-editor>
 
@@ -506,12 +491,7 @@ new class extends Component
             <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
             @if ($this->customers)
-                <flux:select
-                    wire:model.live="form.customer"
-                    :label="__('Customer')"
-                    variant="listbox"
-                    searchable
-                >
+                <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
                     <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
                     @foreach ($this->customers as $customer)
                         <flux:select.option value="{{ $customer->id }}">
@@ -554,12 +534,7 @@ new class extends Component
                 :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])"
                 required
             />
-            <flux:input
-                wire:model="paymentLinkForm.description"
-                :label="__('Description')"
-                type="text"
-                required
-            />
+            <flux:input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
             <div class="flex">
                 <flux:spacer />
                 <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
@@ -574,6 +549,21 @@ new class extends Component
             <flux:input icon="link" :value="$generatedPaymentLink" readonly copyable />
         </div>
     </flux:modal>
+
+    <x-confirm-modal
+        name="delete-photoshoot"
+        :title="__('Delete photoshoot?')"
+        :message="__('This action cannot be undone.')"
+        method="delete"
+    />
+
+    <x-confirm-modal
+        name="delete-photoshoot-keeping-galleries"
+        :title="__('Delete photoshoot but keep galleries?')"
+        :message="__('The galleries will be kept, only the photoshoot is deleted.')"
+        :confirm-label="__('Delete (keep galleries)')"
+        method="deletePreservingGalleries"
+    />
 </div>
 @assets
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />

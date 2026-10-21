@@ -6,55 +6,62 @@ use Livewire\Component;
 new class extends Component
 {
     public $used = 0;
+
     public $total = 0;
+
     public $usage = null;
 
-    public function mount()
+    public bool $hasUnlimitedStorage = false;
+
+    public function mount(): void
     {
         $team = Auth::user()->currentTeam;
 
         $this->used = $team->storage_used_gb;
         $this->total = $team->storage_limit_gb;
         $this->usage = $team->storage_used_percent;
+        $this->hasUnlimitedStorage = $team->hasUnlimitedStorage;
     }
 }; ?>
 
 <div>
-    <div class="mx-2 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800">
-        <div class="flex items-center gap-2 mb-2">
-            <flux:icon.server class="size-4 text-zinc-500 dark:text-zinc-400" />
-            <flux:text class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+    <div
+        class="border-brand-green/15 mx-2 rounded-xl border bg-white p-3 shadow-xs dark:border-white/10 dark:bg-white/5"
+    >
+        <div class="mb-2 flex items-center gap-2">
+            <flux:icon.server class="text-brand-green dark:text-brand-sage size-4" />
+            <flux:text class="text-brand-green-deep dark:text-brand-sage text-xs font-medium">
                 {{ __('Storage') }}
             </flux:text>
         </div>
 
         <div class="space-y-1">
             <div class="flex justify-between text-xs">
-                <span class="text-zinc-600 dark:text-zinc-400">{{ __('Used') }}</span>
-                <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $used }}</span>
+                <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Used') }}</span>
+                <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $used }}</span>
             </div>
 
-            @unless (Auth::user()->currentTeam->hasUnlimitedStorage)
+            @unless ($hasUnlimitedStorage)
                 <div class="flex justify-between text-xs">
-                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
-                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $total }}</span>
+                    <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Total') }}</span>
+                    <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $total }}</span>
                 </div>
             @else
                 <div class="flex justify-between text-xs">
-                    <span class="text-zinc-600 dark:text-zinc-400">{{ __('Total') }}</span>
-                    <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ __('Unlimited') }}</span>
+                    <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Total') }}</span>
+                    <span class="text-brand-ink dark:text-brand-cream font-mono">{{ __('Unlimited') }}</span>
                 </div>
             @endunless
 
-            @unless (Auth::user()->currentTeam->hasUnlimitedStorage)
+            @unless ($hasUnlimitedStorage)
                 <div class="mt-2">
-                    <div class="flex justify-between text-xs mb-1">
-                        <span class="text-zinc-600 dark:text-zinc-400">{{ __('Usage') }}</span>
-                        <span class="font-mono text-zinc-700 dark:text-zinc-300">{{ $usage }}%</span>
+                    <div class="mb-1 flex justify-between text-xs">
+                        <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Usage') }}</span>
+                        <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $usage }}%</span>
                     </div>
-                    <div class="w-full bg-zinc-200 rounded-full h-1.5 dark:bg-zinc-700">
+                    <div class="bg-brand-sage/30 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10">
                         <div
-                            class="h-1.5 rounded-full transition-all duration-300 {{ $usage > 90 ? 'bg-red-500' : ($usage > 75 ? 'bg-yellow-500' : 'bg-blue-500') }}"
+                            class="{{ $usage > 90 ? 'bg-brand-coral' : ($usage > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
                             style="width: {{ min($usage, 100) }}%"
                         ></div>
                     </div>

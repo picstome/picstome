@@ -2,7 +2,7 @@
 
 <flux:chart :value="$series" class="aspect-[3/1]">
     <flux:chart.svg>
-        <flux:chart.bar field="value" class="text-blue-500 dark:text-blue-400" />
+        <flux:chart.bar field="value" class="text-brand-green dark:text-brand-sage" />
 
         <flux:chart.axis axis="x" field="label" :format="['month' => 'short', 'year' => 'numeric']">
             <flux:chart.axis.tick />

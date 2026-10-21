@@ -111,14 +111,11 @@ new class extends Component
                                 {{ __('Assign to photoshoot') }}
                             </flux:menu.item>
                         </flux:modal.trigger>
-                        <flux:menu.item
-                            icon="trash"
-                            variant="danger"
-                            wire:click="delete"
-                            wire:confirm="{{ __('Are you sure?') }}"
-                        >
-                            {{ __('Delete contract') }}
-                        </flux:menu.item>
+                        <flux:modal.trigger name="delete-contract">
+                            <flux:menu.item icon="trash" variant="danger">
+                                {{ __('Delete contract') }}
+                            </flux:menu.item>
+                        </flux:modal.trigger>
                     </flux:menu>
                 </flux:dropdown>
 
@@ -252,4 +249,12 @@ new class extends Component
             </div>
         </form>
     </flux:modal>
+
+    <x-confirm-modal
+        name="delete-contract"
+        :title="__('Delete contract?')"
+        :message="__('This action cannot be undone.')"
+        :confirm-label="__('Delete contract')"
+        method="delete"
+    />
 </div>
