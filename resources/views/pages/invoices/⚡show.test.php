@@ -200,6 +200,31 @@ it('does not show the public link of a draft invoice', function () {
         ->assertDontSee('Generate a new link');
 });
 
+it('duplicates an issued invoice and opens the form on its line items', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertSee('wire:click="duplicate"', false)
+        ->call('duplicate')
+        ->assertHasNoErrors();
+
+    $draft = $this->team->invoices()->where('status', Invoice::STATUS_DRAFT)->first();
+
+    expect($draft)->not->toBeNull()
+        ->and($draft->customer_id)->toBe($invoice->customer_id);
+
+    $component->assertRedirect(route('invoices.create', ['invoice' => $draft->ulid]));
+});
+
+it('does not offer to duplicate a draft invoice', function () {
+    $invoice = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertDontSee('wire:click="duplicate"', false);
+});
+
 it('allows editing a draft invoice', function () {
     $invoice = draftInvoice($this->team);
 

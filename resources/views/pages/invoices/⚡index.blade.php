@@ -3,6 +3,7 @@
 use App\Livewire\Forms\InvoiceSettingsForm;
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
+use App\Services\InvoiceDuplicationService;
 use App\Traits\FormatsMoney;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -106,6 +107,20 @@ new class extends Component
     }
 
     /**
+     * Copy an issued invoice into a new draft.
+     */
+    public function duplicate(int $invoiceId)
+    {
+        $this->authorize('create', Invoice::class);
+
+        $invoice = Auth::user()->currentTeam->invoices()->findOrFail($invoiceId);
+
+        $draft = app(InvoiceDuplicationService::class)->duplicate($invoice, Auth::user());
+
+        $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
+    }
+
+    /**
      * Validate the fields of a step of the guided setup.
      *
      * @param  list<string>  $fields
@@ -184,7 +199,7 @@ new class extends Component
                     <x-table.column class="hidden sm:table-cell">{{ __('Issue date') }}</x-table.column>
                     <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
                     <x-table.column class="group/right-align hidden sm:table-cell">{{ __('Status') }}</x-table.column>
-                    <x-table.column class="group/right-align">{{ __('Links') }}</x-table.column>
+                    <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
                 </x-table.columns>
 
                 <x-table.rows>
@@ -271,6 +286,18 @@ new class extends Component
                                             <span class="hidden sm:inline">{{ __('View invoice') }}</span>
                                         </flux:button>
                                     @endif
+
+                                    @if ($invoice->isIssued())
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="document-duplicate"
+                                            wire:click="duplicate({{ $invoice->id }})"
+                                            :aria-label="__('Duplicate')"
+                                        >
+                                            <span class="hidden sm:inline">{{ __('Duplicate') }}</span>
+                                        </flux:button>
+                                    @endif
                                 </div>
                             </x-table.cell>
                         </x-table.row>
@@ -350,7 +377,7 @@ new class extends Component
                     </flux:select>
                     <flux:select wire:model="form.vat_percent" :label="__('VAT rate')">
                         @foreach (config('invoices.vat_rates') as $rate)
-                            <option value="{{ $rate }}">{{ $rate }}%</option>
+                            <option value="{{ $rate }}"><x-vat-rate-label :rate="$rate" /></option>
                         @endforeach
                     </flux:select>
                     <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />

@@ -482,25 +482,26 @@ new class extends Component
                 <flux:input wire:model="form.due_date" :label="__('Due date')" type="date" />
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:select wire:model="form.vat_percent" :label="__('VAT rate')">
+                    <flux:select wire:model.live="form.vat_percent" :label="__('VAT rate')">
                         @foreach (config('invoices.vat_rates') as $rate)
-                            <option value="{{ $rate }}">{{ $rate }}%</option>
+                            <option value="{{ $rate }}"><x-vat-rate-label :rate="$rate" /></option>
                         @endforeach
                     </flux:select>
 
-                    <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
+                    <flux:input wire:model.live.debounce.500ms="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
                 </div>
 
                 <flux:checkbox
-                    wire:model="form.apply_irpf"
+                    wire:model.live="form.apply_irpf"
                     :label="__('Apply IRPF withholding')"
                     :description="__('The withholding is deducted from the amount the client pays.')"
                 />
 
-                @if ((float) $this->form->vat_percent === 0)
+                @if ((float) $this->form->vat_percent === 0.0)
                     <flux:input
-                        wire:model="form.vat_exemption_reason"
-                        :label="__('Why there is no VAT')"
+                        wire:model.live.debounce.500ms="form.vat_exemption_reason"
+                        :label="__('Reason for the exemption')"
+                        :description="__('An exempt invoice must state why it has no VAT. For example: «Operación exenta por el artículo 20 de la LIVA».')"
                         placeholder="{{ __('Exempt operation') }}"
                     />
                 @endif
@@ -517,13 +518,13 @@ new class extends Component
                 @endif
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:select wire:model="form.discount_type" :label="__('Discount')">
+                    <flux:select wire:model.live="form.discount_type" :label="__('Discount')">
                         <option value="">{{ __('No discount') }}</option>
                         <option value="percentage">{{ __('Percentage') }}</option>
                         <option value="fixed">{{ __('Fixed amount') }}</option>
                     </flux:select>
 
-                    <flux:input wire:model="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
+                    <flux:input wire:model.live.debounce.500ms="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
                 </div>
 
                 <flux:textarea wire:model="form.payment_terms" :label="__('Payment terms')" rows="2" />

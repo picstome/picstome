@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Models\User;
 use App\Services\InvoiceIssuanceService;
@@ -61,6 +62,48 @@ it('shows the links to the pdf and the public page of an issued invoice', functi
         ->test('pages::invoices')
         ->assertSee(route('invoices.pdf', $invoice), false)
         ->assertSee(route('invoices.public.show', $invoice->public_token), false);
+});
+
+it('duplicates an issued invoice from the list', function () {
+    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
+
+    $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee('duplicate('.$invoice->id.')', false)
+        ->call('duplicate', $invoice->id)
+        ->assertHasNoErrors();
+
+    $draft = $this->team->invoices()->where('status', Invoice::STATUS_DRAFT)->first();
+
+    expect($draft)->not->toBeNull()
+        ->and($draft->customer_id)->toBe($invoice->customer_id);
+
+    $component->assertRedirect(route('invoices.create', ['invoice' => $draft->ulid]));
+});
+
+it('does not duplicate an invoice of another team', function () {
+    $otherTeam = User::factory()->withPersonalTeam()->create()->currentTeam;
+
+    InvoiceSetting::factory()->for($otherTeam)->create();
+
+    $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($otherTeam));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->call('duplicate', $invoice->id)
+        ->assertStatus(404);
+
+    expect($this->team->invoices()->count())->toBe(0);
+});
+
+it('does not show the duplicate action for a draft invoice', function () {
+    $draft = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertDontSee('duplicate('.$draft->id.')', false);
 });
 
 it('does not show the links for a draft invoice', function () {

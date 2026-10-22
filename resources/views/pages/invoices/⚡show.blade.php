@@ -3,6 +3,7 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Services\InvoiceFingerprintService;
+use App\Services\InvoiceDuplicationService;
 use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
@@ -136,6 +137,19 @@ new class extends Component
         $this->redirect(route('invoices.show', $draft), navigate: true);
     }
 
+    /**
+     * Copy an issued invoice into a new draft, to make recurring invoices
+     * faster to prepare.
+     */
+    public function duplicate()
+    {
+        $this->authorize('create', Invoice::class);
+
+        $draft = app(InvoiceDuplicationService::class)->duplicate($this->invoice, Auth::user());
+
+        $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
+    }
+
     public function delete()
     {
         $this->authorize('delete', $this->invoice);
@@ -174,6 +188,12 @@ new class extends Component
             @if ($this->invoice->pdf_path)
                 <flux:button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
                     {{ __('Download PDF') }}
+                </flux:button>
+            @endif
+
+            @if ($this->invoice->isIssued())
+                <flux:button variant="primary" class="btn-ink" icon="document-duplicate" wire:click="duplicate">
+                    {{ __('Duplicate') }}
                 </flux:button>
             @endif
 
