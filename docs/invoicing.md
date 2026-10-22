@@ -194,6 +194,23 @@ An issued invoice is never voided: it is **rectified** (article 15 of RD
 - The deadline is four years since the tax accrual. The app warns when the
   original invoice belongs to a previous exercise.
 
+## Duplicating invoices
+
+An issued invoice can be duplicated from its detail or from the invoices list.
+The copy is a **new draft** with the same client, line items, discount, taxes,
+payment terms and notes, opened on the line-items step of the guided creation
+so the amounts can be adjusted before issuing it.
+
+The copy never inherits the number, the fingerprint, the PDF, the public link
+or the status of the original, and it is never a corrective invoice, even when
+the original one is. The issue date is the current date and the due date is
+left empty. The currency is the one configured in the invoicing settings, and
+the exchange rate is only reused when the currency has not changed.
+
+The audit trail records the `created` event of the draft with the invoice it
+comes from in its context, so a recurring invoice can always be traced back to
+the document it was copied from.
+
 ## Audit trail
 
 `invoice_events` is append only: the model forbids updating and deleting the
