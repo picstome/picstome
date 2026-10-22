@@ -1,6 +1,11 @@
 @props(['series', 'label'])
 
-<flux:chart :value="$series" class="aspect-[3/1]">
+{{-- Re-measure after the modal transition, otherwise Flux keeps the pre-animation hit area. --}}
+<flux:chart
+    :value="$series"
+    class="aspect-[3/1]"
+    x-init="setTimeout(() => $el._observable?.notify('resize'), 300)"
+>
     <flux:chart.svg>
         <flux:chart.bar field="value" class="text-brand-green dark:text-brand-sage" />
 

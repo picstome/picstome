@@ -78,6 +78,8 @@ new class extends Component
             'users' => __('Users'),
             'paid_users' => __('Paid users'),
             'lifetime_users' => __('Lifetime users'),
+            'invoices' => __('Invoices'),
+            'stripe_payments' => __('Stripe payments'),
         ];
     }
 
@@ -149,7 +151,7 @@ new class extends Component
                 {{ __('Usage stats') }}
             </flux:heading>
             <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
-                {{ __('Photos, storage, and growth across Picstome.') }}
+                {{ __('Content, users and revenue across Picstome.') }}
             </flux:text>
         </div>
 
@@ -184,107 +186,199 @@ new class extends Component
         </div>
     </div>
 
+    <section class="mt-8" aria-labelledby="period-heading">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <div class="flex items-center gap-2">
+                    <flux:icon.arrow-trending-up class="text-brand-coral size-5" />
+
+                    <flux:heading
+                        id="period-heading"
+                        size="lg"
+                        class="text-brand-green dark:text-brand-cream font-semibold"
+                    >
+                        {{ __('New in period') }}
+                    </flux:heading>
+                </div>
+
+                <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">{{ $this->periodLabel }}</flux:text>
+            </div>
+
+            <flux:text class="text-brand-ink/55 dark:text-brand-sage/70 flex items-center gap-2 text-xs font-medium">
+                <flux:icon.chart-bar class="size-4" />
+                {{ __('Click a metric to see its 12-month chart') }}
+            </flux:text>
+        </div>
+
+        <flux:card class="mt-4 overflow-hidden p-0!">
+            <div class="divide-brand-green/10 dark:divide-white/10 grid divide-y lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+                <x-stat-group :title="__('Content')" :description="__('Created in the period')" icon="photo" tone="green">
+                    <x-stat-row
+                        :label="__('Photos')"
+                        :value="number_format($this->rangeStats['photos'])"
+                        data-test="photos-card"
+                        clickable
+                        x-on:click="chart = 'photos'; $flux.modal('usage-chart').show()"
+                    />
+
+                    <x-stat-row
+                        :label="__('Galleries')"
+                        :value="number_format($this->rangeStats['galleries'])"
+                        clickable
+                        x-on:click="chart = 'galleries'; $flux.modal('usage-chart').show()"
+                    />
+
+                    <x-stat-row
+                        :label="__('Contracts')"
+                        :value="number_format($this->rangeStats['contracts'])"
+                        clickable
+                        x-on:click="chart = 'contracts'; $flux.modal('usage-chart').show()"
+                    />
+                </x-stat-group>
+
+                <x-stat-group :title="__('Users and plans')" :description="__('New accounts and plan changes')" icon="users" tone="coral">
+                    <x-stat-row
+                        :label="__('Users')"
+                        :value="number_format($this->rangeStats['users'])"
+                        clickable
+                        x-on:click="chart = 'users'; $flux.modal('usage-chart').show()"
+                    />
+
+                    <x-stat-row
+                        :label="__('Paid users')"
+                        :value="number_format($this->rangeStats['paid_users'])"
+                        :hint="__('Subscription started')"
+                        clickable
+                        x-on:click="chart = 'paid_users'; $flux.modal('usage-chart').show()"
+                    />
+
+                    <x-stat-row
+                        :label="__('Lifetime users')"
+                        :value="number_format($this->rangeStats['lifetime_users'])"
+                        :hint="__('Purchased or granted')"
+                        clickable
+                        x-on:click="chart = 'lifetime_users'; $flux.modal('usage-chart').show()"
+                    />
+                </x-stat-group>
+
+                <x-stat-group :title="__('Billing')" :description="__('Invoices and Stripe payments')" icon="receipt-percent" tone="sage">
+                    <x-stat-row
+                        :label="__('Invoices')"
+                        :value="number_format($this->rangeStats['invoices'])"
+                        :hint="$this->rangeStats['invoice_teams'] > 0
+                            ? __('Used by :count teams', ['count' => number_format($this->rangeStats['invoice_teams'])])
+                            : __('No issued invoices')"
+                        data-test="invoices-card"
+                        clickable
+                        x-on:click="chart = 'invoices'; $flux.modal('usage-chart').show()"
+                    />
+
+                    <x-stat-row
+                        :label="__('Stripe payments')"
+                        :value="number_format($this->rangeStats['stripe_payments'])"
+                        :hint="__('Completed through Stripe')"
+                        data-test="stripe-payments-card"
+                        clickable
+                        x-on:click="chart = 'stripe_payments'; $flux.modal('usage-chart').show()"
+                    />
+                </x-stat-group>
+            </div>
+        </flux:card>
+    </section>
+
+    <section class="mt-8" aria-labelledby="totals-heading">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <flux:icon.chart-pie class="text-brand-coral size-5" />
+
+                <flux:heading
+                    id="totals-heading"
+                    size="lg"
+                    class="text-brand-green dark:text-brand-cream font-semibold"
+                >
+                    {{ __('Current totals') }}
+                </flux:heading>
+            </div>
+
+            <div class="text-brand-ink/70 dark:text-brand-sage/80 flex items-center gap-2 text-sm font-medium">
+                <flux:icon.clock class="size-4" />
+                <span>{{ __('Updated :time', ['time' => $this->updatedLabel]) }}</span>
+            </div>
+        </div>
+
+        <flux:card class="mt-4 overflow-hidden p-0!">
+            <div class="divide-brand-green/10 dark:divide-white/10 grid divide-y lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+                <x-stat-group :title="__('Library')" :description="__('Storage and documents')" icon="rectangle-stack" tone="green">
+                    <x-stat-row
+                        :label="__('Photos stored')"
+                        :value="number_format($this->snapshot['photos'])"
+                        :hint="__('Current photo files')"
+                    />
+
+                    <x-stat-row
+                        :label="__('S3 storage used')"
+                        :value="$this->formatFileSize($this->snapshot['storage_bytes'])"
+                        :hint="__('Includes retained versions')"
+                    />
+
+                    <x-stat-row
+                        :label="__('Galleries')"
+                        :value="number_format($this->snapshot['galleries'])"
+                    />
+
+                    <x-stat-row
+                        :label="__('Contracts')"
+                        :value="number_format($this->snapshot['contracts'])"
+                    />
+                </x-stat-group>
+
+                <x-stat-group :title="__('Accounts')" :description="__('Users and Stripe accounts')" icon="users" tone="coral">
+                    <x-stat-row
+                        :label="__('Users')"
+                        :value="number_format($this->snapshot['users'])"
+                    />
+
+                    <x-stat-row
+                        :label="__('Stripe accounts')"
+                        :value="number_format($this->snapshot['stripe_accounts'])"
+                        :hint="__(':count of :total accounts', [
+                            'count' => number_format($this->snapshot['stripe_accounts']),
+                            'total' => number_format($this->snapshot['accounts']),
+                        ])"
+                        data-test="stripe-accounts-card"
+                    />
+                </x-stat-group>
+
+                <x-stat-group :title="__('Monetization')" :description="__('Accumulated billing')" icon="banknotes" tone="sage">
+                    <x-stat-row
+                        :label="__('Invoices')"
+                        :value="number_format($this->snapshot['invoices'])"
+                        :hint="$this->snapshot['invoice_teams'] > 0
+                            ? __('Used by :count teams', ['count' => number_format($this->snapshot['invoice_teams'])])
+                            : __('Not used yet')"
+                        data-test="invoices-total-card"
+                    />
+
+                    <x-stat-row
+                        :label="__('Stripe payments')"
+                        :value="number_format($this->snapshot['stripe_payments'])"
+                        :hint="__('Completed through Stripe')"
+                        data-test="stripe-payments-total-card"
+                    />
+                </x-stat-group>
+            </div>
+        </flux:card>
+    </section>
+
     <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
         <div>
-            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
-                {{ __('New in period') }}
-            </flux:heading>
+            <div class="flex items-center gap-2">
+                <flux:icon.user-group class="text-brand-coral size-5" />
 
-            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">{{ $this->periodLabel }}</flux:text>
-        </div>
-    </div>
-
-    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <x-stat-card
-            :label="__('Photos')"
-            :value="number_format($this->rangeStats['photos'])"
-            data-test="photos-card"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'photos'; $flux.modal('usage-chart').show()"
-        />
-
-        <x-stat-card
-            :label="__('Galleries')"
-            :value="number_format($this->rangeStats['galleries'])"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'galleries'; $flux.modal('usage-chart').show()"
-        />
-
-        <x-stat-card
-            :label="__('Contracts')"
-            :value="number_format($this->rangeStats['contracts'])"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'contracts'; $flux.modal('usage-chart').show()"
-        />
-
-        <x-stat-card
-            :label="__('Users')"
-            :value="number_format($this->rangeStats['users'])"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'users'; $flux.modal('usage-chart').show()"
-        />
-
-        <x-stat-card
-            :label="__('Paid users')"
-            :value="number_format($this->rangeStats['paid_users'])"
-            :hint="__('Subscription started')"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'paid_users'; $flux.modal('usage-chart').show()"
-        />
-
-        <x-stat-card
-            :label="__('Lifetime users')"
-            :value="number_format($this->rangeStats['lifetime_users'])"
-            :hint="__('Purchased or granted')"
-            tone="ink"
-            clickable
-            x-on:click="chart = 'lifetime_users'; $flux.modal('usage-chart').show()"
-        />
-    </div>
-
-    <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
-        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
-            {{ __('Current totals') }}
-        </flux:heading>
-
-        <div class="text-brand-ink/70 dark:text-brand-sage/80 flex items-center gap-2 text-sm font-medium">
-            <flux:icon.clock class="size-4" />
-            <span>{{ __('Updated :time', ['time' => $this->updatedLabel]) }}</span>
-        </div>
-    </div>
-
-    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <x-stat-card
-            :label="__('Photos stored')"
-            :value="number_format($this->snapshot['photos'])"
-            :hint="__('Current photo files')"
-            tone="green"
-        />
-
-        <x-stat-card
-            :label="__('S3 storage used')"
-            :value="$this->formatFileSize($this->snapshot['storage_bytes'])"
-            :hint="__('Includes retained versions')"
-            tone="green"
-        />
-
-        <x-stat-card :label="__('Galleries')" :value="number_format($this->snapshot['galleries'])" tone="green" />
-
-        <x-stat-card :label="__('Contracts')" :value="number_format($this->snapshot['contracts'])" tone="green" />
-
-        <x-stat-card :label="__('Users')" :value="number_format($this->snapshot['users'])" tone="green" />
-    </div>
-
-    <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
-        <div>
-            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
-                {{ __('Average photos per user') }}
-            </flux:heading>
+                <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                    {{ __('Average photos per user') }}
+                </flux:heading>
+            </div>
 
             <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Paid users have an active subscription. Lifetime includes purchased plans and admin grants.') }}
