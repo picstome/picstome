@@ -110,6 +110,37 @@ it('does not leave the line items step with an invalid line', function () {
         ->assertSee('field is required');
 });
 
+it('asks for the exemption reason when the VAT is zero', function () {
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->set('form.customer_id', $this->customer->id)
+        ->set('form.lineItems.0.description', 'Sesión de fotos')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 100)
+        ->call('nextStep')
+        ->call('nextStep')
+        ->assertSet('step', 3);
+
+    $component->set('form.vat_percent', '21')
+        ->assertDontSee('Reason for the exemption');
+
+    $component->set('form.vat_percent', '0')
+        ->assertSee('Reason for the exemption')
+        ->assertSee('An exempt invoice must state why it has no VAT.');
+});
+
+it('requires the exemption reason when the VAT is zero', function () {
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->set('form.customer_id', $this->customer->id)
+        ->set('form.lineItems.0.description', 'Sesión de fotos')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 100)
+        ->set('form.vat_percent', '0')
+        ->call('saveDraft')
+        ->assertHasErrors(['form.vat_exemption_reason' => 'required']);
+});
+
 it('does not allow a client from another team', function () {
     $otherCustomer = Customer::factory()->create();
 

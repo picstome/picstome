@@ -128,6 +128,13 @@ Amounts are calculated in cents and rounded half up to two decimals. The
 invoice shows the amount the client pays. The net amount before VAT
 (`base − IRPF`) is only shown on screen.
 
+## VAT rates and exemptions
+
+An invoice uses one VAT rate. The 0% rate means the invoice is **exempt**, and
+the Spanish invoicing rules require the document to state the legal reason for
+the exemption, so the reason is mandatory and is printed on the PDF. For
+example: «Operación exenta por el artículo 20 de la LIVA».
+
 ## Complete and simplified invoices
 
 - A **complete invoice** requires the legal name, the tax ID and the address

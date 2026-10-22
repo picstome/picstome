@@ -70,7 +70,21 @@ class InvoiceForm extends Form
             'payment_terms' => ['nullable', 'string', 'max:1000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'exchange_rate' => ['nullable', 'numeric', 'min:0'],
-            'vat_exemption_reason' => ['nullable', 'string', 'max:255'],
+            'vat_exemption_reason' => [
+                (float) $this->vat_percent === 0.0 ? 'required' : 'nullable',
+                'string',
+                'max:255',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'vat_exemption_reason.required' => __('The invoice must explain why it has no VAT.'),
         ];
     }
 

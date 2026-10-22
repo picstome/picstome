@@ -377,7 +377,7 @@ new class extends Component
                     </flux:select>
                     <flux:select wire:model="form.vat_percent" :label="__('VAT rate')">
                         @foreach (config('invoices.vat_rates') as $rate)
-                            <option value="{{ $rate }}">{{ $rate }}%</option>
+                            <option value="{{ $rate }}"><x-vat-rate-label :rate="$rate" /></option>
                         @endforeach
                     </flux:select>
                     <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
