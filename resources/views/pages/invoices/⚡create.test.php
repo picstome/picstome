@@ -290,3 +290,42 @@ it('binds the client form of the invoice to the client form', function () {
         ->assertSee('wire:model="customerForm.name"', false)
         ->assertDontSee('wire:model="form.name"', false);
 });
+
+it('pre-fills the invoice with the client of the request', function () {
+    $customer = Customer::factory()->for($this->team)->create([
+        'name' => 'Acme Studio SL',
+        'email' => 'acme@example.com',
+        'legal_name' => 'Acme Studio SL',
+        'tax_id' => 'B87654321',
+        'address' => 'Calle Mayor 1',
+        'city' => 'Madrid',
+        'postal_code' => '28001',
+        'country' => 'ES',
+    ]);
+
+    Livewire::withQueryParams(['customer' => $customer->ulid])
+        ->actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertHasNoErrors()
+        ->assertSet('form.customer_id', $customer->id)
+        ->assertSet('form.invoice_type', Invoice::TYPE_FULL)
+        ->assertSet('step', 2);
+
+    expect(Invoice::count())->toBe(0);
+});
+
+it('pre-fills a simplified invoice for a client without fiscal data', function () {
+    $customer = Customer::factory()->for($this->team)->create([
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+        'legal_name' => null,
+        'tax_id' => null,
+    ]);
+
+    Livewire::withQueryParams(['customer' => $customer->ulid])
+        ->actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertHasNoErrors()
+        ->assertSet('form.customer_id', $customer->id)
+        ->assertSet('form.invoice_type', Invoice::TYPE_SIMPLIFIED);
+});

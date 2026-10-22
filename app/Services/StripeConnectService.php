@@ -69,6 +69,34 @@ class StripeConnectService
     }
 
     /**
+     * The email registered in the connected account.
+     *
+     * The platform key is not allowed to edit it, so the app only reads it
+     * to warn the photographer when it does not match the current one.
+     */
+    public function accountEmail(Team $team): ?string
+    {
+        $accountId = $this->getStripeAccountIdForTeam($team);
+
+        if (! $accountId) {
+            return null;
+        }
+
+        $response = Http::withToken($this->getApiKeyForTeam($team))
+            ->asForm()
+            ->withHeaders([
+                'Accept' => 'application/json',
+            ])
+            ->get("https://api.stripe.com/v1/accounts/{$accountId}");
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        return $response->json('email');
+    }
+
+    /**
      * Create an Account Link for onboarding.
      * Returns the onboarding URL.
      */
@@ -143,6 +171,29 @@ class StripeConnectService
         $session = $response->json();
 
         return $session['url'];
+    }
+
+    /**
+     * Sync the local onboarding flag with the real state of the connected
+     * account.
+     *
+     * The flag is only set when the photographer comes back from Stripe, so
+     * an onboarding finished in another tab (or in the Stripe dashboard) was
+     * never detected. Returns true when the team can accept payments.
+     */
+    public function syncOnboardingStatus(Team $team): bool
+    {
+        if ($team->hasStripeAccountOnboarded()) {
+            return true;
+        }
+
+        if (! $this->isOnboardingComplete($team)) {
+            return false;
+        }
+
+        $team->markOnboarded();
+
+        return true;
     }
 
     /**

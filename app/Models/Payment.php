@@ -29,6 +29,14 @@ class Payment extends Model
     }
 
     /**
+     * The invoice that settles this payment.
+     */
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    /**
      * Get the formatted amount using Laravel Cashier.
      */
     protected function formattedAmount(): Attribute

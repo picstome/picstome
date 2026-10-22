@@ -169,6 +169,14 @@ class Invoice extends Model
     }
 
     /**
+     * The payments that settle this invoice.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
      * Every corrective invoice of this invoice, issued or still a draft.
      */
     public function rectifications(): HasMany

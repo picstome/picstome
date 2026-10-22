@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FakePaymentService;
 use App\Services\StorageUsageService;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -358,6 +359,18 @@ class Team extends Model
      * Check if Stripe onboarding is complete for this team.
      */
     public function hasCompletedOnboarding(): bool
+    {
+        if (FakePaymentService::enabled()) {
+            return true;
+        }
+
+        return $this->hasStripeAccountOnboarded();
+    }
+
+    /**
+     * Whether the connected account has finished the onboarding in Stripe.
+     */
+    public function hasStripeAccountOnboarded(): bool
     {
         if ($this->stripe_test_mode) {
             return (bool) $this->stripe_test_onboarded;

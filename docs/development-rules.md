@@ -78,20 +78,39 @@ legacy migrations that are not fully reversible.
 - Storage/URL tests must call `Storage::fake()` for the relevant disk.
 - Tests must not depend on production bucket names, credentials or cache state.
 
+### Testing payments locally
+
+Two ways to exercise the payment flow without moving real money:
+
+- **Stripe test mode**: enable it in *Branding → Payments*. The team then uses
+  the test secret key and a test connected account, so the checkout only
+  accepts test cards (`4242 4242 4242 4242`, any future expiry and any CVC).
+  The test account still has to complete the Stripe hosted onboarding, which
+  accepts fake data. The onboarding flag of the team is synced with Stripe
+  every time the *Stripe Connect* screen is loaded, so finishing the onboarding
+  in another tab is detected.
+- **Fake payments**: set `PAYMENTS_FAKE=true` in the local `.env` (only
+  honoured when `APP_ENV=local`). The payment is then created directly, with
+  a `fake_` intent id, and the whole flow (payment → invoice) can be tested
+  without Stripe. The flag is ignored in the test suite and in production.
+
 ## Deployment checklist
 
 1. Merge only after CI and quality are green.
 2. Back up the production database and confirm storage backup policy.
 3. Review `php artisan migrate --pretend` output.
-4. Deploy code and run `composer install --no-dev` as appropriate.
-5. Run `php artisan migrate --force`.
-6. Run feature-specific reconciliation commands, for example:
+4. Confirm the production environment has `APP_ENV=production` and
+   `APP_DEBUG=false`, so the local-only helpers (like the fake payments mode)
+   stay disabled.
+5. Deploy code and run `composer install --no-dev` as appropriate.
+6. Run `php artisan migrate --force`.
+7. Run feature-specific reconciliation commands, for example:
    `php artisan storage:recalculate --dry-run` then the real command.
-7. Run `npm ci && npm run build` when assets changed.
-8. Clear/rebuild caches as appropriate.
-9. Restart queue workers after job-code changes.
-10. Run smoke tests for the changed flow.
-11. Record the deployed commit/tag and rollback commit.
+8. Run `npm ci && npm run build` when assets changed.
+9. Clear/rebuild caches as appropriate.
+10. Restart queue workers after job-code changes.
+11. Run smoke tests for the changed flow.
+12. Record the deployed commit/tag and rollback commit.
 
 ## Rollback
 

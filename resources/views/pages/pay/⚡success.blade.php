@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Models\Team;
+use App\Services\FakePaymentService;
 use App\Notifications\BookingCreated;
 use Carbon\Carbon;
 use Facades\App\Services\StripeConnectService;
@@ -26,9 +27,16 @@ class extends Component
     #[Url]
     public ?string $session_id = null;
 
+    #[Url]
+    public ?bool $fake = null;
+
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', $handle)->firstOrFail();
+
+        if ($this->fake && FakePaymentService::enabled()) {
+            return;
+        }
 
         abort_if(! $this->session_id, 404);
 

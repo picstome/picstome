@@ -3,7 +3,9 @@
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
+use App\Models\Payment;
 use App\Models\User;
+use App\Services\InvoiceFromPaymentService;
 use App\Services\InvoiceIssuanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -239,4 +241,23 @@ it('does not allow editing an issued invoice', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
         ->assertDontSee(route('invoices.create', ['invoice' => $invoice->ulid]), false);
+});
+
+it('shows the payments of the invoice and the pending amount', function () {
+    $payment = Payment::factory()->for($this->team)->create([
+        'amount' => 15000,
+        'currency' => 'eur',
+    ]);
+
+    $invoice = app(InvoiceFromPaymentService::class)->createFromPayment($payment, $this->user);
+
+    app(InvoiceIssuanceService::class)->issue($invoice, $this->user);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertHasNoErrors()
+        ->assertSee('Payments')
+        ->assertSee('Paid')
+        ->assertSee('Pending')
+        ->assertSee('0.00');
 });

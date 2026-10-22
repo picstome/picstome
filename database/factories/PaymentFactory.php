@@ -18,6 +18,8 @@ class PaymentFactory extends Factory
             'currency' => 'usd',
             'description' => $this->faker->sentence,
             'photoshoot_id' => null,
+            'customer_email' => $this->faker->unique()->safeEmail(),
+            'completed_at' => now(),
         ];
     }
 }

@@ -51,9 +51,32 @@ new class extends Component
             $this->form->setInvoice($invoice);
 
             $this->step = $invoice->isRectificative() ? 3 : ($invoice->customer_id ? 2 : 1);
+        } else {
+            $customer = $this->customerFromRequest();
+
+            if ($customer) {
+                $this->form->setCustomer($customer, $settings);
+
+                $this->step = 2;
+            }
         }
 
         $this->ensureLineItem();
+    }
+
+    /**
+     * The client requested in the URL, when the invoice is created from the
+     * customer record.
+     */
+    private function customerFromRequest(): ?Customer
+    {
+        $ulid = request()->get('customer');
+
+        if (blank($ulid)) {
+            return null;
+        }
+
+        return Auth::user()->currentTeam->customers()->where('ulid', $ulid)->first();
     }
 
     /**
@@ -341,6 +364,14 @@ new class extends Component
         </flux:callout>
     @endif
 
+    @if ($this->form->invoice?->payments->isNotEmpty())
+        <flux:callout icon="information-circle" variant="outline" class="mt-6">
+            <flux:callout.text>
+                {{ __('This invoice was created from a payment. A payment does not replace the invoice: it is issued by the photographer.') }}
+            </flux:callout.text>
+        </flux:callout>
+    @endif
+
     @if ($this->form->invoice?->isRectificative())
         <flux:callout icon="information-circle" variant="outline" class="mt-6">
             <flux:callout.text>
@@ -477,6 +508,16 @@ new class extends Component
                     <option value="full">{{ __('Complete invoice') }}</option>
                     <option value="simplified">{{ __('Simplified invoice') }}</option>
                 </flux:select>
+
+                @if ($this->form->invoice_type === 'simplified')
+                    <flux:callout icon="information-circle" variant="outline">
+                        <flux:callout.text>
+                            {{ __('A simplified invoice does not identify the client and is limited to :limit euros.', [
+                                'limit' => number_format((float) $this->settings->simplified_invoice_limit, 2, ',', '.'),
+                            ]) }}
+                        </flux:callout.text>
+                    </flux:callout>
+                @endif
 
                 <flux:input wire:model="form.issue_date" :label="__('Issue date')" type="date" />
                 <flux:input wire:model="form.due_date" :label="__('Due date')" type="date" />

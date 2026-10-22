@@ -191,14 +191,14 @@ new class extends Component
     @endif
 
     @if ($this->invoices->isNotEmpty())
-        <div class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&_table]:table-auto [&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4 dark:border-white/10 dark:bg-white/5">
+        <div class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&_table]:table-auto [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3 dark:border-white/10 dark:bg-white/5">
             <x-table id="table">
                 <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
                     <x-table.column>{{ __('Number') }}</x-table.column>
                     <x-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-table.column>
-                    <x-table.column class="hidden sm:table-cell">{{ __('Issue date') }}</x-table.column>
+                    <x-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-table.column>
                     <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
-                    <x-table.column class="group/right-align hidden sm:table-cell">{{ __('Status') }}</x-table.column>
+                    <x-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-table.column>
                     <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
                 </x-table.columns>
 
@@ -218,10 +218,10 @@ new class extends Component
                                     <span @class(['font-mono' => filled($invoice->full_number)])>
                                         {{ $invoice->full_number ?? __('Draft') }}
                                     </span>
-                                    <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 sm:hidden">
-                                        <span>{{ $invoice->customer?->name }}</span>
+                                    <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 xl:hidden">
+                                        <span class="sm:hidden">{{ $invoice->customer?->name }}</span>
                                         @if ($invoice->issue_date)
-                                            <span>· {{ $invoice->issue_date->format('Y-m-d') }}</span>
+                                            <span class="xl:hidden">· {{ $invoice->issue_date->format('Y-m-d') }}</span>
                                         @endif
                                         <flux:badge
                                             size="sm"
@@ -240,14 +240,14 @@ new class extends Component
                             <x-table.cell variant="muted" class="hidden w-full sm:table-cell">
                                 {{ $invoice->customer?->name ?? '—' }}
                             </x-table.cell>
-                            <x-table.cell variant="muted" class="hidden sm:table-cell">
+                            <x-table.cell variant="muted" class="hidden xl:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
                             </x-table.cell>
                             <x-table.cell variant="strong" class="whitespace-nowrap text-end">
                                 {{ $this->money($invoice->total) }}
                                 <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
                             </x-table.cell>
-                            <x-table.cell class="hidden text-end sm:table-cell">
+                            <x-table.cell class="hidden text-end xl:table-cell">
                                 <flux:badge
                                     :color="match ($invoice->status) {
                                         'issued' => 'green',
@@ -260,16 +260,17 @@ new class extends Component
                                 </flux:badge>
                             </x-table.cell>
                             <x-table.cell class="whitespace-nowrap text-end">
-                                <div class="flex items-center justify-end gap-1">
+                                <div class="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
                                     @if ($invoice->pdf_path)
                                         <flux:button
                                             size="sm"
                                             variant="ghost"
+                                            class="!px-2"
                                             icon="document-arrow-down"
                                             :href="route('invoices.pdf', $invoice)"
                                             :aria-label="__('Download PDF')"
                                         >
-                                            <span class="hidden sm:inline">{{ __('PDF') }}</span>
+                                            <span class="hidden xl:inline">{{ __('PDF') }}</span>
                                         </flux:button>
                                     @endif
 
@@ -277,13 +278,14 @@ new class extends Component
                                         <flux:button
                                             size="sm"
                                             variant="ghost"
+                                            class="!px-2"
                                             icon="arrow-top-right-on-square"
                                             :href="route('invoices.public.show', $invoice->public_token)"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             :aria-label="__('View invoice')"
                                         >
-                                            <span class="hidden sm:inline">{{ __('View invoice') }}</span>
+                                            <span class="hidden xl:inline">{{ __('View invoice') }}</span>
                                         </flux:button>
                                     @endif
 

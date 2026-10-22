@@ -14,6 +14,11 @@ it('sets onboarding complete when team has completed onboarding', function () {
     $team = $user->currentTeam;
     $team->markOnboarded();
 
+    StripeConnectService::shouldReceive('syncOnboardingStatus')
+        ->once()
+        ->with($team)
+        ->andReturn(true);
+
     $component = Livewire::actingAs($user)->test('pages::stripe-connect.return')->assertOk();
 
     expect($component->onboardingComplete)->toBeTrue();
@@ -24,7 +29,7 @@ it('marks onboarding complete when onboarding is complete', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
-    StripeConnectService::shouldReceive('isOnboardingComplete')
+    StripeConnectService::shouldReceive('syncOnboardingStatus')
         ->once()
         ->with($team)
         ->andReturn(true);
@@ -41,7 +46,7 @@ it('sets onboarding not complete when onboarding is incomplete', function () {
     $team = $user->currentTeam;
     $mockedUrl = 'https://stripe.test/onboarding-return';
 
-    StripeConnectService::shouldReceive('isOnboardingComplete')
+    StripeConnectService::shouldReceive('syncOnboardingStatus')
         ->once()
         ->with($team)
         ->andReturn(false);
