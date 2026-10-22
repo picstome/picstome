@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
@@ -88,6 +89,28 @@ class InvoiceForm extends Form
         ];
     }
 
+    /**
+     * Pre-fill the form with a client, choosing the type of invoice from its
+     * fiscal data.
+     */
+    public function setCustomer(Customer $customer, InvoiceSetting $settings): void
+    {
+        $snapshots = app(InvoiceService::class);
+
+        $snapshot = $snapshots->customerSnapshot($customer);
+
+        $this->customer_id = $customer->id;
+        $this->invoice_type = $snapshots->missingCustomerFields($snapshot) === []
+            ? Invoice::TYPE_FULL
+            : Invoice::TYPE_SIMPLIFIED;
+        $this->vat_percent = (string) (float) $settings->vat_percent;
+        $this->irpf_percent = (string) (float) $settings->irpf_percent;
+        $this->apply_irpf = (bool) $settings->apply_irpf;
+        $this->payment_terms = (string) $settings->payment_terms;
+        $this->notes = (string) $settings->notes;
+        $this->issue_date = $this->issue_date ?: now()->toDateString();
+    }
+
     public function setSettings(InvoiceSetting $settings): void
     {
         $this->vat_percent = (string) (float) $settings->vat_percent;
@@ -154,7 +177,7 @@ class InvoiceForm extends Form
             'invoice_type' => $this->invoice_type,
             'issue_date' => $this->issue_date,
             'due_date' => $this->due_date ?: null,
-            'currency' => $settings->currency,
+            'currency' => $this->invoice?->currency ?? $settings->currency,
             'exchange_rate' => $rate,
             'exchange_rate_date' => $rate ? now()->toDateString() : null,
             'vat_percent' => $this->vat_percent,

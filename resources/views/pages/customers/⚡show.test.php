@@ -3,6 +3,7 @@
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Gallery;
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Models\Team;
@@ -76,4 +77,21 @@ it('shows the client link modal with the customer share url', function () {
     $response->assertStatus(200)
         ->assertSee(__('Client link'))
         ->assertSee(route('clients.show', $customer));
+});
+
+it('shows the invoices of the client and the option to create one', function () {
+    $customer = Customer::factory()->for($this->team)->create();
+
+    $invoice = Invoice::factory()->for($this->team)->for($customer)->create([
+        'status' => Invoice::STATUS_ISSUED,
+        'series' => 'F',
+        'year' => (int) now()->year,
+        'number' => 1,
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::customers.show', ['customer' => $customer])
+        ->assertSee('Invoices')
+        ->assertSee($invoice->full_number)
+        ->assertSee(route('invoices.create', ['customer' => $customer->ulid]), false);
 });

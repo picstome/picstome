@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Team;
+use App\Services\FakePaymentService;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
@@ -39,6 +40,19 @@ class extends Component
             'amount' => 'required|integer|min:1',
             'description' => 'required|string|max:255',
         ]);
+
+        if (FakePaymentService::enabled()) {
+            app(FakePaymentService::class)->createPayment(
+                $this->team,
+                $this->amount * 100,
+                $this->description
+            );
+
+            return redirect()->route('handle.pay.success', [
+                'handle' => $this->team->handle,
+                'fake' => 1,
+            ]);
+        }
 
         $checkoutUrl = StripeConnectService::createCheckoutSession(
             $this->team,

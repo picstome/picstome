@@ -218,6 +218,34 @@ The audit trail records the `created` event of the draft with the invoice it
 comes from in its context, so a recurring invoice can always be traced back to
 the document it was copied from.
 
+## Invoicing a payment
+
+A payment received through Stripe does not create an invoice: the invoice is
+issued by the photographer to the client, no matter how the client pays. The
+app makes it easy with the **Create invoice** action, available in the
+payments list, in the session detail and in the client record.
+
+The action creates a **draft** with the amount of the payment as its total
+(taxes included, so the line holds the net amount the VAT is calculated from),
+the description of the payment and the client that paid it. The type of
+invoice is chosen automatically: a **complete invoice** when the client has
+its fiscal data and a **simplified invoice** when it only has a name and an
+email, which needs no tax ID or address and is limited by the configured
+amount (3.000 € by default for photography studios).
+
+The invoice is linked to the payment (`payments.invoice_id`), so a payment is
+never invoiced twice, and the invoice detail shows the payments that settle
+it, the amount paid and the amount pending. A payment does not replace the
+invoice: it is issued by the photographer.
+
+## Invoicing a client
+
+The client record has its own **Invoices** block, below the payments, with the
+invoices already issued to that client and a **Create invoice** action that
+opens the guided creation with the client and the type of invoice already
+chosen. Nothing is stored until the invoice is saved, so no empty drafts are
+left behind.
+
 ## Audit trail
 
 `invoice_events` is append only: the model forbids updating and deleting the

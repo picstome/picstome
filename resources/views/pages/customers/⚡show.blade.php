@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
+use App\Traits\FormatsMoney;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
@@ -9,6 +10,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use FormatsMoney;
+
     public Customer $customer;
 
     public CustomerForm $form;
@@ -28,6 +31,12 @@ new class extends Component
     public function team()
     {
         return Auth::user()->currentTeam;
+    }
+
+    #[Computed]
+    public function invoices()
+    {
+        return $this->customer->invoices()->latest('id')->get();
     }
 
     public function update()
@@ -372,6 +381,84 @@ new class extends Component
                 @endforeach
             </x-table.rows>
         </x-table>
+    @endif
+
+    <div class="mt-12">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <flux:heading level="2">{{ __('Invoices') }}</flux:heading>
+
+            <flux:button
+                variant="primary"
+                class="btn-ink"
+                icon="document-plus"
+                :href="route('invoices.create', ['customer' => $customer->ulid])"
+                wire:navigate
+            >
+                {{ __('Create invoice') }}
+            </flux:button>
+        </div>
+        <flux:separator class="mt-4" />
+    </div>
+
+    @if ($this->invoices->isNotEmpty())
+        <x-table class="mt-6 [&_table]:table-auto [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3">
+            <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
+                <x-table.column>{{ __('Number') }}</x-table.column>
+                <x-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-table.column>
+                <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
+                <x-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-table.column>
+            </x-table.columns>
+            <x-table.rows>
+                @foreach ($this->invoices as $invoice)
+                    <x-table.row>
+                        <x-table.cell variant="strong" class="relative whitespace-nowrap">
+                            <a
+                                href="{{ route('invoices.show', $invoice) }}"
+                                wire:navigate
+                                class="absolute inset-0 focus:outline-hidden"
+                            ></a>
+                            <div class="flex flex-col">
+                                <span class="font-mono">{{ $invoice->full_number ?? __('Draft') }}</span>
+                                <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 xl:hidden">
+                                    @if ($invoice->issue_date)
+                                        <span>{{ $invoice->issue_date->format('Y-m-d') }}</span>
+                                    @endif
+                                    <flux:badge
+                                        size="sm"
+                                        :color="match ($invoice->status) {
+                                            'issued' => 'green',
+                                            'rectified' => 'orange',
+                                            default => 'zinc',
+                                        }"
+                                        inset
+                                    >
+                                        {{ $invoice->status_label }}
+                                    </flux:badge>
+                                </span>
+                            </div>
+                        </x-table.cell>
+                        <x-table.cell variant="muted" class="hidden whitespace-nowrap xl:table-cell">{{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}</x-table.cell>
+                        <x-table.cell class="whitespace-nowrap text-end">
+                            {{ $this->money($invoice->total) }} {{ $invoice->currency }}
+                        </x-table.cell>
+                        <x-table.cell class="hidden text-end xl:table-cell">
+                            <flux:badge
+                                :color="match ($invoice->status) {
+                                    'issued' => 'green',
+                                    'rectified' => 'orange',
+                                    default => 'zinc',
+                                }"
+                                inset
+                            >
+                                {{ $invoice->status_label }}
+                            </flux:badge>
+                        </x-table.cell>
+                    </x-table.row>
+                @endforeach
+            </x-table.rows>
+        </x-table>
+    @else
+        <p class="mt-4 text-sm text-zinc-500">{{ __('This client has no invoices yet.') }}</p>
     @endif
 
     <flux:modal name="edit" class="w-full sm:max-w-lg">

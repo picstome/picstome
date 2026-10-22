@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\InvoiceFromPaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -144,4 +146,48 @@ it('can delete a payment', function () {
         ->call('deletePayment', $payment->id);
 
     expect($payment->fresh())->toBeNull();
+});
+
+it('creates the draft invoice of a payment', function () {
+    $payment = Payment::factory()->for($this->team)->create(['amount' => 15000, 'currency' => 'eur']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::payments')
+        ->call('createInvoice', $payment->id)
+        ->assertHasNoErrors();
+
+    $invoice = Invoice::where('team_id', $this->team->id)->first();
+
+    expect($invoice)->not->toBeNull()
+        ->and($invoice->status)->toBe(Invoice::STATUS_DRAFT)
+        ->and((float) $invoice->total)->toBe(150.0)
+        ->and($payment->fresh()->invoice_id)->toBe($invoice->id);
+
+    $component->assertRedirect(route('invoices.create', ['invoice' => $invoice->ulid]));
+});
+
+it('does not invoice the same payment twice', function () {
+    $payment = Payment::factory()->for($this->team)->create();
+
+    app(InvoiceFromPaymentService::class)->createFromPayment($payment, $this->user);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::payments')
+        ->call('createInvoice', $payment->id)
+        ->assertHasErrors(['payment' => 'This payment is already invoiced.']);
+
+    expect(Invoice::where('team_id', $this->team->id)->count())->toBe(1);
+});
+
+it('cannot invoice a payment of another team', function () {
+    $otherTeam = Team::factory()->create();
+
+    $payment = Payment::factory()->for($otherTeam)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::payments')
+        ->call('createInvoice', $payment->id)
+        ->assertStatus(404);
+
+    expect(Invoice::count())->toBe(0);
 });

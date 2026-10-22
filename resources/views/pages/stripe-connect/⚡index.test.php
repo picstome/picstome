@@ -17,6 +17,16 @@ it('sets the onboarding url', function () {
         ->with($team)
         ->andReturn($mockedUrl);
 
+    StripeConnectService::shouldReceive('syncOnboardingStatus')
+        ->once()
+        ->with($team)
+        ->andReturn(false);
+
+    StripeConnectService::shouldReceive('accountEmail')
+        ->once()
+        ->with($team)
+        ->andReturn(null);
+
     $component = Livewire::actingAs($user)->test('pages::stripe-connect.index')->assertOk();
 
     expect($component->onboardingUrl)->toBe($mockedUrl);

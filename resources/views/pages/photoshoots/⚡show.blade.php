@@ -6,7 +6,9 @@ use App\Livewire\Forms\PaymentLinkForm;
 use App\Livewire\Forms\PhotoshootForm;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
+use App\Models\Invoice;
 use App\Models\Photoshoot;
+use App\Services\InvoiceFromPaymentService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -32,6 +34,20 @@ new class extends Component
     public function payments()
     {
         return $this->photoshoot->payments()->orderByDesc('completed_at')->get();
+    }
+
+    /**
+     * Create the draft invoice of a payment and open it for review.
+     */
+    public function createInvoice(int $paymentId)
+    {
+        $this->authorize('create', Invoice::class);
+
+        $payment = $this->photoshoot->payments()->findOrFail($paymentId);
+
+        $invoice = app(InvoiceFromPaymentService::class)->createFromPayment($payment, Auth::user());
+
+        $this->redirect(route('invoices.create', ['invoice' => $invoice->ulid]), navigate: true);
     }
 
     public function mount(Photoshoot $photoshoot)
@@ -243,6 +259,7 @@ new class extends Component
                 <x-table.column>{{ __('Amount') }}</x-table.column>
                 <x-table.column>{{ __('Payment Date') }}</x-table.column>
                 <x-table.column>{{ __('Customer Email') }}</x-table.column>
+                <x-table.column align="end">{{ __('Actions') }}</x-table.column>
             </x-table.columns>
             <x-table.rows>
                 @foreach ($this->payments as $payment)
@@ -253,6 +270,24 @@ new class extends Component
                             {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
                         </x-table.cell>
                         <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
+                        <x-table.cell align="end">
+                            @if ($payment->invoice)
+                                <flux:link
+                                    :href="route('invoices.show', $payment->invoice)"
+                                    wire:navigate
+                                >
+                                    {{ $payment->invoice->full_number }}
+                                </flux:link>
+                            @else
+                                <flux:button
+                                    size="sm"
+                                    variant="ghost"
+                                    icon="document-plus"
+                                    :aria-label="__('Create invoice')"
+                                    wire:click="createInvoice({{ $payment->id }})"
+                                />
+                            @endif
+                        </x-table.cell>
                     </x-table.row>
                 @endforeach
             </x-table.rows>

@@ -4,6 +4,13 @@ return [
 
     'photo_resize' => 2048,
 
+    /**
+     * Fake payments mode: skips Stripe completely so the payment flow can be
+     * tested locally without a connected account. Never enabled in production.
+     */
+    'payments_fake' => (bool) env('PAYMENTS_FAKE', false)
+        && env('APP_ENV', 'production') === 'local',
+
     'photo_thumb_resize' => 1000,
 
     'photo_small_thumb_resize' => 500,

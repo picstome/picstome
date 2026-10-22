@@ -2,6 +2,7 @@
 
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
+use App\Models\Payment;
 use App\Services\InvoiceFingerprintService;
 use App\Services\InvoiceDuplicationService;
 use App\Services\InvoiceIssuanceService;
@@ -25,13 +26,37 @@ new class extends Component
     {
         $this->authorize('view', $invoice);
 
-        $this->invoice = $invoice->load(['rectifiesInvoice', 'rectification']);
+        $this->invoice = $invoice->load(['rectifiesInvoice', 'rectification', 'payments']);
     }
 
     #[Computed]
     public function chain()
     {
         return app(InvoiceFingerprintService::class)->verify($this->invoice);
+    }
+
+    /**
+     * Amount of the invoice already settled by its payments.
+     */
+    #[Computed]
+    public function paidAmount(): float
+    {
+        return round($this->invoice->payments->sum(fn (Payment $payment) => $payment->amount / 100), 2);
+    }
+
+    /**
+     * Amount of the invoice still pending.
+     */
+    #[Computed]
+    public function pendingAmount(): float
+    {
+        return max(0, round((float) $this->invoice->total - $this->paidAmount(), 2));
+    }
+
+    #[Computed]
+    public function isPaid(): bool
+    {
+        return (float) $this->invoice->total > 0 && $this->pendingAmount() <= 0;
     }
 
     #[Computed]
@@ -184,6 +209,10 @@ new class extends Component
             <flux:badge :color="$this->invoice->isIssued() ? 'green' : ($this->invoice->isRectified() ? 'orange' : 'zinc')" inset>
                 {{ $this->invoice->status_label }}
             </flux:badge>
+
+            @if ($this->isPaid)
+                <flux:badge color="lime" inset>{{ __('Paid') }}</flux:badge>
+            @endif
 
             @if ($this->invoice->pdf_path)
                 <flux:button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
@@ -394,6 +423,41 @@ new class extends Component
                     @endif
                 </dl>
             </div>
+
+            @if ($this->invoice->payments->isNotEmpty())
+                <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+                    <flux:heading level="3" size="sm">{{ __('Payments') }}</flux:heading>
+
+                    <dl class="mt-3 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-zinc-500">{{ __('Paid') }}</dt>
+                            <dd>{{ $this->money($this->paidAmount) }} {{ $this->invoice->currency }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-zinc-500">{{ __('Pending') }}</dt>
+                            <dd>{{ $this->money($this->pendingAmount) }} {{ $this->invoice->currency }}</dd>
+                        </div>
+                    </dl>
+
+                    <ul class="mt-3 space-y-2 text-sm">
+                        @foreach ($this->invoice->payments as $payment)
+                            <li class="flex items-center justify-between gap-4">
+                                <span class="text-zinc-600 dark:text-zinc-300">{{ $payment->description }}</span>
+                                <span class="whitespace-nowrap">
+                                    {{ $payment->formattedAmount }}
+                                    @if ($payment->completed_at)
+                                        <span class="ms-2 text-xs text-zinc-500">{{ $payment->completed_at->format('Y-m-d') }}</span>
+                                    @endif
+                                </span>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <flux:text size="sm" class="mt-3 text-zinc-500">
+                        {{ __('A payment does not replace the invoice: it is issued by the photographer.') }}
+                    </flux:text>
+                </div>
+            @endif
 
             @if (filled($this->invoice->fingerprint))
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">

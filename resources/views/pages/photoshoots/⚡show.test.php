@@ -3,6 +3,8 @@
 use App\Models\Contract;
 use App\Models\Customer;
 use App\Models\Gallery;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Photo;
 use App\Models\Photoshoot;
 use App\Models\Team;
@@ -206,4 +208,25 @@ test('can add new contract', function () {
             expect($contract->isSigned())->toBeFalse();
         });
     });
+});
+
+it('creates the draft invoice of a payment of the session', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+    $payment = Payment::factory()->for($this->team)->for($photoshoot)->create([
+        'amount' => 15000,
+        'currency' => 'eur',
+    ]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
+        ->call('createInvoice', $payment->id)
+        ->assertHasNoErrors();
+
+    $invoice = Invoice::where('team_id', $this->team->id)->first();
+
+    expect($invoice)->not->toBeNull()
+        ->and((float) $invoice->total)->toBe(150.0)
+        ->and($payment->fresh()->invoice_id)->toBe($invoice->id);
+
+    $component->assertRedirect(route('invoices.create', ['invoice' => $invoice->ulid]));
 });

@@ -2,7 +2,9 @@
 
 use App\Livewire\Forms\PaymentForm;
 use App\Livewire\Forms\PaymentLinkForm;
+use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\InvoiceFromPaymentService;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -103,6 +105,20 @@ new class extends Component
         $this->linkForm->reset();
     }
 
+    /**
+     * Create the draft invoice of a payment and open it for review.
+     */
+    public function createInvoice(int $paymentId)
+    {
+        $this->authorize('create', Invoice::class);
+
+        $payment = $this->team->payments()->findOrFail($paymentId);
+
+        $invoice = app(InvoiceFromPaymentService::class)->createFromPayment($payment, Auth::user());
+
+        $this->redirect(route('invoices.create', ['invoice' => $invoice->ulid]), navigate: true);
+    }
+
     public function sort($column)
     {
         if ($this->sortBy === $column) {
@@ -190,6 +206,23 @@ new class extends Component
                                             >
                                                 {{ __('Edit') }}
                                             </flux:menu.item>
+                                            @if ($payment->invoice)
+                                                <flux:menu.item
+                                                    :href="route('invoices.show', $payment->invoice)"
+                                                    icon="document-text"
+                                                    wire:navigate
+                                                >
+                                                    {{ __('View invoice') }}
+                                                </flux:menu.item>
+                                            @else
+                                                <flux:menu.item
+                                                    wire:click="createInvoice({{ $payment->id }})"
+                                                    icon="document-plus"
+                                                >
+                                                    {{ __('Create invoice') }}
+                                                </flux:menu.item>
+                                            @endif
+
                                             <flux:menu.item
                                                 wire:click="requestDeletePayment({{ $payment->id }})"
                                                 icon="trash"
