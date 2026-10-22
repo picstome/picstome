@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Contract;
 use App\Models\Gallery;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
@@ -22,9 +24,9 @@ use InvalidArgumentException;
  */
 class AdminUsageStatsService
 {
-    private const CACHE_PREFIX = 'admin-usage-stats:v1';
+    private const CACHE_PREFIX = 'admin-usage-stats:v2';
 
-    private const METRICS = ['photos', 'galleries', 'contracts', 'users', 'paid_users', 'lifetime_users'];
+    private const METRICS = ['photos', 'galleries', 'contracts', 'users', 'paid_users', 'lifetime_users', 'invoices', 'stripe_payments'];
 
     /**
      * @return array{
@@ -36,6 +38,11 @@ class AdminUsageStatsService
      *     paid_users: int,
      *     lifetime_users: int,
      *     free_users: int,
+     *     invoices: int,
+     *     invoice_teams: int,
+     *     stripe_payments: int,
+     *     stripe_accounts: int,
+     *     accounts: int,
      *     avg_photos_per_user: float,
      *     avg_photos_per_paid_user: float,
      *     avg_photos_per_lifetime_user: float,
@@ -60,6 +67,9 @@ class AdminUsageStatsService
      *     users: int,
      *     paid_users: int,
      *     lifetime_users: int,
+     *     invoices: int,
+     *     invoice_teams: int,
+     *     stripe_payments: int,
      *     computed_at: string
      * }
      */
@@ -133,6 +143,11 @@ class AdminUsageStatsService
      *     paid_users: int,
      *     lifetime_users: int,
      *     free_users: int,
+     *     invoices: int,
+     *     invoice_teams: int,
+     *     stripe_payments: int,
+     *     stripe_accounts: int,
+     *     accounts: int,
      *     avg_photos_per_user: float,
      *     avg_photos_per_paid_user: float,
      *     avg_photos_per_lifetime_user: float,
@@ -162,6 +177,11 @@ class AdminUsageStatsService
             'paid_users' => $paidUsers,
             'lifetime_users' => $lifetimeUsers,
             'free_users' => $freeUsers,
+            'invoices' => $this->issuedInvoicesQuery()->count(),
+            'invoice_teams' => $this->issuedInvoicesQuery()->distinct()->count('team_id'),
+            'stripe_payments' => $this->stripePaymentsQuery()->count(),
+            'stripe_accounts' => $this->stripeAccountsQuery()->count(),
+            'accounts' => Team::query()->where('personal_team', true)->count(),
             'avg_photos_per_user' => $this->average($photos, $users),
             'avg_photos_per_paid_user' => $this->average($paidPhotos, $paidUsers),
             'avg_photos_per_lifetime_user' => $this->average($lifetimePhotos, $lifetimeUsers),
@@ -178,6 +198,9 @@ class AdminUsageStatsService
      *     users: int,
      *     paid_users: int,
      *     lifetime_users: int,
+     *     invoices: int,
+     *     invoice_teams: int,
+     *     stripe_payments: int,
      *     computed_at: string
      * }
      */
@@ -204,6 +227,19 @@ class AdminUsageStatsService
                 ->where('lifetime_at', '<=', $to)
                 ->distinct()
                 ->count('user_id'),
+            'invoices' => $this->issuedInvoicesQuery()
+                ->when($from, fn (Builder $query) => $query->where('issued_at', '>=', $from))
+                ->where('issued_at', '<=', $to)
+                ->count(),
+            'invoice_teams' => $this->issuedInvoicesQuery()
+                ->when($from, fn (Builder $query) => $query->where('issued_at', '>=', $from))
+                ->where('issued_at', '<=', $to)
+                ->distinct()
+                ->count('team_id'),
+            'stripe_payments' => $this->stripePaymentsQuery()
+                ->when($from, fn (Builder $query) => $query->where('completed_at', '>=', $from))
+                ->where('completed_at', '<=', $to)
+                ->count(),
             'computed_at' => now()->toIso8601String(),
         ];
     }
@@ -223,6 +259,8 @@ class AdminUsageStatsService
             'users' => $this->monthlyCount(User::query(), 'created_at', $from, $to),
             'paid_users' => $this->monthlyPaidUsers($from, $to),
             'lifetime_users' => $this->monthlyLifetimeUsers($from, $to),
+            'invoices' => $this->monthlyCount($this->issuedInvoicesQuery(), 'issued_at', $from, $to),
+            'stripe_payments' => $this->monthlyCount($this->stripePaymentsQuery(), 'completed_at', $from, $to),
             default => throw new InvalidArgumentException("Unknown usage metric [{$metric}]."),
         };
 
@@ -301,6 +339,40 @@ class AdminUsageStatsService
             'pgsql' => "to_char({$column}, 'YYYY-MM')",
             default => "DATE_FORMAT({$column}, '%Y-%m')",
         };
+    }
+
+    private function issuedInvoicesQuery(): Builder
+    {
+        return Invoice::query()->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_RECTIFIED]);
+    }
+
+    /**
+     * Completed payments collected through Stripe, excluding local fake payments.
+     */
+    private function stripePaymentsQuery(): Builder
+    {
+        return Payment::query()
+            ->whereNotNull('completed_at')
+            ->whereNotNull('stripe_payment_intent_id')
+            ->where('stripe_payment_intent_id', 'not like', 'fake_%');
+    }
+
+    /**
+     * Personal teams whose current Stripe mode has completed onboarding.
+     */
+    private function stripeAccountsQuery(): Builder
+    {
+        return Team::query()
+            ->where('personal_team', true)
+            ->where(function (Builder $query): void {
+                $query->where(function (Builder $query): void {
+                    $query->where('stripe_test_mode', false)
+                        ->where('stripe_onboarded', true);
+                })->orWhere(function (Builder $query): void {
+                    $query->where('stripe_test_mode', true)
+                        ->where('stripe_test_onboarded', true);
+                });
+            });
     }
 
     private function paidTeamsQuery(): Builder

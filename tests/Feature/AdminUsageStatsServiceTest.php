@@ -2,6 +2,8 @@
 
 use App\Models\Contract;
 use App\Models\Gallery;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
@@ -69,6 +71,55 @@ it('builds a snapshot with paid, lifetime, and free buckets', function () {
         ->and($stats['avg_photos_per_free_user'])->toBe(1.0);
 });
 
+it('counts issued invoices, stripe payments, and onboarded stripe accounts', function () {
+    $liveUser = User::factory()->withPersonalTeam()->create();
+    $liveTeam = $liveUser->personalTeam();
+    $liveTeam->update(['stripe_onboarded' => true]);
+
+    $testUser = User::factory()->withPersonalTeam()->create();
+    $testTeam = $testUser->personalTeam();
+    $testTeam->update([
+        'stripe_test_mode' => true,
+        'stripe_test_onboarded' => true,
+    ]);
+
+    $pendingUser = User::factory()->withPersonalTeam()->create();
+    $pendingTeam = $pendingUser->personalTeam();
+    $pendingTeam->update(['stripe_account_id' => 'acct_pending']);
+
+    Invoice::factory()->for($liveTeam)->issued()->create(['number' => 1]);
+    Invoice::factory()->for($liveTeam)->create([
+        'status' => Invoice::STATUS_RECTIFIED,
+        'series' => 'F',
+        'year' => (int) now()->year,
+        'number' => 2,
+        'issued_at' => now()->subDay(),
+    ]);
+    Invoice::factory()->for($liveTeam)->create();
+    Invoice::factory()->for($testTeam)->issued()->create(['number' => 1]);
+
+    Payment::factory()->for($liveTeam)->create([
+        'stripe_payment_intent_id' => 'pi_live',
+        'completed_at' => now(),
+    ]);
+    Payment::factory()->for($liveTeam)->create([
+        'stripe_payment_intent_id' => 'fake_local',
+        'completed_at' => now(),
+    ]);
+    Payment::factory()->for($liveTeam)->create([
+        'stripe_payment_intent_id' => 'pi_pending',
+        'completed_at' => null,
+    ]);
+
+    $stats = app(AdminUsageStatsService::class)->snapshot();
+
+    expect($stats['invoices'])->toBe(3)
+        ->and($stats['invoice_teams'])->toBe(2)
+        ->and($stats['stripe_payments'])->toBe(1)
+        ->and($stats['stripe_accounts'])->toBe(2)
+        ->and($stats['accounts'])->toBe(3);
+});
+
 it('caches the snapshot until it is explicitly forgotten', function () {
     $service = app(AdminUsageStatsService::class);
 
@@ -127,6 +178,24 @@ it('builds monthly series for dashboard metrics', function () {
         'lifetime_at' => now()->startOfMonth()->addDays(4),
     ]);
 
+    Invoice::factory()->for($team)->issued()->create([
+        'number' => 1,
+        'issued_at' => now()->subMonthNoOverflow()->startOfMonth()->addDays(2),
+    ]);
+    Invoice::factory()->for($team)->issued()->create([
+        'number' => 2,
+        'issued_at' => now()->startOfMonth()->addDay(),
+    ]);
+
+    Payment::factory()->for($team)->create([
+        'stripe_payment_intent_id' => 'pi_series_last_month',
+        'completed_at' => now()->subMonthNoOverflow()->startOfMonth()->addDays(2),
+    ]);
+    Payment::factory()->for($team)->create([
+        'stripe_payment_intent_id' => 'pi_series_current_month',
+        'completed_at' => now()->startOfMonth()->addDay(),
+    ]);
+
     $service = app(AdminUsageStatsService::class);
     $from = now()->subMonthNoOverflow()->startOfMonth();
     $to = now()->endOfDay();
@@ -134,10 +203,14 @@ it('builds monthly series for dashboard metrics', function () {
     $photos = $service->monthlySeries('photos', $from, $to);
     $paidUsers = $service->monthlySeries('paid_users', $from, $to);
     $lifetimeUsers = $service->monthlySeries('lifetime_users', $from, $to);
+    $invoices = $service->monthlySeries('invoices', $from, $to);
+    $stripePayments = $service->monthlySeries('stripe_payments', $from, $to);
     $allSeries = $service->monthlySeriesForAll($from, $to);
 
-    expect($allSeries)->toHaveKeys(['photos', 'galleries', 'contracts', 'users', 'paid_users', 'lifetime_users'])
+    expect($allSeries)->toHaveKeys(['photos', 'galleries', 'contracts', 'users', 'paid_users', 'lifetime_users', 'invoices', 'stripe_payments'])
         ->and($allSeries['photos'])->toBe($photos)
+        ->and($allSeries['invoices'])->toBe($invoices)
+        ->and($allSeries['stripe_payments'])->toBe($stripePayments)
         ->and($photos)->toHaveCount(2)
         ->and($photos[0]['value'])->toBe(1)
         ->and($photos[1]['value'])->toBe(1)
@@ -145,6 +218,10 @@ it('builds monthly series for dashboard metrics', function () {
         ->and($paidUsers[1]['value'])->toBe(0)
         ->and($lifetimeUsers[0]['value'])->toBe(0)
         ->and($lifetimeUsers[1]['value'])->toBe(1)
+        ->and($invoices[0]['value'])->toBe(1)
+        ->and($invoices[1]['value'])->toBe(1)
+        ->and($stripePayments[0]['value'])->toBe(1)
+        ->and($stripePayments[1]['value'])->toBe(1)
         ->and($photos[1]['month'])->toBe(now()->format('Y-m'))
         ->and($photos[1]['label'])->toBe(now()->startOfMonth()->toDateString());
 });
@@ -175,6 +252,14 @@ it('counts new records and new paid and lifetime users in a completed range', fu
     Contract::factory()->for($paidTeam)->create([
         'created_at' => $windowStart->copy()->addDays(5),
     ]);
+    Invoice::factory()->for($paidTeam)->issued()->create([
+        'number' => 1,
+        'issued_at' => $windowStart->copy()->addDays(6),
+    ]);
+    Payment::factory()->for($paidTeam)->create([
+        'stripe_payment_intent_id' => 'pi_in_range',
+        'completed_at' => $windowStart->copy()->addDays(6),
+    ]);
 
     $lifetimeUser = User::factory()->withPersonalTeam()->create();
     $lifetimeUser->forceFill(['created_at' => $windowStart->copy()->addDays(6)])->saveQuietly();
@@ -197,6 +282,14 @@ it('counts new records and new paid and lifetime users in a completed range', fu
     Contract::factory()->for($outsideTeam)->create([
         'created_at' => $windowStart->copy()->subDays(7),
     ]);
+    Invoice::factory()->for($outsideTeam)->issued()->create([
+        'number' => 1,
+        'issued_at' => $windowStart->copy()->subDays(6),
+    ]);
+    Payment::factory()->for($outsideTeam)->create([
+        'stripe_payment_intent_id' => 'pi_outside_range',
+        'completed_at' => $windowStart->copy()->subDays(6),
+    ]);
 
     $stats = app(AdminUsageStatsService::class)->range($windowStart, $windowEnd);
 
@@ -205,5 +298,8 @@ it('counts new records and new paid and lifetime users in a completed range', fu
         ->and($stats['contracts'])->toBe(1)
         ->and($stats['users'])->toBe(2)
         ->and($stats['paid_users'])->toBe(1)
-        ->and($stats['lifetime_users'])->toBe(1);
+        ->and($stats['lifetime_users'])->toBe(1)
+        ->and($stats['invoices'])->toBe(1)
+        ->and($stats['invoice_teams'])->toBe(1)
+        ->and($stats['stripe_payments'])->toBe(1);
 });
