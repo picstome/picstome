@@ -489,6 +489,12 @@ test('a guest can create an annotation from the browser', function () {
 
     $page->wait(0.5);
 
+    // The annotation mode stays active until the user exits it.
+    $page->assertSee('Click on the photo to mark a spot');
+
+    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->wait(0.2);
+
     $pinIsVisible = fn (): bool => (bool) $page->script(<<<'JS'
         (() => {
             const pin = document.querySelector('#photo button[title="Photo annotation"]')

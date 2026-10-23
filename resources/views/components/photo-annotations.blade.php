@@ -98,8 +98,8 @@
                 const x = Math.min(100, Math.max(0, ((event.clientX - rect.left) / rect.width) * 100))
                 const y = Math.min(100, Math.max(0, ((event.clientY - rect.top) / rect.height) * 100))
 
-                this.annotating = false
-                this.$dispatch('annotations-toggled', { active: false })
+                // Annotation mode stays active so several spots can be marked
+                // in a row; the user exits it from the toolbar.
                 $wire.addAnnotation(Number(x.toFixed(2)), Number(y.toFixed(2)))
             },
         }"
