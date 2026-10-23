@@ -39,7 +39,11 @@ class GuestPhotoCommented extends Notification
             ->line(__('Gallery: :name', ['name' => $this->photo->gallery->name]))
             ->line(__('Photo: :name', ['name' => $this->photo->name]))
             ->line(__('Comment: ":comment"', ['comment' => $this->comment->comment]))
-            ->action(__('View Photo'), url('/galleries/'.$this->photo->gallery->id.'/photos/'.$this->photo->id))
+            ->action(__('View Photo'), route('galleries.photos.show', [
+                'gallery' => $this->photo->gallery_id,
+                'photo' => $this->photo->id,
+                'comment' => $this->comment->id,
+            ]))
             ->line(__('You are receiving this because someone commented on your shared gallery.'));
     }
 

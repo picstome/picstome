@@ -71,6 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'watermarked' => false,
             'description_enabled' => false,
             'comments_enabled' => true,
+            'annotations_enabled' => false,
             'versions_visible' => false,
         ], $this->gallery_preferences['share_gallery_defaults'] ?? []);
     }

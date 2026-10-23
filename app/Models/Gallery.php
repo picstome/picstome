@@ -50,6 +50,7 @@ class Gallery extends Model
             'selection_limit_notification_sent_at' => 'datetime',
             'portfolio_order' => 'integer',
             'are_comments_enabled' => 'boolean',
+            'are_annotations_enabled' => 'boolean',
         ];
     }
 

@@ -176,6 +176,7 @@ new class extends Component
 
         $this->dispatch('version-deleted');
     }
+
     /**
      * Guard destructive actions independently of the public property value.
      */
@@ -190,10 +191,10 @@ new class extends Component
     }
 }; ?>
 
-<div class="absolute bottom-3 left-1/2 z-10 -translate-x-1/2" :class="zoom ? 'hidden' : ''">
+<div class="contents">
     @if ($this->versions->isNotEmpty())
         <flux:modal.trigger name="photo-versions-{{ $photo->id }}">
-            <flux:button size="sm" icon="rectangle-stack">
+            <flux:button size="sm" icon="rectangle-stack" variant="primary" class="btn-ink">
                 {{ __('Versions') }} ({{ $this->versions->count() }})
             </flux:button>
         </flux:modal.trigger>

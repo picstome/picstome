@@ -30,6 +30,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
     public $commentText = '';
 
+    public ?float $pendingPinX = null;
+
+    public ?float $pendingPinY = null;
+
     public function mount()
     {
         abort_unless($this->gallery->is_shared, 404);
@@ -70,6 +74,34 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             ->append($this->photo->id);
     }
 
+    /**
+     * Remember the clicked position and open the comment composer. The pin is
+     * only persisted together with the comment text.
+     */
+    public function addAnnotation(float $x, float $y): void
+    {
+        abort_unless($this->photo->isImage(), 404);
+
+        abort_unless($this->photo->gallery->are_comments_enabled, 403);
+
+        $isOwner = Auth::check() && $this->photo->gallery->team->owner->is(Auth::user());
+
+        abort_if(Auth::check() && ! $isOwner, 403);
+
+        abort_unless($isOwner || $this->photo->gallery->are_annotations_enabled, 403);
+
+        $this->pendingPinX = round(max(0, min(100, $x)), 2);
+        $this->pendingPinY = round(max(0, min(100, $y)), 2);
+
+        Flux::modal('add-comment')->show();
+    }
+
+    public function cancelPendingPin(): void
+    {
+        $this->pendingPinX = null;
+        $this->pendingPinY = null;
+    }
+
     public function addComment()
     {
         abort_unless($this->photo->gallery->are_comments_enabled, 403);
@@ -80,9 +112,14 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
         abort_if(Auth::check() && ! $this->photo->gallery->team->owner->is(Auth::user()), 403);
 
+        $hasPin = $this->pendingPinX !== null && $this->pendingPinY !== null && $this->photo->isImage();
+
         $comment = $this->photo->comments()->create([
             'user_id' => Auth::id() ?: null,
             'comment' => $this->commentText,
+            'x' => $hasPin ? $this->pendingPinX : null,
+            'y' => $hasPin ? $this->pendingPinY : null,
+            'annotated_version_number' => $hasPin ? $this->photo->currentVersionNumber() : null,
         ]);
 
         if (Auth::guest()) {
@@ -92,6 +129,13 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         }
 
         $this->commentText = '';
+
+        if ($hasPin) {
+            $this->pendingPinX = null;
+            $this->pendingPinY = null;
+
+            Flux::modal('add-comment')->close();
+        }
     }
 
     public ?int $pendingCommentId = null;
@@ -118,6 +162,45 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     public function comments()
     {
         return $this->photo->comments()->latest()->with('user')->get();
+    }
+
+    #[Computed]
+    public function currentVersionNumber(): int
+    {
+        return $this->photo->currentVersionNumber();
+    }
+
+    /**
+     * Version numbers still stored for this photo, used to tell whether an
+     * annotation points to a version that was deleted or collapsed.
+     *
+     * @return list<int>
+     */
+    #[Computed]
+    public function versionNumbers(): array
+    {
+        return $this->photo->versions()
+            ->pluck('version_number')
+            ->map(fn ($number) => (int) $number)
+            ->values()
+            ->all();
+    }
+
+    #[Computed]
+    public function annotationsCount(): int
+    {
+        return $this->comments
+            ->filter(fn (PhotoComment $comment) => $comment->hasCoordinates())
+            ->count();
+    }
+
+    #[Computed]
+    public function staleAnnotationsCount(): int
+    {
+        return $this->comments
+            ->filter(fn (PhotoComment $comment) => $comment->hasCoordinates()
+                && $comment->isFromOtherVersion($this->currentVersionNumber))
+            ->count();
     }
 }; ?>
 
@@ -238,6 +321,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         })()
     "
     x-on:selection-limit-reached.window="$flux.modal('selection-limit').show()"
+    x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
@@ -310,6 +394,13 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     alt="{{ $photo->name }}"
                     x-cloak
                 />
+                @if ($photo->gallery->are_comments_enabled)
+                    <x-photo-annotations
+                        :photo="$photo"
+                        :comments="$this->comments"
+                        :can-annotate="$photo->gallery->are_annotations_enabled"
+                    />
+                @endif
             @elseif ($photo->isVideo())
                 <video
                     x-data="{
@@ -434,6 +525,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     icon="arrow-left"
                     size="sm"
                     icon:variant="micro"
+                    variant="primary"
+                    class="btn-ink"
                 >
                     {{ __('Back') }}
                 </flux:button>
@@ -441,7 +534,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             <div class="flex gap-3">
                 @if ($photo->gallery->are_comments_enabled)
                     <flux:modal.trigger name="add-comment">
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden">
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
                             @if ($this->comments->isEmpty())
                                 {{ __('Add comment') }}
                             @else
@@ -449,14 +542,18 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                             @endif
                         </flux:button>
 
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" square />
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
                     </flux:modal.trigger>
+
+                    <x-photo-annotate-button
+                        :can-annotate="$photo->isImage() && $photo->gallery->are_annotations_enabled"
+                    />
                 @endif
 
                 @if ($this->photo->gallery->is_share_downloadable)
                     @if ($photo->path && $photo->raw_path)
                         <flux:dropdown>
-                            <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                            <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" variant="primary" class="btn-ink" square />
                             <flux:menu>
                                 <flux:menu.item
                                     :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
@@ -478,6 +575,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                             icon="cloud-arrow-down"
                             icon:variant="mini"
                             size="sm"
+                            variant="primary"
+                            class="btn-ink"
                             square
                         />
                     @endif
@@ -489,17 +588,30 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                         wire:click="favorite"
                         icon="heart"
                         :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                        :variant="$photo->isFavorited() ? 'primary' : 'outline'"
                         size="sm"
-                        @class(['text-red-500!' => $photo->isFavorited()])
+                        @class(['btn-coral' => $photo->isFavorited()])
                         square
                     />
                 @endif
             </div>
         </div>
 
-        @if (config('picstome.file_versions_enabled') && $photo->gallery->is_share_versions_visible)
-            <livewire:photo-versions :photo="$photo" :manageable="false" />
-        @endif
+        <div
+            x-data="{ annotating: false }"
+            x-on:annotations-toggled.window="annotating = $event.detail.active"
+            x-show="! annotating && ! zoom"
+            style="display: none"
+            class="absolute right-3 bottom-3 z-10 flex items-center gap-2"
+        >
+            @if (config('picstome.file_versions_enabled') && $photo->gallery->is_share_versions_visible)
+                <livewire:photo-versions :photo="$photo" :manageable="false" />
+            @endif
+
+            @if ($photo->gallery->are_comments_enabled && $this->annotationsCount > 0)
+                <x-photo-annotations-toggle />
+            @endif
+        </div>
     </div>
     @if ($photo->gallery->are_comments_enabled)
         <flux:modal name="add-comment" class="w-full sm:max-w-lg">
@@ -508,46 +620,25 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
                     <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
                 </div>
+
+                @if ($this->staleAnnotationsCount > 0)
+                    <div
+                        class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+                    >
+                        {{ __('Annotations from older versions: :count', ['count' => $this->staleAnnotationsCount]) }}
+                    </div>
+                @endif
+
                 @if ($this->comments->isNotEmpty())
                     <div class="max-h-64 space-y-4 overflow-y-auto">
                         @foreach ($this->comments as $comment)
-                            <div
-                                @class([
-                                    'group relative rounded bg-zinc-50 p-3 dark:bg-zinc-900',
-                                    'ml-auto text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
-                                ])
-                            >
-                                <div
-                                    @class([
-                                        'mb-1 flex items-center gap-2',
-                                        'justify-end text-right' => $comment->user && $comment->user->is($photo->gallery->team->owner),
-                                    ])
-                                >
-                                    @if ($comment->user)
-                                        <flux:text variant="strong" class="text-sm font-semibold">
-                                            {{ $comment->user->name }}
-                                        </flux:text>
-                                        <flux:text>&middot;</flux:text>
-                                    @endif
-
-                                    <flux:text class="text-xs">
-                                        {{ $comment->created_at->diffForHumans() }}
-                                    </flux:text>
-                                    @if (auth()->check() && $photo->gallery->team->owner->is(auth()->user()))
-                                        <flux:button
-                                            wire:click="requestDeleteComment({{ $comment->id }})"
-                                            icon="x-mark"
-                                            variant="subtle"
-                                            size="xs"
-                                            inset="right"
-                                            square
-                                        />
-                                    @endif
-                                </div>
-                                <flux:text variant="strong">
-                                    {{ $comment->comment }}
-                                </flux:text>
-                            </div>
+                            <x-photo-comment-item
+                                :comment="$comment"
+                                :can-delete="auth()->check() && $photo->gallery->team->owner->is(auth()->user())"
+                                :align-right="$comment->user && $comment->user->is($photo->gallery->team->owner)"
+                                :current-version-number="$this->currentVersionNumber"
+                                :version-numbers="$this->versionNumbers"
+                            />
                         @endforeach
                     </div>
                 @endif

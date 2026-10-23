@@ -36,7 +36,7 @@ Preconditions:
 
 ## Gotchas
 
-- Unsubscribed personal teams are limited to 5 contracts per month (`picstome.personal_team_monthly_contract_limit`); always clean up verification contracts, and treat a refusal as the paywall, not a bug.
+- Unsubscribed personal teams are limited to 1 contract per month (`picstome.personal_team_monthly_contract_limit`); always clean up verification contracts, and treat a refusal as the paywall, not a bug.
 - The signature is drawn on a canvas (signature_pad), not uploaded; with no strokes the `Submit` fails validation on the signature field — a `Clear` button appears once strokes exist.
 - Signing also creates/updates a `Customer` row on the team. Since commit 77d2424 the resolution order is: an existing team customer with the signer email is reused; otherwise, if the contract has exactly 2 signatures and is linked to a photoshoot with a customer, signing **claims** that photoshoot customer (stamping the signer email/birthdate onto it) instead of creating a row; otherwise a new customer is created (name = legal name). With the simple 1-signature recipe above, expect one new customer keyed by the signer email with the birthdate backfilled — check `App\Models\Customer::where('email','verify-<label>-signer@example.com')` and remove it in cleanup.
 - The signer `email` field is required, so the empty-email normalization (blank customer emails stored as NULL, commit 7d4c6f4) is never exercised by signing; it shows on the customers pages (a customer saved with a blank email has `email => null`, and multiple no-email customers coexist).
