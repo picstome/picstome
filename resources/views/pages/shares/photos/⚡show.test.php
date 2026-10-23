@@ -324,3 +324,166 @@ test('guests cannot manage versions even with a tampered manageable flag', funct
 
     expect($photo->fresh()->path)->toBe('galleries/current.jpg');
 });
+
+test('a guest can pin a comment to a shared photo when annotations are enabled', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = $gallery->photos()->first();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('addAnnotation', 12.5, 87.5)
+        ->assertSet('pendingPinX', 12.5)
+        ->assertSet('pendingPinY', 87.5)
+        ->set('commentText', 'Retouch this spot')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->x)->toBe(12.5);
+    expect($comment->y)->toBe(87.5);
+    expect($comment->annotated_version_number)->toBe(1);
+    expect($comment->user_id)->toBeNull();
+});
+
+test('a guest cannot pin annotations when the gallery setting is disabled', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => false,
+    ]);
+    $photo = $gallery->photos()->first();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('addAnnotation', 10.0, 10.0)
+        ->assertStatus(403);
+});
+
+test('the team owner can pin annotations on a shared photo', function () {
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => false,
+    ]);
+    $photo = $gallery->photos()->first();
+
+    Livewire::actingAs($gallery->team->owner)
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('addAnnotation', 33.0, 66.0)
+        ->assertSet('pendingPinX', 33.0)
+        ->assertSet('pendingPinY', 66.0);
+});
+
+test('pins are rendered on the shared photo and removed with their comment', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $comment = PhotoComment::factory()->for($photo)->create([
+        'x' => 30,
+        'y' => 70,
+        'annotated_version_number' => 1,
+    ]);
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertSee('left: 30%', false)
+        ->assertSee('top: 70%', false)
+        ->assertSee('photo-comment-'.$comment->id, false);
+
+    Livewire::actingAs($gallery->team->owner)
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertHasNoErrors();
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertDontSee('left: 30%', false);
+});
+
+test('the shared comment list flags annotations made on an older version', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 1]);
+
+    PhotoComment::factory()->for($photo)->create([
+        'x' => 30,
+        'y' => 70,
+        'annotated_version_number' => 1,
+    ]);
+
+    $photo->update(['version_count' => 2]);
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertSee('Version 1')
+        ->assertSee('This annotation was made on version 1.');
+});
+
+test('annotation mode can be toggled from the toolbar in the browser', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => 'annotate1',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $page = visit("/shares/annotate1/photos/{$photo->id}");
+
+    $page->assertSee('Annotate')
+        ->click('Annotate')
+        ->assertSee('Exit annotation mode')
+        ->assertSee('Click on the photo to mark a spot');
+});
+
+test('a guest can create an annotation from the browser', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => 'annotate2',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $page = visit("/shares/annotate2/photos/{$photo->id}");
+
+    $page->script(<<<'JS'
+        const image = document.querySelector('#photo img')
+        image.removeAttribute('srcset')
+        image.src = '/favicon-96x96.png'
+    JS);
+
+    $page->wait(0.3);
+
+    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->wait(0.3);
+
+    $page->script(<<<'JS'
+        const layer = document.querySelector('#photo .cursor-crosshair')
+        const rect = layer.getBoundingClientRect()
+        layer.dispatchEvent(new MouseEvent('click', {
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+            bubbles: true,
+        }))
+    JS);
+
+    $page->wait(0.7);
+
+    $page->type('[name=commentText]', 'Retouch this spot');
+    $page->click('Submit');
+    $page->wait(0.7);
+
+    $comment = $photo->comments()->first();
+
+    expect($comment)->not->toBeNull();
+    expect($comment->comment)->toBe('Retouch this spot');
+    expect($comment->x)->toBeGreaterThan(49.9)->toBeLessThan(50.1);
+    expect($comment->y)->toBeGreaterThan(49.9)->toBeLessThan(50.1);
+    expect($comment->annotated_version_number)->toBe(1);
+});

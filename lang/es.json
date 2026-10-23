@@ -1054,5 +1054,16 @@
     "results": "resultados",
     "signatures": "firmas",
     "to": "al",
-    "total storage": "almacenamiento total"
+    "total storage": "almacenamiento total",
+    "Annotations from older versions: :count": "Anotaciones de versiones anteriores: :count",
+    "Annotate": "Anotar",
+    "Annotated on version :number": "Anotada en la versión :number",
+    "Click on the photo to mark a spot": "Haz clic en la foto para marcar un punto",
+    "Enable photo annotations": "Habilitar anotaciones en fotos",
+    "Exit annotation mode": "Salir del modo anotación",
+    "Photo annotation": "Anotación en la foto",
+    "That version is no longer available.": "Esa versión ya no está disponible.",
+    "This annotation was made on version :number.": "Esta anotación se hizo sobre la versión :number.",
+    "Visitors can pin a comment to a spot on the photo. Requires photo comments.": "Los visitantes pueden fijar un comentario en un punto de la foto. Requiere comentarios en fotos.",
+    "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.": "Suscríbete para habilitar la protección con contraseña, descripciones de galería, comentarios y anotaciones en fotos para galerías compartidas."
 }

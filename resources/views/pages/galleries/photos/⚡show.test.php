@@ -275,3 +275,116 @@ test('the current version cannot be deleted', function () {
 
     expect(PhotoVersion::find($version->id))->not->toBeNull();
 });
+
+test('the photographer can pin a comment to a photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 1]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('addAnnotation', 25.5, 60.0)
+        ->assertSet('pendingPinX', 25.5)
+        ->assertSet('pendingPinY', 60.0)
+        ->set('commentText', 'Retouch this corner')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->comment)->toBe('Retouch this corner');
+    expect($comment->x)->toBe(25.5);
+    expect($comment->y)->toBe(60.0);
+    expect($comment->annotated_version_number)->toBe(1);
+    expect($comment->hasCoordinates())->toBeTrue();
+});
+
+test('annotation coordinates are clamped to the image bounds', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('addAnnotation', 140.0, -20.0)
+        ->assertSet('pendingPinX', 100.0)
+        ->assertSet('pendingPinY', 0.0);
+});
+
+test('annotations cannot be pinned to a non-image photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->pdf()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('addAnnotation', 10.0, 10.0)
+        ->assertStatus(404);
+});
+
+test('a plain comment keeps the annotation fields empty', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->set('commentText', 'Just a comment')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->x)->toBeNull();
+    expect($comment->y)->toBeNull();
+    expect($comment->annotated_version_number)->toBeNull();
+    expect($comment->hasCoordinates())->toBeFalse();
+});
+
+test('annotations from an older version are flagged in the comment list', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 1]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('addAnnotation', 40.0, 40.0)
+        ->set('commentText', 'Check the left eye')
+        ->call('addComment');
+
+    $photo->update(['version_count' => 2]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo->fresh()])
+        ->assertSee('Version 1')
+        ->assertSee('Annotations from older versions: 1')
+        ->assertSee('This annotation was made on version 1.');
+});
+
+test('an annotation from a deleted version is marked as unavailable', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 3]);
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 2,
+        'path' => 'galleries/old.jpg',
+    ]);
+
+    PhotoComment::factory()->for($photo)->create([
+        'x' => 10,
+        'y' => 20,
+        'annotated_version_number' => 2,
+    ]);
+
+    $version->delete();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo->fresh()])
+        ->assertSee('That version is no longer available.');
+});
+
+test('the comment deep link opens and focuses the linked comment', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+    $comment = PhotoComment::factory()->for($photo)->create();
+
+    Livewire::actingAs($this->user)
+        ->withQueryParams(['comment' => $comment->id])
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->assertDispatched('focus-comment', id: $comment->id);
+});

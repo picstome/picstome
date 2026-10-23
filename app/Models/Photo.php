@@ -86,6 +86,18 @@ class Photo extends Model
     }
 
     /**
+     * Number of the version currently represented by this photo. The current
+     * file has no version row when it is the latest upload, so the stored
+     * version count is the fallback.
+     */
+    public function currentVersionNumber(): int
+    {
+        $number = $this->currentVersion?->version_number ?? $this->version_count;
+
+        return (int) ($number ?: 1);
+    }
+
+    /**
      * Copy the current photo state into the version history.
      */
     public function snapshotAsVersion(?int $versionNumber = null): PhotoVersion

@@ -50,6 +50,9 @@ class ShareGalleryForm extends Form
     #[Validate('required|boolean')]
     public $commentsEnabled = true;
 
+    #[Validate('required|boolean')]
+    public $annotationsEnabled = false;
+
     /**
      * Seed the form from the gallery when it is already shared, otherwise from
      * the authenticated user's remembered defaults.
@@ -71,6 +74,7 @@ class ShareGalleryForm extends Form
             $this->descriptionEnabled = ! empty($gallery->share_description);
             $this->description = $gallery->share_description;
             $this->commentsEnabled = (bool) $gallery->are_comments_enabled;
+            $this->annotationsEnabled = (bool) $gallery->are_annotations_enabled && $this->commentsEnabled;
 
             return;
         }
@@ -88,6 +92,7 @@ class ShareGalleryForm extends Form
         $this->descriptionEnabled = (bool) ($defaults['description_enabled'] ?? false);
         $this->description = null;
         $this->commentsEnabled = (bool) ($defaults['comments_enabled'] ?? true);
+        $this->annotationsEnabled = (bool) ($defaults['annotations_enabled'] ?? false) && $this->commentsEnabled;
     }
 
     /**
@@ -96,6 +101,12 @@ class ShareGalleryForm extends Form
     public function update()
     {
         $this->validate();
+
+        $annotationsEnabled = $this->annotationsEnabled && $this->commentsEnabled;
+
+        // Keep the form in sync with the persisted invariant so the switch
+        // reflects the saved state after sharing.
+        $this->annotationsEnabled = $annotationsEnabled;
 
         $this->gallery->update([
             'is_share_selectable' => $this->selectable,
@@ -112,6 +123,7 @@ class ShareGalleryForm extends Form
                 ? $this->description
                 : null,
             'are_comments_enabled' => $this->commentsEnabled,
+            'are_annotations_enabled' => $annotationsEnabled,
         ]);
 
         Auth::user()?->rememberShareGalleryDefaults([
@@ -123,6 +135,7 @@ class ShareGalleryForm extends Form
             'watermarked' => (bool) $this->watermarked,
             'description_enabled' => (bool) $this->descriptionEnabled,
             'comments_enabled' => (bool) $this->commentsEnabled,
+            'annotations_enabled' => $annotationsEnabled,
             'versions_visible' => config('picstome.file_versions_enabled') && (bool) $this->versionsVisible,
         ]);
     }

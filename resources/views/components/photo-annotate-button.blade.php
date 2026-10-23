@@ -1,0 +1,29 @@
+@props([
+    'canAnnotate' => false,
+])
+
+@if ($canAnnotate)
+    <flux:button
+        icon="map-pin"
+        size="sm"
+        class="max-sm:hidden"
+        x-data="{ active: false }"
+        x-on:annotations-toggled.window="active = $event.detail.active"
+        x-on:click="$dispatch('toggle-annotations')"
+        x-bind:class="active ? 'bg-brand-green! text-brand-cream!' : ''"
+    >
+        <span x-show="!active">{{ __('Annotate') }}</span>
+        <span x-show="active" x-cloak>{{ __('Exit annotation mode') }}</span>
+    </flux:button>
+
+    <flux:button
+        icon="map-pin"
+        size="sm"
+        class="sm:hidden"
+        square
+        x-data="{ active: false }"
+        x-on:annotations-toggled.window="active = $event.detail.active"
+        x-on:click="$dispatch('toggle-annotations')"
+        x-bind:class="active ? 'bg-brand-green! text-brand-cream!' : ''"
+    />
+@endif

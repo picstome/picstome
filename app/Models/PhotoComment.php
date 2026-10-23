@@ -14,6 +14,15 @@ class PhotoComment extends Model
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'x' => 'float',
+            'y' => 'float',
+            'annotated_version_number' => 'integer',
+        ];
+    }
+
     protected static function booted()
     {
         static::created(function ($comment) {
@@ -35,5 +44,23 @@ class PhotoComment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Whether this comment is pinned to a position on the photo.
+     */
+    public function hasCoordinates(): bool
+    {
+        return $this->x !== null && $this->y !== null;
+    }
+
+    /**
+     * Whether the annotation was made on a version other than the current one.
+     * Plain comments (without an annotated version) are never stale.
+     */
+    public function isFromOtherVersion(int $currentVersionNumber): bool
+    {
+        return $this->annotated_version_number !== null
+            && (int) $this->annotated_version_number !== $currentVersionNumber;
     }
 }

@@ -978,5 +978,16 @@
     "photos": "photos",
     "remaining files.": "remaining files.",
     "signatures": "signatures",
-    "total storage": "total storage"
+    "total storage": "total storage",
+    "Annotations from older versions: :count": "Annotations from older versions: :count",
+    "Annotate": "Annotate",
+    "Annotated on version :number": "Annotated on version :number",
+    "Click on the photo to mark a spot": "Click on the photo to mark a spot",
+    "Enable photo annotations": "Enable photo annotations",
+    "Exit annotation mode": "Exit annotation mode",
+    "Photo annotation": "Photo annotation",
+    "That version is no longer available.": "That version is no longer available.",
+    "This annotation was made on version :number.": "This annotation was made on version :number.",
+    "Visitors can pin a comment to a spot on the photo. Requires photo comments.": "Visitors can pin a comment to a spot on the photo. Requires photo comments.",
+    "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.": "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries."
 }

@@ -465,6 +465,63 @@ describe('Gallery Sharing', function () {
         expect($gallery->are_comments_enabled)->toBeFalse();
     });
 
+    it('can enable and disable photo annotations for a shared gallery', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.annotationsEnabled', true)
+            ->call('share');
+
+        $gallery->refresh();
+
+        expect($gallery->are_annotations_enabled)->toBeTrue();
+        expect($gallery->are_comments_enabled)->toBeTrue();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.annotationsEnabled', false)
+            ->call('share');
+
+        expect($gallery->fresh()->are_annotations_enabled)->toBeFalse();
+    });
+
+    it('does not enable photo annotations when photo comments are disabled', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.commentsEnabled', false)
+            ->set('shareForm.annotationsEnabled', true)
+            ->call('share');
+
+        $gallery->refresh();
+
+        expect($gallery->are_comments_enabled)->toBeFalse();
+        expect($gallery->are_annotations_enabled)->toBeFalse();
+    });
+
+    it('does not seed photo annotations when photo comments are disabled', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+        $gallery = Gallery::factory()->for($this->team)->shared()->create([
+            'are_comments_enabled' => false,
+            'are_annotations_enabled' => true,
+        ]);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->assertSet('shareForm.annotationsEnabled', false);
+    });
+
+    it('forces photo annotations off when the team is not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.commentsEnabled', true)
+            ->set('shareForm.annotationsEnabled', true)
+            ->call('share');
+
+        expect($gallery->fresh()->are_annotations_enabled)->toBeFalse();
+    });
+
     it('can be shared with a description', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create();

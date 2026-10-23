@@ -67,6 +67,21 @@ gallery modal. Shared visitors can compare versions but cannot restore, delete
 or download historical versions. Watermarked galleries render the watermark in
 the comparison modal.
 
+## Annotations
+
+Photo comments can be pinned to a normalized position on the image
+(`photo_comments.x` / `y`, percentages of the rendered image). A pinned
+comment stores the version number it was created on
+(`annotated_version_number`) instead of a version row reference, so deleting
+versions or running `photos:collapse-versions` does not break the data:
+
+- Annotations are only created against the current version. The comparison
+  modal is read-only for annotations.
+- When the current version changes (new upload or restore), annotations from
+  another version are flagged in the comment list and drawn dimmed on the photo.
+- `replaceCurrentVersion` keeps the version number, so an in-place replacement
+  does not mark annotations as outdated.
+
 ## Feature flag and rollback
 
 `PICSTOME_FILE_VERSIONS_ENABLED=false` is the emergency deprecation mode. It:

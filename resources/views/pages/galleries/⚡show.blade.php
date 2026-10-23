@@ -213,6 +213,7 @@ new class extends Component
             $this->shareForm->passwordProtected = false;
             $this->shareForm->descriptionEnabled = false;
             $this->shareForm->commentsEnabled = false;
+            $this->shareForm->annotationsEnabled = false;
         }
 
         $this->shareForm->update();
@@ -891,7 +892,7 @@ new class extends Component
                 <flux:callout icon="bolt" variant="secondary" class="mb-4">
                     <flux:callout.heading>{{ __('Unlock more sharing features') }}</flux:callout.heading>
                     <flux:callout.text>
-                        {{ __('Subscribe to enable password protection, gallery descriptions, and photo comments for shared galleries.') }}
+                        {{ __('Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.') }}
                     </flux:callout.text>
                     <x-slot name="actions">
                         <flux:button :href="route('subscribe')" variant="primary">
@@ -926,6 +927,14 @@ new class extends Component
                 wire:model="shareForm.commentsEnabled"
                 :label="__('Enable photo comments')"
                 :disabled="!$this->team->subscribed()"
+                x-on:change="if (! $event.target.checked) $wire.set('shareForm.annotationsEnabled', false)"
+            />
+
+            <flux:switch
+                wire:model="shareForm.annotationsEnabled"
+                :label="__('Enable photo annotations')"
+                :description="__('Visitors can pin a comment to a spot on the photo. Requires photo comments.')"
+                x-bind:disabled="{{ $this->team->subscribed() ? '! $wire.shareForm.commentsEnabled' : 'true' }}"
             />
 
             <div x-show="$wire.shareForm.descriptionEnabled">
