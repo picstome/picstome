@@ -362,7 +362,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         @endif
 
         <div
-            class="absolute top-0 bottom-0 left-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
+            class="absolute top-0 bottom-0 left-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($previous)
@@ -378,7 +378,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             @endif
         </div>
         <div
-            class="absolute top-0 right-0 bottom-0 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
+            class="absolute top-0 right-0 bottom-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($next)
@@ -394,7 +394,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             @endif
         </div>
         <div
-            class="absolute top-0 right-0 left-0 flex items-center justify-between gap-4 p-3 max-sm:p-1"
+            class="absolute top-0 right-0 left-0 z-30 flex items-center justify-between gap-4 p-3 max-sm:p-1"
             :class="zoom ? 'hidden' : 'flex'"
         >
             <div class="flex gap-3">
@@ -410,7 +410,11 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     {{ __('Back') }}
                 </flux:button>
             </div>
-            <div class="flex gap-3">
+            <div
+                class="flex gap-3"
+                x-data="{ annotating: false }"
+                x-on:annotations-toggled.window="annotating = $event.detail.active"
+            >
                 <flux:tooltip toggleable>
                     <flux:button icon="information-circle" size="sm" variant="subtle" />
                     <flux:tooltip.content class="max-w-[20rem] space-y-2">
@@ -439,17 +443,19 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     </flux:menu>
                 </flux:dropdown>
 
-                <flux:modal.trigger name="add-comment">
-                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
-                        @if ($this->comments->isEmpty())
-                            {{ __('Add comment') }}
-                        @else
-                            {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
-                        @endif
-                    </flux:button>
+                <div class="contents" x-show="! annotating">
+                    <flux:modal.trigger name="add-comment">
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
+                            @if ($this->comments->isEmpty())
+                                {{ __('Add comment') }}
+                            @else
+                                {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
+                            @endif
+                        </flux:button>
 
-                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
-                </flux:modal.trigger>
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
+                    </flux:modal.trigger>
+                </div>
 
                 <x-photo-annotate-button :can-annotate="$photo->isImage()" />
 
