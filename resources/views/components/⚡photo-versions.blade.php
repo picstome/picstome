@@ -194,7 +194,7 @@ new class extends Component
 <div class="contents">
     @if ($this->versions->isNotEmpty())
         <flux:modal.trigger name="photo-versions-{{ $photo->id }}">
-            <flux:button size="sm" icon="rectangle-stack" variant="primary">
+            <flux:button size="sm" icon="rectangle-stack" variant="primary" class="btn-ink">
                 {{ __('Versions') }} ({{ $this->versions->count() }})
             </flux:button>
         </flux:modal.trigger>

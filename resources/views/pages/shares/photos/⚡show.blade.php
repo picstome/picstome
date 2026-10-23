@@ -525,6 +525,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     icon="arrow-left"
                     size="sm"
                     icon:variant="micro"
+                    variant="primary"
+                    class="btn-ink"
                 >
                     {{ __('Back') }}
                 </flux:button>
@@ -532,7 +534,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             <div class="flex gap-3">
                 @if ($photo->gallery->are_comments_enabled)
                     <flux:modal.trigger name="add-comment">
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden">
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
                             @if ($this->comments->isEmpty())
                                 {{ __('Add comment') }}
                             @else
@@ -540,7 +542,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                             @endif
                         </flux:button>
 
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" square />
+                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
                     </flux:modal.trigger>
 
                     <x-photo-annotate-button
@@ -551,7 +553,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @if ($this->photo->gallery->is_share_downloadable)
                     @if ($photo->path && $photo->raw_path)
                         <flux:dropdown>
-                            <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                            <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" variant="primary" class="btn-ink" square />
                             <flux:menu>
                                 <flux:menu.item
                                     :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
@@ -573,6 +575,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                             icon="cloud-arrow-down"
                             icon:variant="mini"
                             size="sm"
+                            variant="primary"
+                            class="btn-ink"
                             square
                         />
                     @endif
@@ -584,8 +588,9 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                         wire:click="favorite"
                         icon="heart"
                         :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                        :variant="$photo->isFavorited() ? 'primary' : 'outline'"
                         size="sm"
-                        @class(['text-red-500!' => $photo->isFavorited()])
+                        @class(['btn-coral' => $photo->isFavorited()])
                         square
                     />
                 @endif

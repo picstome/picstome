@@ -404,6 +404,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     icon="arrow-left"
                     size="sm"
                     icon:variant="micro"
+                    variant="primary"
+                    class="btn-ink"
                 >
                     {{ __('Back') }}
                 </flux:button>
@@ -438,7 +440,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 </flux:dropdown>
 
                 <flux:modal.trigger name="add-comment">
-                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden">
+                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
                         @if ($this->comments->isEmpty())
                             {{ __('Add comment') }}
                         @else
@@ -446,14 +448,14 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                         @endif
                     </flux:button>
 
-                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" square />
+                    <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
                 </flux:modal.trigger>
 
                 <x-photo-annotate-button :can-annotate="$photo->isImage()" />
 
                 @if ($photo->path && $photo->raw_path)
                     <flux:dropdown>
-                        <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" square />
+                        <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" variant="primary" class="btn-ink" square />
                         <flux:menu>
                             <flux:menu.item
                                 :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
@@ -475,6 +477,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                         icon="cloud-arrow-down"
                         icon:variant="mini"
                         size="sm"
+                        variant="primary"
+                        class="btn-ink"
                         square
                     />
                 @endif
@@ -482,8 +486,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     wire:click="favorite"
                     icon="heart"
                     :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
+                    :variant="$photo->isFavorited() ? 'primary' : 'outline'"
                     size="sm"
-                    @class(['text-red-500!' => $photo->isFavorited()])
+                    @class(['btn-coral' => $photo->isFavorited()])
                     square
                 />
             </div>
