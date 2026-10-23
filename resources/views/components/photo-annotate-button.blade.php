@@ -10,7 +10,7 @@
         x-data="{ active: false }"
         x-on:annotations-toggled.window="active = $event.detail.active"
         x-on:click="$dispatch('toggle-annotations')"
-        x-bind:class="active ? 'bg-brand-green! text-brand-cream!' : ''"
+        x-bind:class="active ? 'bg-(--color-accent)! text-(--color-accent-foreground)!' : ''"
     >
         <span x-show="!active">{{ __('Annotate') }}</span>
         <span x-show="active" x-cloak>{{ __('Exit annotation mode') }}</span>
@@ -24,6 +24,6 @@
         x-data="{ active: false }"
         x-on:annotations-toggled.window="active = $event.detail.active"
         x-on:click="$dispatch('toggle-annotations')"
-        x-bind:class="active ? 'bg-brand-green! text-brand-cream!' : ''"
+        x-bind:class="active ? 'bg-(--color-accent)! text-(--color-accent-foreground)!' : ''"
     />
 @endif

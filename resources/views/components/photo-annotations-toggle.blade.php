@@ -10,6 +10,7 @@
     <flux:button
         size="sm"
         icon="eye-slash"
+        variant="primary"
         x-show="visible"
         x-on:click="$dispatch('toggle-annotations-visibility')"
     >
@@ -19,6 +20,7 @@
     <flux:button
         size="sm"
         icon="eye"
+        variant="primary"
         x-show="! visible"
         x-cloak
         style="display: none"

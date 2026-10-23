@@ -489,7 +489,13 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             </div>
         </div>
 
-        <div class="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2" :class="zoom ? 'hidden' : ''">
+        <div
+            x-data="{ annotating: false }"
+            x-on:annotations-toggled.window="annotating = $event.detail.active"
+            x-show="! annotating && ! zoom"
+            style="display: none"
+            class="absolute right-3 bottom-3 z-10 flex items-center gap-2"
+        >
             @if (config('picstome.file_versions_enabled'))
                 <livewire:photo-versions :photo="$photo" :manageable="true" />
             @endif

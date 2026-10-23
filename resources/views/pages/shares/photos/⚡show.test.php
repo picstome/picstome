@@ -515,6 +515,22 @@ test('a guest can create an annotation from the browser', function () {
 
     $clickToggle('Show annotations');
     expect($pinIsVisible())->toBeTrue();
+
+    $controlsAreVisible = fn (): bool => (bool) $page->script(<<<'JS'
+        (() => {
+            const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Hide annotations')
+
+            return button ? button.offsetParent !== null : false
+        })()
+    JS);
+
+    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->wait(0.2);
+    expect($controlsAreVisible())->toBeFalse();
+
+    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->wait(0.2);
+    expect($controlsAreVisible())->toBeTrue();
 });
 
 test('the annotations toggle appears only when the photo has annotations', function () {
