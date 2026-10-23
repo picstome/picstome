@@ -463,6 +463,15 @@ test('a guest can create an annotation from the browser', function () {
     $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
     $page->wait(0.3);
 
+    // The comments button hides and the toolbar stays clickable above the
+    // annotation capture layer.
+    $page->assertDontSee('Add comment')
+        ->click('Exit annotation mode')
+        ->assertSee('Annotate');
+
+    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->wait(0.3);
+
     $page->script(<<<'JS'
         const layer = document.querySelector('#photo .cursor-crosshair')
         const rect = layer.getBoundingClientRect()
