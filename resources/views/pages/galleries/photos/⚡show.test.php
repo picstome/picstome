@@ -388,3 +388,22 @@ test('the comment deep link opens and focuses the linked comment', function () {
         ->test('pages::galleries.photos.show', ['photo' => $photo])
         ->assertDispatched('focus-comment', id: $comment->id);
 });
+
+test('the annotations toggle appears only when the photo has annotations', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    actingAs($this->user)->get('/galleries/1/photos/1')
+        ->assertOk()
+        ->assertDontSee('Hide annotations');
+
+    PhotoComment::factory()->for($photo)->create([
+        'x' => 30,
+        'y' => 70,
+        'annotated_version_number' => 1,
+    ]);
+
+    actingAs($this->user)->get('/galleries/1/photos/1')
+        ->assertOk()
+        ->assertSee('Hide annotations');
+});

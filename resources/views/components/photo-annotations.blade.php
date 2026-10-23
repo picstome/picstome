@@ -13,6 +13,7 @@
     <div
         x-data="{
             annotating: false,
+            annotationsVisible: true,
             box: { left: 0, top: 0, width: 0, height: 0 },
             pointerStart: null,
             visibleImage() {
@@ -62,11 +63,21 @@
             },
             toggle() {
                 this.annotating = !this.annotating
+
+                if (this.annotating && !this.annotationsVisible) {
+                    this.annotationsVisible = true
+                    this.$dispatch('annotations-visibility-changed', { visible: true })
+                }
+
                 this.$dispatch('annotations-toggled', { active: this.annotating })
 
                 if (this.annotating) {
                     this.$nextTick(() => this.updateBox())
                 }
+            },
+            toggleVisibility() {
+                this.annotationsVisible = !this.annotationsVisible
+                this.$dispatch('annotations-visibility-changed', { visible: this.annotationsVisible })
             },
             startPointer(event) {
                 this.pointerStart = { x: event.clientX, y: event.clientY }
@@ -94,6 +105,7 @@
         }"
         x-init="updateBox()"
         x-on:toggle-annotations.window="toggle()"
+        x-on:toggle-annotations-visibility.window="toggleVisibility()"
         x-on:resize.window.debounce.100ms="updateBox()"
         x-on:load.window.capture.debounce.100ms="updateBox()"
         x-show="typeof zoom === 'undefined' || !zoom"
@@ -111,6 +123,7 @@
 
         @if ($pins->isNotEmpty())
             <div
+                x-show="annotationsVisible"
                 class="absolute"
                 :style="`left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;`"
             >

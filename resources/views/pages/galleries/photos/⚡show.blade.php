@@ -208,6 +208,14 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     }
 
     #[Computed]
+    public function annotationsCount(): int
+    {
+        return $this->comments
+            ->filter(fn (PhotoComment $comment) => $comment->hasCoordinates())
+            ->count();
+    }
+
+    #[Computed]
     public function staleAnnotationsCount(): int
     {
         return $this->comments
@@ -481,9 +489,15 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             </div>
         </div>
 
-        @if (config('picstome.file_versions_enabled'))
-            <livewire:photo-versions :photo="$photo" :manageable="true" />
-        @endif
+        <div class="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2" :class="zoom ? 'hidden' : ''">
+            @if (config('picstome.file_versions_enabled'))
+                <livewire:photo-versions :photo="$photo" :manageable="true" />
+            @endif
+
+            @if ($this->annotationsCount > 0)
+                <x-photo-annotations-toggle />
+            @endif
+        </div>
     </div>
 
     <flux:modal name="add-comment" class="w-full sm:max-w-lg">

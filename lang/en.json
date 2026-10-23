@@ -989,5 +989,7 @@
     "That version is no longer available.": "That version is no longer available.",
     "This annotation was made on version :number.": "This annotation was made on version :number.",
     "Visitors can pin a comment to a spot on the photo. Requires photo comments.": "Visitors can pin a comment to a spot on the photo. Requires photo comments.",
-    "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.": "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries."
+    "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.": "Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.",
+    "Hide annotations": "Hide annotations",
+    "Show annotations": "Show annotations"
 }

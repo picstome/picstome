@@ -486,4 +486,56 @@ test('a guest can create an annotation from the browser', function () {
     expect($comment->x)->toBeGreaterThan(49.9)->toBeLessThan(50.1);
     expect($comment->y)->toBeGreaterThan(49.9)->toBeLessThan(50.1);
     expect($comment->annotated_version_number)->toBe(1);
+
+    $page->wait(0.5);
+
+    $pinIsVisible = fn (): bool => (bool) $page->script(<<<'JS'
+        (() => {
+            const pin = document.querySelector('#photo button[title="Photo annotation"]')
+
+            return pin ? pin.offsetParent !== null : false
+        })()
+    JS);
+
+    $clickToggle = function (string $label) use ($page): void {
+        $page->script(<<<JS
+            (() => {
+                const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '{$label}')
+                button?.click()
+            })()
+        JS);
+
+        $page->wait(0.2);
+    };
+
+    expect($pinIsVisible())->toBeTrue();
+
+    $clickToggle('Hide annotations');
+    expect($pinIsVisible())->toBeFalse();
+
+    $clickToggle('Show annotations');
+    expect($pinIsVisible())->toBeTrue();
+});
+
+test('the annotations toggle appears only when the photo has annotations', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertDontSee('Hide annotations');
+
+    PhotoComment::factory()->for($photo)->create([
+        'x' => 30,
+        'y' => 70,
+        'annotated_version_number' => 1,
+    ]);
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertSee('Hide annotations');
 });
