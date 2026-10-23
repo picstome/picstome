@@ -37,7 +37,10 @@ return [
         ),
     ],
 
-    'personal_team_monthly_contract_limit' => 5,
+    /**
+     * Maximum number of contracts a free team can create per month.
+     */
+    'personal_team_monthly_contract_limit' => 1,
 
     /**
      * Maximum number of invoices a free team can issue per month.
