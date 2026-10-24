@@ -570,3 +570,59 @@ test('the annotations toggle appears only when the photo has annotations', funct
         ->assertOk()
         ->assertSee('Hide annotations');
 });
+
+test('a platform admin can pin annotations on a shared photo they do not own', function () {
+    config(['picstome.admin_emails' => ['admin@example.com']]);
+
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = $gallery->photos()->first();
+    $admin = User::factory()->create(['email' => 'admin@example.com']);
+
+    Livewire::actingAs($admin)
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('addAnnotation', 15.0, 25.0)
+        ->assertSet('pendingPinX', 15.0)
+        ->set('commentText', 'Admin annotation')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->comment)->toBe('Admin annotation');
+    expect($comment->user_id)->toBe($admin->id);
+    expect($comment->x)->toBe(15.0);
+    expect($comment->y)->toBe(25.0);
+});
+
+test('a platform admin can comment and delete comments on a shared photo', function () {
+    config(['picstome.admin_emails' => ['admin@example.com']]);
+
+    $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
+        'are_comments_enabled' => true,
+    ]);
+    $photo = $gallery->photos()->first();
+    $admin = User::factory()->create(['email' => 'admin@example.com']);
+
+    $guestComment = $photo->comments()->create([
+        'user_id' => null,
+        'comment' => 'Guest comment',
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->set('commentText', 'Admin comment')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->where('user_id', $admin->id)->count())->toBe(1);
+
+    Livewire::actingAs($admin)
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('deleteComment', $guestComment->id)
+        ->assertHasNoErrors();
+
+    expect($photo->comments()->find($guestComment->id))->toBeNull();
+});

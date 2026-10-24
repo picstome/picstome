@@ -86,7 +86,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
         $isOwner = Auth::check() && $this->photo->gallery->team->owner->is(Auth::user());
 
-        abort_if(Auth::check() && ! $isOwner, 403);
+        abort_if(Auth::check() && ! $this->canManageComments, 403);
 
         abort_unless($isOwner || $this->photo->gallery->are_annotations_enabled, 403);
 
@@ -110,7 +110,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             'commentText' => 'required|string|max:1000',
         ]);
 
-        abort_if(Auth::check() && ! $this->photo->gallery->team->owner->is(Auth::user()), 403);
+        abort_if(Auth::check() && ! $this->canManageComments, 403);
 
         $hasPin = $this->pendingPinX !== null && $this->pendingPinY !== null && $this->photo->isImage();
 
@@ -153,9 +153,23 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
         abort_unless($comment->photo->is($this->photo), 404);
 
-        abort_unless(Auth::check() && $this->photo->gallery->team->owner->is(Auth::user()), 403);
+        abort_unless($this->canManageComments, 403);
 
         $comment->delete();
+    }
+
+    /**
+     * Whether the authenticated visitor can comment, annotate and moderate.
+     * The team owner keeps this ability; platform admins can help on any
+     * shared gallery without impersonating the studio.
+     */
+    #[Computed]
+    public function canManageComments(): bool
+    {
+        $user = Auth::user();
+
+        return $user !== null
+            && ($user->is_admin || $this->photo->gallery->team->owner->is($user));
     }
 
     #[Computed]
@@ -640,7 +654,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                         @foreach ($this->comments as $comment)
                             <x-photo-comment-item
                                 :comment="$comment"
-                                :can-delete="auth()->check() && $photo->gallery->team->owner->is(auth()->user())"
+                                :can-delete="$this->canManageComments"
                                 :align-right="$comment->user && $comment->user->is($photo->gallery->team->owner)"
                                 :current-version-number="$this->currentVersionNumber"
                                 :version-numbers="$this->versionNumbers"
