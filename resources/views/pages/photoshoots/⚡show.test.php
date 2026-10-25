@@ -183,6 +183,20 @@ test('can edit a team photoshoot', function () {
     });
 });
 
+test('shows a download button for executed contracts with a pdf', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+    $executed = Contract::factory()->for($this->team)->for($photoshoot)->executed()->create([
+        'pdf_file_path' => 'contracts/1/contract.pdf',
+    ]);
+    $pending = Contract::factory()->for($this->team)->for($photoshoot)->create();
+
+    actingAs($this->user)
+        ->get('/photoshoots/1')
+        ->assertOk()
+        ->assertSee(route('contracts.download', $executed), false)
+        ->assertDontSee(route('contracts.download', $pending), false);
+});
+
 test('can add new contract', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
