@@ -352,6 +352,7 @@ new class extends Component
                 <x-table.column>{{ __('Location') }}</x-table.column>
                 <x-table.column>{{ __('Shooting date') }}</x-table.column>
                 <x-table.column>{{ __('Signatures') }}</x-table.column>
+                <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
             </x-table.columns>
 
             <x-table.rows>
@@ -381,6 +382,17 @@ new class extends Component
                         <x-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                        </x-table.cell>
+                        <x-table.cell class="text-end">
+                            @if ($contract->isExecuted() && $contract->pdf_file_path)
+                                <flux:button
+                                    size="sm"
+                                    variant="ghost"
+                                    icon="document-arrow-down"
+                                    :href="route('contracts.download', ['contract' => $contract])"
+                                    :aria-label="__('Download contract')"
+                                />
+                            @endif
                         </x-table.cell>
                     </x-table.row>
                 @endforeach

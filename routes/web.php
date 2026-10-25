@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContractPdfController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
@@ -83,6 +84,10 @@ Route::livewire('/contract-templates/{contractTemplate}', 'pages::contract-templ
 Route::livewire('/contracts', 'pages::contracts')->name('contracts')->middleware(['auth', 'verified']);
 
 Route::livewire('/contracts/{contract}', 'pages::contracts.show')->name('contracts.show')->middleware(['auth', 'verified']);
+
+Route::get('/contracts/{contract}/download', ContractPdfController::class)
+    ->name('contracts.download')
+    ->middleware(['auth', 'verified']);
 
 Route::redirect('/branding', '/branding/general')->name('branding')->middleware('auth');
 

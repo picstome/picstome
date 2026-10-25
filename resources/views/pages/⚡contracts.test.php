@@ -5,6 +5,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
 use Livewire\Livewire;
 
@@ -40,6 +41,21 @@ describe('Viewing contracts', function () {
             ->get('/contracts')
             ->assertOk()
             ->assertSee(route('contract-templates'), false);
+    });
+
+    it('shows a download button for executed contracts with a pdf', function () {
+        Storage::fake(config('picstome.disk'));
+
+        $executed = Contract::factory()->for($this->team)->executed()->create([
+            'pdf_file_path' => 'contracts/1/contract.pdf',
+        ]);
+        $pending = Contract::factory()->for($this->team)->create();
+
+        actingAs($this->user)
+            ->get('/contracts')
+            ->assertOk()
+            ->assertSee(route('contracts.download', $executed), false)
+            ->assertDontSee(route('contracts.download', $pending), false);
     });
 });
 
