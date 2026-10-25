@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -90,6 +91,18 @@ class Gallery extends Model
     public function photos()
     {
         return $this->hasMany(Photo::class);
+    }
+
+    /**
+     * First displayable image in the gallery, exposed as a relation so it can
+     * be eager loaded without hydrating every photo in the gallery.
+     */
+    public function firstImagePhoto(): HasOne
+    {
+        return $this->hasOne(Photo::class)->ofMany(
+            ['id' => 'min'],
+            fn (Builder $query) => $query->images(),
+        );
     }
 
     /**
@@ -684,14 +697,16 @@ class Gallery extends Model
     }
 
     /**
-     * Get the first image (not video) in the gallery
+     * Get the first image (not video) in the gallery.
      */
     public function firstImage()
     {
         return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
-            $photos = $this->relationLoaded('photos') ? $this->photos : $this->photos()->get();
+            if ($this->relationLoaded('photos')) {
+                return $this->photos->first(fn (Photo $photo) => $photo->isImage());
+            }
 
-            return $photos->first(fn ($photo) => $photo->isImage());
+            return $this->firstImagePhoto;
         });
     }
 

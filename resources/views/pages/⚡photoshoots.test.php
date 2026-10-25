@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Customer;
+use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\Photoshoot;
 use App\Models\Team;
 use App\Models\User;
@@ -29,6 +31,58 @@ it('shows only photoshoots belonging to users team', function () {
     expect($component->photoshoots->contains($photoshootA))->toBeTrue();
     expect($component->photoshoots->contains($photoshootB))->toBeFalse();
     expect($component->photoshoots->contains($photoshootC))->toBeTrue();
+});
+
+it('uses the first image of the latest gallery with photos as the cover', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create(['date' => now()]);
+
+    $olderGallery = Gallery::factory()->for($this->team)->for($photoshoot)->create();
+    $olderPhoto = Photo::factory()->for($olderGallery)->create([
+        'name' => 'older.jpg',
+        'path' => 'galleries/older.jpg',
+    ]);
+
+    $galleryWithImage = Gallery::factory()->for($this->team)->for($photoshoot)->create();
+    $coverPhoto = Photo::factory()->for($galleryWithImage)->create([
+        'name' => 'cover.jpg',
+        'path' => 'galleries/cover.jpg',
+    ]);
+
+    $latestVideoGallery = Gallery::factory()->for($this->team)->for($photoshoot)->create();
+    Photo::factory()->for($latestVideoGallery)->create([
+        'name' => 'clip.mp4',
+        'path' => 'galleries/clip.mp4',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots');
+
+    $component
+        ->assertSee($coverPhoto->small_thumbnail_url)
+        ->assertDontSee($olderPhoto->small_thumbnail_url);
+});
+
+it('shows a placeholder when no gallery has a photo', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+    $gallery = Gallery::factory()->for($this->team)->for($photoshoot)->create();
+
+    Photo::factory()->for($gallery)->create([
+        'name' => 'clip.mp4',
+        'path' => 'galleries/clip.mp4',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots');
+
+    $component->assertSeeHtml('data-test="photoshoot-cover-placeholder"');
+});
+
+it('paginates photoshoots', function () {
+    Photoshoot::factory()->for($this->team)->count(25)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots');
+
+    expect($component->photoshoots->total())->toBe(25);
+    expect($component->photoshoots->hasPages())->toBeTrue();
+    expect($component->photoshoots->count())->toBe(24);
 });
 
 it('allows a user to create a photoshoot with a customer email', function () {

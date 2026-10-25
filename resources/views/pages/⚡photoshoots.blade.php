@@ -27,8 +27,13 @@ new class extends Component
     {
         return Auth::user()->currentTeam
             ->photoshoots()
+            ->with([
+                'customer',
+                'latestGalleryWithImages.firstImagePhoto.gallery',
+            ])
+            ->withCount(['galleries', 'photos'])
             ->latest('date')
-            ->paginate(25);
+            ->paginate(24);
     }
 
     #[Computed]
@@ -55,53 +60,112 @@ new class extends Component
     </div>
 
     @if ($this->photoshoots?->isNotEmpty())
-        <x-table id="table" class="mt-8">
-            <x-table.columns>
-                <x-table.column>{{ __('Name') }}</x-table.column>
-                <x-table.column>{{ __('Location') }}</x-table.column>
-            </x-table.columns>
-
-            <x-table.rows>
+        <div class="mt-12">
+            <div id="photoshoots-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach ($this->photoshoots as $photoshoot)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
-                            <a
-                                href="/photoshoots/{{ $photoshoot->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
-                            <p>{{ $photoshoot->name }}</p>
-                            <flux:text>
-                                {{ $photoshoot->customer?->name }}
-                            </flux:text>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
-                            <a
-                                href="/photoshoots/{{ $photoshoot->id }}"
-                                class="absolute inset-0 focus:outline-hidden"
-                            ></a>
-                            <p>{{ $photoshoot->formatted_date }}{{ $photoshoot->location ? ', ' . $photoshoot->location : '' }}</p>
-                        </x-table.cell>
-                    </x-table.row>
+                    @php($cover = $photoshoot->latestGalleryWithImages?->firstImagePhoto)
+
+                    <flux:card
+                        class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                    >
+                        <a
+                            href="{{ route('photoshoots.show', ['photoshoot' => $photoshoot]) }}"
+                            class="block"
+                            wire:navigate
+                        >
+                            <div
+                                class="relative aspect-3/2 w-full overflow-hidden rounded-t-lg bg-zinc-200 dark:bg-zinc-700"
+                            >
+                                @if ($cover)
+                                    <img
+                                        src="{{ $cover->small_thumbnail_url }}"
+                                        alt="{{ $photoshoot->name }}"
+                                        class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        loading="lazy"
+                                        width="400"
+                                        height="267"
+                                    />
+                                @else
+                                    <div
+                                        class="flex size-full items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900"
+                                        data-test="photoshoot-cover-placeholder"
+                                    >
+                                        <flux:icon.camera class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                        <span class="sr-only">{{ __('No photos') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="space-y-3 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <flux:heading size="lg">{{ $photoshoot->name }}</flux:heading>
+
+                                    @if ($photoshoot->photos_count > 0)
+                                        <span
+                                            class="inline-flex shrink-0 items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400"
+                                            title="{{ __('photos') }}"
+                                        >
+                                            <flux:icon.photo variant="micro" class="size-4" />
+                                            {{ $photoshoot->photos_count }}
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if ($photoshoot->customer || $photoshoot->customer_name)
+                                    <flux:text variant="subtle" size="sm">
+                                        {{ $photoshoot->customer?->name ?? $photoshoot->customer_name }}
+                                    </flux:text>
+                                @endif
+
+                                <div
+                                    class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400"
+                                >
+                                    @if ($photoshoot->formatted_date)
+                                        <span class="inline-flex items-center gap-1">
+                                            <flux:icon.calendar variant="micro" class="size-4" />
+                                            {{ $photoshoot->formatted_date }}
+                                        </span>
+                                    @endif
+
+                                    @if ($photoshoot->location)
+                                        <span class="inline-flex items-center gap-1">
+                                            <flux:icon.map-pin variant="micro" class="size-4" />
+                                            {{ $photoshoot->location }}
+                                        </span>
+                                    @endif
+
+                                    @if ($photoshoot->galleries_count > 0)
+                                        <span class="inline-flex items-center gap-1" title="{{ __('Galleries') }}">
+                                            <flux:icon.rectangle-stack variant="micro" class="size-4" />
+                                            {{ $photoshoot->galleries_count }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </a>
+                    </flux:card>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </div>
 
-        <div
-            x-data
-            x-on:click="
-                let el = $event.target
-                while (el && el !== $el) {
-                    if (el.hasAttribute('wire:click')) {
-                        document.getElementById('table')?.scrollIntoView({ behavior: 'smooth' })
-                        break
+            <div
+                x-data
+                x-on:click="
+                    let el = $event.target
+                    while (el && el !== $el) {
+                        if (el.hasAttribute('wire:click')) {
+                            document
+                                .getElementById('photoshoots-grid')
+                                ?.scrollIntoView({ behavior: 'smooth' })
+                            break
+                        }
+
+                        el = el.parentElement
                     }
-
-                    el = el.parentElement
-                }
-            "
-            class="mt-6"
-        >
-            <flux:pagination :paginator="$this->photoshoots" />
+                "
+                class="mt-6"
+            >
+                <flux:pagination :paginator="$this->photoshoots" />
+            </div>
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
@@ -128,12 +192,7 @@ new class extends Component
             <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
             @if ($this->customers)
-                <flux:select
-                    wire:model.live="form.customer"
-                    :label="__('Customer')"
-                    variant="listbox"
-                    searchable
-                >
+                <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
                     <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
                     @foreach ($this->customers as $customer)
                         <flux:select.option value="{{ $customer->id }}">
