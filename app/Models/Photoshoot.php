@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Traits\FormatsFileSize;
 use Database\Factories\PhotoshootFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Photoshoot extends Model
 {
@@ -31,6 +34,29 @@ class Photoshoot extends Model
     public function galleries()
     {
         return $this->hasMany(Gallery::class);
+    }
+
+    /**
+     * Newest gallery of the photoshoot that contains at least one image.
+     * Older galleries are used as fallback when the newest ones are empty.
+     */
+    public function latestGalleryWithImages(): HasOne
+    {
+        return $this->hasOne(Gallery::class)->ofMany(
+            ['id' => 'max'],
+            fn (Builder $query) => $query->whereHas(
+                'photos',
+                fn (Builder $query) => $query->images(),
+            ),
+        );
+    }
+
+    /**
+     * Every photo across the galleries of the photoshoot, used for counters.
+     */
+    public function photos(): HasManyThrough
+    {
+        return $this->hasManyThrough(Photo::class, Gallery::class);
     }
 
     public function contracts()

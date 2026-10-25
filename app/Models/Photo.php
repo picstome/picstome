@@ -7,6 +7,8 @@ use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
 use Carbon\Carbon;
 use Database\Factories\PhotoFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -114,6 +116,19 @@ class Photo extends Model
             'status' => $this->status,
             'uploaded_at' => $this->uploaded_at ?? $this->created_at ?? now(),
         ]);
+    }
+
+    /**
+     * Limit the query to displayable image files.
+     */
+    #[Scope]
+    protected function images(Builder $query): void
+    {
+        $query->where(function (Builder $query) {
+            foreach (['jpg', 'jpeg', 'png', 'tiff'] as $extension) {
+                $query->orWhere('path', 'like', '%.'.$extension);
+            }
+        });
     }
 
     public function scopeFavorited($query)
