@@ -39,7 +39,7 @@ decides when it reaches `main`. Report the state of the work and wait.
   adding new logic.
 - New behavior has tests, including a regression test for the bug/feature.
 - `vendor/bin/pint --dirty` passes.
-- `php artisan test --compact` passes.
+- `composer test` passes (runs the full Pest suite in parallel).
 - `npm run build` passes when frontend assets changed.
 - Migrations have a working `down()` and have been tested with fresh + rollback.
 - External services and storage are faked in tests. Never rely on a real S3
@@ -72,6 +72,8 @@ legacy migrations that are not fully reversible.
 
 ## Testing
 
+- Run the full suite with `composer test` (Pest in parallel). While iterating,
+  use `./vendor/bin/pest --compact --filter=testName`.
 - Feature tests cover the happy path, permissions and failure cases.
 - UI changes require a browser test where practical.
 - Queue jobs must be tested with a fake/sync queue.

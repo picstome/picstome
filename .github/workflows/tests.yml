@@ -7,10 +7,15 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     environment: Testing
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -21,7 +26,8 @@ jobs:
         with:
           php-version: '8.5'
           tools: composer:v2
-          coverage: xdebug
+          coverage: none
+          ini-values: opcache.enable_cli=1
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -32,17 +38,32 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
       - name: Add Flux Credentials Loaded From ENV
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Install Flux Pro
-        run: composer require livewire/flux-pro --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Copy Environment File
         run: cp .env.example .env
@@ -61,4 +82,4 @@ jobs:
           php artisan migrate --force
 
       - name: Run Tests
-        run: ./vendor/bin/pest
+        run: ./vendor/bin/pest --parallel --compact --default-time-limit=60
