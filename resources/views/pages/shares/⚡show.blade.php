@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Gallery;
+use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use SummarizesGalleryTabs;
+
     public Gallery $gallery;
 
     public Collection $favorites;
@@ -93,50 +96,17 @@ new #[Layout('layouts.guest')] class extends Component
                 </x-subheading>
             @endif
         </div>
-        <div class="flex gap-4">
-            @if ($this->gallery->is_share_downloadable)
-                <flux:button
-                    x-show="$wire.activeTab !== 'favorited'"
-                    :href="route('shares.download', ['gallery' => $gallery])"
-                    variant="primary"
-                >
-                    {{ __('Download') }}
-                </flux:button>
-                <flux:button
-                    x-show="$wire.activeTab === 'favorited'"
-                    :href="route('shares.download', ['gallery' => $gallery, 'favorites' => true])"
-                    variant="primary"
-                    x-cloak
-                >
-                    {{ __('Download') }}
-                </flux:button>
-            @endif
-        </div>
     </div>
     @if ($this->allPhotos->isNotEmpty())
         <div class="mt-8 max-sm:-mx-5">
-            <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">
-                    {{ __('All photos') }}
-                </flux:navbar.item>
-                @if ($gallery->is_share_selectable)
-                    <flux:navbar.item
-                        @click="$wire.activeTab = 'favorited'"
-                        x-bind:data-current="$wire.activeTab === 'favorited'"
-                    >
-                        {{ __('Favorited') }}
-                    </flux:navbar.item>
-                @endif
-
-                @if ($gallery->are_comments_enabled)
-                    <flux:navbar.item
-                        @click="$wire.activeTab = 'commented'"
-                        x-bind:data-current="$wire.activeTab === 'commented'"
-                    >
-                        {{ __('Commented') }}
-                    </flux:navbar.item>
-                @endif
-            </flux:navbar>
+            <x-gallery-tabs
+                :favorites-count="$this->favorites->count()"
+                :selection-limit="$gallery->share_selection_limit"
+                :comments-count="$this->totalComments()"
+                :show-favorites="$gallery->is_share_selectable"
+                :show-comments="$gallery->are_comments_enabled"
+                :download-url="$gallery->is_share_downloadable ? route('shares.download', ['gallery' => $gallery]) : null"
+            />
             <div x-show="$wire.activeTab === 'all'" class="pt-1">
                 <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
                     @foreach ($this->allPhotos as $photo)
@@ -176,6 +146,15 @@ new #[Layout('layouts.guest')] class extends Component
                     </div>
                 @endif
             </div>
+            @if ($gallery->is_share_downloadable)
+                <div x-show="$wire.activeTab === 'download'" class="pt-1">
+                    <x-gallery-download-panel
+                        :count="$this->allPhotos->count()"
+                        :size="$this->formattedDownloadSize()"
+                        :href="route('shares.download', ['gallery' => $gallery])"
+                    />
+                </div>
+            @endif
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
@@ -192,7 +171,7 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
     @endsubscribed
 
-    <x-selection-limit-modal />
+    <x-selection-limit-modal :limit="$gallery->share_selection_limit" />
 </div>
 @script
     <script>

@@ -50,6 +50,96 @@ describe('Gallery Viewing', function () {
         expect($component->allPhotos->contains($photoC))->toBeTrue();
     });
 
+    it('shows the gallery tab labels with favorite and comment counts', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'is_share_selectable' => true,
+            'share_selection_limit' => 10,
+            'are_comments_enabled' => true,
+        ]);
+        Photo::factory()->count(3)->for($gallery)->favorited()->create();
+        $commentedPhoto = Photo::factory()->for($gallery)->create();
+        PhotoComment::factory()->count(3)->for($commentedPhoto)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertSee('Favorites (3/10)')
+            ->assertSee('Comments (3)');
+    });
+
+    it('does not show a download tab on the owner gallery page', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertDontSee('Download gallery');
+    });
+
+    it('does not overflow horizontally on small mobile screens', function () {
+        $user = User::factory()->withPersonalTeam()->create(['language' => 'es']);
+        $gallery = Gallery::factory()->for($user->currentTeam)->shared()->selectable(2)->public()->create([
+            'name' => 'test recuerda',
+            'are_comments_enabled' => true,
+        ]);
+        Photo::factory()->count(2)->for($gallery)->favorited()->create(['status' => 'processed']);
+
+        $this->actingAs($user);
+
+        $page = visit("/galleries/{$gallery->id}");
+
+        foreach ([320, 375] as $width) {
+            $page->resize($width, 900);
+            $page->wait(0.1);
+
+            expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
+                ->toBeTrue();
+        }
+    });
+
+    it('accepts files dropped anywhere while the add media modal is open', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+
+        $page->click('Add media');
+        $page->wait(0.3);
+
+        $page->script(<<<'JS'
+            (() => {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(new File(['x'], 'outside-drop.exe', { type: 'application/octet-stream' }));
+
+                document.body.dispatchEvent(new DragEvent('dragover', {
+                    bubbles: true,
+                    cancelable: true,
+                    dataTransfer,
+                }));
+            })()
+        JS);
+
+        $page->wait(0.2);
+        $page->assertAttributeContains('#add-photos-uploader', 'class', 'ring-2');
+
+        $page->script(<<<'JS'
+            (() => {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(new File(['x'], 'outside-drop.exe', { type: 'application/octet-stream' }));
+
+                document.body.dispatchEvent(new DragEvent('drop', {
+                    bubbles: true,
+                    cancelable: true,
+                    dataTransfer,
+                }));
+            })()
+        JS);
+
+        $page->wait(0.3);
+        $page->assertSee('outside-drop.exe');
+    });
+
     it('prevents guests from viewing any galleries', function () {
         Gallery::factory()->for($this->team)->create();
 

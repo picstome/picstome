@@ -6,6 +6,7 @@ use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Traits\SummarizesGalleryTabs;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -20,7 +21,7 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithFileUploads;
+    use SummarizesGalleryTabs, WithFileUploads;
 
     public Gallery $gallery;
 
@@ -418,10 +419,10 @@ new class extends Component
     </div>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-        <div class="max-sm:w-full sm:flex-1">
-            <div class="flex items-center gap-4">
-                <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
-                <div class="flex items-center gap-2">
+        <div class="max-sm:w-full min-w-0 sm:flex-1">
+            <div class="flex flex-wrap items-center gap-4">
+                <x-heading level="1" size="xl" class="min-w-0 break-words">{{ $gallery->name }}</x-heading>
+                <div class="flex flex-wrap items-center gap-2">
                     @if ($gallery->is_shared)
                         <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
                     @endif
@@ -455,7 +456,7 @@ new class extends Component
                 </div>
             @endif
         </div>
-        <div class="flex flex-wrap justify-end gap-4">
+        <div class="flex flex-wrap justify-end gap-4 max-sm:justify-start">
             <flux:dropdown>
                 <flux:button icon="ellipsis-horizontal" variant="subtle" />
 
@@ -527,29 +528,19 @@ new class extends Component
 
     @if ($this->allPhotos?->isNotEmpty())
         <div class="mt-8 max-sm:-mx-5">
-            <flux:navbar class="border-b border-zinc-800/10 dark:border-white/20">
-                <flux:navbar.item @click="$wire.activeTab = 'all'" x-bind:data-current="$wire.activeTab === 'all'">
-                    {{ __('All photos') }}
-                </flux:navbar.item>
-                <flux:navbar.item
-                    @click="$wire.activeTab = 'favorited'"
-                    x-bind:data-current="$wire.activeTab === 'favorited'"
-                >
-                    {{ __('Favorited') }}
-                </flux:navbar.item>
-                @if ($favorites->isNotEmpty())
-                    <flux:modal.trigger name="favorite-list">
-                        <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
-                    </flux:modal.trigger>
-                @endif
-
-                <flux:navbar.item
-                    @click="$wire.activeTab = 'commented'"
-                    x-bind:data-current="$wire.activeTab === 'commented'"
-                >
-                    {{ __('Commented') }}
-                </flux:navbar.item>
-            </flux:navbar>
+            <x-gallery-tabs
+                :favorites-count="$this->favorites->count()"
+                :selection-limit="$gallery->share_selection_limit"
+                :comments-count="$this->totalComments()"
+            >
+                <x-slot name="afterFavorites">
+                    @if ($favorites->isNotEmpty())
+                        <flux:modal.trigger name="favorite-list">
+                            <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
+                        </flux:modal.trigger>
+                    @endif
+                </x-slot>
+            </x-gallery-tabs>
 
             <div x-show="$wire.activeTab === 'all'" class="pt-1">
                 <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
@@ -654,12 +645,14 @@ new class extends Component
 
             <div
                 x-data="multiFileUploader"
-                x-on:dragover.prevent="dragActive = true"
-                x-on:dragleave.prevent="dragActive = false"
-                x-on:drop.prevent="handleDrop($event)"
+                x-on:dragover.window="handleWindowDragOver($event)"
+                x-on:dragleave.window="handleWindowDragLeave($event)"
+                x-on:drop.window="handleWindowDrop($event)"
+                x-on:modal-close.document="if ($event.detail.name === 'add-photos') resetDrag()"
                 x-on:confirm-replace-all.window="confirmReplaceAll()"
                 x-on:confirm-replace-conflict.window="confirmReplaceConflict()"
-                :class="{'ring-2 ring-blue-400 ring-offset-4 rounded-sm': dragActive}"
+                :class="{'ring-2 ring-(--color-accent) ring-offset-4 rounded-lg': dragActive}"
+                id="add-photos-uploader"
             >
                 <!-- File Input -->
                 <flux:input
@@ -669,7 +662,7 @@ new class extends Component
                     multiple
                 />
                 <flux:description class="mt-2 max-sm:hidden">
-                    {{ __('Drag and drop files here, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
+                    {{ __('Drag and drop files anywhere on the screen, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
                 </flux:description>
 
                 <flux:error name="photos" />
@@ -1444,6 +1437,47 @@ new class extends Component
                     await this.markConflicts();
                     this.processUploadQueue();
                 }
+            },
+
+            isAddPhotosModalOpen() {
+                return document.querySelector('dialog[data-modal="add-photos"]')?.open === true;
+            },
+
+            hasDraggedFiles(event) {
+                return Array.from(event.dataTransfer?.types ?? []).includes('Files');
+            },
+
+            handleWindowDragOver(event) {
+                if (! this.isAddPhotosModalOpen() || ! this.hasDraggedFiles(event)) {
+                    return;
+                }
+
+                event.preventDefault();
+                this.dragActive = true;
+            },
+
+            handleWindowDragLeave(event) {
+                if (! this.isAddPhotosModalOpen()) {
+                    return;
+                }
+
+                if (event.relatedTarget === null) {
+                    this.dragActive = false;
+                }
+            },
+
+            async handleWindowDrop(event) {
+                if (! this.isAddPhotosModalOpen() || ! this.hasDraggedFiles(event)) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                await this.handleDrop(event);
+            },
+
+            resetDrag() {
+                this.dragActive = false;
             },
 
             canUpload() {

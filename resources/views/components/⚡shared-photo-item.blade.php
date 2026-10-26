@@ -17,9 +17,7 @@ new class extends Component
     {
         abort_unless($this->photo->gallery->is_share_selectable, 403);
 
-        $this->photo->toggleFavorite();
-
-        if ($this->photo->gallery->isSelectionLimitReached()) {
+        if ($this->photo->toggleFavoriteAndCheckSelectionLimit()) {
             $this->dispatch('selection-limit-reached');
 
             $this->photo->gallery->notifyOwnerWhenSelectionLimitReached();

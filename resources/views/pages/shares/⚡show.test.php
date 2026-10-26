@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoComment;
 use App\Models\User;
 use App\Notifications\SelectionLimitReached;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,6 +91,96 @@ test('visitors can view shared gallery favorites', function () {
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     expect($component->favorites->contains($favorite))->toBeTrue();
+});
+
+test('shared gallery shows the download tab with the photo count and total size', function () {
+    $gallery = Gallery::factory()->shared()->downloadable()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create(['size' => 1024 * 1024]);
+    Photo::factory()->for($gallery)->create(['size' => 1024 * 1024]);
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Download')
+        ->assertSee('This gallery has 2 photos and weighs approximately 2 MB.');
+});
+
+test('shared gallery hides the download tab when downloads are disabled', function () {
+    $gallery = Gallery::factory()->shared()->undownloadable()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertDontSee('Download gallery')
+        ->assertDontSee('This gallery has');
+});
+
+test('shared gallery shows the favorite count and selection limit', function () {
+    $gallery = Gallery::factory()->shared()->selectable(10)->for($this->team)->create();
+    Photo::factory()->count(3)->for($gallery)->favorited()->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Favorites (3/10)');
+});
+
+test('shared gallery shows the favorite count without a selection limit', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create();
+    Photo::factory()->count(2)->for($gallery)->favorited()->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Favorites (2)');
+});
+
+test('shared gallery shows the total comment count in the comments tab', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['are_comments_enabled' => true]);
+    $commentedPhoto = Photo::factory()->for($gallery)->create();
+    $otherCommentedPhoto = Photo::factory()->for($gallery)->create();
+    PhotoComment::factory()->count(2)->for($commentedPhoto)->create();
+    PhotoComment::factory()->for($otherCommentedPhoto)->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Comments (3)');
+});
+
+test('shared gallery shows the comments label without a count when there are none', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['are_comments_enabled' => true]);
+    Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Comments')
+        ->assertDontSee('Comments (');
+});
+
+test('selection limit modal shows the number of allowed photos', function () {
+    $gallery = Gallery::factory()->shared()->selectable(2)->for($this->team)->create();
+    Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('You have reached the limit of 2 photos.');
+});
+
+test('shared gallery labels and download warning are translated to Spanish', function () {
+    app()->setLocale('es');
+
+    $gallery = Gallery::factory()->shared()->downloadable()->selectable(10)->for($this->team)->create([
+        'are_comments_enabled' => true,
+    ]);
+    $favoritePhoto = Photo::factory()->for($gallery)->favorited()->create();
+    Photo::factory()->for($gallery)->create();
+    PhotoComment::factory()->for($favoritePhoto)->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertSee('Favoritos (1/10)')
+        ->assertSee('Comentarios (1)')
+        ->assertSee('Descargar galería')
+        ->assertSee('Esta galería tiene 2 fotos y pesa aproximadamente 2 KB.')
+        ->assertSee('Probablemente no se descargue en un móvil.')
+        ->assertSee('Recuerda que también puedes descargar las fotos de forma individual.');
 });
 
 test('shared gallery displays description when present', function () {
