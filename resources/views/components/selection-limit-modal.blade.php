@@ -3,6 +3,8 @@
     gallery. Replaces the native browser alert with a branded dialog.
 --}}
 
+@props(['limit' => null])
+
 <flux:modal name="selection-limit" class="w-full sm:max-w-md">
     <div class="space-y-6">
         <div class="flex items-start gap-3">
@@ -16,7 +18,9 @@
                 <flux:heading size="lg">{{ __('Selection limit reached') }}</flux:heading>
 
                 <flux:subheading class="mt-1">
-                    {{ __('You have reached the limit for photo selection.') }}
+                    {{ $limit
+                        ? __('You have reached the limit of :limit photos.', ['limit' => $limit])
+                        : __('You have reached the limit for photo selection.') }}
                 </flux:subheading>
             </div>
         </div>

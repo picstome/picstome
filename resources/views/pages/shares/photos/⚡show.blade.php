@@ -56,11 +56,11 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     {
         abort_unless($this->photo->gallery->is_share_selectable, 401);
 
-        if ($this->photo->gallery->photos()->favorited()->count() === $this->photo->gallery->share_selection_limit) {
+        if ($this->photo->toggleFavoriteAndCheckSelectionLimit()) {
             $this->dispatch('selection-limit-reached');
-        }
 
-        $this->photo->toggleFavorite();
+            $this->photo->gallery->notifyOwnerWhenSelectionLimitReached();
+        }
     }
 
     #[Computed]
@@ -688,7 +688,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         :method="$this->pendingCommentId ? 'deleteComment('.$this->pendingCommentId.')' : null"
     />
 
-    <x-selection-limit-modal />
+    <x-selection-limit-modal :limit="$photo->gallery->share_selection_limit" />
 </div>
 
 @assets

@@ -5,7 +5,9 @@ use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Models\PhotoVersion;
 use App\Models\User;
+use App\Notifications\SelectionLimitReached;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -63,15 +65,44 @@ test('photo cannot be favorited when the gallery is not selectable', function ()
     expect($gallery->photos()->first()->isFavorited())->toBeFalse();
 });
 
-test('favoriting a photo dispatches a selection limit reached event when the gallery selection limit is exceeded', function () {
-    $gallery = Gallery::factory()->shared()->selectable(limit: 5)->has(Photo::factory()->favorited()->count(5))->create();
+test('favoriting the photo that reaches the selection limit dispatches a selection limit reached event', function () {
+    $gallery = Gallery::factory()->shared()->selectable(limit: 5)->has(Photo::factory()->favorited()->count(4))->create();
     $gallery->photos()->save(Photo::factory()->unfavorited()->make());
-
-    expect($gallery->photos()->favorited()->count())->toBe(5);
 
     $component = Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $gallery->photos()->unfavorited()->first()])->call('favorite');
 
     $component->assertDispatched('selection-limit-reached');
+});
+
+test('favoriting a photo beyond the selection limit does not dispatch a selection limit reached event', function () {
+    $gallery = Gallery::factory()->shared()->selectable(limit: 5)->has(Photo::factory()->favorited()->count(5))->create();
+    $gallery->photos()->save(Photo::factory()->unfavorited()->make());
+
+    $component = Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $gallery->photos()->unfavorited()->first()])->call('favorite');
+
+    $component->assertNotDispatched('selection-limit-reached');
+});
+
+test('unfavoriting a photo at the selection limit does not dispatch a selection limit reached event', function () {
+    $gallery = Gallery::factory()->shared()->selectable(limit: 2)->has(Photo::factory()->favorited()->count(2))->create();
+    $photo = $gallery->photos()->favorited()->first();
+
+    $component = Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])->call('favorite');
+
+    $component->assertNotDispatched('selection-limit-reached');
+
+    expect($photo->fresh()->isFavorited())->toBeFalse();
+});
+
+test('reaching the selection limit from the photo page notifies the gallery owner', function () {
+    Notification::fake();
+
+    $gallery = Gallery::factory()->shared()->selectable(limit: 2)->has(Photo::factory()->favorited())->create();
+    $photo = Photo::factory()->for($gallery)->unfavorited()->create();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])->call('favorite');
+
+    Notification::assertSentTo($gallery->team->owner, SelectionLimitReached::class);
 });
 
 test('unauthenticated visitors to a password-protected gallery are redirected to the unlock page', function () {

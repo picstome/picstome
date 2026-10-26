@@ -148,6 +148,22 @@ class Photo extends Model
         Cache::forget("gallery:{$this->gallery_id}:favorites:ids");
     }
 
+    /**
+     * Toggle the favorite state and report whether this action selected the
+     * photo and completed the gallery selection limit.
+     *
+     * Unselecting never reports the limit so guests are not warned when they
+     * remove a photo to choose another one.
+     */
+    public function toggleFavoriteAndCheckSelectionLimit(): bool
+    {
+        $selecting = ! $this->isFavorited();
+
+        $this->toggleFavorite();
+
+        return $selecting && $this->gallery->isSelectionLimitReached();
+    }
+
     public function isFavorited()
     {
         return $this->favorited_at !== null;
