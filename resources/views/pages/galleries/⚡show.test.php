@@ -81,7 +81,7 @@ describe('Gallery Viewing', function () {
             'name' => 'test recuerda',
             'are_comments_enabled' => true,
         ]);
-        Photo::factory()->count(2)->for($gallery)->favorited()->create();
+        Photo::factory()->count(2)->for($gallery)->favorited()->create(['status' => 'processed']);
 
         $this->actingAs($user);
 
@@ -98,7 +98,7 @@ describe('Gallery Viewing', function () {
 
     it('accepts files dropped anywhere while the add media modal is open', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
-        Photo::factory()->for($gallery)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
 
         $this->actingAs($this->user);
 
