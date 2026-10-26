@@ -251,7 +251,7 @@ protected function isAccessible(User $user, ?string $path = null): bool
 ## Pest
 
 - This project uses Pest for testing. Create tests: `php artisan make:test --pest {name}`.
-- Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
+- Run tests: `composer test` or filter: `./vendor/bin/pest --compact --filter=testName`.
 - Do NOT delete tests without approval.
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Pest documentation and updated code examples.
 - IMPORTANT: Activate `pest-testing` every time you're working with a Pest or testing-related task.
@@ -278,7 +278,7 @@ Minimum checklist:
 - Document non-obvious code inline (PHPDoc/services/jobs/migrations/components).
 - Review DRY: reuse existing services, components and traits.
 - Add feature and regression tests; fake S3/FTP/queues in tests.
-- Run `vendor/bin/pint --dirty` and `php artisan test --compact`.
+- Run `vendor/bin/pint --dirty` and `composer test`.
 - Migrations need a working `down()` and fresh + rollback verification.
 - Destructive data operations require dry-run and explicit `--force`.
 - Update `docs/` for operational, migration or rollback requirements.
