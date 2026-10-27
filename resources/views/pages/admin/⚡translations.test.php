@@ -143,7 +143,7 @@ it('does not scroll horizontally', function (int $width) {
     visit('/admin/translations')
         ->resize($width, 900)
         ->assertSee('Translations')
-        ->assertScript("document.documentElement.scrollWidth <= window.innerWidth + 1", true)
+        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
         ->assertScript("(() => { const el = document.querySelector('ui-table-scroll-area'); return el === null || el.scrollWidth <= el.clientWidth + 1; })()", true)
         ->assertNoJavascriptErrors();
 })->with([1024, 1280, 1440, 1920]);
@@ -153,7 +153,7 @@ it('opens the editor from the browser', function () {
 
     visit('/admin/translations')
         ->assertSee('Translations')
-        ->assertScript("document.documentElement.scrollWidth <= window.innerWidth + 1", true)
+        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
         ->assertScript("(() => { const el = document.querySelector('ui-table-scroll-area'); return el === null || el.scrollWidth <= el.clientWidth + 1; })()", true)
         ->fill('[data-test="translation-search"]', 'Hello!')
         ->click('[data-test="edit-'.md5('Hello!').'"]')
