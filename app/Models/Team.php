@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\StorageAlmostFull;
 use App\Services\FakePaymentService;
 use App\Services\StorageUsageService;
 use Database\Factories\TeamFactory;
@@ -25,6 +26,24 @@ class Team extends Model
 
     protected $guarded = [];
 
+    protected static function booted(): void
+    {
+        static::updated(function (Team $team): void {
+            if (! $team->wasChanged(['custom_storage_limit', 'lifetime_at'])) {
+                return;
+            }
+
+            // Reload first so the flags are dirty even when the in-memory
+            // model did not have the previously stored values loaded.
+            $team->refresh();
+
+            $team->forceFill([
+                'storage_limit_notification_sent_at' => null,
+                'storage_alert_dismissed_at' => null,
+            ])->saveQuietly();
+        });
+    }
+
     public function canStoreFile(int $size): bool
     {
         if ($this->storage_limit === null) {
@@ -47,6 +66,8 @@ class Team extends Model
             'stripe_test_mode' => 'boolean',
             'stripe_test_onboarded' => 'boolean',
             'dismissed_setup_steps' => 'array',
+            'storage_limit_notification_sent_at' => 'datetime',
+            'storage_alert_dismissed_at' => 'datetime',
         ];
     }
 
@@ -284,14 +305,81 @@ class Team extends Model
             if ($this->storage_limit === null) {
                 return null;
             }
+
             if ($this->storage_limit == 0) {
                 return 100;
             }
 
-            $percent = ($this->calculateStorageUsed() / $this->storage_limit) * 100;
-
-            return number_format($percent);
+            return number_format($this->storageUsedPercentage());
         });
+    }
+
+    /**
+     * Raw storage usage percentage, used by alerts and the dashboard banner.
+     */
+    public function storageUsedPercentage(): float
+    {
+        if ($this->storage_limit === null) {
+            return 0.0;
+        }
+
+        if ($this->storage_limit == 0) {
+            return 100.0;
+        }
+
+        return ($this->calculateStorageUsed() / $this->storage_limit) * 100;
+    }
+
+    /**
+     * Link to the place where the owner can buy more storage.
+     */
+    public function storageUpgradeUrl(): string
+    {
+        return $this->subscribed()
+            ? route('billing-portal')
+            : route('subscribe');
+    }
+
+    /**
+     * Whether the dashboard should show the storage warning banner.
+     */
+    public function shouldShowStorageAlert(): bool
+    {
+        return $this->storage_limit !== null
+            && $this->storage_alert_dismissed_at === null
+            && $this->storageUsedPercentage() >= config('picstome.storage_warning_percent', 95);
+    }
+
+    /**
+     * Hide the dashboard warning until the plan changes.
+     */
+    public function dismissStorageAlert(): void
+    {
+        $this->forceFill(['storage_alert_dismissed_at' => now()])->save();
+    }
+
+    /**
+     * Send the storage warning email once per plan.
+     *
+     * The flag is reset only when custom_storage_limit or lifetime_at changes,
+     * so freeing space and filling it again on the same plan does not resend.
+     */
+    public function notifyOwnerWhenStorageAlmostFull(): void
+    {
+        if ($this->storage_limit === null
+            || $this->storage_limit_notification_sent_at !== null
+            || $this->storageUsedPercentage() < config('picstome.storage_warning_percent', 95)) {
+            return;
+        }
+
+        $used = $this->calculateStorageUsed();
+
+        $this->forceFill(['storage_limit_notification_sent_at' => now()])->save();
+
+        $this->owner?->notify(
+            (new StorageAlmostFull($used, $this->storage_limit, $this->storageUpgradeUrl()))
+                ->locale($this->owner->language ?? config('app.locale'))
+        );
     }
 
     protected function hasUnlimitedStorage(): Attribute

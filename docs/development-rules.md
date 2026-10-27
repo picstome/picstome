@@ -104,6 +104,13 @@ folder after `lang/`, so edits win at runtime. The files are not tracked by
 git and must be included in backups. If the app runs on multiple servers, the
 folder must be shared or the overrides will diverge.
 
+## Storage alerts
+
+The storage warning email is sent once per plan when usage reaches 95%. The
+dashboard banner can be dismissed until the plan changes. Both flags reset when
+`custom_storage_limit` or `lifetime_at` changes. Deploy the storage-alert
+migration before restarting queue workers.
+
 ## Deployment checklist
 
 1. Merge only after CI and quality are green.

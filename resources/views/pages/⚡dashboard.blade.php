@@ -296,6 +296,8 @@ new class extends Component
 } ?>
 
 <div>
+    <livewire:storage-alert-banner />
+
     <div class="flex items-center gap-3">
         <span class="bg-brand-coral h-10 w-1 rounded-full"></span>
 

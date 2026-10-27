@@ -283,6 +283,15 @@
                                 >
                                     {{ __('Translations') }}
                                 </flux:navlist.item>
+
+                                <flux:navlist.item
+                                    :href="route('admin.emails')"
+                                    icon="envelope"
+                                    wire:navigate
+                                    :current="request()->routeIs('admin.emails')"
+                                >
+                                    {{ __('Emails') }}
+                                </flux:navlist.item>
                             </flux:navlist.group>
                         @endif
                     </flux:navlist>
