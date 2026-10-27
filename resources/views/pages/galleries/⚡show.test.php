@@ -66,6 +66,20 @@ describe('Gallery Viewing', function () {
             ->assertSee('Comments (3)');
     });
 
+    it('shows the public gallery explanation tooltip on hover', function () {
+        $user = User::factory()->withPersonalTeam()->create(['language' => 'en']);
+        $gallery = Gallery::factory()->for($user->currentTeam)->public()->create();
+
+        $this->actingAs($user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[x-tooltip]');
+        $page->wait(0.3);
+
+        expect($page->script("document.querySelector('[data-tsui-tooltip]')?.innerText.trim()"))
+            ->toContain('This gallery is public and visible in your portfolio section.');
+    });
+
     it('does not show a download tab on the owner gallery page', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create();

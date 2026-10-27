@@ -433,14 +433,12 @@ new class extends Component
                     @if ($gallery->is_public)
                         <div class="flex items-center gap-1">
                             <x-ts-badge color="blue" size="sm">{{ __('Public') }}</x-ts-badge>
-                            <x-ts-tooltip toggleable>
-                                <x-ts-button icon="information-circle" size="xs" variant="subtle" />
-                                <x-ts-tooltip-content class="max-w-[20rem]">
-                                    <p>
-                                        {{ __('This gallery is public and visible in your portfolio section.') }}
-                                    </p>
-                                </x-ts-tooltip-content>
-                            </x-ts-tooltip>
+                            <x-tooltip
+                                :text="__('This gallery is public and visible in your portfolio section.')"
+                                icon="information-circle"
+                                color="zinc"
+                                xs
+                            />
                         </div>
                     @endif
                 </div>
