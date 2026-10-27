@@ -147,15 +147,15 @@ class extends Component
                         alt="{{ $team->name }}"
                     />
                 @else
-                    <flux:heading size="xl">{{ $team->name }}</flux:heading>
+                    <x-ts-heading size="xl">{{ $team->name }}</x-ts-heading>
                 @endif
             </a>
 
             <div>
-                <flux:heading size="xl">{{ __('Payment Successful!') }}</flux:heading>
-                <flux:text class="mt-2">
+                <x-ts-heading size="xl">{{ __('Payment Successful!') }}</x-ts-heading>
+                <x-ts-text class="mt-2">
                     {{ __('Thank you for your payment. Your transaction was completed successfully.') }}
-                </flux:text>
+                </x-ts-text>
             </div>
         </div>
     </div>

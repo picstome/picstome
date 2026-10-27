@@ -21,32 +21,32 @@ new class extends Component
 } ?>
 
 <div>
-    <flux:modal name="login" class="w-full sm:max-w-sm">
+    <x-ts-modal name="login" class="w-full sm:max-w-sm">
         <form wire:submit="login" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Login') }}</flux:heading>
-                <flux:subheading>{{ __('Welcome Back!') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Login') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Welcome Back!') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
+            <x-ts-input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
-            <flux:input
+            <x-ts-input
                 wire:model="form.password"
                 type="password"
                 :label="__('Password')"
                 :placeholder="__('Your password')"
             />
 
-            <flux:button type="submit" variant="primary" class="w-full">
+            <x-ts-button type="submit" variant="primary" class="w-full">
                 {{ __('Login') }}
-            </flux:button>
+            </x-ts-button>
 
             <div class="text-center text-sm">
                 {{ __('Don\'t have an account?') }}
-                <flux:modal.trigger name="register">
+                <x-ts-modal-trigger name="register">
                     <button type="button" class="text-zinc-800 dark:text-white underline decoration-zinc-800/20 dark:decoration-white/20">{{ __('Register') }}</button>
-                </flux:modal.trigger>
+                </x-ts-modal-trigger>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

@@ -29,10 +29,10 @@ new class extends Component
         class="border-brand-green/15 mx-2 rounded-xl border bg-white p-3 shadow-xs dark:border-white/10 dark:bg-white/5"
     >
         <div class="mb-2 flex items-center gap-2">
-            <flux:icon.server class="text-brand-green dark:text-brand-sage size-4" />
-            <flux:text class="text-brand-green-deep dark:text-brand-sage text-xs font-medium">
+            <x-icon name="server" class="text-brand-green dark:text-brand-sage size-4" />
+            <x-ts-text class="text-brand-green-deep dark:text-brand-sage text-xs font-medium">
                 {{ __('Storage') }}
-            </flux:text>
+            </x-ts-text>
         </div>
 
         <div class="space-y-1">

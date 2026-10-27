@@ -29,13 +29,13 @@ class extends Component
                 @if($team->brand_logo_icon_url)
                     <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
                 @else
-                    <flux:heading size="xl">{{ $team->name }}</flux:heading>
+                    <x-ts-heading size="xl">{{ $team->name }}</x-ts-heading>
                 @endif
             </a>
 
             <div>
-                <flux:heading size="xl">{{ __('Payment Cancelled') }}</flux:heading>
-                <flux:text class="mt-2">{{ __('Your payment was cancelled. No charges were made.') }}</flux:text>
+                <x-ts-heading size="xl">{{ __('Payment Cancelled') }}</x-ts-heading>
+                <x-ts-text class="mt-2">{{ __('Your payment was cancelled. No charges were made.') }}</x-ts-text>
             </div>
         </div>
     </div>

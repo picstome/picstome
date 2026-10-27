@@ -1,14 +1,15 @@
 <?php
 
+use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\StylingForm;
 use App\Models\Team;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use Interactions;
     use WithFileUploads;
 
     public Team $team;
@@ -21,7 +22,7 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        Flux::toast(__('Your changes have been saved.'), variant: 'success');
+        $this->toast()->success(__('Your changes have been saved.'))->send();
     }
 
     public function mount()
@@ -32,7 +33,21 @@ new class extends Component
     }
 }; ?>
 
+@php
+    $previewFontFamily = $form->font ? "'{$form->font}', sans-serif" : null;
+    $previewFontUrl = $form->font
+        ? 'https://fonts.googleapis.com/css2?family='.str_replace(' ', '+', $form->font).'&display=swap'
+        : null;
+@endphp
+
 <section class="mx-auto max-w-6xl">
+    @if ($previewFontUrl)
+        <link
+            wire:key="preview-font-{{ md5($previewFontUrl) }}"
+            rel="stylesheet"
+            href="{{ $previewFontUrl }}"
+        />
+    @endif
     @include('partials.branding-header')
 
     <div class="flex items-start max-md:flex-col">
@@ -40,15 +55,15 @@ new class extends Component
             @include('partials.branding-nav')
         </div>
 
-        <flux:separator class="md:hidden" />
+        <x-ts-separator class="md:hidden" />
 
         <div class="flex-1 self-stretch max-md:pt-6">
-            <flux:heading>{{ __('Styling') }}</flux:heading>
-            <flux:subheading>{{ __('Customize visual style of your studio.') }}</flux:subheading>
+            <x-ts-heading>{{ __('Styling') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('Customize visual style of your studio.') }}</x-ts-subheading>
 
             <div class="mt-5 w-full max-w-lg">
                 <form wire:submit="save" class="space-y-6">
-                    <flux:select wire:model.live="form.color" :label="__('Accent color')" class="flex-wrap">
+                    <x-ts-select wire:model.live="form.color" :label="__('Accent color')" class="flex-wrap">
                         <option value="">{{ __('Picstome (default)') }}</option>
                         <option value="zinc">{{ __('Zinc') }}</option>
                         <option value="red">{{ __('Red') }}</option>
@@ -68,43 +83,45 @@ new class extends Component
                         <option value="fuchsia">{{ __('Fuchsia') }}</option>
                         <option value="pink">{{ __('Pink') }}</option>
                         <option value="rose">{{ __('Rose') }}</option>
-                    </flux:select>
+                    </x-ts-select>
 
                     <div class="border-brand-green/10 dark:border-white/10 rounded-xl border bg-white p-4 dark:bg-white/5">
-                        <flux:text class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase">
+                        <x-ts-text class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase">
                             {{ __('Preview') }}
-                        </flux:text>
+                        </x-ts-text>
 
                         <div class="mt-3 flex flex-wrap items-center gap-3">
-                            @if ($form->color)
-                                <flux:button
-                                    variant="primary"
-                                    :color="$form->color"
-                                    :href="route('handle.show', ['handle' => $team->handle])"
-                                    target="_blank"
-                                    icon:trailing="arrow-top-right-on-square"
-                                >
-                                    {{ __('View Profile') }}
-                                </flux:button>
-                            @else
-                                <flux:button
-                                    variant="primary"
-                                    class="[--color-accent:var(--color-brand-green)] [--color-accent-content:var(--color-brand-green)] [--color-accent-foreground:white]"
-                                    :href="route('handle.show', ['handle' => $team->handle])"
-                                    target="_blank"
-                                    icon:trailing="arrow-top-right-on-square"
-                                >
-                                    {{ __('View Profile') }}
-                                </flux:button>
-                            @endif
+                            <span style="font-family: {{ $previewFontFamily ?? 'inherit' }}">
+                                @if ($form->color)
+                                    <x-ts-button
+                                        variant="primary"
+                                        :color="$form->color"
+                                        :href="route('handle.show', ['handle' => $team->handle])"
+                                        target="_blank"
+                                        icon:trailing="arrow-top-right-on-square"
+                                    >
+                                        {{ __('View Profile') }}
+                                    </x-ts-button>
+                                @else
+                                    <x-ts-button
+                                        variant="primary"
+                                        class="[--color-accent:var(--color-brand-green)] [--color-accent-content:var(--color-brand-green)] [--color-accent-foreground:white]"
+                                        :href="route('handle.show', ['handle' => $team->handle])"
+                                        target="_blank"
+                                        icon:trailing="arrow-top-right-on-square"
+                                    >
+                                        {{ __('View Profile') }}
+                                    </x-ts-button>
+                                @endif
+                            </span>
 
-                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 text-sm font-medium">
+                            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 text-sm font-medium">
                                 {{ __('Applies to your public pages. The Picstome dashboard keeps its own theme.') }}
-                            </flux:text>
+                            </x-ts-text>
                         </div>
                     </div>
 
-                    <flux:select wire:model="form.font" :label="__('Font')">
+                    <x-ts-select wire:model.live="form.font" :label="__('Font')">
                         <option value="">System sans-serif</option>
                         <option value="Roboto Flex">Roboto</option>
                         <option value="Raleway">Raleway</option>
@@ -115,9 +132,9 @@ new class extends Component
                         <option value="Source Serif 4">Source Serif</option>
                         <option value="Roboto Serif">Roboto Serif</option>
                         <option value="Playfair Display">Playfair Display</option>
-                    </flux:select>
+                    </x-ts-select>
 
-                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                 </form>
             </div>
         </div>

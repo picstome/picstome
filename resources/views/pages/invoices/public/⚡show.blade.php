@@ -68,11 +68,11 @@ new #[Layout('layouts.guest')] class extends Component
 
 <div>
     <div class="flex flex-wrap items-center gap-3">
-        <x-heading level="1" size="xl">
+        <x-ts-heading level="1" size="xl">
             {{ $this->invoice->full_number }}
-        </x-heading>
+        </x-ts-heading>
 
-        <flux:badge
+        <x-ts-badge
             :color="match ($this->invoice->status) {
                 'issued' => 'green',
                 'rectified' => 'orange',
@@ -81,17 +81,17 @@ new #[Layout('layouts.guest')] class extends Component
             inset
         >
             {{ $this->invoice->status_label }}
-        </flux:badge>
+        </x-ts-badge>
     </div>
 
-    <x-subheading>
+    <x-ts-subheading>
         {{ $this->invoice->isRectificative() ? __('Corrective invoice') : ($this->invoice->isSimplified() ? __('Simplified invoice') : __('Invoice')) }}
         · {{ $this->invoice->issue_date?->format('Y-m-d') }}
-    </x-subheading>
+    </x-ts-subheading>
 
     @if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice)
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This invoice corrects :number.', ['number' => $this->invoice->rectifiesInvoice->full_number]) }}
                 @if (filled($this->invoice->rectification_reason))
                     {{ __('Reason: :reason', ['reason' => $this->invoice->rectification_reason]) }}
@@ -101,27 +101,27 @@ new #[Layout('layouts.guest')] class extends Component
                         {{ __('View the original invoice') }}
                     </a>
                 @endif
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->invoice->rectification)
-        <flux:callout icon="check-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="check-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This invoice was corrected by :number.', ['number' => $this->invoice->rectification->full_number]) }}
                 @if ($this->hasPublicLink($this->invoice->rectification))
                     <a href="{{ route('invoices.public.show', $this->invoice->rectification->public_token) }}" class="font-medium underline">
                         {{ __('View the corrective invoice') }}
                     </a>
                 @endif
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     <div class="mt-8 grid gap-6 lg:grid-cols-2">
         <div class="space-y-6">
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Issuer') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Issuer') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['issuer']['legal_name'] ?? '' }}</div>
                     @if (filled($this->invoice->invoice_data['issuer']['tax_id'] ?? null))
@@ -138,7 +138,7 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Client') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Client') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['customer']['legal_name'] ?? ($this->invoice->customer?->name ?? '—') }}</div>
                     @if (filled($this->invoice->invoice_data['customer']['tax_id'] ?? null))
@@ -148,7 +148,7 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Traceability') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Traceability') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-xs text-zinc-500">
                     <div class="break-all font-mono">{{ $this->invoice->fingerprint }}</div>
                     <div class="mt-2">
@@ -226,9 +226,9 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
 
             @if ($this->invoice->pdf_path)
-                <flux:button variant="primary" icon="document-arrow-down" :href="route('invoices.public.pdf', $this->invoice->public_token)">
+                <x-ts-button variant="primary" icon="document-arrow-down" :href="route('invoices.public.pdf', $this->invoice->public_token)">
                     {{ __('Download PDF') }}
-                </flux:button>
+                </x-ts-button>
             @endif
         </div>
     </div>

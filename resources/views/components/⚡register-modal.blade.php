@@ -38,34 +38,34 @@ new class extends Component
 } ?>
 
 <div>
-    <flux:modal name="register" class="w-full sm:max-w-sm">
+    <x-ts-modal name="register" class="w-full sm:max-w-sm">
         <form wire:submit="register" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Register') }}</flux:heading>
-                <flux:subheading>{{ __('Create a new account') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Register') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Create a new account') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
+            <x-ts-input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
 
-            <flux:input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
+            <x-ts-input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
-            <flux:input
+            <x-ts-input
                 wire:model="password"
                 type="password"
                 :label="__('Password')"
                 :placeholder="__('Your password')"
             />
 
-            <flux:input
+            <x-ts-input
                 wire:model="password_confirmation"
                 type="password"
                 :label="__('Confirm Password')"
                 :placeholder="__('Confirm your password')"
             />
 
-            <flux:button type="submit" variant="primary" class="w-full">
+            <x-ts-button type="submit" variant="primary" class="w-full">
                 {{ __('Register') }}
-            </flux:button>
+            </x-ts-button>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

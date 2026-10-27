@@ -1,17 +1,20 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\BioLinkForm;
 use App\Livewire\Forms\PublicProfileForm;
 use App\Livewire\Forms\SocialLinksForm;
 use App\Models\BioLink;
 use App\Models\Team;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     public Team $team;
 
     public PublicProfileForm $form;
@@ -30,7 +33,7 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        Flux::toast(__('Your changes have been saved.'), variant: 'success');
+        $this->toast()->success(__('Your changes have been saved.'))->send();
     }
 
     public function saveSocialLinks()
@@ -39,18 +42,18 @@ new class extends Component
 
         $this->team = $this->team->fresh();
 
-        $this->modal('social-links')->close();
+        $this->closeModal('social-links');
 
         $this->dispatch('social-links-updated');
 
-        Flux::toast(__('Your changes have been saved.'), variant: 'success');
+        $this->toast()->success(__('Your changes have been saved.'))->send();
     }
 
     public function addLink()
     {
         $this->addForm->store();
         $this->addForm->resetForm();
-        $this->modal('add-link')->close();
+        $this->closeModal('add-link');
     }
 
     public function updateLink(BioLink $link)
@@ -61,7 +64,7 @@ new class extends Component
 
         $this->editForm->resetForm();
         $this->editingLink = null;
-        $this->modal('edit-link')->close();
+        $this->closeModal('edit-link');
     }
 
     public ?int $pendingLinkId = null;
@@ -70,7 +73,7 @@ new class extends Component
     {
         $this->pendingLinkId = $id;
 
-        Flux::modal('delete-link')->show();
+        $this->openModal('delete-link');
     }
 
     public function deleteLink(BioLink $link)
@@ -93,7 +96,7 @@ new class extends Component
 
         $this->editingLink = $link;
         $this->editForm->setBioLink($link);
-        $this->modal('edit-link')->show();
+        $this->openModal('edit-link');
     }
 
     #[Computed]
@@ -113,12 +116,12 @@ new class extends Component
 
 <section class="mx-auto max-w-lg">
     <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">{{ __('Public Profile') }}</flux:heading>
-        <flux:subheading size="lg">
+        <x-ts-heading size="xl" level="1">{{ __('Public Profile') }}</x-ts-heading>
+        <x-ts-subheading size="lg">
             {{ __('Configure your public profile information.') }}
-        </flux:subheading>
+        </x-ts-subheading>
         <div class="mt-4 flex flex-wrap items-center gap-2">
-            <flux:button
+            <x-ts-button
                 :href="route('handle.show', ['handle' => $team->handle])"
                 target="_blank"
                 icon:trailing="arrow-top-right-on-square"
@@ -127,9 +130,9 @@ new class extends Component
                 size="sm"
             >
                 {{ __('View Profile') }}
-            </flux:button>
+            </x-ts-button>
 
-            <flux:button
+            <x-ts-button
                 :href="route('branding.styling')"
                 icon="paint-brush"
                 variant="primary"
@@ -138,27 +141,27 @@ new class extends Component
                 wire:navigate
             >
                 {{ __('Styling') }}
-            </flux:button>
+            </x-ts-button>
         </div>
-        <flux:separator variant="subtle" class="mt-6" />
+        <x-ts-separator variant="subtle" class="mt-6" />
     </div>
 
     <div class="mt-5 space-y-12">
         <!-- Handle Section -->
         <form wire:submit="save" class="space-y-4">
-            <flux:field>
-                <flux:label>{{ __('Username') }}</flux:label>
-                <flux:input wire:model="form.handle" :placeholder="__('e.g. mystudio')" />
-                <flux:description>
+            <x-ts-field>
+                <x-ts-label>{{ __('Username') }}</x-ts-label>
+                <x-ts-input wire:model="form.handle" :placeholder="__('e.g. mystudio')" />
+                <x-ts-description>
                     {{ __('This is your unique username that visitors will use to access your public profile at @').$team->handle }}
-                </flux:description>
-                <flux:error name="form.handle" />
-            </flux:field>
+                </x-ts-description>
 
-            <flux:field
+            </x-ts-field>
+
+            <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <flux:label>{{ __('Bio') }}</flux:label>
+                <x-ts-label>{{ __('Bio') }}</x-ts-label>
 
                 <trix-editor
                     input="trix"
@@ -169,34 +172,34 @@ new class extends Component
 
                 <input wire:model="form.bio" id="trix" type="text" class="hidden" />
 
-                <flux:description>
+                <x-ts-description>
                     {{ __('A short description that appears on your public profile. Maximum 1000 characters.') }}
-                </flux:description>
+                </x-ts-description>
 
-                <flux:error name="form.bio" />
-            </flux:field>
+                <x-ts-error name="form.bio" />
+            </x-ts-field>
 
-            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+            <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
         </form>
 
         <!-- Bio Links Section -->
         <div>
             <div class="space-y-4">
                 <div>
-                    <flux:heading size="sm">{{ __('Bio Links') }}</flux:heading>
-                    <flux:text class="mt-1">{{ __('Manage your bio links for your public profile.') }}</flux:text>
+                    <x-ts-heading size="sm">{{ __('Bio Links') }}</x-ts-heading>
+                    <x-ts-text class="mt-1">{{ __('Manage your bio links for your public profile.') }}</x-ts-text>
                 </div>
 
                 <div>
-                    <flux:separator variant="subtle" />
+                    <x-ts-separator variant="subtle" />
                     @if ($this->bioLinks->isNotEmpty())
-                        <flux:table>
-                            <flux:table.rows x-sort="handleReorder">
+                        <x-data-table>
+                            <x-data-table.rows x-sort="handleReorder">
                                 @foreach ($this->bioLinks as $link)
-                                    <flux:table.row :key="$link->id" x-sort:item="{{ $link->id }}">
-                                        <flux:table.cell>
+                                    <x-data-table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                        <x-data-table.cell>
                                             <div class="flex items-center gap-3">
-                                                <flux:button
+                                                <x-ts-button
                                                     x-sort:handle
                                                     variant="subtle"
                                                     size="sm"
@@ -204,327 +207,328 @@ new class extends Component
                                                     class="cursor-move touch-manipulation"
                                                     square
                                                 >
-                                                    <flux:icon.bars-2 variant="micro" />
-                                                </flux:button>
+                                                    <x-icon name="bars-2" variant="micro" />
+                                                </x-ts-button>
                                                 <div>
-                                                    <flux:text variant="strong">
+                                                    <x-ts-text variant="strong">
                                                         {{ str()->of($link->title)->limit(40) }}
-                                                    </flux:text>
-                                                    <flux:text class="text-xs">
+                                                    </x-ts-text>
+                                                    <x-ts-text class="text-xs">
                                                         {{ str()->of($link->url)->limit(40) }}
-                                                    </flux:text>
+                                                    </x-ts-text>
                                                 </div>
                                             </div>
-                                        </flux:table.cell>
-                                        <flux:table.cell>
-                                            <flux:dropdown>
-                                                <flux:button
-                                                    icon="ellipsis-vertical"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    inset="top bottom"
+                                        </x-data-table.cell>
+                                        <x-data-table.cell>
+                                            <x-dropdown position="bottom-end">
+                                                <x-slot:action>
+                                                    <x-ts-button
+                                                        icon="ellipsis-vertical"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        x-on:click="show = ! show"
+                                                    />
+                                                </x-slot:action>
+
+                                                <x-dropdown.items
+                                                    :text="__('Edit')"
+                                                    wire:click="editLink({{ $link->id }})"
                                                 />
-                                                <flux:menu>
-                                                    <flux:menu.item wire:click="editLink({{ $link->id }})">
-                                                        {{ __('Edit') }}
-                                                    </flux:menu.item>
-                                                    <flux:menu.item
-                                                        variant="danger"
-                                                        wire:click="requestDeleteLink({{ $link->id }})"
-                                                    >
-                                                        {{ __('Delete') }}
-                                                    </flux:menu.item>
-                                                </flux:menu>
-                                            </flux:dropdown>
-                                        </flux:table.cell>
-                                    </flux:table.row>
+                                                <x-dropdown.items
+                                                    :text="__('Delete')"
+                                                    wire:click="requestDeleteLink({{ $link->id }})"
+                                                    class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                                                />
+                                            </x-dropdown>
+                                        </x-data-table.cell>
+                                    </x-data-table.row>
                                 @endforeach
-                            </flux:table.rows>
-                        </flux:table>
+                            </x-data-table.rows>
+                        </x-data-table>
 
                         <div class="mt-2">
-                            <flux:modal.trigger name="add-link">
-                                <flux:button icon="plus" variant="primary" class="btn-ink">
+                            <x-ts-modal-trigger name="add-link">
+                                <x-ts-button icon="plus" variant="primary" class="btn-ink">
                                     {{ __('Add Link') }}
-                                </flux:button>
-                            </flux:modal.trigger>
+                                </x-ts-button>
+                            </x-ts-modal-trigger>
                         </div>
                     @else
-                        <flux:callout icon="link" variant="secondary">
-                            <flux:callout.heading>{{ __('Add Bio Links') }}</flux:callout.heading>
-                            <flux:callout.text>
+                        <x-ts-callout icon="link" variant="secondary">
+                            <x-ts-callout-heading>{{ __('Add Bio Links') }}</x-ts-callout-heading>
+                            <x-ts-callout-text>
                                 {{ __('Add links to your bio to help visitors discover your work and connect with you.') }}
-                            </flux:callout.text>
+                            </x-ts-callout-text>
                             <x-slot name="actions">
-                                <flux:modal.trigger name="add-link">
-                                    <flux:button variant="primary" class="btn-ink">{{ __('Add Link') }}</flux:button>
-                                </flux:modal.trigger>
+                                <x-ts-modal-trigger name="add-link">
+                                    <x-ts-button variant="primary" class="btn-ink">{{ __('Add Link') }}</x-ts-button>
+                                </x-ts-modal-trigger>
                             </x-slot>
-                        </flux:callout>
+                        </x-ts-callout>
                     @endif
                 </div>
             </div>
 
-            <flux:modal name="add-link" class="md:w-96">
+            <x-ts-modal name="add-link" class="md:w-96">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Add Bio Link') }}</flux:heading>
-                        <flux:text class="mt-2">{{ __('Add a new link to your bio.') }}</flux:text>
+                        <x-ts-heading size="lg">{{ __('Add Bio Link') }}</x-ts-heading>
+                        <x-ts-text class="mt-2">{{ __('Add a new link to your bio.') }}</x-ts-text>
                     </div>
 
                     <div class="space-y-4">
-                        <flux:field>
-                            <flux:label>{{ __('Title') }}</flux:label>
-                            <flux:input wire:model="addForm.title" type="text" placeholder="e.g. Instagram" />
-                            <flux:error name="addForm.title" />
-                        </flux:field>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Title') }}</x-ts-label>
+                            <x-ts-input wire:model="addForm.title" type="text" placeholder="e.g. Instagram" />
 
-                        <flux:field>
-                            <flux:label>{{ __('URL') }}</flux:label>
-                            <flux:input
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('URL') }}</x-ts-label>
+                            <x-ts-input
                                 wire:model="addForm.url"
                                 type="url"
                                 placeholder="https://instagram.com/username"
                             />
-                            <flux:error name="addForm.url" />
-                        </flux:field>
+
+                        </x-ts-field>
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <flux:modal.close>
-                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                        </flux:modal.close>
-                        <flux:button wire:click="addLink" variant="primary">{{ __('Add Link') }}</flux:button>
+                        <x-ts-modal-close>
+                            <x-ts-button variant="ghost">{{ __('Cancel') }}</x-ts-button>
+                        </x-ts-modal-close>
+                        <x-ts-button wire:click="addLink" variant="primary">{{ __('Add Link') }}</x-ts-button>
                     </div>
                 </div>
-            </flux:modal>
+            </x-ts-modal>
 
-            <flux:modal name="edit-link" class="md:w-96">
+            <x-ts-modal name="edit-link" class="md:w-96">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Edit Bio Link') }}</flux:heading>
-                        <flux:text class="mt-2">{{ __('Update your bio link details.') }}</flux:text>
+                        <x-ts-heading size="lg">{{ __('Edit Bio Link') }}</x-ts-heading>
+                        <x-ts-text class="mt-2">{{ __('Update your bio link details.') }}</x-ts-text>
                     </div>
 
                     <div class="space-y-4">
-                        <flux:field>
-                            <flux:label>{{ __('Title') }}</flux:label>
-                            <flux:input wire:model="editForm.title" type="text" placeholder="e.g. Instagram" />
-                            <flux:error name="editForm.title" />
-                        </flux:field>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Title') }}</x-ts-label>
+                            <x-ts-input wire:model="editForm.title" type="text" placeholder="e.g. Instagram" />
 
-                        <flux:field>
-                            <flux:label>{{ __('URL') }}</flux:label>
-                            <flux:input
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('URL') }}</x-ts-label>
+                            <x-ts-input
                                 wire:model="editForm.url"
                                 type="url"
                                 placeholder="https://instagram.com/username"
                             />
-                            <flux:error name="editForm.url" />
-                        </flux:field>
+
+                        </x-ts-field>
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <flux:modal.close>
-                            <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                        </flux:modal.close>
-                        <flux:button wire:click="updateLink({{ $editingLink }})" variant="primary">
+                        <x-ts-modal-close>
+                            <x-ts-button variant="ghost">{{ __('Cancel') }}</x-ts-button>
+                        </x-ts-modal-close>
+                        <x-ts-button wire:click="updateLink({{ $editingLink }})" variant="primary">
                             {{ __('Update Link') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
                 </div>
-            </flux:modal>
+            </x-ts-modal>
         </div>
 
         <!-- Social Links Section -->
         <div>
             <div class="space-y-4">
                 <div>
-                    <flux:heading size="sm">{{ __('Social Links') }}</flux:heading>
-                    <flux:text class="mt-1">{{ __('Manage your social media profiles and website.') }}</flux:text>
+                    <x-ts-heading size="sm">{{ __('Social Links') }}</x-ts-heading>
+                    <x-ts-text class="mt-1">{{ __('Manage your social media profiles and website.') }}</x-ts-text>
                 </div>
 
                 @if ($team->hasSocialLinks())
-                    <flux:avatar.group>
+                    <x-ts-avatar-group>
                         @if ($team->instagram_url)
-                            <flux:tooltip content="{{ $team->instagram_url }}">
-                                <flux:avatar circle src="https://s.magecdn.com/social/tc-instagram.svg" />
-                            </flux:tooltip>
+                            <x-ts-tooltip content="{{ $team->instagram_url }}">
+                                <x-ts-avatar circle src="https://s.magecdn.com/social/tc-instagram.svg" />
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->youtube_url)
-                            <flux:tooltip content="{{ $team->youtube_url }}">
-                                <flux:avatar circle src="https://s.magecdn.com/social/tc-youtube.svg" />
-                            </flux:tooltip>
+                            <x-ts-tooltip content="{{ $team->youtube_url }}">
+                                <x-ts-avatar circle src="https://s.magecdn.com/social/tc-youtube.svg" />
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->facebook_url)
-                            <flux:tooltip content="{{ $team->facebook_url }}">
-                                <flux:avatar circle src="https://s.magecdn.com/social/tc-facebook.svg" />
-                            </flux:tooltip>
+                            <x-ts-tooltip content="{{ $team->facebook_url }}">
+                                <x-ts-avatar circle src="https://s.magecdn.com/social/tc-facebook.svg" />
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->x_url)
-                            <flux:tooltip content="{{ $team->x_url }}">
-                                <flux:avatar circle src="https://s.magecdn.com/social/tc-x.svg" />
-                            </flux:tooltip>
+                            <x-ts-tooltip content="{{ $team->x_url }}">
+                                <x-ts-avatar circle src="https://s.magecdn.com/social/tc-x.svg" />
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->tiktok_url)
-                            <flux:tooltip content="{{ $team->tiktok_url }}">
-                                <flux:avatar circle src="https://s.magecdn.com/social/tc-tiktok.svg" />
-                            </flux:tooltip>
+                            <x-ts-tooltip content="{{ $team->tiktok_url }}">
+                                <x-ts-avatar circle src="https://s.magecdn.com/social/tc-tiktok.svg" />
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->twitch_url)
-                            <flux:tooltip content="{{ $team->twitch_url }}">
-                                <flux:avatar circle>
+                            <x-ts-tooltip content="{{ $team->twitch_url }}">
+                                <x-ts-avatar circle>
                                     <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                                         <path
                                             d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286H13.714L22.286 10.857V0H6zm14.571 10.857l-3.429 3.429H13.714l-3 3v-3H6.857V1.714H20.57v9.143z"
                                         />
                                     </svg>
-                                </flux:avatar>
-                            </flux:tooltip>
+                                </x-ts-avatar>
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->website_url)
-                            <flux:tooltip content="{{ $team->website_url }}">
-                                <flux:avatar
+                            <x-ts-tooltip content="{{ $team->website_url }}">
+                                <x-ts-avatar
                                     circle
                                     src="https://unavatar.io/google/{{ parse_url($team->website_url, PHP_URL_HOST) }}"
                                 />
-                            </flux:tooltip>
+                            </x-ts-tooltip>
                         @endif
 
                         @if ($team->other_social_links)
-                            <flux:tooltip content="{{ $team->other_social_links['url'] }}">
-                                <flux:avatar
+                            <x-ts-tooltip content="{{ $team->other_social_links['url'] }}">
+                                <x-ts-avatar
                                     circle
                                     src="https://unavatar.io/google/{{ parse_url($team->other_social_links['url'], PHP_URL_HOST) }}"
                                 />
-                            </flux:tooltip>
+                            </x-ts-tooltip>
                         @endif
-                    </flux:avatar.group>
+                    </x-ts-avatar-group>
 
                     <div>
-                        <flux:modal.trigger name="social-links">
-                            <flux:button variant="primary" class="btn-ink">
+                        <x-ts-modal-trigger name="social-links">
+                            <x-ts-button variant="primary" class="btn-ink">
                                 {{ __('Edit Social Links') }}
-                            </flux:button>
-                        </flux:modal.trigger>
+                            </x-ts-button>
+                        </x-ts-modal-trigger>
                     </div>
                 @else
-                    <flux:callout icon="link" variant="secondary">
-                        <flux:callout.heading>{{ __('Add Social Links') }}</flux:callout.heading>
-                        <flux:callout.text>
+                    <x-ts-callout icon="link" variant="secondary">
+                        <x-ts-callout-heading>{{ __('Add Social Links') }}</x-ts-callout-heading>
+                        <x-ts-callout-text>
                             {{ __('Connect your social media profiles and website to your public profile to help visitors find and follow you.') }}
-                        </flux:callout.text>
+                        </x-ts-callout-text>
                         <x-slot name="actions">
-                            <flux:modal.trigger name="social-links">
-                                <flux:button variant="primary" class="btn-ink">
+                            <x-ts-modal-trigger name="social-links">
+                                <x-ts-button variant="primary" class="btn-ink">
                                     {{ __('Add Social Links') }}
-                                </flux:button>
-                            </flux:modal.trigger>
+                                </x-ts-button>
+                            </x-ts-modal-trigger>
                         </x-slot>
-                    </flux:callout>
+                    </x-ts-callout>
                 @endif
             </div>
 
-            <flux:modal name="social-links" variant="flyout" class="md:w-[32rem]">
+            <x-ts-modal name="social-links" variant="flyout" class="md:w-[32rem]">
                 <div class="space-y-6">
                     <div>
-                        <flux:heading size="lg">{{ __('Edit Social Links') }}</flux:heading>
-                        <flux:text class="mt-2">
+                        <x-ts-heading size="lg">{{ __('Edit Social Links') }}</x-ts-heading>
+                        <x-ts-text class="mt-2">
                             {{ __('Add your social media profiles and website to your public profile.') }}
-                        </flux:text>
+                        </x-ts-text>
                     </div>
 
                     <form wire:submit="saveSocialLinks" class="space-y-4">
-                        <flux:field>
-                            <flux:label>{{ __('Instagram') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.instagram" placeholder="username" />
-                            <flux:description>{{ __('Enter your Instagram username (without @)') }}</flux:description>
-                            <flux:error name="socialLinksForm.instagram" />
-                        </flux:field>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Instagram') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.instagram" placeholder="username" />
+                            <x-ts-description>{{ __('Enter your Instagram username (without @)') }}</x-ts-description>
 
-                        <flux:field>
-                            <flux:label>{{ __('YouTube') }}</flux:label>
-                            <flux:input
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('YouTube') }}</x-ts-label>
+                            <x-ts-input
                                 wire:model="socialLinksForm.youtube"
                                 placeholder="channel/UC123 or @username"
                             />
-                            <flux:description>
+                            <x-ts-description>
                                 {{ __('Enter your YouTube channel URL path or @username') }}
-                            </flux:description>
-                            <flux:error name="socialLinksForm.youtube" />
-                        </flux:field>
+                            </x-ts-description>
 
-                        <flux:field>
-                            <flux:label>{{ __('Facebook') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.facebook" placeholder="username" />
-                            <flux:description>{{ __('Enter your Facebook username or page name') }}</flux:description>
-                            <flux:error name="socialLinksForm.facebook" />
-                        </flux:field>
+                        </x-ts-field>
 
-                        <flux:field>
-                            <flux:label>{{ __('X (Twitter)') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.x" placeholder="username" />
-                            <flux:description>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Facebook') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.facebook" placeholder="username" />
+                            <x-ts-description>{{ __('Enter your Facebook username or page name') }}</x-ts-description>
+
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('X (Twitter)') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.x" placeholder="username" />
+                            <x-ts-description>
                                 {{ __('Enter your X (Twitter) username (without @)') }}
-                            </flux:description>
-                            <flux:error name="socialLinksForm.x" />
-                        </flux:field>
+                            </x-ts-description>
 
-                        <flux:field>
-                            <flux:label>{{ __('TikTok') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.tiktok" placeholder="username" />
-                            <flux:description>{{ __('Enter your TikTok username (without @)') }}</flux:description>
-                            <flux:error name="socialLinksForm.tiktok" />
-                        </flux:field>
+                        </x-ts-field>
 
-                        <flux:field>
-                            <flux:label>{{ __('Twitch') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.twitch" placeholder="username" />
-                            <flux:description>{{ __('Enter your Twitch username') }}</flux:description>
-                            <flux:error name="socialLinksForm.twitch" />
-                        </flux:field>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('TikTok') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.tiktok" placeholder="username" />
+                            <x-ts-description>{{ __('Enter your TikTok username (without @)') }}</x-ts-description>
 
-                        <flux:field>
-                            <flux:label>{{ __('Website') }}</flux:label>
-                            <flux:input wire:model="socialLinksForm.website" placeholder="https://example.com" />
-                            <flux:description>{{ __('Enter your website URL') }}</flux:description>
-                            <flux:error name="socialLinksForm.website" />
-                        </flux:field>
+                        </x-ts-field>
 
-                        <flux:field>
-                            <flux:label>{{ __('Other') }}</flux:label>
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Twitch') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.twitch" placeholder="username" />
+                            <x-ts-description>{{ __('Enter your Twitch username') }}</x-ts-description>
+
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Website') }}</x-ts-label>
+                            <x-ts-input wire:model="socialLinksForm.website" placeholder="https://example.com" />
+                            <x-ts-description>{{ __('Enter your website URL') }}</x-ts-description>
+
+                        </x-ts-field>
+
+                        <x-ts-field>
+                            <x-ts-label>{{ __('Other') }}</x-ts-label>
                             <div class="flex gap-2">
-                                <flux:input
+                                <x-ts-input
                                     wire:model="socialLinksForm.other.label"
                                     placeholder="Label"
                                     class="flex-1"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="socialLinksForm.other.url"
                                     placeholder="https://example.com"
                                     class="flex-1"
                                 />
                             </div>
-                            <flux:error name="socialLinksForm.other.label" />
-                            <flux:error name="socialLinksForm.other.url" />
-                        </flux:field>
+
+
+                        </x-ts-field>
 
                         <div class="flex gap-2 pt-4">
-                            <flux:spacer />
-                            <flux:modal.close>
-                                <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                            </flux:modal.close>
-                            <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                            <x-ts-spacer />
+                            <x-ts-modal-close>
+                                <x-ts-button variant="ghost">{{ __('Cancel') }}</x-ts-button>
+                            </x-ts-modal-close>
+                            <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                         </div>
                     </form>
                 </div>
-            </flux:modal>
+            </x-ts-modal>
         </div>
     </div>
 

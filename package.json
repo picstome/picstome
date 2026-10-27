@@ -7,6 +7,7 @@
         "format": "npx prettier --write resources/"
     },
     "devDependencies": {
+        "@tailwindcss/forms": "^0.5.11",
         "@tailwindcss/postcss": "^4.0.7",
         "@tailwindcss/typography": "^0.5.16",
         "axios": "^1.7.4",

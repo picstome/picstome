@@ -15,318 +15,310 @@
         <link rel="preconnect" href="https://fonts.bunny.net" />
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
+        <tallstackui:script />
         @vite('resources/css/app.css')
-        @fluxAppearance
         @stack('head')
     </head>
-    <body class="app-shell bg-brand-paper text-brand-ink dark:bg-brand-night dark:text-brand-cream min-h-screen">
-        @unless ($fullScreen ?? false)
-            <flux:sidebar
-                sticky
-                stashable
-                class="border-brand-green/10 bg-brand-paper dark:bg-brand-night-deep overflow-hidden! border-r dark:border-white/10"
-            >
-                <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
-
-                @auth
-                    <a
-                        href="{{ route('dashboard') }}"
-                        wire:navigate
-                        class="flex justify-center px-2"
-                        aria-label="{{ __('Dashboard') }}"
-                    >
-                        @if (auth()->user()->currentTeam->brand_logo_icon_url)
-                            <img
-                                src="{{ auth()->user()->currentTeam->brand_logo_icon_url }}"
-                                class="block h-16 rounded"
-                                alt="{{ auth()->user()->currentTeam->name }}"
-                            />
-                        @else
-                            <img src="/app-logo.png" class="block h-16 rounded dark:hidden" alt="Picstome" />
-                            <img src="/app-logo-dark.png" class="hidden h-16 rounded dark:block" alt="Picstome" />
-                        @endif
-                    </a>
-                @endauth
-
-                @auth
-                    <flux:modal.trigger name="search" shortcut="cmd.k">
-                        <flux:input
-                            as="button"
-                            variant="filled"
-                            :placeholder="__('Search...')"
-                            icon="magnifying-glass"
-                            kbd="⌘K"
-                            class="hover:bg-brand-sage-soft! bg-white! dark:bg-white/10! dark:hover:bg-white/15!"
-                        />
-                    </flux:modal.trigger>
-
-                    <flux:modal
-                        name="search"
-                        variant="bare"
-                        class="my-[12vh] max-h-screen w-full max-w-[30rem] overflow-y-hidden px-2"
-                    >
-                        <livewire:search />
-                    </flux:modal>
-                @endauth
-
+    <body
+        x-data="tallstackui_darkTheme({ name: 'dark-theme', default: 'system' })"
+        x-bind:class="{ 'dark': darkTheme }"
+        class="app-shell bg-brand-paper text-brand-ink dark:bg-brand-night dark:text-brand-cream min-h-screen"
+    >
+        @if ($fullScreen ?? false)
+            <main class="min-h-screen">
+                {{ $slot }}
+            </main>
+        @else
+            <div x-data="{ sidebarOpen: false }" class="min-h-screen">
                 <div
-                    class="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-1"
-                    data-sidebar-scroll
-                    x-data="{
-                        revealGroup(disclosure) {
-                            if (! disclosure?.matches?.('ui-disclosure')) {
-                                return
-                            }
+                    x-show="sidebarOpen"
+                    x-cloak
+                    x-on:click="sidebarOpen = false"
+                    class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                ></div>
 
-                            requestAnimationFrame(() => {
-                                if (! disclosure.hasAttribute('data-open')) {
-                                    return
-                                }
-
-                                const content = disclosure.lastElementChild
-
-                                if (! content) {
-                                    return
-                                }
-
-                                const container = this.$el
-                                const containerRect = container.getBoundingClientRect()
-                                const contentRect = content.getBoundingClientRect()
-
-                                if (contentRect.bottom > containerRect.bottom) {
-                                    container.scrollTo({
-                                        top:
-                                            container.scrollTop +
-                                            (contentRect.bottom - containerRect.bottom) +
-                                            8,
-                                        behavior: 'smooth',
-                                    })
-                                }
-                            })
-                        },
-                    }"
-                    x-init="
-                        $nextTick(() => {
-                            const expanded = $el.querySelector('ui-disclosure[data-open]')
-
-                            if (expanded) {
-                                revealGroup(expanded)
-                            }
-                        })
-                    "
-                    x-on:lofi-disclosable-change="revealGroup($event.target.closest('ui-disclosure'))"
+                <aside
+                    x-bind:class="sidebarOpen ? 'translate-x-0!' : ''"
+                    class="border-brand-green/10 bg-brand-paper dark:bg-brand-night-deep fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r transition-transform duration-200 lg:translate-x-0 dark:border-white/10"
                 >
-                    <flux:navlist>
-                        <flux:navlist.item :href="route('dashboard')" icon="home" wire:navigate>
-                            {{ __('Dashboard') }}
-                        </flux:navlist.item>
+                    <div class="flex items-center justify-between gap-2 px-4 pt-4 pb-6">
+                        <a
+                            href="{{ route('dashboard') }}"
+                            wire:navigate
+                            class="flex min-w-0 flex-1 justify-center"
+                            aria-label="{{ __('Dashboard') }}"
+                        >
+                            @if (auth()->user()->currentTeam->brand_logo_icon_url)
+                                <img
+                                    src="{{ auth()->user()->currentTeam->brand_logo_icon_url }}"
+                                    class="block h-16 rounded"
+                                    alt="{{ auth()->user()->currentTeam->name }}"
+                                />
+                            @else
+                                <img src="/app-logo.png" class="block h-16 rounded dark:hidden" alt="Picstome" />
+                                <img src="/app-logo-dark.png" class="hidden h-16 rounded dark:block" alt="Picstome" />
+                            @endif
+                        </a>
 
-                        <flux:navlist.item
+                        <button
+                            type="button"
+                            x-on:click="sidebarOpen = false"
+                            class="text-zinc-400 hover:text-zinc-700 lg:hidden dark:hover:text-white"
+                            aria-label="{{ __('Close menu') }}"
+                        >
+                            <x-icon name="x-mark" class="size-5" />
+                        </button>
+                    </div>
+
+                    <div class="px-4 pb-5">
+                        <x-ts-modal-trigger name="search" shortcut="cmd.k">
+                            <x-ts-input
+                                as="button"
+                                variant="filled"
+                                :placeholder="__('Search...')"
+                                icon="magnifying-glass"
+                                kbd="⌘K"
+                                class="hover:bg-brand-sage-soft! bg-white! dark:bg-white/10! dark:hover:bg-white/15!"
+                            />
+                        </x-ts-modal-trigger>
+
+                        <x-ts-modal
+                            name="search"
+                            variant="bare"
+                            class="my-[12vh] max-h-screen w-full max-w-[30rem] overflow-y-hidden px-2"
+                        >
+                            <livewire:search />
+                        </x-ts-modal>
+                    </div>
+
+                    <nav class="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-4 pb-3" aria-label="Sidebar">
+                        <x-app-nav-link :href="route('dashboard')" icon="home" :current="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
                             :href="route('public-profile')"
                             icon="at-symbol"
-                            wire:navigate
                             :current="request()->routeIs('public-profile')"
                         >
                             {{ __('Public Profile') }}
-                        </flux:navlist.item>
-                    </flux:navlist>
+                        </x-app-nav-link>
 
-                    <flux:navlist variant="outline">
-                        <flux:navlist.group :heading="__('Photos')">
-                            <flux:navlist.item
-                                :href="route('galleries')"
-                                icon="photo"
-                                wire:navigate
-                                :current="request()->routeIs('galleries*')"
-                            >
-                                {{ __('Galleries') }}
-                            </flux:navlist.item>
+                        <p class="px-3 py-2 text-sm leading-none font-medium text-zinc-400">
+                            {{ __('Photos') }}
+                        </p>
 
-                            <flux:navlist.item
-                                :href="route('photoshoots')"
-                                icon="camera"
-                                wire:navigate
-                                :current="request()->routeIs('photoshoots*')"
-                            >
-                                {{ __('Photoshoots') }}
-                            </flux:navlist.item>
-
-                            <flux:navlist.item
-                                :href="route('portfolio')"
-                                icon="briefcase"
-                                wire:navigate
-                                :current="request()->routeIs('portfolio*')"
-                            >
-                                {{ __('Portfolio') }}
-                            </flux:navlist.item>
-                        </flux:navlist.group>
-
-                        <flux:navlist.group :heading="__('Manage')" class="mt-4">
-                            <flux:navlist.item
-                                :href="route('customers')"
-                                icon="user-group"
-                                wire:navigate
-                                :current="request()->routeIs('customers*') || request()->routeIs('clients*')"
-                            >
-                                {{ __('Customers') }}
-                            </flux:navlist.item>
-
-                            <flux:navlist.item
-                                :href="route('contracts')"
-                                icon="document-text"
-                                wire:navigate
-                                :current="request()->routeIs('contracts*') || request()->routeIs('contract-templates*')"
-                            >
-                                {{ __('Contracts') }}
-                            </flux:navlist.item>
-
-                            <flux:navlist.item
-                                :href="route('invoices')"
-                                icon="document-plus"
-                                wire:navigate
-                                :current="request()->routeIs('invoices*')"
-                            >
-                                {{ __('Invoices') }}
-                            </flux:navlist.item>
-
-                            <flux:navlist.item
-                                :href="route('payments')"
-                                icon="banknotes"
-                                wire:navigate
-                                :current="request()->routeIs('payments*') || request()->routeIs('stripe.connect*')"
-                            >
-                                {{ __('Payments') }}
-                            </flux:navlist.item>
-                        </flux:navlist.group>
-
-                        <flux:navlist.group
-                            :heading="__('Tools')"
-                            class="mt-4 [&>div.relative]:ps-0 [&>div.relative>div]:hidden"
-                            expandable
-                            :expanded="request()->routeIs('tools.*')"
+                        <x-app-nav-link
+                            :href="route('galleries')"
+                            icon="photo"
+                            :current="request()->routeIs('galleries*')"
                         >
-                            <flux:navlist.item :href="route('tools.calculator')" icon="calculator" wire:navigate>
-                                {{ __('Calculator') }}
-                            </flux:navlist.item>
+                            {{ __('Galleries') }}
+                        </x-app-nav-link>
 
-                            <flux:navlist.item
-                                :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/descargar/' : 'https://picstome.com/download/'"
-                                icon="device-phone-mobile"
-                                target="_blank"
+                        <x-app-nav-link
+                            :href="route('photoshoots')"
+                            icon="camera"
+                            :current="request()->routeIs('photoshoots*')"
+                        >
+                            {{ __('Photoshoots') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
+                            :href="route('portfolio')"
+                            icon="briefcase"
+                            :current="request()->routeIs('portfolio*')"
+                        >
+                            {{ __('Portfolio') }}
+                        </x-app-nav-link>
+
+                        <p class="mt-4 px-3 py-2 text-sm leading-none font-medium text-zinc-400">
+                            {{ __('Manage') }}
+                        </p>
+
+                        <x-app-nav-link
+                            :href="route('customers')"
+                            icon="user-group"
+                            :current="request()->routeIs('customers*') || request()->routeIs('clients*')"
+                        >
+                            {{ __('Customers') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
+                            :href="route('contracts')"
+                            icon="document-text"
+                            :current="request()->routeIs('contracts*') || request()->routeIs('contract-templates*')"
+                        >
+                            {{ __('Contracts') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
+                            :href="route('invoices')"
+                            icon="document-plus"
+                            :current="request()->routeIs('invoices*')"
+                        >
+                            {{ __('Invoices') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
+                            :href="route('payments')"
+                            icon="banknotes"
+                            :current="request()->routeIs('payments*') || request()->routeIs('stripe.connect*')"
+                        >
+                            {{ __('Payments') }}
+                        </x-app-nav-link>
+
+                        <div x-data="{ open: {{ request()->routeIs('tools.*') ? 'true' : 'false' }} }" class="mt-4" data-sidebar-tools="{{ request()->routeIs('tools.*') ? 'open' : 'closed' }}">
+                            <button
+                                type="button"
+                                x-on:click="open = ! open"
+                                class="text-brand-ink hover:bg-brand-sage-soft/80 dark:text-brand-sage flex h-8 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold transition dark:hover:bg-white/7"
                             >
-                                {{ __('Picstome APP') }}
-                            </flux:navlist.item>
+                                <span class="grid size-4 shrink-0 place-items-center">
+                                    <x-icon name="chevron-down" class="size-3 transition" x-bind:class="{ 'rotate-180': open }" />
+                                </span>
+                                {{ __('Tools') }}
+                            </button>
 
-                            <flux:navlist.item
-                                :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/photo-stats/' : 'https://picstome.com/photostats/'"
-                                icon="chart-bar"
-                                target="_blank"
-                            >
-                                {{ __('Photo Stats') }}
-                            </flux:navlist.item>
-
-                            <flux:navlist.item
-                                href="https://github.com/picstome/picstome-rater/releases/latest"
-                                icon="star"
-                                target="_blank"
-                            >
-                                {{ __('Rater') }}
-                            </flux:navlist.item>
-
-                            <span class="flex items-center gap-1">
-                                <flux:navlist.item
-                                    :href="route('tools.black-screen')"
-                                    icon="computer-desktop"
-                                    wire:navigate
-                                    :current="request()->routeIs('tools.black-screen')"
-                                    class="min-w-0 flex-1"
+                            <div x-show="open" class="mt-1 space-y-0.5">
+                                <x-app-nav-link
+                                    :href="route('tools.calculator')"
+                                    icon="calculator"
+                                    :current="request()->routeIs('tools.calculator')"
                                 >
-                                    {{ __('Black Screen') }}
-                                </flux:navlist.item>
+                                    {{ __('Calculator') }}
+                                </x-app-nav-link>
 
-                                <flux:button
-                                    x-data
-                                    x-on:click="$dispatch('black-screen:start')"
-                                    size="xs"
-                                    square
-                                    icon="computer-desktop"
-                                    icon:variant="solid"
-                                    tooltip:position="right"
-                                    :tooltip="__('Turn screen black')"
-                                    :aria-label="__('Turn screen black')"
-                                    class="border-black! bg-black! text-white! hover:bg-zinc-800! dark:border-zinc-600! dark:bg-black!"
-                                    data-black-screen-shortcut
-                                />
-                            </span>
-                        </flux:navlist.group>
+                                <x-app-nav-link
+                                    :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/descargar/' : 'https://picstome.com/download/'"
+                                    icon="device-phone-mobile"
+                                    target="_blank"
+                                >
+                                    {{ __('Picstome APP') }}
+                                </x-app-nav-link>
+
+                                <x-app-nav-link
+                                    :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/photo-stats/' : 'https://picstome.com/photostats/'"
+                                    icon="chart-bar"
+                                    target="_blank"
+                                >
+                                    {{ __('Photo Stats') }}
+                                </x-app-nav-link>
+
+                                <x-app-nav-link
+                                    href="https://github.com/picstome/picstome-rater/releases/latest"
+                                    icon="star"
+                                    target="_blank"
+                                >
+                                    {{ __('Rater') }}
+                                </x-app-nav-link>
+
+                                <div class="relative flex items-center">
+                                    <x-app-nav-link
+                                        :href="route('tools.black-screen')"
+                                        icon="computer-desktop"
+                                        :current="request()->routeIs('tools.black-screen')"
+                                        class="min-w-0 flex-1 pe-9!"
+                                    >
+                                        {{ __('Black Screen') }}
+                                    </x-app-nav-link>
+
+                                    <button
+                                        type="button"
+                                        x-data
+                                        x-on:click="$dispatch('black-screen:start')"
+                                        @class([
+                                            'absolute end-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 transition',
+                                            'text-brand-cream/75 hover:bg-white/10 hover:text-brand-cream' => request()->routeIs('tools.black-screen'),
+                                            'text-zinc-400 hover:bg-brand-sage-soft hover:text-brand-green dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-white' => ! request()->routeIs('tools.black-screen'),
+                                        ])
+                                        title="{{ __('Turn screen black') }} (⌘B / Ctrl+B)"
+                                        aria-label="{{ __('Turn screen black') }}"
+                                        aria-keyshortcuts="Meta+B Control+B"
+                                        data-black-screen-shortcut
+                                    >
+                                        <x-icon name="bolt" class="size-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
                         @if (auth()->user()?->is_admin)
-                            <flux:navlist.group :heading="__('Admin')" class="mt-4">
-                                <flux:navlist.item :href="route('users')" icon="user" wire:navigate>
-                                    {{ __('Users') }}
-                                </flux:navlist.item>
+                            <p class="mt-4 px-3 py-2 text-sm leading-none font-medium text-zinc-400">
+                                {{ __('Admin') }}
+                            </p>
 
-                                <flux:navlist.item
-                                    :href="route('admin.stats')"
-                                    icon="chart-bar"
-                                    wire:navigate
-                                    :current="request()->routeIs('admin.stats')"
-                                >
-                                    {{ __('Statistics') }}
-                                </flux:navlist.item>
+                            <x-app-nav-link :href="route('users')" icon="user" :current="request()->routeIs('users')">
+                                {{ __('Users') }}
+                            </x-app-nav-link>
 
-                                <flux:navlist.item
-                                    :href="route('admin.translations')"
-                                    icon="language"
-                                    wire:navigate
-                                    :current="request()->routeIs('admin.translations')"
-                                >
-                                    {{ __('Translations') }}
-                                </flux:navlist.item>
+                            <x-app-nav-link
+                                :href="route('admin.stats')"
+                                icon="chart-bar"
+                                :current="request()->routeIs('admin.stats')"
+                            >
+                                {{ __('Statistics') }}
+                            </x-app-nav-link>
 
-                                <flux:navlist.item
-                                    :href="route('admin.emails')"
-                                    icon="envelope"
-                                    wire:navigate
-                                    :current="request()->routeIs('admin.emails')"
-                                >
-                                    {{ __('Emails') }}
-                                </flux:navlist.item>
-                            </flux:navlist.group>
+                            <x-app-nav-link
+                                :href="route('admin.translations')"
+                                icon="language"
+                                :current="request()->routeIs('admin.translations')"
+                            >
+                                {{ __('Translations') }}
+                            </x-app-nav-link>
+
+                            <x-app-nav-link
+                                :href="route('admin.emails')"
+                                icon="envelope"
+                                :current="request()->routeIs('admin.emails')"
+                            >
+                                {{ __('Emails') }}
+                            </x-app-nav-link>
                         @endif
-                    </flux:navlist>
+                    </nav>
+
+                    <div class="mt-auto space-y-3 border-t border-brand-green/10 px-4 py-3 dark:border-white/10">
+                        <livewire:storage-usage-indicator />
+
+                        @unless (auth()->user()->currentTeam->subscribed())
+                            <x-ts-button :href="route('subscribe')" variant="primary" size="sm" class="w-full">
+                                {{ __('Subscribe') }}
+                            </x-ts-button>
+                        @endunless
+
+                        <livewire:profile-dropdown />
+                    </div>
+                </aside>
+
+                <div class="flex min-h-screen flex-col lg:pl-64">
+                    <header
+                        class="border-brand-green/10 bg-brand-paper/90 dark:bg-brand-night/90 flex items-center gap-3 border-b px-4 py-2 backdrop-blur lg:hidden dark:border-white/10"
+                    >
+                        <button
+                            type="button"
+                            x-on:click="sidebarOpen = true"
+                            class="text-brand-ink dark:text-brand-cream"
+                            aria-label="{{ __('Open menu') }}"
+                        >
+                            <x-icon name="bars-2" class="size-5" />
+                        </button>
+
+                        <x-ts-spacer />
+
+                        <livewire:profile-dropdown :with-name="false" />
+                    </header>
+
+                    <main @class([
+                        'min-w-0 flex-1',
+                        'mx-auto w-full max-w-7xl p-6 lg:p-8' => ! ($isTool ?? false),
+                        'p-0' => $isTool ?? false,
+                    ])>
+                        {{ $slot }}
+                    </main>
                 </div>
-
-                @auth
-                    <livewire:storage-usage-indicator />
-
-                    @unless (auth()->user()->currentTeam->subscribed())
-                        <flux:button :href="route('subscribe')" variant="primary" size="sm" class="mx-2">
-                            {{ __('Subscribe') }}
-                        </flux:button>
-                    @endunless
-                @endauth
-
-                <livewire:profile-dropdown />
-            </flux:sidebar>
-
-            <flux:header
-                class="border-brand-green/10 bg-brand-paper/90 dark:bg-brand-night/90 border-b backdrop-blur lg:hidden dark:border-white/10"
-            >
-                <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
-
-                <flux:spacer />
-
-                <livewire:profile-dropdown :with-name="false" />
-            </flux:header>
-        @endunless
-
-        <flux:main
-            :container="!($fullScreen ?? false) && !($isTool ?? false)"
-            @class(['p-0!' => ($fullScreen ?? false) || ($isTool ?? false)])
-        >
-            {{ $slot }}
-        </flux:main>
+            </div>
+        @endif
 
         @auth
             @include('partials.black-screen')
@@ -337,10 +329,6 @@
             <livewire:register-modal />
         @endguest
 
-        @fluxScripts
-
-        @persist('toast')
-            <flux:toast />
-        @endpersist
+        <x-toast />
     </body>
 </html>

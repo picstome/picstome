@@ -13,6 +13,8 @@ uses(RefreshDatabase::class);
 
 describe('DeleteExpiredGalleriesCommand', function () {
     beforeEach(function () {
+        $this->freezeTime();
+
         $this->disk = config('picstome.disk');
         Storage::fake($this->disk);
         $this->team = Team::factory()->create();

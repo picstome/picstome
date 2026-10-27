@@ -28,6 +28,7 @@
             <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
         @endif
 
+        <tallstackui:script />
         @vite('resources/css/app.css')
 
         @php
@@ -37,48 +38,48 @@
         @if (! empty($accentColor))
             <style>
                 :root {
-                    --color-accent: var(--color-{{ $accentColor }}-500);
-                    --color-accent-content: var(--color-{{ $accentColor }}-600);
-                }
-
-                .dark {
-                    --color-accent: var(--color-{{ $accentColor }}-500);
-                    --color-accent-content: var(--color-{{ $accentColor }}-400);
+                    --color-primary-50: var(--color-{{ $accentColor }}-50);
+                    --color-primary-100: var(--color-{{ $accentColor }}-100);
+                    --color-primary-200: var(--color-{{ $accentColor }}-200);
+                    --color-primary-300: var(--color-{{ $accentColor }}-300);
+                    --color-primary-400: var(--color-{{ $accentColor }}-400);
+                    --color-primary-500: var(--color-{{ $accentColor }}-500);
+                    --color-primary-600: var(--color-{{ $accentColor }}-600);
+                    --color-primary-700: var(--color-{{ $accentColor }}-700);
+                    --color-primary-800: var(--color-{{ $accentColor }}-800);
+                    --color-primary-900: var(--color-{{ $accentColor }}-900);
+                    --color-primary-950: var(--color-{{ $accentColor }}-950);
                 }
             </style>
         @else
             <style>
                 :root {
-                    --color-accent: var(--color-brand-green);
-                    --color-accent-content: var(--color-brand-green);
-                    --color-accent-foreground: white;
-                }
-
-                .dark {
-                    --color-accent: var(--color-brand-sage);
-                    --color-accent-content: var(--color-brand-sage);
-                    --color-accent-foreground: var(--color-brand-ink-strong);
+                    --color-primary-500: var(--color-brand-green);
+                    --color-primary-600: var(--color-brand-green-deep);
                 }
             </style>
         @endif
-
-        @fluxAppearance
 
         {{ $head ?? '' }}
 
         @stack('head')
     </head>
     <body
+        x-data="tallstackui_darkTheme({ name: 'dark-theme', default: 'system' })"
+        x-bind:class="{ 'dark': darkTheme }"
         @class([
             'min-h-screen',
             'bg-brand-paper dark:bg-brand-night' => empty($accentColor),
             'bg-white dark:bg-zinc-800' => ! empty($accentColor),
         ])
     >
-        <flux:main :container="! ($fullScreen ?? false)" @class(['p-0!' => ($fullScreen) ?? false])>
+        <main @class([
+            'min-h-screen',
+            'mx-auto w-full max-w-7xl px-4 py-6 lg:px-8' => ! ($fullScreen ?? false),
+        ])>
             {{ $slot }}
-        </flux:main>
+        </main>
 
-        @fluxScripts
+        <x-toast />
     </body>
 </html>

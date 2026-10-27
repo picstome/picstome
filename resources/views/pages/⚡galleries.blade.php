@@ -1,9 +1,9 @@
 <?php
 
+use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\GalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use Interactions;
     use WithPagination;
 
     public GalleryForm $form;
@@ -59,7 +60,7 @@ new class extends Component
         }
 
         if (! $account) {
-            Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+            $this->toast()->error(__('Could not reach the upload server. Please try again.'))->send();
 
             $this->redirect(route('galleries.show', ['gallery' => $gallery]));
 
@@ -90,19 +91,19 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Galleries') }}</x-heading>
-            <x-subheading>{{ __('View, create, and manage your galleries.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Galleries') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('View, create, and manage your galleries.') }}</x-ts-subheading>
         </div>
         <div class="flex gap-4">
             @if ($this->team?->subscribed())
-                <flux:button icon="camera" wire:click="startLiveShoot" variant="primary" class="btn-ink">
+                <x-ts-button icon="camera" wire:click="startLiveShoot" variant="primary" class="btn-ink">
                     {{ __('Connect camera') }}
-                </flux:button>
+                </x-ts-button>
             @endif
 
-            <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
-                <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-gallery' : 'login'">
+                <x-ts-button variant="primary">{{ __('Create gallery') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
@@ -110,7 +111,7 @@ new class extends Component
         <div class="mt-12">
             <div id="grid" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 @foreach ($this->galleries as $gallery)
-                    <flux:card
+                    <x-ts-card
                         class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
                     >
                         <a href="{{ route('galleries.show', ['gallery' => $gallery]) }}" class="block" wire:navigate>
@@ -136,29 +137,29 @@ new class extends Component
                                 <div
                                     class="flex aspect-3/2 w-full items-center justify-center rounded-t-lg bg-zinc-200 dark:bg-zinc-700"
                                 >
-                                    <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                    <x-icon name="photo" class="size-12 text-zinc-400 dark:text-zinc-500" />
                                 </div>
                             @endif
 
                             <div class="p-4">
-                                <flux:heading size="lg" class="mb-2">
+                                <x-ts-heading size="lg" class="mb-2">
                                     {{ $gallery->name }}
-                                </flux:heading>
+                                </x-ts-heading>
 
                                 <div class="flex items-center justify-between">
-                                    <flux:text variant="subtle" size="sm">
+                                    <x-ts-text variant="subtle" size="sm">
                                         {{ $gallery->photosCount() }} {{ __('photos') }}
-                                    </flux:text>
+                                    </x-ts-text>
 
                                     @if ($gallery->created_at)
-                                        <flux:text variant="subtle" size="sm">
+                                        <x-ts-text variant="subtle" size="sm">
                                             {{ $gallery->created_at->format('M j, Y') }}
-                                        </flux:text>
+                                        </x-ts-text>
                                     @endif
                                 </div>
                             </div>
                         </a>
-                    </flux:card>
+                    </x-ts-card>
                 @endforeach
             </div>
 
@@ -176,34 +177,34 @@ new class extends Component
                 "
                 class="mt-6"
             >
-                <flux:pagination :paginator="$this->galleries" />
+                <x-ts-pagination :paginator="$this->galleries" />
             </div>
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No galleries') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No galleries') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('We couldn\'t find any galleries. Create one to get started.') }}
-            </flux:subheading>
-            <flux:modal.trigger :name="auth()->check() ? 'create-gallery' : 'login'">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-gallery' : 'login'">
+                <x-ts-button variant="primary">
                     {{ __('Create gallery') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="create-gallery" class="w-full sm:max-w-lg">
+    <x-ts-modal name="create-gallery" class="w-full sm:max-w-lg">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new gallery') }}</flux:heading>
-                <flux:subheading>{{ __('Enter your gallery details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new gallery') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter your gallery details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
+            <x-ts-input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
-            <flux:input
+            <x-ts-input
                 wire:model="form.expirationDate"
                 :label="__('Expiration date')"
                 :badge="$this->team?->subscribed() ? __('Optional') : null"
@@ -212,30 +213,30 @@ new class extends Component
             />
 
             @if (! $this->team?->subscribed())
-                <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary">
+                    <x-ts-callout-heading>{{ __('Subscribe for optional expiration') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Subscribe') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endif
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="form.keepOriginalSize"
                 :label="__('Keep photos at their original size')"
                 :description="__('This setting is shared with the create gallery modal.')"
             />
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

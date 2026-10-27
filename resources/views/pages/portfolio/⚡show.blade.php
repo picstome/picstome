@@ -46,10 +46,12 @@ class extends Component
     <div class="h-full">
         <div class="space-y-4 text-center">
             <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block space-y-4" wire:navigate>
-                @if($team->brand_logo_icon_url)
+                @if($team->brand_logo_url)
+                    <img src="{{ $team->brand_logo_url }}" class="mx-auto max-h-[90px] w-auto md:max-h-[160px]" alt="{{ $team->name }}" />
+                @elseif($team->brand_logo_icon_url)
                     <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
                 @else
-                    <flux:heading size="xl">{{ $team->name }}</flux:heading>
+                    <x-ts-heading size="xl">{{ $team->name }}</x-ts-heading>
                 @endif
             </a>
 
@@ -57,35 +59,35 @@ class extends Component
         </div>
 
         @if($photos->isNotEmpty())
-            <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8 max-sm:-mx-6">
+            <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8">
                 <img src="{{ ($gallery->coverPhoto ?? $photos->first())->large_thumbnail_url }}" class="w-full h-full object-cover" />
             </div>
         @endif
 
-        <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
-            <div class="max-sm:w-full sm:flex-1">
-                <flux:breadcrumbs class="mb-2">
-                    <flux:breadcrumbs.item href="{{ route('portfolio.index', ['handle' => $team->handle]) }}">
+        <div class="mt-6 lg:mt-8">
+            <div class="min-w-0">
+                <x-ts-breadcrumbs class="mb-2">
+                    <x-ts-breadcrumbs-item href="{{ route('portfolio.index', ['handle' => $team->handle]) }}">
                         {{ __('Portfolio') }}
-                    </flux:breadcrumbs.item>
-                    <flux:breadcrumbs.item>
+                    </x-ts-breadcrumbs-item>
+                    <x-ts-breadcrumbs-item>
                         {{ $gallery->name }}
-                    </flux:breadcrumbs.item>
-                </flux:breadcrumbs>
+                    </x-ts-breadcrumbs-item>
+                </x-ts-breadcrumbs>
                 <div class="flex items-center gap-4">
-                    <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                    <x-ts-heading level="1" size="xl">{{ $gallery->name }}</x-ts-heading>
                 </div>
 
                 @if($gallery->share_description)
-                    <x-subheading class="mt-2">
+                    <x-ts-subheading class="mt-2">
                         {{ $gallery->share_description }}
-                    </x-subheading>
+                    </x-ts-subheading>
                 @endif
             </div>
         </div>
 
         @if ($photos->isNotEmpty())
-            <div class="mt-8 max-sm:-mx-5">
+            <div class="mt-8">
                 <div class="pt-1">
                     <div
                         class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
@@ -106,8 +108,8 @@ class extends Component
                                         @contextmenu.prevent
                                         x-on:load="loaded = true"
                                         x-on:error="errored = true"
-                                        class="object-cover"
-                                        :class="loaded || errored ? 'object-cover' : 'object-cover animate-pulse bg-zinc-300 dark:bg-white/10 h-full w-full'"
+                                        class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
+                                        :class="loaded || errored ? '' : 'animate-pulse'"
                                         loading="lazy" />
                                 </a>
                             </div>
@@ -117,11 +119,11 @@ class extends Component
             </div>
         @else
             <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-                <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-                <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
-                <flux:subheading class="mb-6 max-w-72 text-center">
+                <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                <x-ts-heading size="lg" level="2">{{ __('No photos') }}</x-ts-heading>
+                <x-ts-subheading class="mb-6 max-w-72 text-center">
                     {{ __('We couldn’t find any photos.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
         @endif
 

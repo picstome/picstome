@@ -1,7 +1,8 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Services\CalculatorService;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     public array $settings = [];
 
     public array $fixed_expenses = [];
@@ -167,7 +170,7 @@ new class extends Component
         $this->pendingDeleteType = $type;
         $this->pendingDeleteId = $id;
 
-        Flux::modal('delete-calculator-item')->show();
+        $this->openModal('delete-calculator-item');
     }
 
     /**
@@ -209,8 +212,8 @@ new class extends Component
     public function resetCalculator(): void
     {
         $this->loadState(CalculatorService::reset(Auth::user()->currentTeam));
-        Flux::modal('reset-calculator')->close();
-        Flux::toast(__('Calculator reset to defaults.'), variant: 'success');
+        $this->closeModal('reset-calculator');
+        $this->toast()->success(__('Calculator reset to defaults.'))->send();
     }
 
     public function dismissGuide(): void
@@ -308,13 +311,13 @@ new class extends Component
 <div class="mx-auto max-w-6xl">
     <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <flux:heading size="xl" level="1">{{ __('Session price calculator') }}</flux:heading>
-            <flux:subheading size="lg">
+            <x-ts-heading size="xl" level="1">{{ __('Session price calculator') }}</x-ts-heading>
+            <x-ts-subheading size="lg">
                 {{ __('Price your sessions with your costs, time and taxes.') }}
-            </flux:subheading>
+            </x-ts-subheading>
         </div>
 
-        <flux:badge icon="banknotes" color="zinc">{{ __('Currency') }}: {{ $this->currency }}</flux:badge>
+        <x-ts-badge icon="banknotes" color="zinc">{{ __('Currency') }}: {{ $this->currency }}</x-ts-badge>
     </div>
 
     @if (! $this->guideDismissed)
@@ -323,12 +326,12 @@ new class extends Component
         >
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <flux:heading size="sm" class="text-brand-green dark:text-brand-sage">
+                    <x-ts-heading size="sm" class="text-brand-green dark:text-brand-sage">
                         {{ __('How this calculator works') }}
-                    </flux:heading>
-                    <flux:text size="sm" class="text-brand-ink/75 dark:text-brand-sage/85 mt-1">
+                    </x-ts-heading>
+                    <x-ts-text size="sm" class="text-brand-ink/75 dark:text-brand-sage/85 mt-1">
                         {{ __('It adds your costs and the value of your time, then applies VAT and IRPF transparently.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <ul class="text-brand-ink/75 dark:text-brand-sage/85 mt-3 list-disc space-y-1 ps-4 text-sm">
                         <li>{{ __('Fixed expenses and monthly time are split across your sessions per month.') }}</li>
@@ -339,7 +342,7 @@ new class extends Component
                     </ul>
                 </div>
 
-                <flux:button
+                <x-ts-button
                     variant="subtle"
                     size="sm"
                     square
@@ -355,12 +358,12 @@ new class extends Component
         <div class="space-y-6">
             <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <div class="mb-5">
-                    <flux:heading size="lg">{{ __('Quick settings') }}</flux:heading>
-                    <flux:text size="sm">{{ __('These values drive every calculation.') }}</flux:text>
+                    <x-ts-heading size="lg">{{ __('Quick settings') }}</x-ts-heading>
+                    <x-ts-text size="sm">{{ __('These values drive every calculation.') }}</x-ts-text>
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input
+                    <x-ts-input
                         wire:model.live.debounce.500ms="settings.hourly_rate"
                         type="number"
                         step="0.01"
@@ -369,7 +372,7 @@ new class extends Component
                         :description="__('Value of one hour of your time, before taxes.')"
                     />
 
-                    <flux:input
+                    <x-ts-input
                         wire:model.live.debounce.500ms="settings.sessions_per_month"
                         type="number"
                         step="1"
@@ -378,7 +381,7 @@ new class extends Component
                         :description="__('Used to split monthly costs and monthly time.')"
                     />
 
-                    <flux:input
+                    <x-ts-input
                         wire:model.live.debounce.500ms="settings.vat_percent"
                         type="number"
                         step="0.01"
@@ -388,7 +391,7 @@ new class extends Component
                         :description="__('Added to the client invoice. Set it to 0 when it does not apply.')"
                     />
 
-                    <flux:input
+                    <x-ts-input
                         wire:model.live.debounce.500ms="settings.income_tax_percent"
                         type="number"
                         step="0.01"
@@ -404,11 +407,11 @@ new class extends Component
                     class="mt-5 flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-700 dark:bg-zinc-900"
                 >
                     <div>
-                        <flux:heading size="sm">{{ __('Apply IRPF withholding') }}</flux:heading>
-                        <flux:text size="sm">{{ __('Only when the client is a company or professional.') }}</flux:text>
+                        <x-ts-heading size="sm">{{ __('Apply IRPF withholding') }}</x-ts-heading>
+                        <x-ts-text size="sm">{{ __('Only when the client is a company or professional.') }}</x-ts-text>
                     </div>
 
-                    <flux:switch
+                    <x-ts-switch
                         wire:model.live="settings.income_tax_withholding"
                         :aria-label="__('Apply IRPF withholding')"
                     />
@@ -416,18 +419,12 @@ new class extends Component
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
-                <flux:tab.group>
-                    <flux:tabs wire:model="tab" scrollable>
-                        <flux:tab name="fixed" icon="receipt-percent">{{ __('Fixed expenses') }}</flux:tab>
-                        <flux:tab name="session" icon="camera">{{ __('Session expenses') }}</flux:tab>
-                        <flux:tab name="equipment" icon="wrench-screwdriver">{{ __('Equipment') }}</flux:tab>
-                        <flux:tab name="time" icon="clock">{{ __('Time') }}</flux:tab>
-                    </flux:tabs>
-
-                    <flux:tab.panel name="fixed">
-                        <flux:text size="sm" class="mb-4">
+                <x-tab wire:model="tab" paddingless shadowless>
+<x-tab.items tab="fixed" :title="__('Fixed expenses')">
+                        <x-slot:left><x-icon name="receipt-percent" class="size-4" /></x-slot:left>
+                        <x-ts-text size="sm" class="mb-4">
                             {{ __('Monthly costs that do not change per session.') }}
-                        </flux:text>
+                        </x-ts-text>
 
                         <div class="space-y-2">
                             @forelse ($fixed_expenses as $index => $item)
@@ -435,14 +432,14 @@ new class extends Component
                                     class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
                                     wire:key="fixed-{{ $item['id'] }}"
                                 >
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="fixed_expenses.{{ $index }}.name"
                                         :aria-label="__('Expense name')"
                                         :placeholder="__('Expense name')"
                                         class="flex-1"
                                     />
 
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="fixed_expenses.{{ $index }}.amount"
                                         type="number"
                                         step="0.01"
@@ -451,7 +448,7 @@ new class extends Component
                                         class="sm:w-36"
                                     />
 
-                                    <flux:button
+                                    <x-ts-button
                                         variant="subtle"
                                         size="sm"
                                         square
@@ -462,18 +459,18 @@ new class extends Component
                                     />
                                 </div>
                             @empty
-                                <flux:text size="sm">{{ __('No fixed expenses yet.') }}</flux:text>
+                                <x-ts-text size="sm">{{ __('No fixed expenses yet.') }}</x-ts-text>
                             @endforelse
                         </div>
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newFixedName"
                                     :placeholder="__('Expense name')"
                                     :aria-label="__('Expense name')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newFixedAmount"
                                     type="number"
                                     step="0.01"
@@ -481,12 +478,12 @@ new class extends Component
                                     :placeholder="__('Amount')"
                                     :aria-label="__('Amount')"
                                 />
-                                <flux:button variant="primary" icon="plus" wire:click="addFixedExpense">
+                                <x-ts-button variant="primary" icon="plus" wire:click="addFixedExpense">
                                     {{ __('Add expense') }}
-                                </flux:button>
+                                </x-ts-button>
                             </div>
-                            <flux:error name="newFixedName" class="mt-2" />
-                            <flux:error name="newFixedAmount" />
+
+
                         </div>
 
                         <div
@@ -501,10 +498,11 @@ new class extends Component
                                 <strong>{{ $this->formatMoney($summary['fixed_per_session']) }}</strong>
                             </span>
                         </div>
-                    </flux:tab.panel>
+                    </x-tab.items>
 
-                    <flux:tab.panel name="session">
-                        <flux:text size="sm" class="mb-4">{{ __('Variable costs for each session.') }}</flux:text>
+                    <x-tab.items tab="session" :title="__('Session expenses')">
+                        <x-slot:left><x-icon name="camera" class="size-4" /></x-slot:left>
+                        <x-ts-text size="sm" class="mb-4">{{ __('Variable costs for each session.') }}</x-ts-text>
 
                         <div class="space-y-2">
                             @forelse ($session_expenses as $index => $item)
@@ -512,14 +510,14 @@ new class extends Component
                                     class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
                                     wire:key="session-{{ $item['id'] }}"
                                 >
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="session_expenses.{{ $index }}.name"
                                         :aria-label="__('Expense name')"
                                         :placeholder="__('Expense name')"
                                         class="flex-1"
                                     />
 
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="session_expenses.{{ $index }}.amount"
                                         type="number"
                                         step="0.01"
@@ -528,7 +526,7 @@ new class extends Component
                                         class="sm:w-36"
                                     />
 
-                                    <flux:button
+                                    <x-ts-button
                                         variant="subtle"
                                         size="sm"
                                         square
@@ -539,18 +537,18 @@ new class extends Component
                                     />
                                 </div>
                             @empty
-                                <flux:text size="sm">{{ __('No session expenses yet.') }}</flux:text>
+                                <x-ts-text size="sm">{{ __('No session expenses yet.') }}</x-ts-text>
                             @endforelse
                         </div>
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newSessionName"
                                     :placeholder="__('Expense name')"
                                     :aria-label="__('Expense name')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newSessionAmount"
                                     type="number"
                                     step="0.01"
@@ -558,22 +556,23 @@ new class extends Component
                                     :placeholder="__('Amount')"
                                     :aria-label="__('Amount')"
                                 />
-                                <flux:button variant="primary" icon="plus" wire:click="addSessionExpense">
+                                <x-ts-button variant="primary" icon="plus" wire:click="addSessionExpense">
                                     {{ __('Add expense') }}
-                                </flux:button>
+                                </x-ts-button>
                             </div>
-                            <flux:error name="newSessionName" class="mt-2" />
-                            <flux:error name="newSessionAmount" />
+
+
                         </div>
 
                         <div class="mt-4 rounded-lg bg-zinc-50 px-4 py-3 text-sm dark:bg-zinc-900">
                             {{ __('Total per session') }}:
                             <strong>{{ $this->formatMoney($summary['session_total']) }}</strong>
                         </div>
-                    </flux:tab.panel>
+                    </x-tab.items>
 
-                    <flux:tab.panel name="equipment">
-                        <flux:text size="sm" class="mb-4">{{ __('Camera gear and depreciation.') }}</flux:text>
+                    <x-tab.items tab="equipment" :title="__('Equipment')">
+                        <x-slot:left><x-icon name="wrench-screwdriver" class="size-4" /></x-slot:left>
+                        <x-ts-text size="sm" class="mb-4">{{ __('Camera gear and depreciation.') }}</x-ts-text>
 
                         <div class="space-y-2">
                             @forelse ($equipment as $index => $item)
@@ -582,13 +581,13 @@ new class extends Component
                                     wire:key="equipment-{{ $item['id'] }}"
                                 >
                                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                                        <flux:input
+                                        <x-ts-input
                                             wire:model.live.debounce.500ms="equipment.{{ $index }}.name"
                                             :label="__('Equipment name')"
                                             class="flex-1"
                                         />
 
-                                        <flux:input
+                                        <x-ts-input
                                             wire:model.live.debounce.500ms="equipment.{{ $index }}.price"
                                             type="number"
                                             step="0.01"
@@ -597,7 +596,7 @@ new class extends Component
                                             class="sm:w-32"
                                         />
 
-                                        <flux:input
+                                        <x-ts-input
                                             wire:model.live.debounce.500ms="equipment.{{ $index }}.resale_value"
                                             type="number"
                                             step="0.01"
@@ -606,7 +605,7 @@ new class extends Component
                                             class="sm:w-32"
                                         />
 
-                                        <flux:input
+                                        <x-ts-input
                                             wire:model.live.debounce.500ms="equipment.{{ $index }}.useful_life_years"
                                             type="number"
                                             step="1"
@@ -616,7 +615,7 @@ new class extends Component
                                             class="sm:w-32"
                                         />
 
-                                        <flux:button
+                                        <x-ts-button
                                             variant="subtle"
                                             size="sm"
                                             square
@@ -628,7 +627,7 @@ new class extends Component
                                     </div>
                                 </div>
                             @empty
-                                <flux:text size="sm">{{ __('No equipment yet.') }}</flux:text>
+                                <x-ts-text size="sm">{{ __('No equipment yet.') }}</x-ts-text>
                             @endforelse
                         </div>
 
@@ -636,22 +635,22 @@ new class extends Component
                             <div
                                 class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_8rem_8rem_8rem_auto] lg:items-end"
                             >
-                                <flux:input wire:model="newEquipmentName" :label="__('Equipment name')" />
-                                <flux:input
+                                <x-ts-input wire:model="newEquipmentName" :label="__('Equipment name')" />
+                                <x-ts-input
                                     wire:model="newEquipmentPrice"
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     :label="__('Price')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newEquipmentResale"
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     :label="__('Resale value')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newEquipmentLife"
                                     type="number"
                                     step="1"
@@ -659,14 +658,14 @@ new class extends Component
                                     max="50"
                                     :label="__('Useful life (years)')"
                                 />
-                                <flux:button variant="primary" icon="plus" wire:click="addEquipment">
+                                <x-ts-button variant="primary" icon="plus" wire:click="addEquipment">
                                     {{ __('Add equipment') }}
-                                </flux:button>
+                                </x-ts-button>
                             </div>
-                            <flux:error name="newEquipmentName" class="mt-2" />
-                            <flux:error name="newEquipmentPrice" />
-                            <flux:error name="newEquipmentResale" />
-                            <flux:error name="newEquipmentLife" />
+
+
+
+
                         </div>
 
                         <div
@@ -685,14 +684,15 @@ new class extends Component
                                 <strong>{{ $this->formatMoney($summary['depreciation_per_session']) }}</strong>
                             </span>
                         </div>
-                    </flux:tab.panel>
+                    </x-tab.items>
 
-                    <flux:tab.panel name="time">
-                        <flux:text size="sm" class="mb-4">
+                    <x-tab.items tab="time" :title="__('Time')">
+                        <x-slot:left><x-icon name="clock" class="size-4" /></x-slot:left>
+                        <x-ts-text size="sm" class="mb-4">
                             {{ __('Hours spent on each session and on recurring monthly tasks.') }}
-                        </flux:text>
+                        </x-ts-text>
 
-                        <flux:heading size="sm" class="mb-2">{{ __('Time per session') }}</flux:heading>
+                        <x-ts-heading size="sm" class="mb-2">{{ __('Time per session') }}</x-ts-heading>
 
                         <div class="space-y-2">
                             @forelse ($session_tasks as $index => $item)
@@ -700,14 +700,14 @@ new class extends Component
                                     class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
                                     wire:key="session-task-{{ $item['id'] }}"
                                 >
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="session_tasks.{{ $index }}.name"
                                         :aria-label="__('Task name')"
                                         :placeholder="__('Task name')"
                                         class="flex-1"
                                     />
 
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="session_tasks.{{ $index }}.hours"
                                         type="number"
                                         step="0.5"
@@ -716,7 +716,7 @@ new class extends Component
                                         class="sm:w-32"
                                     />
 
-                                    <flux:button
+                                    <x-ts-button
                                         variant="subtle"
                                         size="sm"
                                         square
@@ -727,18 +727,18 @@ new class extends Component
                                     />
                                 </div>
                             @empty
-                                <flux:text size="sm">{{ __('No time tracked yet.') }}</flux:text>
+                                <x-ts-text size="sm">{{ __('No time tracked yet.') }}</x-ts-text>
                             @endforelse
                         </div>
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newSessionTaskName"
                                     :placeholder="__('Task name')"
                                     :aria-label="__('Task name')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newSessionTaskHours"
                                     type="number"
                                     step="0.5"
@@ -746,15 +746,15 @@ new class extends Component
                                     :placeholder="__('Hours')"
                                     :aria-label="__('Hours')"
                                 />
-                                <flux:button variant="primary" icon="plus" wire:click="addSessionTask">
+                                <x-ts-button variant="primary" icon="plus" wire:click="addSessionTask">
                                     {{ __('Add time') }}
-                                </flux:button>
+                                </x-ts-button>
                             </div>
-                            <flux:error name="newSessionTaskName" class="mt-2" />
-                            <flux:error name="newSessionTaskHours" />
+
+
                         </div>
 
-                        <flux:heading size="sm" class="mt-6 mb-2">{{ __('Time per month') }}</flux:heading>
+                        <x-ts-heading size="sm" class="mt-6 mb-2">{{ __('Time per month') }}</x-ts-heading>
 
                         <div class="space-y-2">
                             @forelse ($monthly_tasks as $index => $item)
@@ -762,14 +762,14 @@ new class extends Component
                                     class="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 sm:flex-row sm:items-center dark:border-zinc-700"
                                     wire:key="monthly-task-{{ $item['id'] }}"
                                 >
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="monthly_tasks.{{ $index }}.name"
                                         :aria-label="__('Task name')"
                                         :placeholder="__('Task name')"
                                         class="flex-1"
                                     />
 
-                                    <flux:input
+                                    <x-ts-input
                                         wire:model.live.debounce.500ms="monthly_tasks.{{ $index }}.hours"
                                         type="number"
                                         step="0.5"
@@ -778,7 +778,7 @@ new class extends Component
                                         class="sm:w-32"
                                     />
 
-                                    <flux:button
+                                    <x-ts-button
                                         variant="subtle"
                                         size="sm"
                                         square
@@ -789,18 +789,18 @@ new class extends Component
                                     />
                                 </div>
                             @empty
-                                <flux:text size="sm">{{ __('No time tracked yet.') }}</flux:text>
+                                <x-ts-text size="sm">{{ __('No time tracked yet.') }}</x-ts-text>
                             @endforelse
                         </div>
 
                         <div class="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                             <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_auto]">
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newMonthlyTaskName"
                                     :placeholder="__('Task name')"
                                     :aria-label="__('Task name')"
                                 />
-                                <flux:input
+                                <x-ts-input
                                     wire:model="newMonthlyTaskHours"
                                     type="number"
                                     step="0.5"
@@ -808,12 +808,12 @@ new class extends Component
                                     :placeholder="__('Hours per month')"
                                     :aria-label="__('Hours per month')"
                                 />
-                                <flux:button variant="primary" icon="plus" wire:click="addMonthlyTask">
+                                <x-ts-button variant="primary" icon="plus" wire:click="addMonthlyTask">
                                     {{ __('Add time') }}
-                                </flux:button>
+                                </x-ts-button>
                             </div>
-                            <flux:error name="newMonthlyTaskName" class="mt-2" />
-                            <flux:error name="newMonthlyTaskHours" />
+
+
                         </div>
 
                         <div
@@ -832,8 +832,8 @@ new class extends Component
                                 <strong>{{ $this->formatMoney($summary['monthly_time_per_session']) }}</strong>
                             </span>
                         </div>
-                    </flux:tab.panel>
-                </flux:tab.group>
+                    </x-tab.items>
+                </x-tab>
             </div>
         </div>
 
@@ -841,9 +841,9 @@ new class extends Component
             <div
                 class="border-brand-green/30 dark:border-brand-sage/30 rounded-xl border-2 bg-white p-6 dark:bg-white/5"
             >
-                <flux:heading size="lg" class="text-brand-green dark:text-brand-sage">
+                <x-ts-heading size="lg" class="text-brand-green dark:text-brand-sage">
                     {{ __('Recommended price') }}
-                </flux:heading>
+                </x-ts-heading>
 
                 <div class="bg-brand-coral text-brand-cream mt-5 rounded-xl px-5 py-4">
                     <div class="text-brand-cream text-xs font-semibold tracking-wide uppercase">
@@ -884,7 +884,7 @@ new class extends Component
                     </div>
                 </div>
 
-                <flux:separator class="my-4" />
+                <x-ts-separator class="my-4" />
 
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between gap-3 font-semibold">
@@ -992,7 +992,7 @@ new class extends Component
                 >
                     <span x-ref="summary" class="hidden">{{ $this->copySummary }}</span>
 
-                    <flux:button
+                    <x-ts-button
                         variant="primary"
                         icon="clipboard-document"
                         class="flex-1"
@@ -1001,17 +1001,17 @@ new class extends Component
                         <span x-text="copied ? copiedLabel : copyFailed ? failedLabel : copyLabel">
                             {{ __('Copy summary') }}
                         </span>
-                    </flux:button>
+                    </x-ts-button>
 
-                    <flux:modal.trigger name="reset-calculator">
-                        <flux:button
+                    <x-ts-modal-trigger name="reset-calculator">
+                        <x-ts-button
                             variant="subtle"
                             square
                             icon="arrow-path"
                             :tooltip="__('Reset to defaults')"
                             :aria-label="__('Reset to defaults')"
                         />
-                    </flux:modal.trigger>
+                    </x-ts-modal-trigger>
                 </div>
             </div>
         </aside>
@@ -1024,26 +1024,26 @@ new class extends Component
         :method="$this->pendingDeleteType && $this->pendingDeleteId ? 'deleteItem(\''.$this->pendingDeleteType.'\', \''.$this->pendingDeleteId.'\')' : null"
     />
 
-    <flux:modal name="reset-calculator" class="w-full sm:max-w-md">
+    <x-ts-modal name="reset-calculator" class="w-full sm:max-w-md">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Reset calculator?') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Reset calculator?') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('This will replace all calculator settings and items with the defaults.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
             <div class="flex gap-2">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:modal.close>
-                    <flux:button variant="outline" class="btn-outline-brand">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
+                <x-ts-modal-close>
+                    <x-ts-button variant="outline" class="btn-outline-brand">{{ __('Cancel') }}</x-ts-button>
+                </x-ts-modal-close>
 
-                <flux:button variant="primary" class="btn-coral" wire:click="resetCalculator">
+                <x-ts-button variant="primary" class="btn-coral" wire:click="resetCalculator">
                     {{ __('Reset') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </div>
-    </flux:modal>
+    </x-ts-modal>
 </div>

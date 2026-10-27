@@ -33,3 +33,24 @@ test('pdf photos have no set as cover action', function () {
     expect($html)->not->toContain('Remove as Cover');
     expect($html)->toContain('Delete');
 });
+
+test('video photos have no set as cover action', function () {
+    $photo = Photo::factory()->video()->for(Gallery::factory()->for($this->team))->create();
+
+    $html = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])->html();
+
+    expect($html)->not->toContain('Set as Cover');
+    expect($html)->not->toContain('Remove as Cover');
+    expect($html)->toContain('Delete');
+});
+
+test('videos cannot be set as gallery cover', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+        ->call('setAsCover')
+        ->assertStatus(422);
+
+    expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});

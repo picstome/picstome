@@ -34,20 +34,20 @@ new class extends Component
 
 <div>
     @if ($visible)
-        <flux:callout icon="exclamation-triangle" variant="warning" class="mb-6" data-test="storage-alert-banner">
-            <flux:callout.heading>{{ __('Your storage is almost full') }}</flux:callout.heading>
+        <x-ts-callout icon="exclamation-triangle" variant="warning" class="mb-6" data-test="storage-alert-banner">
+            <x-ts-callout-heading>{{ __('Your storage is almost full') }}</x-ts-callout-heading>
 
-            <flux:callout.text>
+            <x-ts-callout-text>
                 {{ __('You have used :percent% of your storage. When it fills up, you won\'t be able to upload more photos or videos.', ['percent' => $percent]) }}
-            </flux:callout.text>
+            </x-ts-callout-text>
 
             <x-slot name="actions">
                 <div class="flex items-center gap-2">
-                    <flux:button :href="$upgradeUrl" variant="primary">
+                    <x-ts-button :href="$upgradeUrl" variant="primary">
                         {{ __('See plans') }}
-                    </flux:button>
+                    </x-ts-button>
 
-                    <flux:button
+                    <x-ts-button
                         variant="subtle"
                         icon="x-mark"
                         wire:click="dismiss"
@@ -56,6 +56,6 @@ new class extends Component
                     />
                 </div>
             </x-slot>
-        </flux:callout>
+        </x-ts-callout>
     @endif
 </div>

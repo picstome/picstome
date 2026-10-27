@@ -1,11 +1,12 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\InvoiceSettingsForm;
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Services\InvoiceDuplicationService;
 use App\Traits\FormatsMoney;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -13,6 +14,8 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     use FormatsMoney;
     use WithPagination;
 
@@ -73,7 +76,7 @@ new class extends Component
     {
         $this->setupStep = 1;
 
-        $this->modal('invoice-setup')->show();
+        $this->openModal('invoice-setup');
     }
 
     public function nextSetupStep(): void
@@ -96,14 +99,14 @@ new class extends Component
     {
         $this->form->completeSetup();
 
-        $this->modal('invoice-setup')->close();
+        $this->closeModal('invoice-setup');
 
-        Flux::toast(__('Your invoicing settings have been saved.'), variant: 'success');
+        $this->toast()->success(__('Your invoicing settings have been saved.'))->send();
     }
 
     public function skipSetup(): void
     {
-        $this->modal('invoice-setup')->close();
+        $this->closeModal('invoice-setup');
     }
 
     /**
@@ -158,57 +161,57 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Invoices') }}</x-heading>
-            <x-subheading>{{ __('Create invoices and share them with your clients.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Invoices') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('Create invoices and share them with your clients.') }}</x-ts-subheading>
         </div>
         <div class="flex items-center gap-2">
-            <flux:button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
+            <x-ts-button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
                 {{ __('Invoice settings') }}
-            </flux:button>
+            </x-ts-button>
 
-            <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
+            <x-ts-button variant="primary" :href="route('invoices.create')" wire:navigate>
                 {{ __('New invoice') }}
-            </flux:button>
+            </x-ts-button>
         </div>
     </div>
 
     @if ($this->needsSetup)
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.heading>{{ __('Complete your invoicing settings') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-heading>{{ __('Complete your invoicing settings') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('Add your legal name, tax ID and address before issuing your first invoice.') }}
-            </flux:callout.text>
+            </x-ts-callout-text>
             <x-slot name="actions">
                 @if ($this->setupPending)
-                    <flux:button variant="primary" wire:click="openSetup">{{ __('Set up now') }}</flux:button>
+                    <x-ts-button variant="primary" wire:click="openSetup">{{ __('Set up now') }}</x-ts-button>
                 @endif
 
-                <flux:button variant="ghost" :href="route('invoices.settings')" wire:navigate>
+                <x-ts-button variant="ghost" :href="route('invoices.settings')" wire:navigate>
                     {{ __('Invoice settings') }}
-                </flux:button>
+                </x-ts-button>
             </x-slot>
-        </flux:callout>
+        </x-ts-callout>
     @endif
 
     @if ($this->invoices->isNotEmpty())
         <div class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs [&_table]:table-auto [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3 dark:border-white/10 dark:bg-white/5">
-            <x-table id="table">
-                <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
-                    <x-table.column>{{ __('Number') }}</x-table.column>
-                    <x-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-table.column>
-                    <x-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-table.column>
-                    <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
-                    <x-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-table.column>
-                    <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
-                </x-table.columns>
+            <x-data-table id="table">
+                <x-data-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
+                    <x-data-table.column>{{ __('Number') }}</x-data-table.column>
+                    <x-data-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-data-table.column>
+                    <x-data-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-data-table.column>
+                    <x-data-table.column class="group/right-align">{{ __('Total') }}</x-data-table.column>
+                    <x-data-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-data-table.column>
+                    <x-data-table.column class="group/right-align">{{ __('Actions') }}</x-data-table.column>
+                </x-data-table.columns>
 
-                <x-table.rows>
+                <x-data-table.rows>
                     @foreach ($this->invoices as $invoice)
-                        <x-table.row
+                        <x-data-table.row
                             wire:key="invoice-{{ $invoice->id }}"
                             class="transition hover:bg-zinc-50 dark:hover:bg-white/5"
                         >
-                            <x-table.cell variant="strong" class="relative">
+                            <x-data-table.cell variant="strong" class="relative">
                                 <a
                                     href="{{ route('invoices.show', $invoice) }}"
                                     wire:navigate
@@ -223,7 +226,7 @@ new class extends Component
                                         @if ($invoice->issue_date)
                                             <span class="xl:hidden">· {{ $invoice->issue_date->format('Y-m-d') }}</span>
                                         @endif
-                                        <flux:badge
+                                        <x-ts-badge
                                             size="sm"
                                             :color="match ($invoice->status) {
                                                 'issued' => 'green',
@@ -233,22 +236,22 @@ new class extends Component
                                             inset
                                         >
                                             {{ $invoice->status_label }}
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     </span>
                                 </div>
-                            </x-table.cell>
-                            <x-table.cell variant="muted" class="hidden w-full sm:table-cell">
+                            </x-data-table.cell>
+                            <x-data-table.cell variant="muted" class="hidden w-full sm:table-cell">
                                 {{ $invoice->customer?->name ?? '—' }}
-                            </x-table.cell>
-                            <x-table.cell variant="muted" class="hidden xl:table-cell">
+                            </x-data-table.cell>
+                            <x-data-table.cell variant="muted" class="hidden xl:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
-                            </x-table.cell>
-                            <x-table.cell variant="strong" class="whitespace-nowrap text-end">
+                            </x-data-table.cell>
+                            <x-data-table.cell variant="strong" class="whitespace-nowrap text-end">
                                 {{ $this->money($invoice->total) }}
                                 <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
-                            </x-table.cell>
-                            <x-table.cell class="hidden text-end xl:table-cell">
-                                <flux:badge
+                            </x-data-table.cell>
+                            <x-data-table.cell class="hidden text-end xl:table-cell">
+                                <x-ts-badge
                                     :color="match ($invoice->status) {
                                         'issued' => 'green',
                                         'rectified' => 'orange',
@@ -257,12 +260,12 @@ new class extends Component
                                     inset
                                 >
                                     {{ $invoice->status_label }}
-                                </flux:badge>
-                            </x-table.cell>
-                            <x-table.cell class="whitespace-nowrap text-end">
+                                </x-ts-badge>
+                            </x-data-table.cell>
+                            <x-data-table.cell class="whitespace-nowrap text-end">
                                 <div class="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
                                     @if ($invoice->pdf_path)
-                                        <flux:button
+                                        <x-ts-button
                                             size="sm"
                                             variant="ghost"
                                             class="!px-2"
@@ -271,11 +274,11 @@ new class extends Component
                                             :aria-label="__('Download PDF')"
                                         >
                                             <span class="hidden xl:inline">{{ __('PDF') }}</span>
-                                        </flux:button>
+                                        </x-ts-button>
                                     @endif
 
                                     @if (filled($invoice->public_token))
-                                        <flux:button
+                                        <x-ts-button
                                             size="sm"
                                             variant="ghost"
                                             class="!px-2"
@@ -286,11 +289,11 @@ new class extends Component
                                             :aria-label="__('View invoice')"
                                         >
                                             <span class="hidden xl:inline">{{ __('View invoice') }}</span>
-                                        </flux:button>
+                                        </x-ts-button>
                                     @endif
 
                                     @if ($invoice->isIssued())
-                                        <flux:button
+                                        <x-ts-button
                                             size="sm"
                                             variant="ghost"
                                             icon="document-duplicate"
@@ -298,42 +301,42 @@ new class extends Component
                                             :aria-label="__('Duplicate')"
                                         >
                                             <span class="hidden sm:inline">{{ __('Duplicate') }}</span>
-                                        </flux:button>
+                                        </x-ts-button>
                                     @endif
                                 </div>
-                            </x-table.cell>
-                        </x-table.row>
+                            </x-data-table.cell>
+                        </x-data-table.row>
                     @endforeach
-                </x-table.rows>
-            </x-table>
+                </x-data-table.rows>
+            </x-data-table>
         </div>
 
         <div class="mt-6">
-            <flux:pagination :paginator="$this->invoices" />
+            <x-ts-pagination :paginator="$this->invoices" />
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.document-text class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No invoices') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="document-text" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No invoices') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('Create your first invoice and share it with your client.') }}
-            </flux:subheading>
+            </x-ts-subheading>
             <div class="flex items-center gap-3">
-                <flux:button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
+                <x-ts-button variant="primary" class="btn-ink" icon="cog" :href="route('invoices.settings')" wire:navigate>
                     {{ __('Invoice settings') }}
-                </flux:button>
-                <flux:button variant="primary" :href="route('invoices.create')" wire:navigate>
+                </x-ts-button>
+                <x-ts-button variant="primary" :href="route('invoices.create')" wire:navigate>
                     {{ __('New invoice') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </div>
     @endif
 
-    <flux:modal name="invoice-setup" class="w-full sm:max-w-2xl">
+    <x-ts-modal name="invoice-setup" class="w-full sm:max-w-2xl">
         <form wire:submit="finishSetup" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Set up your invoicing') }}</flux:heading>
-                <flux:subheading>{{ __('Step :step of 3', ['step' => $this->setupStep]) }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Set up your invoicing') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Step :step of 3', ['step' => $this->setupStep]) }}</x-ts-subheading>
             </div>
 
             @php
@@ -343,27 +346,27 @@ new class extends Component
             @endphp
 
             @if ($setupErrors->isNotEmpty())
-                <flux:callout icon="exclamation-triangle" variant="danger">
-                    <flux:callout.text>
+                <x-ts-callout icon="exclamation-triangle" variant="danger">
+                    <x-ts-callout-text>
                         @foreach ($setupErrors as $setupError)
                             <div>{{ $setupError }}</div>
                         @endforeach
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
             @endif
 
             @if ($this->setupStep === 1)
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="form.legal_name" :label="__('Legal name')" />
-                    <flux:input wire:model="form.tax_id" :label="__('Tax ID')" />
+                    <x-ts-input wire:model="form.legal_name" :label="__('Legal name')" />
+                    <x-ts-input wire:model="form.tax_id" :label="__('Tax ID')" />
                 </div>
             @elseif ($this->setupStep === 2)
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:input wire:model="form.address" :label="__('Address')" class="sm:col-span-2" />
-                    <flux:input wire:model="form.city" :label="__('City')" />
-                    <flux:input wire:model="form.state" :label="__('State / Province')" />
-                    <flux:input wire:model="form.postal_code" :label="__('Postal code')" />
-                    <flux:input
+                    <x-ts-input wire:model="form.address" :label="__('Address')" class="sm:col-span-2" />
+                    <x-ts-input wire:model="form.city" :label="__('City')" />
+                    <x-ts-input wire:model="form.state" :label="__('State / Province')" />
+                    <x-ts-input wire:model="form.postal_code" :label="__('Postal code')" />
+                    <x-ts-input
                         wire:model="form.country"
                         :label="__('Country')"
                         :description="__('Two letter country code, for example ES.')"
@@ -372,46 +375,46 @@ new class extends Component
                 </div>
             @else
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:select wire:model="form.currency" :label="__('Currency')">
+                    <x-ts-select wire:model="form.currency" :label="__('Currency')">
                         @foreach (config('invoices.currencies') as $code => $name)
                             <option value="{{ $code }}">{{ $name }}</option>
                         @endforeach
-                    </flux:select>
-                    <flux:select wire:model="form.vat_percent" :label="__('VAT rate')">
+                    </x-ts-select>
+                    <x-ts-select wire:model="form.vat_percent" :label="__('VAT rate')">
                         @foreach (config('invoices.vat_rates') as $rate)
                             <option value="{{ $rate }}"><x-vat-rate-label :rate="$rate" /></option>
                         @endforeach
-                    </flux:select>
-                    <flux:input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
-                    <flux:input wire:model="form.series" :label="__('Series')" />
-                    <flux:input wire:model="form.payment_terms" :label="__('Payment terms')" class="sm:col-span-2" />
-                    <flux:input wire:model="form.notes" :label="__('Invoice footer')" class="sm:col-span-2" />
+                    </x-ts-select>
+                    <x-ts-input wire:model="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
+                    <x-ts-input wire:model="form.series" :label="__('Series')" />
+                    <x-ts-input wire:model="form.payment_terms" :label="__('Payment terms')" class="sm:col-span-2" />
+                    <x-ts-input wire:model="form.notes" :label="__('Invoice footer')" class="sm:col-span-2" />
                 </div>
             @endif
 
             <div class="flex items-center justify-between gap-3">
-                <flux:button type="button" variant="ghost" wire:click="skipSetup">
+                <x-ts-button type="button" variant="ghost" wire:click="skipSetup">
                     {{ __('Skip for now') }}
-                </flux:button>
+                </x-ts-button>
 
                 <div class="flex items-center gap-3">
                     @if ($this->setupStep > 1)
-                        <flux:button type="button" variant="outline" class="btn-outline-brand" wire:click="previousSetupStep">
+                        <x-ts-button type="button" variant="outline" class="btn-outline-brand" wire:click="previousSetupStep">
                             {{ __('Back') }}
-                        </flux:button>
+                        </x-ts-button>
                     @endif
 
                     @if ($this->setupStep < 3)
-                        <flux:button type="button" variant="primary" wire:click="nextSetupStep">
+                        <x-ts-button type="button" variant="primary" wire:click="nextSetupStep">
                             {{ __('Continue') }}
-                        </flux:button>
+                        </x-ts-button>
                     @else
-                        <flux:button type="submit" variant="primary">
+                        <x-ts-button type="submit" variant="primary">
                             {{ __('Finish') }}
-                        </flux:button>
+                        </x-ts-button>
                     @endif
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

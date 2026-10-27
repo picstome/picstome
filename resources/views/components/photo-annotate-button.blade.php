@@ -3,7 +3,7 @@
 ])
 
 @if ($canAnnotate)
-    <flux:button
+    <x-ts-button
         icon="map-pin"
         size="sm"
         class="max-sm:hidden"
@@ -14,9 +14,9 @@
     >
         <span x-show="!active">{{ __('Annotate') }}</span>
         <span x-show="active" x-cloak>{{ __('Exit annotation mode') }}</span>
-    </flux:button>
+    </x-ts-button>
 
-    <flux:button
+    <x-ts-button
         icon="map-pin"
         size="sm"
         class="sm:hidden"

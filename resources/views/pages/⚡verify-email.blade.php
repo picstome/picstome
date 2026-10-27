@@ -50,28 +50,28 @@ new #[Layout('layouts.guest')] class extends Component
             <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
         </div>
 
-        <flux:text class="text-center">
+        <x-ts-text class="text-center">
             {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
-        </flux:text>
+        </x-ts-text>
 
         @if (session('status') == 'verification-link-sent')
-            <flux:text class="!dark:text-green-400 text-center font-medium !text-green-600">
+            <x-ts-text class="!dark:text-green-400 text-center font-medium !text-green-600">
                 {{ __('A new verification link has been sent to the email address you provided during registration. Please check your inbox and spam folder.') }}
-            </flux:text>
+            </x-ts-text>
         @endif
 
         <div class="flex flex-col items-center justify-between space-y-3">
             <form wire:submit="sendVerification" class="w-full space-y-6">
-                <flux:error name="sendVerification" />
+                <x-ts-error name="sendVerification" />
 
-                <flux:button type="submit" variant="primary" class="w-full">
+                <x-ts-button type="submit" variant="primary" class="w-full">
                     {{ __('Resend verification email') }}
-                </flux:button>
+                </x-ts-button>
             </form>
 
-            <flux:link class="cursor-pointer text-sm" wire:click="logout">
+            <x-ts-link class="cursor-pointer text-sm" wire:click="logout">
                 {{ __('Log out') }}
-            </flux:link>
+            </x-ts-link>
         </div>
     </div>
 </div>

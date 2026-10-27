@@ -75,6 +75,61 @@ describe('Gallery Viewing', function () {
         $component->assertDontSee('Download gallery');
     });
 
+    it('selects a cover photo from the photo actions menu', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+        $page->wait(0.2);
+        $page->click('[data-photo-actions]');
+        $page->wait(0.2);
+        $page->click('Set as Cover');
+        $page->wait(0.3);
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('opens the favorite list from the actions menu', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+
+        $page->click('[data-gallery-actions]');
+        $page->wait(0.2);
+        $page->click('Favorite list');
+        $page->wait(0.3);
+
+        expect($page->script("getComputedStyle(document.querySelector('#favorite-list')).display"))
+            ->not->toBe('none');
+
+        $page->click('Finder/Explorer');
+        $page->wait(0.2);
+
+        expect($page->script("document.getElementById('finder-textarea').value"))
+            ->not->toBeEmpty();
+    });
+
+    it('opens the favorites tab from the url', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}?activeTab=favorited");
+        $page->wait(0.2);
+
+        expect($page->script("document.querySelector('[role=tablist] [data-current=true]')?.textContent.trim()"))
+            ->toContain('Favorites');
+    });
+
     it('does not overflow horizontally on small mobile screens', function () {
         $user = User::factory()->withPersonalTeam()->create(['language' => 'es']);
         $gallery = Gallery::factory()->for($user->currentTeam)->shared()->selectable(2)->public()->create([

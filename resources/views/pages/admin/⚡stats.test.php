@@ -95,22 +95,23 @@ it('shows the chart tooltip over the bottom of the latest bar', function () {
 
     $tooltip = $page->page()->evaluate(<<<'JS'
         async () => {
-            const chart = document.querySelector('[data-test="usage-chart-content"] ui-chart');
-            const overlay = chart.querySelector('[data-overlay]');
-            const tooltip = chart.querySelector('template[name="tooltip"]')?.nextElementSibling;
-            const lastBar = [...chart.querySelectorAll('[data-bar]')].at(-1).getBoundingClientRect();
+            const chart = document.querySelector('[data-test="usage-chart-content"] svg[dusk="tallstackui_chart"]');
+            const rect = chart.getBoundingClientRect();
 
-            overlay.dispatchEvent(new MouseEvent('mousemove', {
+            chart.dispatchEvent(new PointerEvent('pointermove', {
                 bubbles: true,
-                clientX: lastBar.right - 2,
-                clientY: lastBar.bottom - 2,
+                clientX: rect.right - 20,
+                clientY: rect.bottom - 20,
             }));
 
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            const tooltip = document.querySelector('[dusk="tallstackui_chart_tooltip"]');
+            const style = tooltip ? getComputedStyle(tooltip) : null;
 
             return {
-                active: tooltip.hasAttribute('data-active'),
-                text: tooltip.innerText.trim(),
+                active: !! tooltip && style.display !== 'none' && style.visibility !== 'hidden',
+                text: tooltip?.innerText.trim() ?? '',
             };
         }
     JS);
@@ -130,8 +131,8 @@ it('switches periods and refreshes the cached stats', function () {
         ->set('preset', 'last_30_days')
         ->assertSet('preset', 'last_30_days')
         ->set('customRange', [
-            'start' => now()->subMonths(2)->toDateString(),
-            'end' => now()->subMonth()->toDateString(),
+            now()->subMonths(2)->toDateString(),
+            now()->subMonth()->toDateString(),
         ])
         ->set('preset', 'custom')
         ->call('refreshStats')

@@ -53,18 +53,18 @@ new class extends Component
         >
         </stripe-pricing-table>
 
-        <flux:separator variant="subtle" :text="__('Features')" />
+        <x-ts-separator variant="subtle" :text="__('Features')" />
 
         <div class="flex justify-center mt-8">
             <ul class="space-y-2">
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong"><span class="font-semibold">{{ __('Extra storage') }}</span> {{ __('for photos or videos') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Professional human support by email') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong" class="font-semibold">{{ __('Accepts payments / POS') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Galleries expire when you want') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Password protect galleries') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Contratos ilimitados') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('Comments on photos') }}</flux:text></li>
-                <li class="flex gap-2 items-center"><flux:icon.check variant="mini" class="text-[#316d61]" /><flux:text variant="strong">{{ __('White label') }}</flux:text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong"><span class="font-semibold">{{ __('Extra storage') }}</span> {{ __('for photos or videos') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('Professional human support by email') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong" class="font-semibold">{{ __('Accepts payments / POS') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('Galleries expire when you want') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('Password protect galleries') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('Contratos ilimitados') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('Comments on photos') }}</x-ts-text></li>
+                <li class="flex gap-2 items-center"><x-icon name="check" variant="mini" class="text-[#316d61]" /><x-ts-text variant="strong">{{ __('White label') }}</x-ts-text></li>
             </ul>
         </div>
     </div>

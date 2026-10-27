@@ -435,6 +435,32 @@ test('pins are rendered on the shared photo and removed with their comment', fun
         ->assertDontSee('left: 30%', false);
 });
 
+test('annotation pins are positioned after the image loads', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+    PhotoComment::factory()->for($photo)->create([
+        'comment' => 'Pinned comment',
+        'x' => 50,
+        'y' => 50,
+        'annotated_version_number' => 1,
+    ]);
+
+    $page = visit("/shares/{$gallery->ulid}/photos/{$photo->id}");
+    $page->script("const image = document.querySelector('#photo img'); image.removeAttribute('srcset'); image.src = '/favicon-96x96.png';");
+    $page->wait(0.6);
+
+    expect($page->script("document.querySelectorAll('button[title=\"Photo annotation\"]').length"))
+        ->toBeGreaterThan(0);
+
+    expect($page->script("(() => { const pin = document.querySelector('button[title=\"Photo annotation\"]'); const image = document.querySelector('#photo img'); const p = pin.getBoundingClientRect(); const i = image.getBoundingClientRect(); return p.left >= i.left - 2 && p.right <= i.right + 2 && p.top >= i.top - 2 && p.bottom <= i.bottom + 2; })()"))
+        ->toBeTrue();
+
+    $page->assertNoJavaScriptErrors();
+});
+
 test('the shared comment list flags annotations made on an older version', function () {
     $gallery = Gallery::factory()->shared()->create([
         'ulid' => '0123ABC',
@@ -656,4 +682,28 @@ test('a platform admin can comment and delete comments on a shared photo', funct
         ->assertHasNoErrors();
 
     expect($photo->comments()->find($guestComment->id))->toBeNull();
+});
+
+test('mobile comments button opens the comments modal', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+    PhotoComment::factory()->for($photo)->create(['comment' => 'Mobile comment']);
+
+    $page = visit("/shares/{$gallery->ulid}/photos/{$photo->id}");
+    $page->resize(375, 900);
+    $page->wait(0.2);
+    $page->click('[data-mobile-comments]');
+    $page->wait(0.3);
+
+    expect($page->script("getComputedStyle(document.querySelector('#add-comment')).display"))
+        ->not->toBe('none');
+
+    expect($page->script("document.querySelector('#add-comment').innerText"))
+        ->toContain('Mobile comment');
+
+    expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
+        ->toBeTrue();
 });

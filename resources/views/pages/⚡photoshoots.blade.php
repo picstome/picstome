@@ -1,5 +1,6 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\PhotoshootForm;
 use App\Models\Photoshoot;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public PhotoshootForm $form;
@@ -19,7 +21,7 @@ new class extends Component
 
         $this->form->store();
 
-        $this->modal('create-photoshoot')->close();
+        $this->closeModal('create-photoshoot');
     }
 
     #[Computed]
@@ -49,13 +51,13 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Photoshoots') }}</x-heading>
-            <x-subheading>{{ __('View, create, and manage your photoshoots.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Photoshoots') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('View, create, and manage your photoshoots.') }}</x-ts-subheading>
         </div>
         <div>
-            <flux:modal.trigger :name="auth()->check() ? 'create-photoshoot' : 'login'">
-                <flux:button variant="primary">{{ __('Create photoshoot') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-photoshoot' : 'login'">
+                <x-ts-button variant="primary">{{ __('Create photoshoot') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
@@ -65,7 +67,7 @@ new class extends Component
                 @foreach ($this->photoshoots as $photoshoot)
                     @php($cover = $photoshoot->latestGalleryWithImages?->firstImagePhoto)
 
-                    <flux:card
+                    <x-ts-card
                         class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
                     >
                         <a
@@ -90,7 +92,7 @@ new class extends Component
                                         class="flex size-full items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900"
                                         data-test="photoshoot-cover-placeholder"
                                     >
-                                        <flux:icon.camera class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                        <x-icon name="camera" class="size-12 text-zinc-400 dark:text-zinc-500" />
                                         <span class="sr-only">{{ __('No photos') }}</span>
                                     </div>
                                 @endif
@@ -98,23 +100,23 @@ new class extends Component
 
                             <div class="space-y-3 p-4">
                                 <div class="flex items-start justify-between gap-3">
-                                    <flux:heading size="lg">{{ $photoshoot->name }}</flux:heading>
+                                    <x-ts-heading size="lg">{{ $photoshoot->name }}</x-ts-heading>
 
                                     @if ($photoshoot->photos_count > 0)
                                         <span
                                             class="inline-flex shrink-0 items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400"
                                             title="{{ __('photos') }}"
                                         >
-                                            <flux:icon.photo variant="micro" class="size-4" />
+                                            <x-icon name="photo" variant="micro" class="size-4" />
                                             {{ $photoshoot->photos_count }}
                                         </span>
                                     @endif
                                 </div>
 
                                 @if ($photoshoot->customer || $photoshoot->customer_name)
-                                    <flux:text variant="subtle" size="sm">
+                                    <x-ts-text variant="subtle" size="sm">
                                         {{ $photoshoot->customer?->name ?? $photoshoot->customer_name }}
-                                    </flux:text>
+                                    </x-ts-text>
                                 @endif
 
                                 <div
@@ -122,28 +124,28 @@ new class extends Component
                                 >
                                     @if ($photoshoot->formatted_date)
                                         <span class="inline-flex items-center gap-1">
-                                            <flux:icon.calendar variant="micro" class="size-4" />
+                                            <x-icon name="calendar" variant="micro" class="size-4" />
                                             {{ $photoshoot->formatted_date }}
                                         </span>
                                     @endif
 
                                     @if ($photoshoot->location)
                                         <span class="inline-flex items-center gap-1">
-                                            <flux:icon.map-pin variant="micro" class="size-4" />
+                                            <x-icon name="map-pin" variant="micro" class="size-4" />
                                             {{ $photoshoot->location }}
                                         </span>
                                     @endif
 
                                     @if ($photoshoot->galleries_count > 0)
                                         <span class="inline-flex items-center gap-1" title="{{ __('Galleries') }}">
-                                            <flux:icon.rectangle-stack variant="micro" class="size-4" />
+                                            <x-icon name="rectangle-stack" variant="micro" class="size-4" />
                                             {{ $photoshoot->galleries_count }}
                                         </span>
                                     @endif
                                 </div>
                             </div>
                         </a>
-                    </flux:card>
+                    </x-ts-card>
                 @endforeach
             </div>
 
@@ -164,61 +166,61 @@ new class extends Component
                 "
                 class="mt-6"
             >
-                <flux:pagination :paginator="$this->photoshoots" />
+                <x-ts-pagination :paginator="$this->photoshoots" />
             </div>
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.camera class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No photoshoots') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="camera" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No photoshoots') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('We couldn\'t find any photoshoots. Create one to get started.') }}
-            </flux:subheading>
-            <flux:modal.trigger :name="auth()->check() ? 'create-photoshoot' : 'login'">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-photoshoot' : 'login'">
+                <x-ts-button variant="primary">
                     {{ __('Create photoshoot') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="create-photoshoot" class="w-full sm:max-w-lg">
+    <x-ts-modal name="create-photoshoot" class="w-full sm:max-w-lg">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new photoshoot') }}</flux:heading>
-                <flux:subheading>{{ __('Please enter your photoshoot details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new photoshoot') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Please enter your photoshoot details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
+            <x-ts-input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
             @if ($this->customers)
-                <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
-                    <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
+                <x-ts-select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
+                    <x-ts-select-option value="">{{ __('New customer') }}</x-ts-select-option>
                     @foreach ($this->customers as $customer)
-                        <flux:select.option value="{{ $customer->id }}">
+                        <x-ts-select-option value="{{ $customer->id }}">
                             {{ $customer->name }}{{ $customer->email ? " ({$customer->email})" : '' }}
-                        </flux:select.option>
+                        </x-ts-select-option>
                     @endforeach
-                </flux:select>
+                </x-ts-select>
             @endif
 
             @if (empty($this->form->customer))
-                <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
-                <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
+                <x-ts-input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+                <x-ts-input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
             @endif
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.date" :label="__('Date')" type="date" />
-                <flux:input wire:model="form.location" :label="__('Location')" type="text" />
+                <x-ts-input wire:model="form.date" :label="__('Date')" type="date" />
+                <x-ts-input wire:model="form.location" :label="__('Location')" type="text" />
             </div>
-            <flux:input wire:model="form.price" :label="__('Price')" type="text" />
-            <flux:textarea wire:model="form.comment" :label="__('Comment')" rows="3" />
+            <x-ts-input wire:model="form.price" :label="__('Price')" type="text" />
+            <x-ts-textarea wire:model="form.comment" :label="__('Comment')" rows="3" />
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

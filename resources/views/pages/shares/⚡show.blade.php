@@ -63,7 +63,7 @@ new #[Layout('layouts.guest')] class extends Component
 
 <x-slot name="color">{{ $gallery->team->brand_color }}</x-slot>
 
-<div x-data x-on:selection-limit-reached.window="$flux.modal('selection-limit').show()" class="h-full">
+<div x-data x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')" class="h-full">
     @if ($this->allPhotos->isNotEmpty())
         <div class="relative">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
@@ -71,7 +71,7 @@ new #[Layout('layouts.guest')] class extends Component
             </a>
         </div>
         @if ($gallery->coverPhoto)
-            <div class="relative mt-4 h-[328px] overflow-hidden max-sm:-mx-6 md:h-[480px] lg:mt-8">
+            <div class="relative mt-4 h-[328px] overflow-hidden md:h-[480px] lg:mt-8">
                 <img src="{{ $this->coverImage?->cover_image_url }}" class="h-full w-full object-cover" />
             </div>
         @endif
@@ -85,20 +85,20 @@ new #[Layout('layouts.guest')] class extends Component
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full sm:flex-1">
             <div class="flex items-center gap-4">
-                <x-heading level="1" size="xl">{{ $gallery->name }}</x-heading>
+                <x-ts-heading level="1" size="xl">{{ $gallery->name }}</x-ts-heading>
             </div>
 
             <div class="mt-3 h-1 w-10 rounded-full bg-(--color-accent)"></div>
 
             @if ($gallery->share_description)
-                <x-subheading class="mt-2">
+                <x-ts-subheading class="mt-2">
                     {{ $gallery->share_description }}
-                </x-subheading>
+                </x-ts-subheading>
             @endif
         </div>
     </div>
     @if ($this->allPhotos->isNotEmpty())
-        <div class="mt-8 max-sm:-mx-5">
+        <div class="mt-8">
             <x-gallery-tabs
                 :favorites-count="$this->favorites->count()"
                 :selection-limit="$gallery->share_selection_limit"
@@ -140,9 +140,9 @@ new #[Layout('layouts.guest')] class extends Component
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center py-14">
-                        <flux:text class="max-w-72 text-center">
+                        <x-ts-text class="max-w-72 text-center">
                             {{ __('No favorites yet. Click on the heart icon to select your favorites.') }}
-                        </flux:text>
+                        </x-ts-text>
                     </div>
                 @endif
             </div>
@@ -158,11 +158,11 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No photos') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __("We couldn't find any photos.") }}
-            </flux:subheading>
+            </x-ts-subheading>
         </div>
     @endif
     @unlesssubscribed($gallery->team)

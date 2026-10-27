@@ -29,35 +29,35 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         @if(session('status'))
-            <flux:text variant="strong" class="text-center font-medium">{{ session('status') }}</flux:text>
+            <x-ts-text variant="strong" class="text-center font-medium">{{ session('status') }}</x-ts-text>
         @endif
 
-        <flux:input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
+        <x-ts-input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
         <div>
-            <flux:input
+            <x-ts-input
                 wire:model="form.password"
                 type="password"
                 :label="__('Password')"
                 :placeholder="__('Your password')"
             />
 
-            <flux:text class="mt-2">
-                <flux:link variant="subtle" :href="route('password.request')" wire:navigate>
+            <x-ts-text class="mt-2">
+                <x-ts-link variant="subtle" :href="route('password.request')" wire:navigate>
                     {{ __('Forgot your password?') }}
-                </flux:link>
-            </flux:text>
+                </x-ts-link>
+            </x-ts-text>
         </div>
 
-        <flux:button type="submit" variant="primary" class="w-full">
+        <x-ts-button type="submit" variant="primary" class="w-full">
             {{ __('Log in') }}
-        </flux:button>
+        </x-ts-button>
 
-        <flux:text class="text-center">
+        <x-ts-text class="text-center">
             {{ __('Don\'t have an account?') }}
-            <flux:link href="{{ route('register') }}" wire:navigate>
+            <x-ts-link href="{{ route('register') }}" wire:navigate>
                 {{ __('Register') }}
-            </flux:link>
-        </flux:text>
+            </x-ts-link>
+        </x-ts-text>
     </form>
 </div>

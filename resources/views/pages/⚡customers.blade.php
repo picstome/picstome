@@ -1,5 +1,6 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +10,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public CustomerForm $form;
@@ -19,7 +21,7 @@ new class extends Component
 
         $this->form->store();
 
-        $this->modal('create-customer')->close();
+        $this->closeModal('create-customer');
     }
 
     #[Computed]
@@ -54,25 +56,25 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Customers') }}</x-heading>
-            <x-subheading>{{ __('View, create, and manage your customers.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Customers') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('View, create, and manage your customers.') }}</x-ts-subheading>
         </div>
         <div>
-            <flux:modal.trigger :name="auth()->check() ? 'create-customer' : 'login'">
-                <flux:button variant="primary">{{ __('Add customer') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-customer' : 'login'">
+                <x-ts-button variant="primary">{{ __('Add customer') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
     @if ($this->birthdaySoonCustomers?->isNotEmpty())
         <div class="mt-8 mb-8">
-            <x-heading level="2">{{ __('Upcoming Birthdays') }}</x-heading>
-            <flux:separator class="mt-3" />
-            <x-table>
-                <x-table.rows>
+            <x-ts-heading level="2">{{ __('Upcoming Birthdays') }}</x-ts-heading>
+            <x-ts-separator class="mt-3" />
+            <x-data-table>
+                <x-data-table.rows>
                     @foreach ($this->birthdaySoonCustomers as $customer)
-                        <x-table.row>
-                            <x-table.cell variant="strong" class="relative w-full">
+                        <x-data-table.row>
+                            <x-data-table.cell variant="strong" class="relative w-full">
                                 <a
                                     href="/customers/{{ $customer->id }}"
                                     wire:navigate
@@ -82,60 +84,60 @@ new class extends Component
                                     {{ $customer->name }}
 
                                     @if ($customer->age !== null)
-                                        <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                        <x-ts-badge color="yellow" inset="top bottom" icon="cake" size="sm">
                                             {{ __('Birthday soon') }} ({{ $customer->age + 1 }})
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @else
-                                        <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                        <x-ts-badge color="yellow" inset="top bottom" icon="cake" size="sm">
                                             {{ __('Birthday soon') }}
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @endif
                                 </div>
-                            </x-table.cell>
-                            <x-table.cell class="relative" align="end">
+                            </x-data-table.cell>
+                            <x-data-table.cell class="relative" align="end">
                                 <a
                                     href="/customers/{{ $customer->id }}"
                                     wire:navigate
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
                                 {{ $customer->email }}
-                            </x-table.cell>
-                            <x-table.cell class="relative" align="end">
+                            </x-data-table.cell>
+                            <x-data-table.cell class="relative" align="end">
                                 <a
                                     href="/customers/{{ $customer->id }}"
                                     wire:navigate
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
                                 {{ $customer->phone }}
-                            </x-table.cell>
-                            <x-table.cell class="relative" align="end">
+                            </x-data-table.cell>
+                            <x-data-table.cell class="relative" align="end">
                                 <a
                                     href="/customers/{{ $customer->id }}"
                                     wire:navigate
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
                                 {{ $customer->formatted_birthdate }}
-                            </x-table.cell>
-                        </x-table.row>
+                            </x-data-table.cell>
+                        </x-data-table.row>
                     @endforeach
-                </x-table.rows>
-            </x-table>
+                </x-data-table.rows>
+            </x-data-table>
         </div>
     @endif
 
     @if ($this->customers?->isNotEmpty())
-        <x-table id="table" class="mt-8">
-            <x-table.columns>
-                <x-table.column>{{ __('Name') }}</x-table.column>
-                <x-table.column>{{ __('Email') }}</x-table.column>
-                <x-table.column>{{ __('Phone') }}</x-table.column>
-                <x-table.column>{{ __('Birthdate') }}</x-table.column>
-            </x-table.columns>
+        <x-data-table id="table" class="mt-8">
+            <x-data-table.columns>
+                <x-data-table.column>{{ __('Name') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Email') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Phone') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Birthdate') }}</x-data-table.column>
+            </x-data-table.columns>
 
-            <x-table.rows>
+            <x-data-table.rows>
                 @foreach ($this->customers as $customer)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a
                                 href="/customers/{{ $customer->id }}"
                                 wire:navigate
@@ -145,40 +147,40 @@ new class extends Component
                                 {{ $customer->name }}
 
                                 @if ($customer->isBirthdaySoon())
-                                    <flux:badge color="yellow" inset="top bottom" icon="cake" size="sm">
+                                    <x-ts-badge color="yellow" inset="top bottom" icon="cake" size="sm">
                                         {{ __('Birthday soon') }} ({{ $customer->age + 1 }})
-                                    </flux:badge>
+                                    </x-ts-badge>
                                 @endif
                             </div>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="/customers/{{ $customer->id }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $customer->email }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="/customers/{{ $customer->id }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $customer->phone }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="/customers/{{ $customer->id }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $customer->formatted_birthdate }}
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
 
         <div
             x-data
@@ -194,34 +196,34 @@ new class extends Component
             "
             class="mt-6"
         >
-            <flux:pagination :paginator="$this->customers" />
+            <x-ts-pagination :paginator="$this->customers" />
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.user class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No customers') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="user" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No customers') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __("We couldn't find any customers. Add one to get started.") }}
-            </flux:subheading>
-            <flux:modal.trigger :name="auth()->check() ? 'create-customer' : 'login'">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-customer' : 'login'">
+                <x-ts-button variant="primary">
                     {{ __('Add customer') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="create-customer" class="w-full sm:max-w-lg">
+    <x-ts-modal name="create-customer" class="w-full sm:max-w-lg">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Add a new customer') }}</flux:heading>
-                <flux:subheading>{{ __('Please enter your customer details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Add a new customer') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Please enter your customer details.') }}</x-ts-subheading>
             </div>
             <x-customer-form-fields />
             <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-spacer />
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

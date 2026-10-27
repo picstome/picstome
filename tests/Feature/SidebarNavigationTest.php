@@ -48,13 +48,11 @@ it('collapses the tools group by default and expands it on tool pages', function
 
     $dashboard = actingAs($user)->get('/dashboard')->assertOk();
 
-    expect($dashboard->getContent())
-        ->toContain('data-flux-navlist-group')
-        ->not->toMatch('/\sopen\s+data-flux-navlist-group/');
+    expect($dashboard->getContent())->toContain('data-sidebar-tools="closed"');
 
     $tools = actingAs($user)->get(route('tools.calculator'))->assertOk();
 
-    expect($tools->getContent())->toMatch('/\sopen\s+data-flux-navlist-group/');
+    expect($tools->getContent())->toContain('data-sidebar-tools="open"');
 });
 
 it('localizes the external app links', function () {

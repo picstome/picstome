@@ -3,6 +3,19 @@
         active: false,
         wakeLock: null,
 
+        toggle() {
+            this.active ? this.stop() : this.start();
+        },
+
+        handleShortcut(event) {
+            if (event.repeat || event.altKey || ! (event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'b') {
+                return;
+            }
+
+            event.preventDefault();
+            this.toggle();
+        },
+
         async start() {
             this.active = true;
             document.body.classList.add('overflow-hidden');
@@ -60,6 +73,7 @@
         }
     }"
     x-on:black-screen:start.window="start()"
+    x-on:keydown.window="handleShortcut($event)"
     x-on:keydown.escape.window="active && stop()"
     x-on:fullscreenchange.window="! document.fullscreenElement && active && stop()"
     x-on:visibilitychange.window="document.visibilityState === 'visible' && active && requestWakeLock()"

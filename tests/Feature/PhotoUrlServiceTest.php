@@ -30,3 +30,15 @@ it('builds distinct thumbnail sizes and the original url for versions', function
     expect($large['h'])->toBe((string) config('picstome.photo_resize', 2048));
     expect($service->original())->toBe(Storage::disk('s3')->url('galleries/version.jpg'));
 });
+
+it('uses the configured disk url for videos', function () {
+    Storage::fake('s3');
+    config(['filesystems.disks.s3.url' => 'https://cdn.example.test/bucket']);
+
+    $photo = Photo::factory()->for(Gallery::factory())->create([
+        'disk' => 's3',
+        'path' => 'galleries/video.mp4',
+    ]);
+
+    expect($photo->url)->toBe('https://cdn.example.test/bucket/galleries/video.mp4');
+});

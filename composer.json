@@ -13,13 +13,12 @@
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "league/html-to-markdown": "^5.1",
-        "livewire/flux": "^2.0",
-        "livewire/flux-pro": "^2.2",
         "livewire/livewire": "^4.0",
         "maennchen/zipstream-php": "^3.1",
         "spatie/image": "^3.8",
         "spatie/temporary-directory": "^2.3",
-        "stevebauman/purify": "^6.3"
+        "stevebauman/purify": "^6.3",
+        "tallstackui/tallstackui": "^4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -84,11 +83,5 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "repositories": {
-        "flux-pro": {
-            "type": "composer",
-            "url": "https://composer.fluxui.dev"
-        }
-    }
+    "prefer-stable": true
 }

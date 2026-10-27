@@ -1,7 +1,8 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Services\TranslationOverrideService;
-use Flux\Flux;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     use WithPagination;
 
     #[Url]
@@ -131,7 +134,7 @@ new class extends Component
 
         $this->resetValidation();
 
-        Flux::modal('edit-translation')->show();
+        $this->openModal('edit-translation');
     }
 
     public function save(): void
@@ -159,8 +162,8 @@ new class extends Component
         app('translator')->setLoaded([]);
         unset($this->translations);
 
-        Flux::modal('edit-translation')->close();
-        Flux::toast(__('Translations saved.'));
+        $this->closeModal('edit-translation');
+        $this->toast()->success(__('Translations saved.'))->send();
     }
 
     public function resetTranslation(): void
@@ -177,7 +180,7 @@ new class extends Component
         app('translator')->setLoaded([]);
         unset($this->translations);
 
-        Flux::toast(__('Translation restored.'));
+        $this->toast()->success(__('Translation restored.'))->send();
     }
 
     public function clearFilters(): void
@@ -220,32 +223,32 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <flux:heading size="xl" class="text-brand-green dark:text-brand-cream font-semibold">
+            <x-ts-heading size="xl" class="text-brand-green dark:text-brand-cream font-semibold">
                 {{ __('Translations') }}
-            </flux:heading>
-            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
+            </x-ts-heading>
+            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Edit app and email texts in English and Spanish.') }}
-            </flux:text>
+            </x-ts-text>
         </div>
 
         @if ($this->keys !== [])
             <div class="flex items-center gap-2">
-                <flux:badge color="blue">{{ __('Filtered by email') }}</flux:badge>
-                <flux:button size="sm" variant="subtle" wire:click="clearFilters">
+                <x-ts-badge color="blue">{{ __('Filtered by email') }}</x-ts-badge>
+                <x-ts-button size="sm" variant="subtle" wire:click="clearFilters">
                     {{ __('Show all') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         @endif
     </div>
 
-    <flux:callout icon="information-circle" variant="secondary" class="mt-6">
-        <flux:callout.text>
+    <x-ts-callout icon="information-circle" variant="secondary" class="mt-6">
+        <x-ts-callout-text>
             {{ __('Changes are stored in storage/app/translations and override the language files. Include that folder in backups.') }}
-        </flux:callout.text>
-    </flux:callout>
+        </x-ts-callout-text>
+    </x-ts-callout>
 
     <div class="mt-6 flex flex-wrap items-end gap-3">
-        <flux:input
+        <x-ts-input
             wire:model.live.debounce.300ms="search"
             :placeholder="__('Search by key or text...')"
             icon="magnifying-glass"
@@ -253,61 +256,61 @@ new class extends Component
             data-test="translation-search"
         />
 
-        <flux:select wire:model.live="status" :label="__('Status')" class="w-full sm:w-52">
-            <flux:select.option value="all">{{ __('All') }}</flux:select.option>
-            <flux:select.option value="missing">{{ __('Missing Spanish') }}</flux:select.option>
-            <flux:select.option value="overridden">{{ __('Overridden') }}</flux:select.option>
-        </flux:select>
+        <x-ts-select wire:model.live="status" :label="__('Status')" class="w-full sm:w-52">
+            <x-ts-select-option value="all">{{ __('All') }}</x-ts-select-option>
+            <x-ts-select-option value="missing">{{ __('Missing Spanish') }}</x-ts-select-option>
+            <x-ts-select-option value="overridden">{{ __('Overridden') }}</x-ts-select-option>
+        </x-ts-select>
 
         @if ($search !== '' || $status !== 'all' || $keys !== [])
-            <flux:button variant="subtle" icon="x-mark" wire:click="clearFilters">
+            <x-ts-button variant="subtle" icon="x-mark" wire:click="clearFilters">
                 {{ __('Clear filters') }}
-            </flux:button>
+            </x-ts-button>
         @endif
     </div>
 
-    <flux:table :paginate="$this->translations" class="mt-6">
-        <flux:table.columns>
-            <flux:table.column class="w-[34%]">{{ __('Key') }}</flux:table.column>
-            <flux:table.column class="w-[22%] max-xl:hidden">{{ __('English') }}</flux:table.column>
-            <flux:table.column class="w-[22%] max-xl:hidden">{{ __('Spanish') }}</flux:table.column>
-            <flux:table.column class="w-28">{{ __('Status') }}</flux:table.column>
-            <flux:table.column class="w-24"></flux:table.column>
-        </flux:table.columns>
+    <x-data-table class="mt-6">
+        <x-data-table.columns>
+            <x-data-table.column class="w-[34%]">{{ __('Key') }}</x-data-table.column>
+            <x-data-table.column class="w-[22%] max-xl:hidden">{{ __('English') }}</x-data-table.column>
+            <x-data-table.column class="w-[22%] max-xl:hidden">{{ __('Spanish') }}</x-data-table.column>
+            <x-data-table.column class="w-28">{{ __('Status') }}</x-data-table.column>
+            <x-data-table.column class="w-24"></x-data-table.column>
+        </x-data-table.columns>
 
-        <flux:table.rows>
+        <x-data-table.rows>
             @forelse ($this->translations as $row)
-                <flux:table.row wire:key="translation-{{ md5($row['key']) }}">
-                    <flux:table.cell class="align-top whitespace-normal">
+                <x-data-table.row wire:key="translation-{{ md5($row['key']) }}">
+                    <x-data-table.cell class="align-top whitespace-normal">
                         <span class="font-mono text-xs break-all">{{ $row['key'] }}</span>
-                    </flux:table.cell>
+                    </x-data-table.cell>
 
-                    <flux:table.cell class="align-top whitespace-normal max-xl:hidden">
+                    <x-data-table.cell class="align-top whitespace-normal max-xl:hidden">
                         <span class="text-sm">{{ $row['en_preview'] }}</span>
-                    </flux:table.cell>
+                    </x-data-table.cell>
 
-                    <flux:table.cell class="align-top whitespace-normal max-xl:hidden">
+                    <x-data-table.cell class="align-top whitespace-normal max-xl:hidden">
                         <span class="text-sm">{{ $row['es_preview'] ?? '—' }}</span>
-                    </flux:table.cell>
+                    </x-data-table.cell>
 
-                    <flux:table.cell class="align-top">
+                    <x-data-table.cell class="align-top">
                         <div class="flex flex-wrap gap-1">
                             @if ($row['overridden'])
-                                <flux:badge color="blue" size="sm">{{ __('Overridden') }}</flux:badge>
+                                <x-ts-badge color="blue" size="sm">{{ __('Overridden') }}</x-ts-badge>
                             @endif
 
                             @if ($row['missing'])
-                                <flux:badge color="amber" size="sm">{{ __('Missing Spanish') }}</flux:badge>
+                                <x-ts-badge color="amber" size="sm">{{ __('Missing Spanish') }}</x-ts-badge>
                             @endif
 
                             @if (! $row['overridden'] && ! $row['missing'])
-                                <flux:badge size="sm">{{ __('Default') }}</flux:badge>
+                                <x-ts-badge size="sm">{{ __('Default') }}</x-ts-badge>
                             @endif
                         </div>
-                    </flux:table.cell>
+                    </x-data-table.cell>
 
-                    <flux:table.cell class="text-end align-top">
-                        <flux:button
+                    <x-data-table.cell class="text-end align-top">
+                        <x-ts-button
                             size="sm"
                             variant="subtle"
                             icon="pencil-square"
@@ -315,57 +318,59 @@ new class extends Component
                             data-test="edit-{{ md5($row['key']) }}"
                         >
                             {{ __('Edit') }}
-                        </flux:button>
-                    </flux:table.cell>
-                </flux:table.row>
+                        </x-ts-button>
+                    </x-data-table.cell>
+                </x-data-table.row>
             @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5">
-                        <flux:text class="py-6 text-center">{{ __('No translations found.') }}</flux:text>
-                    </flux:table.cell>
-                </flux:table.row>
+                <x-data-table.row>
+                    <x-data-table.cell colspan="5">
+                        <x-ts-text class="py-6 text-center">{{ __('No translations found.') }}</x-ts-text>
+                    </x-data-table.cell>
+                </x-data-table.row>
             @endforelse
-        </flux:table.rows>
-    </flux:table>
+        </x-data-table.rows>
+    </x-data-table>
 
-    <flux:modal name="edit-translation" class="w-full max-w-3xl">
+    <x-ts-pagination :paginator="$this->translations" />
+
+    <x-ts-modal name="edit-translation" class="w-full max-w-3xl">
         <div class="space-y-6" data-test="translation-editor">
             <div>
-                <flux:heading size="lg">{{ __('Edit translation') }}</flux:heading>
-                <flux:text class="mt-1 font-mono text-xs break-all">{{ $editingKey }}</flux:text>
+                <x-ts-heading size="lg">{{ __('Edit translation') }}</x-ts-heading>
+                <x-ts-text class="mt-1 font-mono text-xs break-all">{{ $editingKey }}</x-ts-text>
             </div>
 
             @if ($editingPlaceholders !== [])
                 <div class="flex flex-wrap items-center gap-2">
-                    <flux:text class="text-sm font-medium">{{ __('Variables:') }}</flux:text>
+                    <x-ts-text class="text-sm font-medium">{{ __('Variables:') }}</x-ts-text>
 
                     @foreach ($editingPlaceholders as $placeholder)
-                        <flux:badge size="sm">{{ ':'.$placeholder }}</flux:badge>
+                        <x-ts-badge size="sm">{{ ':'.$placeholder }}</x-ts-badge>
                     @endforeach
                 </div>
             @endif
 
-            <flux:textarea rows="4" wire:model="enValue" :label="__('English')" />
-            <flux:error name="enValue" />
+            <x-ts-textarea rows="4" wire:model="enValue" :label="__('English')" />
 
-            <flux:textarea rows="4" wire:model="esValue" :label="__('Spanish')" />
-            <flux:error name="esValue" />
+
+            <x-ts-textarea rows="4" wire:model="esValue" :label="__('Spanish')" />
+
 
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <flux:button variant="danger" wire:click="resetTranslation" data-test="translation-reset">
+                <x-ts-button variant="danger" wire:click="resetTranslation" data-test="translation-reset">
                     {{ __('Restore default') }}
-                </flux:button>
+                </x-ts-button>
 
                 <div class="flex items-center gap-2">
-                    <flux:modal.close>
-                        <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
-                    </flux:modal.close>
+                    <x-ts-modal-close>
+                        <x-ts-button variant="filled">{{ __('Cancel') }}</x-ts-button>
+                    </x-ts-modal-close>
 
-                    <flux:button variant="primary" wire:click="save" data-test="translation-save">
+                    <x-ts-button variant="primary" wire:click="save" data-test="translation-save">
                         {{ __('Save') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
             </div>
         </div>
-    </flux:modal>
+    </x-ts-modal>
 </div>

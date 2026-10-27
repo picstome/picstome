@@ -127,18 +127,18 @@ class extends Component
 <div class="flex min-h-screen items-center justify-center px-4">
     <div class="mx-auto w-full max-w-md space-y-6">
         @if (FakePaymentService::enabled())
-            <flux:callout icon="beaker" variant="secondary">
-                <flux:callout.heading>{{ __('Fake payments mode') }}</flux:callout.heading>
-                <flux:callout.text>{{ __('No Stripe is involved: the payment is created directly, so you can test the whole flow.') }}</flux:callout.text>
-            </flux:callout>
+            <x-ts-callout icon="beaker" variant="secondary">
+                <x-ts-callout-heading>{{ __('Fake payments mode') }}</x-ts-callout-heading>
+                <x-ts-callout-text>{{ __('No Stripe is involved: the payment is created directly, so you can test the whole flow.') }}</x-ts-callout-text>
+            </x-ts-callout>
         @endif
 
-        <flux:heading size="xl">{{ $this->team->name }}</flux:heading>
-        <flux:text>{{ $this->description }} · {{ $this->formattedAmount }}</flux:text>
+        <x-ts-heading size="xl">{{ $this->team->name }}</x-ts-heading>
+        <x-ts-text>{{ $this->description }} · {{ $this->formattedAmount }}</x-ts-text>
 
         <form wire:submit="pay" class="space-y-6">
-            <flux:input wire:model="email" type="email" :label="__('Email (optional)')" />
-            <flux:button type="submit" variant="primary" class="w-full">{{ __('Pay (simulated)') }}</flux:button>
+            <x-ts-input wire:model="email" type="email" :label="__('Email (optional)')" />
+            <x-ts-button type="submit" variant="primary" class="w-full">{{ __('Pay (simulated)') }}</x-ts-button>
         </form>
     </div>
 </div>

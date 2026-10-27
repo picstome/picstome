@@ -40,3 +40,23 @@ it('can change brand font', function () {
 
     expect($this->team->fresh()->brand_font)->toBe('Montserrat');
 });
+
+it('updates the preview button when the accent color changes', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::branding.styling');
+
+    $component->set('form.color', 'violet');
+
+    expect($component->html())->toContain('bg-violet-500');
+});
+
+it('updates the preview button font when the font changes', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::branding.styling');
+
+    $component->set('form.font', 'Montserrat');
+
+    $html = $component->html();
+
+    expect($html)
+        ->toContain('fonts.googleapis.com/css2?family=Montserrat')
+        ->toContain('font-family: &#039;Montserrat&#039;, sans-serif');
+});

@@ -115,70 +115,102 @@ new class extends Component
     }
 }; ?>
 
-<flux:command class="inline-flex max-h-[76vh] flex-col border-none shadow-lg">
-    <flux:command.input wire:model.live="search" placeholder="{{ __('Search...') }}" autofocus closable />
+<div class="flex w-full max-h-[76vh] flex-col overflow-hidden rounded-xl bg-white shadow-lg dark:bg-dark-800">
+    <div class="border-b border-zinc-100 p-3 dark:border-white/10">
+        <x-input
+            wire:model.live="search"
+            placeholder="{{ __('Search...') }}"
+            icon="magnifying-glass"
+            autofocus
+            clearable
+            class="border-none shadow-none"
+        />
+    </div>
 
     @unless (is_null($this->search))
-        <flux:command.items>
+        <div class="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
             @unless ($this->customers->isEmpty())
-                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                <x-ts-text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Customers') }}
-                </flux:text>
+                </x-ts-text>
                 @foreach ($this->customers as $customer)
-                    <flux:command.item wire:click="viewCustomer('{{ $customer->id }}')">
-                        <div class="flex gap-3">
-                            {{ $customer->name }}
-                            @if ($customer->email)
-                                <flux:text inline>{{ $customer->email }}</flux:text>
-                            @endif
-                        </div>
-                    </flux:command.item>
+                    <button
+                        type="button"
+                        wire:click="viewCustomer('{{ $customer->id }}')"
+                        wire:key="customer-{{ $customer->id }}"
+                        class="hover:bg-brand-sage-soft dark:hover:bg-white/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                    >
+                        <span>{{ $customer->name }}</span>
+                        @if ($customer->email)
+                            <x-ts-text inline class="text-xs">{{ $customer->email }}</x-ts-text>
+                        @endif
+                    </button>
                 @endforeach
             @endunless
 
             @unless ($this->galleries->isEmpty())
-                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                <x-ts-text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Galleries') }}
-                </flux:text>
+                </x-ts-text>
                 @foreach ($this->galleries as $gallery)
-                    <flux:command.item wire:click="viewGallery('{{ $gallery->id }}')">
+                    <button
+                        type="button"
+                        wire:click="viewGallery('{{ $gallery->id }}')"
+                        wire:key="gallery-{{ $gallery->id }}"
+                        class="hover:bg-brand-sage-soft dark:hover:bg-white/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                    >
                         {{ $gallery->name }}
-                    </flux:command.item>
+                    </button>
                 @endforeach
             @endunless
 
             @unless ($this->photoshoots->isEmpty())
-                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                <x-ts-text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Photoshoots') }}
-                </flux:text>
+                </x-ts-text>
                 @foreach ($this->photoshoots as $photoshoot)
-                    <flux:command.item wire:click="viewPhotoshoot('{{ $photoshoot->id }}')">
+                    <button
+                        type="button"
+                        wire:click="viewPhotoshoot('{{ $photoshoot->id }}')"
+                        wire:key="photoshoot-{{ $photoshoot->id }}"
+                        class="hover:bg-brand-sage-soft dark:hover:bg-white/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                    >
                         {{ $photoshoot->name }}
-                    </flux:command.item>
+                    </button>
                 @endforeach
             @endunless
 
             @unless ($this->contracts->isEmpty())
-                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                <x-ts-text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Contracts') }}
-                </flux:text>
+                </x-ts-text>
                 @foreach ($this->contracts as $contract)
-                    <flux:command.item wire:click="viewContract('{{ $contract->id }}')">
+                    <button
+                        type="button"
+                        wire:click="viewContract('{{ $contract->id }}')"
+                        wire:key="contract-{{ $contract->id }}"
+                        class="hover:bg-brand-sage-soft dark:hover:bg-white/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                    >
                         {{ $contract->title }}
-                    </flux:command.item>
+                    </button>
                 @endforeach
             @endunless
 
             @unless ($this->photos->isEmpty())
-                <flux:text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
+                <x-ts-text class="px-2 py-1.5 text-xs font-medium tracking-wide uppercase">
                     {{ __('Photos') }}
-                </flux:text>
+                </x-ts-text>
                 @foreach ($this->photos as $photo)
-                    <flux:command.item wire:click="viewPhoto('{{ $photo->gallery->id }}', '{{ $photo->id }}')">
+                    <button
+                        type="button"
+                        wire:click="viewPhoto('{{ $photo->gallery->id }}', '{{ $photo->id }}')"
+                        wire:key="photo-{{ $photo->id }}"
+                        class="hover:bg-brand-sage-soft dark:hover:bg-white/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm"
+                    >
                         {{ $photo->name }}
-                    </flux:command.item>
+                    </button>
                 @endforeach
             @endunless
-        </flux:command.items>
+        </div>
     @endunless
-</flux:command>
+</div>

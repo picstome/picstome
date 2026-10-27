@@ -25,18 +25,18 @@
 <section {{ $attributes->class(['p-5 sm:p-6', $toneClasses['section']]) }}>
     <div class="flex items-start gap-3">
         <span class="{{ $toneClasses['badge'] }} flex size-10 shrink-0 items-center justify-center rounded-full shadow-xs">
-            <flux:icon :icon="$icon" class="size-5" />
+            <x-ts-icon :icon="$icon" class="size-5" />
         </span>
 
         <div class="min-w-0">
-            <flux:heading size="sm" class="{{ $toneClasses['title'] }}">
+            <x-ts-heading size="sm" class="{{ $toneClasses['title'] }}">
                 {{ $title }}
-            </flux:heading>
+            </x-ts-heading>
 
             @if ($description)
-                <flux:text class="text-brand-ink/60 dark:text-brand-sage/70 mt-0.5 text-xs">
+                <x-ts-text class="text-brand-ink/60 dark:text-brand-sage/70 mt-0.5 text-xs">
                     {{ $description }}
-                </flux:text>
+                </x-ts-text>
             @endif
         </div>
     </div>

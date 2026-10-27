@@ -7,7 +7,7 @@
     x-on:annotations-visibility-changed.window="visible = $event.detail.visible"
     class="contents"
 >
-    <flux:button
+    <x-ts-button
         size="sm"
         icon="eye-slash"
         variant="primary"
@@ -15,9 +15,9 @@
         x-on:click="$dispatch('toggle-annotations-visibility')"
     >
         {{ __('Hide annotations') }}
-    </flux:button>
+    </x-ts-button>
 
-    <flux:button
+    <x-ts-button
         size="sm"
         icon="eye"
         variant="primary"
@@ -27,5 +27,5 @@
         x-on:click="$dispatch('toggle-annotations-visibility')"
     >
         {{ __('Show annotations') }}
-    </flux:button>
+    </x-ts-button>
 </div>

@@ -40,6 +40,8 @@ new class extends Component
     {
         $this->authorize('updateCover', $this->gallery);
 
+        abort_unless($this->photo->isImage(), 422);
+
         $this->gallery->setCoverPhoto($this->photo);
 
         $this->dispatch('gallery-cover-changed');
@@ -66,6 +68,8 @@ new class extends Component
     }"
     @mouseenter="showActions = true"
     @mouseleave="if (!moreActionsOpen && !downloadOptionsOpen) showActions = false"
+    x-on:click.outside="moreActionsOpen = false; downloadOptionsOpen = false"
+    data-photo-card
     @if ($photo->status === 'pending') wire:poll.visible.5s @endif
 >
     <a
@@ -91,7 +95,7 @@ new class extends Component
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
         @elseif ($photo->isVideo())
-            <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted>
+            <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted playsinline preload="metadata">
                 <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                 Your browser does not support the video tag.
             </video>
@@ -99,88 +103,123 @@ new class extends Component
             <div
                 class="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10"
             >
-                <flux:icon.document-text class="size-10 text-zinc-400" />
-                <flux:text class="w-full truncate text-center text-xs text-zinc-500 dark:text-white/70">
+                <x-icon name="document-text" class="size-10 text-zinc-400" />
+                <x-ts-text class="w-full truncate text-center text-xs text-zinc-500 dark:text-white/70">
                     {{ $photo->name }}
-                </flux:text>
+                </x-ts-text>
             </div>
         @else
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
         @endif
     </a>
+
+    @if ($photo->isVideo())
+        <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span class="flex size-12 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-sm">
+                <x-icon name="play" variant="solid" class="size-5 translate-x-px" />
+            </span>
+        </div>
+    @endif
+
     @if (($photo->comments_count ?? 0) > 0)
         <div class="absolute top-1.5 left-1.5 z-10 flex" :class="showActions ? 'flex' : 'hidden'">
-            <flux:badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
+            <x-ts-badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
                 {{ $photo->comments_count }}
-            </flux:badge>
+            </x-ts-badge>
         </div>
     @endif
 
     @if (config('picstome.file_versions_enabled') && $photo->version_count > 1)
         <div class="absolute top-1.5 right-1.5 z-10 flex">
-            <flux:badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
+            <x-ts-badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
                 {{ $photo->version_count }}
-            </flux:badge>
+            </x-ts-badge>
         </div>
     @endif
 
     <div class="absolute right-1.5 bottom-1.5 flex flex-row-reverse gap-2" :class="showActions ? 'flex' : 'hidden'">
-        <flux:button wire:click="favorite({{ $photo->id }})" square size="sm">
+        <x-ts-button
+            wire:click="favorite({{ $photo->id }})"
+            variant="overlay"
+            square
+            size="sm"
+            :aria-label="__('Favorite')"
+        >
             @if ($photo->isFavorited())
-                <flux:icon.heart class="size-5 text-red-500" variant="solid" />
+                <x-icon name="heart" class="size-5 text-red-500" variant="solid" />
             @else
-                <flux:icon.heart class="size-5" />
+                <x-icon name="heart" class="size-5" />
             @endif
-        </flux:button>
+        </x-ts-button>
         @if ($photo->path && $photo->raw_path)
-            <flux:dropdown x-model="downloadOptionsOpen">
-                <flux:button icon="arrow-down-tray" square size="sm" />
-                <flux:menu>
-                    <flux:menu.item
-                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
+            <x-dropdown
+                position="bottom-end"
+                x-on:open="downloadOptionsOpen = $event.detail.status"
+                x-on:select="downloadOptionsOpen = false"
+            >
+                <x-slot:action>
+                    <x-ts-button
                         icon="arrow-down-tray"
-                    >
-                        {{ __('Download JPG') }}
-                    </flux:menu.item>
-                    <flux:menu.item
-                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
-                        icon="arrow-down-tray"
-                    >
-                        {{ __('Download Raw') }}
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
+                        variant="overlay"
+                        square
+                        size="sm"
+                        :aria-label="__('Download')"
+                        x-on:click="show = ! show; $refs.dropdown.dispatchEvent(new CustomEvent('open', { detail: { status: show } }))"
+                    />
+                </x-slot:action>
+
+                <x-dropdown.items
+                    :text="__('Download JPG')"
+                    icon="arrow-down-tray"
+                    :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                />
+                <x-dropdown.items
+                    :text="__('Download Raw')"
+                    icon="arrow-down-tray"
+                    :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
+                />
+            </x-dropdown>
         @else
-            <flux:button
+            <x-ts-button
                 :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
                 icon="arrow-down-tray"
+                variant="overlay"
                 square
                 size="sm"
+                :aria-label="__('Download')"
             />
         @endif
-        <flux:dropdown x-model="moreActionsOpen">
-            <flux:button icon="ellipsis-vertical" square size="sm" />
-            <flux:menu>
-                @if (! $photo->isPdf())
-                    @if ($gallery->coverPhoto?->is($this->photo))
-                        <flux:menu.item wire:click="removeAsCover" icon="x-mark">
-                            {{ __('Remove as Cover') }}
-                        </flux:menu.item>
-                    @else
-                        <flux:menu.item wire:click="setAsCover" icon="star">
-                            {{ __('Set as Cover') }}
-                        </flux:menu.item>
-                    @endif
-                @endif
+        <x-dropdown
+            position="bottom-end"
+            x-on:open="moreActionsOpen = $event.detail.status"
+            x-on:select="moreActionsOpen = false"
+        >
+            <x-slot:action>
+                <x-ts-button
+                    icon="ellipsis-vertical"
+                    variant="overlay"
+                    square
+                    size="sm"
+                    :aria-label="__('More actions')"
+                    data-photo-actions
+                    x-on:click="show = ! show; $refs.dropdown.dispatchEvent(new CustomEvent('open', { detail: { status: show } }))"
+                />
+            </x-slot:action>
 
-                <flux:menu.item
-                    wire:click="$dispatch('request-delete-photo', { id: {{ $photo->id }} })"
-                    icon="trash"
-                    variant="danger"
-                >
-                    {{ __('Delete') }}
-                </flux:menu.item>
-            </flux:menu>
-        </flux:dropdown>
+            @if ($photo->isImage())
+                @if ($gallery->coverPhoto?->is($this->photo))
+                    <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover" />
+                @else
+                    <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover" />
+                @endif
+            @endif
+
+            <x-dropdown.items
+                :text="__('Delete')"
+                icon="trash"
+                wire:click="$dispatch('request-delete-photo', { id: {{ $photo->id }} })"
+                class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+            />
+        </x-dropdown>
     </div>
 </div>

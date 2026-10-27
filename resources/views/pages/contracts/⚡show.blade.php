@@ -1,7 +1,7 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Models\Contract;
-use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -9,6 +9,7 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     public Contract $contract;
 
     public ?Collection $photoshoots = null;
@@ -62,29 +63,29 @@ new class extends Component
             'photoshoot_id' => $this->photoshoot_id,
         ]);
 
-        Flux::modal('assign-photoshoot')->close();
+        $this->closeModal('assign-photoshoot');
     }
 }; ?>
 
 <div @focus.window="$wire.$refresh()">
     <div class="max-lg:hidden">
-        <flux:button :href="route('contracts')" icon="chevron-left" variant="subtle" inset>
+        <x-ts-button :href="route('contracts')" icon="chevron-left" variant="subtle" inset>
             {{ __('Contracts') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="mt-4 lg:mt-8">
         <div class="flex items-center gap-4">
-            <x-heading level="1" size="xl">{{ $contract->title }}</x-heading>
+            <x-ts-heading level="1" size="xl">{{ $contract->title }}</x-ts-heading>
             @if ($contract->isExecuted())
-                <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
+                <x-ts-badge color="lime" size="sm">{{ __('Executed') }}</x-ts-badge>
             @endif
         </div>
-        <x-subheading class="mt-2">{{ $contract->description }}</x-subheading>
+        <x-ts-subheading class="mt-2">{{ $contract->description }}</x-ts-subheading>
         <div class="isolate mt-2.5 flex flex-wrap justify-between gap-x-6 gap-y-4">
             <div class="flex flex-wrap gap-x-10 gap-y-4 py-1.5">
                 <span class="flex items-center gap-3 text-sm text-zinc-800 dark:text-white">
-                    <flux:icon.pencil-square
+                    <x-icon name="pencil-square"
                         variant="solid"
                         class="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500"
                     />
@@ -95,7 +96,7 @@ new class extends Component
                 </span>
 
                 <span class="flex items-center gap-3 text-sm text-zinc-800 dark:text-white">
-                    <flux:icon.calendar
+                    <x-icon name="calendar"
                         variant="solid"
                         class="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500"
                     />
@@ -103,36 +104,38 @@ new class extends Component
                 </span>
             </div>
             <div class="flex gap-4">
-                <flux:dropdown>
-                    <flux:button icon="ellipsis-horizontal" variant="ghost" square />
-                    <flux:menu>
-                        <flux:modal.trigger name="assign-photoshoot">
-                            <flux:menu.item icon="camera">
-                                {{ __('Assign to photoshoot') }}
-                            </flux:menu.item>
-                        </flux:modal.trigger>
-                        <flux:modal.trigger name="delete-contract">
-                            <flux:menu.item icon="trash" variant="danger">
-                                {{ __('Delete contract') }}
-                            </flux:menu.item>
-                        </flux:modal.trigger>
-                    </flux:menu>
-                </flux:dropdown>
+                <x-dropdown position="bottom-end">
+                    <x-slot:action>
+                        <x-ts-button icon="ellipsis-horizontal" variant="ghost" square x-on:click="show = ! show" />
+                    </x-slot:action>
+
+                    <x-dropdown.items
+                        :text="__('Assign to photoshoot')"
+                        icon="camera"
+                        x-on:click="show = false; $tsui.open.modal('assign-photoshoot')"
+                    />
+                    <x-dropdown.items
+                        :text="__('Delete contract')"
+                        icon="trash"
+                        x-on:click="show = false; $tsui.open.modal('delete-contract')"
+                        class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                    />
+                </x-dropdown>
 
                 @if ($contract->isExecuted() && $contract->pdf_file_path)
-                    <flux:button wire:click="download" variant="primary">{{ __('Download') }}</flux:button>
+                    <x-ts-button wire:click="download" variant="primary">{{ __('Download') }}</x-ts-button>
                 @endif
 
                 @if (! $contract->isExecuted() && $contract->signaturesRemaining() === 0)
-                    <flux:button wire:click="execute" variant="primary">{{ __('Execute') }}</flux:button>
+                    <x-ts-button wire:click="execute" variant="primary">{{ __('Execute') }}</x-ts-button>
                 @endif
             </div>
         </div>
     </div>
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Summary') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Summary') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
         <x-description.list>
             <x-description.term>{{ __('Location') }}</x-description.term>
             <x-description.details>{{ $contract->location }}</x-description.details>
@@ -147,68 +150,68 @@ new class extends Component
         </x-description.list>
     </div>
 
-    <flux:heading level="2" class="mt-12">{{ __('Signatures') }}</flux:heading>
-    <x-table class="mt-4">
-        <x-table.columns>
-            <x-table.column></x-table.column>
-            <x-table.column>
+    <x-ts-heading level="2" class="mt-12">{{ __('Signatures') }}</x-ts-heading>
+    <x-data-table class="mt-4">
+        <x-data-table.columns>
+            <x-data-table.column></x-data-table.column>
+            <x-data-table.column>
                 <span class="text-zinc-500 dark:text-zinc-300">
                     {{ __('Signature number') }}
                 </span>
-            </x-table.column>
-            <x-table.column class="w-full">
+            </x-data-table.column>
+            <x-data-table.column class="w-full">
                 <span class="text-zinc-500 dark:text-zinc-300">{{ __('Name') }}</span>
-            </x-table.column>
-            <x-table.column>
+            </x-data-table.column>
+            <x-data-table.column>
                 <span class="text-zinc-500 dark:text-zinc-300">{{ __('Signed at') }}</span>
-            </x-table.column>
-        </x-table.columns>
+            </x-data-table.column>
+        </x-data-table.columns>
 
-        <x-table.rows>
+        <x-data-table.rows>
             @foreach ($contract->signatures as $signature)
-                <x-table.row>
-                    <x-table.cell>
+                <x-data-table.row>
+                    <x-data-table.cell>
                         @if ($signature->isSigned())
-                            <flux:button
+                            <x-ts-button
                                 href="{{ $signature->signature_image_url }}"
                                 target="_blank"
                                 size="sm"
                             >
                                 {{ __('View signature') }}
-                            </flux:button>
+                            </x-ts-button>
                         @else
-                            <flux:button
+                            <x-ts-button
                                 size="sm"
                                 :href="route('signatures.sign', ['signature' => $signature])"
                                 target="_blank"
                             >
                                 {{ __('Sign') }}
-                            </flux:button>
+                            </x-ts-button>
                         @endif
-                    </x-table.cell>
-                    <x-table.cell>
+                    </x-data-table.cell>
+                    <x-data-table.cell>
                         <span class="font-mono">{{ $signature->ulid }}</span>
 
                         @if ($signature->isSigned())
-                            <flux:badge size="sm" color="lime">{{ __('Signed') }}</flux:badge>
+                            <x-ts-badge size="sm" color="lime">{{ __('Signed') }}</x-ts-badge>
                         @else
-                            <flux:badge size="sm">{{ __('Unsigned') }}</flux:badge>
+                            <x-ts-badge size="sm">{{ __('Unsigned') }}</x-ts-badge>
                         @endif
-                    </x-table.cell>
-                    <x-table.cell>
+                    </x-data-table.cell>
+                    <x-data-table.cell>
                         {{ $signature->legal_name }}
                         <br />
                         {{ $signature->email }}
-                    </x-table.cell>
-                    <x-table.cell>{{ $signature->formatted_signed_at }}</x-table.cell>
-                </x-table.row>
+                    </x-data-table.cell>
+                    <x-data-table.cell>{{ $signature->formatted_signed_at }}</x-data-table.cell>
+                </x-data-table.row>
             @endforeach
-        </x-table.rows>
-    </x-table>
+        </x-data-table.rows>
+    </x-data-table>
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Contract terms') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Contract terms') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
         <x-description.list>
             <x-description.term>{{ __('Terms') }}</x-description.term>
             <x-description.details>
@@ -221,34 +224,34 @@ new class extends Component
         </x-description.list>
     </div>
 
-    <flux:modal name="assign-photoshoot" class="md:w-96">
+    <x-ts-modal name="assign-photoshoot" class="md:w-96">
         <form wire:submit="assignToPhotoshoot" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Assign to Photoshoot') }}</flux:heading>
-                <flux:text class="mt-2">{{ __('Select a photoshoot to assign this contract.') }}</flux:text>
+                <x-ts-heading size="lg">{{ __('Assign to Photoshoot') }}</x-ts-heading>
+                <x-ts-text class="mt-2">{{ __('Select a photoshoot to assign this contract.') }}</x-ts-text>
             </div>
-            <flux:select wire:model="photoshoot_id" placeholder="{{ __('Choose photoshoot...') }}">
-                <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
+            <x-ts-select wire:model="photoshoot_id" placeholder="{{ __('Choose photoshoot...') }}">
+                <x-ts-select-option value="">{{ __('No photoshoot') }}</x-ts-select-option>
                 <hr />
                 @if ($photoshoots)
                     @foreach ($photoshoots as $photoshoot)
-                        <flux:select.option value="{{ $photoshoot->id }}">
+                        <x-ts-select-option value="{{ $photoshoot->id }}">
                             {{ $photoshoot->name }}
-                        </flux:select.option>
+                        </x-ts-select-option>
                     @endforeach
                 @endif
-            </flux:select>
+            </x-ts-select>
             <div class="flex gap-2">
-                <flux:spacer />
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button wire:click="assignToPhotoshoot" variant="primary">
+                <x-ts-spacer />
+                <x-ts-modal-close>
+                    <x-ts-button variant="ghost">{{ __('Cancel') }}</x-ts-button>
+                </x-ts-modal-close>
+                <x-ts-button wire:click="assignToPhotoshoot" variant="primary">
                     {{ __('Assign') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="delete-contract"

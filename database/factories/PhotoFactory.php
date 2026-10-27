@@ -56,6 +56,16 @@ class PhotoFactory extends Factory
         });
     }
 
+    public function video(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'name' => 'video.mp4',
+                'path' => 'galleries/gallery-id/video.mp4',
+            ];
+        });
+    }
+
     public function unfavorited(): Factory
     {
         return $this->state(function (array $attributes) {

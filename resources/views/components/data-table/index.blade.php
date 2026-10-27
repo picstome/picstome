@@ -1,8 +1,7 @@
 @php
     $classes = [
-        'table-fixed [:where(&)]:min-w-full',
+        'table-fixed [:where(&)]:min-w-full border-separate border-spacing-0 isolate',
         'text-zinc-800',
-        'divide-y divide-zinc-800/10 text-zinc-800 dark:divide-white/20',
         'whitespace-nowrap [&_[popover]]:whitespace-normal [&_dialog]:whitespace-normal',
     ];
 @endphp

@@ -6,9 +6,9 @@
 @props(['count', 'size', 'href'])
 
 <div class="mx-auto max-w-2xl space-y-6 py-10">
-    <flux:callout variant="warning" icon="exclamation-triangle">
-        <flux:callout.heading>{{ __('Download gallery') }}</flux:callout.heading>
-        <flux:callout.text>
+    <x-ts-callout variant="warning" icon="exclamation-triangle">
+        <x-ts-callout-heading>{{ __('Download gallery') }}</x-ts-callout-heading>
+        <x-ts-callout-text>
             <div class="space-y-2">
                 <p>
                     {{ __('This gallery has :count photos and weighs approximately :size.', [
@@ -21,9 +21,9 @@
                 </p>
                 <p>{{ __('Remember you can also download photos individually.') }}</p>
             </div>
-        </flux:callout.text>
-    </flux:callout>
-    <flux:button :href="$href" variant="primary" icon="arrow-down-tray" class="w-full sm:w-auto">
+        </x-ts-callout-text>
+    </x-ts-callout>
+    <x-ts-button :href="$href" variant="primary" icon="arrow-down-tray" class="w-full sm:w-auto">
         {{ __('Download') }}
-    </flux:button>
+    </x-ts-button>
 </div>

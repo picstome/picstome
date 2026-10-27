@@ -302,22 +302,22 @@ new class extends Component
         <span class="bg-brand-coral h-10 w-1 rounded-full"></span>
 
         <div>
-            <flux:heading size="xl" level="1" class="text-brand-ink dark:text-brand-cream font-semibold">
+            <x-ts-heading size="xl" level="1" class="text-brand-ink dark:text-brand-cream font-semibold">
                 {{ __('Welcome back, :name', ['name' => $this->user->name]) }}
-            </flux:heading>
-            <flux:text class="text-brand-ink/75 dark:text-brand-sage/85 mt-0.5 font-medium">
+            </x-ts-heading>
+            <x-ts-text class="text-brand-ink/75 dark:text-brand-sage/85 mt-0.5 font-medium">
                 {{ __('A quick look at your studio.') }}
-            </flux:text>
+            </x-ts-text>
         </div>
     </div>
 
-    <flux:spacer class="my-6" />
+    <x-ts-spacer class="my-6" />
 
-    <flux:modal.trigger name="search" shortcut="cmd.k">
-        <flux:input as="button" :placeholder="__('Search...')" icon="magnifying-glass" kbd="⌘K" />
-    </flux:modal.trigger>
+    <x-ts-modal-trigger name="search" shortcut="cmd.k">
+        <x-ts-input as="button" :placeholder="__('Search...')" icon="magnifying-glass" kbd="⌘K" />
+    </x-ts-modal-trigger>
 
-    <flux:spacer class="my-6" />
+    <x-ts-spacer class="my-6" />
 
     @if (! $this->team->subscribed())
         <section
@@ -332,27 +332,27 @@ new class extends Component
                     <div
                         class="text-brand-green dark:text-brand-sage flex size-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-xs dark:bg-white/10"
                     >
-                        <flux:icon.shield-check class="size-5" />
+                        <x-icon name="shield-check" class="size-5" />
                     </div>
 
                     <div class="max-w-2xl">
-                        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                        <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
                             {{ __('Get More With Picstome Pro') }}
-                        </flux:heading>
-                        <flux:text class="text-brand-ink/80 dark:text-brand-sage/85 mt-2 font-medium">
+                        </x-ts-heading>
+                        <x-ts-text class="text-brand-ink/80 dark:text-brand-sage/85 mt-2 font-medium">
                             {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
-                        </flux:text>
+                        </x-ts-text>
                     </div>
                 </div>
 
-                <flux:button :href="route('subscribe')" variant="primary" class="shrink-0">
+                <x-ts-button :href="route('subscribe')" variant="primary" class="shrink-0">
                     {{ __('Upgrade to Pro') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </section>
     @endif
 
-    <flux:spacer class="my-6" />
+    <x-ts-spacer class="my-6" />
 
     @if ($this->incompleteSteps->count())
         <section>
@@ -361,9 +361,9 @@ new class extends Component
             >
                 <div class="border-brand-green/10 border-b px-5 py-4 dark:border-white/10">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                        <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
                             {{ __('Complete Your Account Setup') }}
-                        </flux:heading>
+                        </x-ts-heading>
 
                         <span
                             class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium tabular-nums"
@@ -389,18 +389,18 @@ new class extends Component
                             <div
                                 class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage flex size-10 shrink-0 items-center justify-center rounded-xl"
                             >
-                                <flux:icon :icon="$step['icon']" class="size-5" />
+                                <x-ts-icon :icon="$step['icon']" class="size-5" />
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <flux:text variant="strong" class="font-medium">{{ $step['label'] }}</flux:text>
-                                <flux:text class="text-brand-ink/75 dark:text-brand-sage/80 mt-0.5 text-xs font-medium">
+                                <x-ts-text variant="strong" class="font-medium">{{ $step['label'] }}</x-ts-text>
+                                <x-ts-text class="text-brand-ink/75 dark:text-brand-sage/80 mt-0.5 text-xs font-medium">
                                     {{ $step['desc'] }}
-                                </flux:text>
+                                </x-ts-text>
                             </div>
 
                             <div class="flex items-center gap-2">
-                                <flux:button
+                                <x-ts-button
                                     size="sm"
                                     :href="$step['route']"
                                     variant="ghost"
@@ -408,9 +408,9 @@ new class extends Component
                                     class="text-brand-green! hover:bg-brand-green/5! dark:text-brand-sage! dark:hover:bg-white/10!"
                                 >
                                     {{ $step['action'] }}
-                                </flux:button>
+                                </x-ts-button>
 
-                                <flux:button
+                                <x-ts-button
                                     icon="x-mark"
                                     variant="subtle"
                                     size="sm"
@@ -424,14 +424,14 @@ new class extends Component
             </div>
         </section>
 
-        <flux:spacer class="my-6" />
+        <x-ts-spacer class="my-6" />
     @endif
 
     <section>
         <div class="space-y-4">
-            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+            <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
                 {{ __('Account Overview') }}
-            </flux:heading>
+            </x-ts-heading>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 @foreach ([
@@ -464,23 +464,23 @@ new class extends Component
                     >
                         <div class="flex items-start justify-between gap-4">
                             <span class="{{ $card['tone'] }} flex size-10 items-center justify-center rounded-xl">
-                                <flux:icon :icon="$card['icon']" class="size-5" />
+                                <x-ts-icon :icon="$card['icon']" class="size-5" />
                             </span>
 
-                            <flux:icon.arrow-up-right
+                            <x-icon name="arrow-up-right"
                                 class="text-brand-green/40 group-hover:text-brand-green dark:text-brand-sage/50 dark:group-hover:text-brand-sage size-4 transition"
                             />
                         </div>
 
                         <div class="mt-5">
-                            <flux:text
+                            <x-ts-text
                                 class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase"
                             >
                                 {{ $card['label'] }}
-                            </flux:text>
-                            <flux:heading size="xl" class="mt-1 tabular-nums">
+                            </x-ts-text>
+                            <x-ts-heading size="xl" class="mt-1 tabular-nums">
                                 {{ $card['value'] }}
-                            </flux:heading>
+                            </x-ts-heading>
                         </div>
                     </a>
                 @endforeach
@@ -492,7 +492,7 @@ new class extends Component
                         <span
                             class="bg-brand-green text-brand-cream flex size-10 items-center justify-center rounded-xl"
                         >
-                            <flux:icon.server class="size-5" />
+                            <x-icon name="server" class="size-5" />
                         </span>
 
                         @if ($this->team->hasUnlimitedStorage)
@@ -505,12 +505,12 @@ new class extends Component
                     </div>
 
                     <div class="mt-5">
-                        <flux:text
+                        <x-ts-text
                             class="text-brand-green-deep dark:text-brand-sage text-xs font-semibold tracking-wide uppercase"
                         >
                             {{ __('Storage Used') }}
-                        </flux:text>
-                        <flux:heading size="xl" class="mt-1 tabular-nums">{{ $this->usedGb }}</flux:heading>
+                        </x-ts-text>
+                        <x-ts-heading size="xl" class="mt-1 tabular-nums">{{ $this->usedGb }}</x-ts-heading>
                     </div>
 
                     <div class="mt-auto pt-4">
@@ -525,13 +525,13 @@ new class extends Component
                                     style="width: {{ min($this->usagePercent, 100) }}%"
                                 ></div>
                             </div>
-                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-2 text-[11px] font-medium">
+                            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-2 text-[11px] font-medium">
                                 {{ __(':used of :total used', ['used' => $this->usedGb, 'total' => $this->totalGb]) }}
-                            </flux:text>
+                            </x-ts-text>
                         @else
-                            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 text-[11px] font-medium">
+                            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 text-[11px] font-medium">
                                 {{ __(':used used (Unlimited)', ['used' => $this->usedGb]) }}
-                            </flux:text>
+                            </x-ts-text>
                         @endif
                     </div>
                 </div>
@@ -541,17 +541,17 @@ new class extends Component
 
     @if ($this->hasUpcomingEventsOrReminders())
         <section class="mt-8 mb-8">
-            <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+            <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
                 {{ __('Upcoming Events & Reminders') }}
-            </flux:heading>
-            <flux:separator class="mt-3" />
-            <x-table>
-                <x-table.rows>
+            </x-ts-heading>
+            <x-ts-separator class="mt-3" />
+            <x-data-table>
+                <x-data-table.rows>
                     @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                        <x-table.row
+                        <x-data-table.row
                             :class="! empty($event['is_today']) && $event['is_today'] ? 'bg-brand-sage/20 dark:bg-brand-sage/10' : ''"
                         >
-                            <x-table.cell variant="strong" class="relative w-full">
+                            <x-data-table.cell variant="strong" class="relative w-full">
                                 <a
                                     href="{{ $event['link'] }}"
                                     wire:navigate
@@ -561,7 +561,7 @@ new class extends Component
                                     {{ $event['label'] }}
 
                                     @if ($event['type'] === 'birthday')
-                                        <flux:badge
+                                        <x-ts-badge
                                             color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}"
                                             inset="top bottom"
                                             icon="cake"
@@ -569,44 +569,44 @@ new class extends Component
                                         >
                                             {{ ! empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
                                             ({{ $event['age'] }})
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @elseif ($event['type'] === 'photoshoot')
-                                        <flux:badge
+                                        <x-ts-badge
                                             color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}"
                                             inset="top bottom"
                                             icon="camera"
                                             size="sm"
                                         >
                                             {{ ! empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @elseif ($event['type'] === 'gallery')
-                                        <flux:badge
+                                        <x-ts-badge
                                             color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}"
                                             inset="top bottom"
                                             icon="clock"
                                             size="sm"
                                         >
                                             {{ ! empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @elseif ($event['type'] === 'contract')
-                                        <flux:badge color="orange" inset="top bottom" icon="document" size="sm">
+                                        <x-ts-badge color="orange" inset="top bottom" icon="document" size="sm">
                                             {{ __('Awaiting signature') }}
-                                        </flux:badge>
+                                        </x-ts-badge>
                                     @endif
                                 </div>
-                            </x-table.cell>
-                            <x-table.cell class="text-brand-ink/70 dark:text-brand-sage/80 relative" align="end">
+                            </x-data-table.cell>
+                            <x-data-table.cell class="text-brand-ink/70 dark:text-brand-sage/80 relative" align="end">
                                 <a
                                     href="{{ $event['link'] }}"
                                     wire:navigate
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
                                 {{ $this->formatEventDate($event['date']) }}
-                            </x-table.cell>
-                        </x-table.row>
+                            </x-data-table.cell>
+                        </x-data-table.row>
                     @endforeach
-                </x-table.rows>
-            </x-table>
+                </x-data-table.rows>
+            </x-data-table>
         </section>
     @endif
 </div>

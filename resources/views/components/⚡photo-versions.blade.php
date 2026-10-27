@@ -1,8 +1,8 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Models\Photo;
 use App\Services\PhotoUrlService;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -16,6 +16,7 @@ use Livewire\Component;
  */
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     public Photo $photo;
 
     public bool $manageable = false;
@@ -140,7 +141,7 @@ new class extends Component
     {
         $this->pendingVersionId = $versionId;
 
-        Flux::modal('delete-version-'.$this->photo->id)->show();
+        $this->openModal('delete-version-'.$this->photo->id);
     }
 
     public function deletePendingVersion(): void
@@ -193,13 +194,13 @@ new class extends Component
 
 <div class="contents">
     @if ($this->versions->isNotEmpty())
-        <flux:modal.trigger name="photo-versions-{{ $photo->id }}">
-            <flux:button size="sm" icon="rectangle-stack" variant="primary" class="btn-ink">
+        <x-ts-modal-trigger name="photo-versions-{{ $photo->id }}">
+            <x-ts-button size="sm" icon="rectangle-stack" variant="primary" class="btn-ink">
                 {{ __('Versions') }} ({{ $this->versions->count() }})
-            </flux:button>
-        </flux:modal.trigger>
+            </x-ts-button>
+        </x-ts-modal-trigger>
 
-        <flux:modal name="photo-versions-{{ $photo->id }}" class="w-full max-w-6xl">
+        <x-ts-modal name="photo-versions-{{ $photo->id }}" class="w-full max-w-6xl">
             <div
                 class="space-y-4"
                 x-data="{
@@ -248,7 +249,7 @@ new class extends Component
                         : 1;
                 @endphp
 
-                <flux:heading size="lg">{{ __('Compare versions') }}</flux:heading>
+                <x-ts-heading size="lg">{{ __('Compare versions') }}</x-ts-heading>
 
                 <div class="flex gap-3 overflow-x-auto pb-2">
                     @foreach ($this->versions as $version)
@@ -271,22 +272,22 @@ new class extends Component
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <flux:select x-model="left" @change="scale = 1; x = 0; y = 0">
+                    <x-ts-select x-model="left" @change="scale = 1; x = 0; y = 0">
                         @foreach ($this->versions as $version)
-                            <flux:select.option value="{{ $version['id'] }}">{{ $version['label'] }} · {{ $version['source_name'] }} · {{ $version['uploaded_at_display'] }}</flux:select.option>
+                            <x-ts-select-option value="{{ $version['id'] }}">{{ $version['label'] }} · {{ $version['source_name'] }} · {{ $version['uploaded_at_display'] }}</x-ts-select-option>
                         @endforeach
-                    </flux:select>
-                    <flux:select x-model="right" @change="scale = 1; x = 0; y = 0">
+                    </x-ts-select>
+                    <x-ts-select x-model="right" @change="scale = 1; x = 0; y = 0">
                         @foreach ($this->versions as $version)
-                            <flux:select.option value="{{ $version['id'] }}">{{ $version['label'] }} · {{ $version['source_name'] }} · {{ $version['uploaded_at_display'] }}</flux:select.option>
+                            <x-ts-select-option value="{{ $version['id'] }}">{{ $version['label'] }} · {{ $version['source_name'] }} · {{ $version['uploaded_at_display'] }}</x-ts-select-option>
                         @endforeach
-                    </flux:select>
+                    </x-ts-select>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <flux:button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</flux:button>
-                    <flux:button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</flux:button>
-                    <flux:button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</flux:button>
+                    <x-ts-button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</x-ts-button>
+                    <x-ts-button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</x-ts-button>
+                    <x-ts-button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</x-ts-button>
                     <span class="text-sm text-zinc-500" x-text="Math.round(scale * 100) + '%'"></span>
                 </div>
 
@@ -334,25 +335,25 @@ new class extends Component
                                 <div class="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                                     <div>
                                         <div class="text-sm font-medium">{{ $version['label'] }}</div>
-                                        <flux:text class="text-xs">
+                                        <x-ts-text class="text-xs">
                                             {{ $version['source_name'] }} · {{ __('Uploaded at :date', ['date' => $version['uploaded_at_display']]) }}
-                                        </flux:text>
+                                        </x-ts-text>
                                     </div>
                                     <div class="flex gap-2">
-                                        <flux:button as="a" size="sm" href="{{ $version['download_url'] }}" target="_blank">
+                                        <x-ts-button as="a" size="sm" href="{{ $version['download_url'] }}" target="_blank">
                                             {{ __('Download') }}
-                                        </flux:button>
-                                        <flux:button size="sm" wire:click="restoreVersion({{ (int) $version['id'] }})">
+                                        </x-ts-button>
+                                        <x-ts-button size="sm" wire:click="restoreVersion({{ (int) $version['id'] }})">
                                             {{ __('Restore') }}
-                                        </flux:button>
-                                        <flux:button
+                                        </x-ts-button>
+                                        <x-ts-button
                                             size="sm"
                                             variant="primary"
                                             class="btn-coral"
                                             wire:click="requestDeleteVersion({{ (int) $version['id'] }})"
                                         >
                                             {{ __('Delete') }}
-                                        </flux:button>
+                                        </x-ts-button>
                                     </div>
                                 </div>
                             @endif
@@ -360,7 +361,7 @@ new class extends Component
                     </div>
                 @endif
             </div>
-        </flux:modal>
+        </x-ts-modal>
 
         <x-confirm-modal
             name="delete-version-{{ $photo->id }}"

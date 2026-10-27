@@ -612,6 +612,10 @@ class Gallery extends Model
             throw new \Exception('Photo does not belong to this gallery');
         }
 
+        if (! $photo->isImage()) {
+            throw new \InvalidArgumentException('Only images can be used as a gallery cover.');
+        }
+
         $this->update(['cover_photo_id' => $photo->id]);
     }
 

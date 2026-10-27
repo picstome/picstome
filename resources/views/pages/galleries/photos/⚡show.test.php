@@ -407,3 +407,24 @@ test('the annotations toggle appears only when the photo has annotations', funct
         ->assertOk()
         ->assertSee('Hide annotations');
 });
+
+test('video photos do not offer the cover menu', function () {
+    Photo::factory()->video()->for(Gallery::factory()->for($this->team))->create();
+
+    $response = actingAs($this->user)->get('/galleries/1/photos/1');
+
+    $response->assertSuccessful();
+    $response->assertDontSee('Set as Cover');
+    $response->assertDontSee('Remove as Cover');
+});
+
+test('videos cannot be set as gallery cover from the photo page', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setAsCover')
+        ->assertStatus(422);
+
+    expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});
