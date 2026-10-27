@@ -274,6 +274,15 @@
                                 >
                                     {{ __('Statistics') }}
                                 </flux:navlist.item>
+
+                                <flux:navlist.item
+                                    :href="route('admin.translations')"
+                                    icon="language"
+                                    wire:navigate
+                                    :current="request()->routeIs('admin.translations')"
+                                >
+                                    {{ __('Translations') }}
+                                </flux:navlist.item>
                             </flux:navlist.group>
                         @endif
                     </flux:navlist>
