@@ -19,6 +19,12 @@ return [
 
     'subscription_storage_limit' => 1073741824000, // 1TB in bytes
 
+    /**
+     * Storage usage percentage that triggers the dashboard banner and the
+     * "storage almost full" email. The email is sent once per plan.
+     */
+    'storage_warning_percent' => 95,
+
     'storage_limits_by_price' => [
         // 100 GB
         ...array_fill_keys(

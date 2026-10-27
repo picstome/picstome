@@ -22,6 +22,7 @@ class SubscriptionExpiringSoon extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
+            ->subject(__('Your subscription expires soon'))
             ->line(__('Your subscription expires in :days days.', ['days' => $this->daysLeft]))
             ->action(__('Renew Subscription'), route('billing-portal'))
             ->line(__('Thank you for using our application!'));
