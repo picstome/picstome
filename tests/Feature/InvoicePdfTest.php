@@ -37,6 +37,12 @@ it('stores the pdf of an issued invoice', function () {
         ->and(hash('sha256', $contents))->toBe($invoice->pdf_hash);
 });
 
+it('keeps generated invoice pdfs small by subsetting embedded fonts', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($invoice->pdf_size)->toBeLessThan(200_000);
+});
+
 it('counts the pdf of the invoices in the storage usage', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

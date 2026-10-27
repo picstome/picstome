@@ -29,6 +29,22 @@ it('renders the pdf in the contract owner language', function () {
     expect($contract->fresh()->pdf_file_path)->not->toBeNull();
 });
 
+it('keeps generated contract pdfs small by subsetting embedded fonts', function () {
+    Storage::fake('s3');
+
+    $owner = User::factory()->create(['language' => 'es']);
+    $team = Team::factory()->for($owner, 'owner')->create();
+    $contract = Contract::factory()->for($team)->create();
+    $contract->addSignatures(1);
+
+    (new ProcessPdfContract($contract))->handle();
+
+    $contract->refresh();
+
+    expect($contract->pdf_file_path)->not->toBeNull()
+        ->and(Storage::disk('s3')->size($contract->pdf_file_path))->toBeLessThan(200_000);
+});
+
 it('generates the pdf in the owner language when a contract is executed', function () {
     Storage::fake('s3');
 
