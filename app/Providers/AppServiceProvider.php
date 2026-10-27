@@ -22,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Admin translation edits live in storage and are appended after
+        // lang/, so they override the repository files at runtime.
+        app('translation.loader')->addPath(config('translation_overrides.path'));
+
         Cashier::useCustomerModel(Team::class);
 
         Blade::if('subscribed', function (Team $team) {

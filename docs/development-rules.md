@@ -96,10 +96,19 @@ Two ways to exercise the payment flow without moving real money:
   a `fake_` intent id, and the whole flow (payment → invoice) can be tested
   without Stripe. The flag is ignored in the test suite and in production.
 
+## Admin translation overrides
+
+The admin translations panel writes JSON overrides to
+`storage/app/translations/{en,es}.json`. The translation loader reads this
+folder after `lang/`, so edits win at runtime. The files are not tracked by
+git and must be included in backups. If the app runs on multiple servers, the
+folder must be shared or the overrides will diverge.
+
 ## Deployment checklist
 
 1. Merge only after CI and quality are green.
-2. Back up the production database and confirm storage backup policy.
+2. Back up the production database, media storage and
+   `storage/app/translations`.
 3. Review `php artisan migrate --pretend` output.
 4. Confirm the production environment has `APP_ENV=production` and
    `APP_DEBUG=false`, so the local-only helpers (like the fake payments mode)
