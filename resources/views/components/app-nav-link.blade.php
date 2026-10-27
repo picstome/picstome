@@ -17,7 +17,7 @@
         'bg-zinc-100 text-zinc-800 dark:bg-white/10 dark:text-white' => $quiet && $current,
         'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-white/5' => $quiet && ! $current,
     ]) }}
-    @if (! $target) wire:navigate @endif
+    @if (! $target) wire:navigate.hover @endif
 >
     @if ($icon)
         <x-icon
