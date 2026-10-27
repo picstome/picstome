@@ -69,14 +69,46 @@ it('can edit customer notes via Livewire', function () {
     expect($customer->formatted_notes)->toContain('<strong>markdown</strong>');
 });
 
-it('shows the client link modal with the customer share url', function () {
+it('shows the client link modal with the customer share url and shared galleries count', function () {
     $customer = Customer::factory()->for($this->team)->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->for($customer)->create();
+    Gallery::factory()->shared()->for($this->team)->for($photoshoot)->count(2)->create();
 
     $response = actingAs($this->user)->get("/customers/{$customer->id}");
 
     $response->assertStatus(200)
         ->assertSee(__('Client link'))
-        ->assertSee(route('clients.show', $customer));
+        ->assertSee(route('clients.show', $customer))
+        ->assertSee(__('Shared galleries: :count', ['count' => 2]))
+        ->assertSee(__('Remember that the link only shows shared galleries without a password.'));
+});
+
+it('hides the client link and shows a message when there are no shared galleries', function () {
+    $customer = Customer::factory()->for($this->team)->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->for($customer)->create();
+    Gallery::factory()->unshared()->for($this->team)->for($photoshoot)->create();
+    Gallery::factory()->shared()->protected()->for($this->team)->for($photoshoot)->create();
+
+    $response = actingAs($this->user)->get("/customers/{$customer->id}");
+
+    $response->assertStatus(200)
+        ->assertSee(__('This client has no shared galleries.'))
+        ->assertDontSee(__('Client link'))
+        ->assertDontSee(route('clients.show', $customer));
+});
+
+it('counts only shared galleries without a password', function () {
+    $customer = Customer::factory()->for($this->team)->create();
+    $photoshoot = Photoshoot::factory()->for($this->team)->for($customer)->create();
+    Gallery::factory()->shared()->for($this->team)->for($photoshoot)->create();
+    Gallery::factory()->shared()->protected()->for($this->team)->for($photoshoot)->create();
+    Gallery::factory()->unshared()->for($this->team)->for($photoshoot)->create();
+
+    $response = actingAs($this->user)->get("/customers/{$customer->id}");
+
+    $response->assertStatus(200)
+        ->assertSee(__('Shared galleries: :count', ['count' => 1]))
+        ->assertDontSee(__('Shared galleries: :count', ['count' => 2]));
 });
 
 it('shows the invoices of the client and the option to create one', function () {
