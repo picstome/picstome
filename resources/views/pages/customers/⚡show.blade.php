@@ -80,6 +80,15 @@ new class extends Component
     }
 
     #[Computed]
+    public function sharedGalleriesCount(): int
+    {
+        return $this->customer->galleries()
+            ->where('is_shared', true)
+            ->whereNull('share_password')
+            ->count();
+    }
+
+    #[Computed]
     public function contracts()
     {
         return $this->customer->photoshoots->flatMap->contracts;
@@ -134,11 +143,16 @@ new class extends Component
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full sm:flex-1">
             <x-heading level="1" size="xl">{{ $customer->name }}</x-heading>
+            @if ($this->sharedGalleriesCount === 0)
+                <flux:text class="mt-1">{{ __('This client has no shared galleries.') }}</flux:text>
+            @endif
         </div>
         <div class="flex gap-4">
-            <flux:modal.trigger name="client-link">
-                <flux:button icon="link" variant="primary">{{ __('Client link') }}</flux:button>
-            </flux:modal.trigger>
+            @if ($this->sharedGalleriesCount > 0)
+                <flux:modal.trigger name="client-link">
+                    <flux:button icon="link" variant="primary">{{ __('Client link') }}</flux:button>
+                </flux:modal.trigger>
+            @endif
             <flux:modal.trigger name="delete-customer">
                 <flux:button variant="primary" class="btn-coral">
                     {{ __('Delete') }}
@@ -475,23 +489,33 @@ new class extends Component
         </form>
     </flux:modal>
 
-    <flux:modal name="client-link" class="w-full sm:max-w-lg">
-        <div class="space-y-6">
-            <flux:heading size="lg">{{ __('Client link') }}</flux:heading>
+    @if ($this->sharedGalleriesCount > 0)
+        <flux:modal name="client-link" class="w-full sm:max-w-lg">
+            <div class="space-y-6">
+                <flux:heading size="lg">{{ __('Client link') }}</flux:heading>
 
-            <flux:input
-                icon="link"
-                :value="route('clients.show', $customer)"
-                :label="__('Share URL')"
-                readonly
-                copyable
-            />
+                <flux:input
+                    icon="link"
+                    :value="route('clients.show', $customer)"
+                    :label="__('Share URL')"
+                    readonly
+                    copyable
+                />
 
-            <flux:text variant="subtle">
-                {{ __('Share this link with your client so they can view all their shared galleries in one place.') }}
-            </flux:text>
-        </div>
-    </flux:modal>
+                <flux:text variant="subtle">
+                    {{ __('Share this link with your client so they can view all their shared galleries in one place.') }}
+                </flux:text>
+
+                <flux:text variant="subtle">
+                    {{ __('Shared galleries: :count', ['count' => $this->sharedGalleriesCount]) }}
+                </flux:text>
+
+                <flux:text variant="subtle">
+                    {{ __('Remember that the link only shows shared galleries without a password.') }}
+                </flux:text>
+            </div>
+        </flux:modal>
+    @endif
 
     <x-confirm-modal
         name="delete-customer"
