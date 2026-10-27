@@ -91,7 +91,7 @@
                         </x-ts-modal>
                     </div>
 
-                    <nav class="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-4 pb-3" aria-label="Sidebar">
+                    <nav data-sidebar-scroll class="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-4 pb-3" aria-label="Sidebar">
                         <x-app-nav-link :href="route('dashboard')" icon="home" :current="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
                         </x-app-nav-link>
