@@ -131,6 +131,7 @@ it('scrolls to the top after changing photoshoot pages', function () {
 
     $page = visit('/photoshoots');
     $page->script('window.scrollTo(0, document.body.scrollHeight)');
+    $page->script("document.querySelector('[data-photoshoot-card]').__staleCard = true");
     $page->wait(0.2);
 
     expect($page->script('window.scrollY'))->toBeGreaterThan(0);
@@ -138,5 +139,6 @@ it('scrolls to the top after changing photoshoot pages', function () {
     $page->click('[data-pagination-page="2"]');
     $page->wait(1);
 
-    expect($page->script('window.scrollY'))->toBeLessThan(2);
+    expect($page->script('window.scrollY'))->toBeLessThan(2)
+        ->and($page->script("document.querySelector('[data-photoshoot-card]')?.__staleCard ?? null"))->toBeNull();
 });

@@ -112,23 +112,37 @@ new class extends Component
             <div id="grid" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 @foreach ($this->galleries as $gallery)
                     <x-ts-card
+                        wire:key="gallery-{{ $gallery->id }}"
+                        data-gallery-card
                         class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
                     >
                         <a href="{{ route('galleries.show', ['gallery' => $gallery]) }}" class="block" wire:navigate>
                             @if ($gallery->coverPhoto && $gallery->coverPhoto->isImage())
                                 <img
+                                    x-data="{ loaded: false, errored: false }"
+                                    x-init="if ($el.complete) loaded = true"
+                                    data-gallery-image
                                     src="{{ $gallery->coverPhoto->small_thumbnail_url }}"
                                     alt="{{ $gallery->name }}"
-                                    class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                    x-on:load="loaded = true"
+                                    x-on:error="errored = true"
+                                    class="aspect-3/2 w-full rounded-t-lg bg-zinc-300 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-zinc-700"
+                                    :class="loaded || errored ? '' : 'animate-pulse'"
                                     loading="lazy"
                                     width="400"
                                     height="267"
                                 />
                             @elseif ($gallery->firstImage())
                                 <img
+                                    x-data="{ loaded: false, errored: false }"
+                                    x-init="if ($el.complete) loaded = true"
+                                    data-gallery-image
                                     src="{{ $gallery->firstImage()->small_thumbnail_url }}"
                                     alt="{{ $gallery->name }}"
-                                    class="aspect-3/2 w-full rounded-t-lg object-cover transition-transform duration-300 group-hover:scale-105"
+                                    x-on:load="loaded = true"
+                                    x-on:error="errored = true"
+                                    class="aspect-3/2 w-full rounded-t-lg bg-zinc-300 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-zinc-700"
+                                    :class="loaded || errored ? '' : 'animate-pulse'"
                                     loading="lazy"
                                     width="400"
                                     height="267"
