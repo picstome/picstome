@@ -1098,7 +1098,7 @@ new class extends Component
                         <x-timeline class="mt-2" compact>
                             <x-timeline.items
                                 :title="__('Connect to Wi-Fi')"
-                                :description="__('Use a network with internet. A phone hotspot works best.')"
+                                :description="__('Use a regular Wi-Fi network with internet. A phone hotspot may be slower.')"
                                 icon="wifi"
                             />
                             <x-timeline.items
