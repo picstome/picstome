@@ -110,3 +110,34 @@ it('allows a user to create a photoshoot with an existing customer', function ()
     $photoshoot = $this->team->photoshoots()->first();
     expect($photoshoot->customer->is($customer))->toBeTrue();
 });
+
+
+it('shows a wider pagination window with first and last controls', function () {
+    Photoshoot::factory()->for($this->team)->count(150)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::photoshoots')
+        ->call('gotoPage', 4);
+
+    $component
+        ->assertSeeHtml('data-pagination-first')
+        ->assertSeeHtml('data-pagination-last')
+        ->assertSeeHtml('data-pagination-page="2"')
+        ->assertSeeHtml('data-pagination-page="6"');
+});
+
+it('scrolls to the top after changing photoshoot pages', function () {
+    Photoshoot::factory()->for($this->team)->count(30)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/photoshoots');
+    $page->script('window.scrollTo(0, document.body.scrollHeight)');
+    $page->wait(0.2);
+
+    expect($page->script('window.scrollY'))->toBeGreaterThan(0);
+
+    $page->click('[data-pagination-page="2"]');
+    $page->wait(1);
+
+    expect($page->script('window.scrollY'))->toBeLessThan(2);
+});

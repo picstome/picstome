@@ -155,9 +155,7 @@ new class extends Component
                     let el = $event.target
                     while (el && el !== $el) {
                         if (el.hasAttribute('wire:click')) {
-                            document
-                                .getElementById('photoshoots-grid')
-                                ?.scrollIntoView({ behavior: 'smooth' })
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
                             break
                         }
 

@@ -225,3 +225,34 @@ test('starting a live shoot keeps the gallery when the upload server is unreacha
     expect($this->team->galleries()->count())->toBe(1);
     expect(FtpAccount::count())->toBe(0);
 });
+
+
+test('shows a wider pagination window with first and last controls', function () {
+    Gallery::factory()->for($this->team)->count(150)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries')
+        ->call('gotoPage', 4);
+
+    $component
+        ->assertSeeHtml('data-pagination-first')
+        ->assertSeeHtml('data-pagination-last')
+        ->assertSeeHtml('data-pagination-page="2"')
+        ->assertSeeHtml('data-pagination-page="6"');
+});
+
+test('scrolls to the top after changing gallery pages', function () {
+    Gallery::factory()->for($this->team)->count(30)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries');
+    $page->script('window.scrollTo(0, document.body.scrollHeight)');
+    $page->wait(0.2);
+
+    expect($page->script('window.scrollY'))->toBeGreaterThan(0);
+
+    $page->click('[data-pagination-page="2"]');
+    $page->wait(1);
+
+    expect($page->script('window.scrollY'))->toBeLessThan(2);
+});
