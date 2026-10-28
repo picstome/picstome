@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
@@ -361,4 +362,52 @@ test('shared gallery does not overflow on mobile', function () {
         expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
             ->toBeTrue();
     }
+});
+
+test('shared gallery only watches for new photos in remote mode', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => 'REMOTE1']);
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    expect($component->html())->not->toContain('wire:poll.visible.5s');
+
+    FtpAccount::factory()->for($this->team)->create([
+        'active' => true,
+        'active_gallery_id' => $gallery->id,
+    ]);
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    expect($component->html())->toContain('wire:poll.visible.5s');
+
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $component->call('refreshPhotos');
+
+    expect($component->allPhotos->contains($photo))->toBeTrue();
+    expect($component->html())->toContain('data-photo-card');
+
+    $component->call('stopRemoteMode');
+
+    expect($component->remoteMode)->toBeFalse();
+    expect($component->html())->not->toContain('wire:poll.visible.5s');
+});
+
+test('shared gallery shows a photo that arrives after the page loads', function () {
+    config(['picstome.live_gallery_poll_seconds' => 1]);
+
+    $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => 'LIVE123']);
+
+    FtpAccount::factory()->for($this->team)->create([
+        'active' => true,
+        'active_gallery_id' => $gallery->id,
+    ]);
+
+    $page = visit('/shares/LIVE123/'.$gallery->slug);
+
+    Photo::factory()->for($gallery)->create();
+
+    $page->wait(3);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
 });

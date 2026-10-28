@@ -265,10 +265,27 @@ class FtpAccount extends Model
     }
 
     /**
+     * The storage disk where the camera uploads land.
+     */
+    public static function diskName(): string
+    {
+        return (string) (config('picstome.ftp_uploads.disk') ?: config('picstome.disk'));
+    }
+
+    /**
+     * The driver behind the inbox disk. S3 objects are only listed once the
+     * upload is complete, so the live scan can use a shorter stability window.
+     */
+    public static function diskDriver(): ?string
+    {
+        return config('filesystems.disks.'.static::diskName().'.driver');
+    }
+
+    /**
      * The disk the camera uploads are written to.
      */
     public static function disk(): Filesystem
     {
-        return Storage::disk(config('picstome.ftp_uploads.disk') ?: config('picstome.disk'));
+        return Storage::disk(static::diskName());
     }
 }

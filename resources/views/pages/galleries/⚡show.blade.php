@@ -1,13 +1,12 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
-use TallStackUi\Traits\Interactions;
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Traits\InteractsWithTallStackModals;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -19,11 +18,12 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
     use Interactions;
+    use InteractsWithTallStackModals;
     use SummarizesGalleryTabs, WithFileUploads;
 
     public Gallery $gallery;
@@ -335,6 +335,15 @@ new class extends Component
         return $this->gallery->photosInOrder($this->gallery->photoIds());
     }
 
+    /**
+     * Re-render the grid after the live watcher detects a new camera upload.
+     */
+    #[On('gallery-photos-updated')]
+    public function refreshPhotos(): void
+    {
+        unset($this->allPhotos);
+    }
+
     #[Computed]
     public function team()
     {
@@ -415,6 +424,14 @@ new class extends Component
 }; ?>
 
 <div>
+    <livewire:gallery-live-watcher
+        :$gallery
+        :scan-inbox="true"
+        :stop-when-remote-mode-ends="false"
+        :poll-only-when-visible="false"
+        :key="'live-watcher-'.$gallery->id"
+    />
+
     <div class="max-lg:hidden">
         <x-ts-button :href="route('galleries')" icon="chevron-left" variant="subtle" inset>
             {{ __('Galleries') }}
