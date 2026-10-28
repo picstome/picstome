@@ -68,6 +68,8 @@ new class extends Component
                     @php($cover = $photoshoot->latestGalleryWithImages?->firstImagePhoto)
 
                     <x-ts-card
+                        wire:key="photoshoot-{{ $photoshoot->id }}"
+                        data-photoshoot-card
                         class="group relative overflow-hidden p-0! transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-700"
                     >
                         <a
@@ -80,9 +82,15 @@ new class extends Component
                             >
                                 @if ($cover)
                                     <img
+                                        x-data="{ loaded: false, errored: false }"
+                                        x-init="if ($el.complete) loaded = true"
+                                        data-photoshoot-image
                                         src="{{ $cover->small_thumbnail_url }}"
                                         alt="{{ $photoshoot->name }}"
-                                        class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        x-on:load="loaded = true"
+                                        x-on:error="errored = true"
+                                        class="size-full bg-zinc-300 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-zinc-700"
+                                        :class="loaded || errored ? '' : 'animate-pulse'"
                                         loading="lazy"
                                         width="400"
                                         height="267"
