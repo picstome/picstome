@@ -98,10 +98,10 @@ new class extends Component
 
     <x-settings.layout heading="{{ __('Profile') }}" subheading="{{ __('Update your name and email address') }}">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" label="{{ __('Name') }}" type="text" name="name" required autofocus autocomplete="name" />
+            <x-ts-input wire:model="name" label="{{ __('Name') }}" type="text" name="name" required autofocus autocomplete="name" />
 
             <div>
-                <flux:input wire:model="email" label="{{ __('Email') }}" type="email" name="email" required autocomplete="email" />
+                <x-ts-input wire:model="email" label="{{ __('Email') }}" type="email" name="email" required autocomplete="email" />
 
                 @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
                     <div>
@@ -125,31 +125,31 @@ new class extends Component
                 @endif
             </div>
 
-            <flux:field>
-                <flux:label>{{ __('Profile photo') }}</flux:label>
+            <x-ts-field>
+                <x-ts-label>{{ __('Profile photo') }}</x-ts-label>
 
                 <div class="flex justify-between items-center">
                     <div>
-                        <flux:input wire:model="avatar" type="file" />
+                        <x-ts-input wire:model="avatar" type="file" />
                     </div>
 
                     <div class="flex gap-3 items-center">
                         <img src="{{ auth()->user()->avatar_url }}" class="size-20 rounded-md">
 
                         @if (auth()->user()->avatar_path)
-                            <flux:button wire:click="deleteAvatar" icon="trash" variant="subtle" size="sm" />
+                            <x-ts-button wire:click="deleteAvatar" icon="trash" variant="subtle" size="sm" />
                         @endif
                     </div>
                 </div>
 
-                <flux:error name="avatar" />
-            </flux:field>
+                <x-ts-error name="avatar" />
+            </x-ts-field>
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full">
+                    <x-ts-button variant="primary" type="submit" class="w-full">
                         {{ __('Save') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
 
                 <x-action-message class="me-3" on="profile-updated">

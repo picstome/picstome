@@ -71,10 +71,10 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         @if(session('status'))
-            <flux:text variant="strong" class="text-center font-medium">{{ session('status') }}</flux:text>
+            <x-ts-text variant="strong" class="text-center font-medium">{{ session('status') }}</x-ts-text>
         @endif
 
-        <flux:input
+        <x-ts-input
             wire:model="email"
             :label="__('Email')"
             type="email"
@@ -82,7 +82,7 @@ new #[Layout('layouts.guest')] class extends Component
             autocomplete="email"
         />
 
-        <flux:input
+        <x-ts-input
             wire:model="password"
             :label="__('Password')"
             type="password"
@@ -92,7 +92,7 @@ new #[Layout('layouts.guest')] class extends Component
             viewable
         />
 
-        <flux:input
+        <x-ts-input
             wire:model="password_confirmation"
             :label="__('Confirm password')"
             type="password"
@@ -102,8 +102,8 @@ new #[Layout('layouts.guest')] class extends Component
             viewable
         />
 
-        <flux:button type="submit" variant="primary" class="w-full">
+        <x-ts-button type="submit" variant="primary" class="w-full">
             {{ __('Reset password') }}
-        </flux:button>
+        </x-ts-button>
     </form>
 </div>

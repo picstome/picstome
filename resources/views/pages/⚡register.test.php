@@ -14,6 +14,27 @@ it('allows guests to view the registration page', function () {
     get(route('register'))->assertStatus(200);
 });
 
+it('aligns the terms checkbox with its label', function () {
+    $page = visit('/register');
+    $page->wait(0.2);
+
+    expect($page->script(<<<'JS'
+        (() => {
+            const input = document.querySelector('input[type=checkbox]')
+            const label = input?.closest('label')
+
+            if (!input || !label) {
+                return false
+            }
+
+            const inputRect = input.getBoundingClientRect()
+            const labelRect = label.getBoundingClientRect()
+
+            return Math.abs((inputRect.top + inputRect.height / 2) - (labelRect.top + labelRect.height / 2)) < 2
+        })()
+    JS))->toBeTrue();
+});
+
 it('allows guests to register with valid data', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Test User')

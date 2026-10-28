@@ -28,10 +28,10 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         @if(session('status'))
-            <flux:text variant="strong" class="text-center font-medium">{{ session('status') }}</flux:text>
+            <x-ts-text variant="strong" class="text-center font-medium">{{ session('status') }}</x-ts-text>
         @endif
 
-        <flux:input
+        <x-ts-input
             wire:model="email"
             :label="__('Email Address')"
             type="email"
@@ -40,13 +40,13 @@ new #[Layout('layouts.guest')] class extends Component
             placeholder="email@example.com"
         />
 
-        <flux:button type="submit" variant="primary" class="w-full">
+        <x-ts-button type="submit" variant="primary" class="w-full">
             {{ __('Email password reset link') }}
-        </flux:button>
+        </x-ts-button>
 
-        <flux:text class="space-x-1 text-center">
+        <x-ts-text class="space-x-1 text-center">
             <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
-        </flux:text>
+            <x-ts-link :href="route('login')" wire:navigate>{{ __('log in') }}</x-ts-link>
+        </x-ts-text>
     </form>
 </div>

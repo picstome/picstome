@@ -5,7 +5,7 @@
             <img src="{{ $team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $team->name }}" />
         @endif
 
-        <flux:heading size="xl">{{ $team->name }}</flux:heading>
+        <x-ts-heading size="xl">{{ $team->name }}</x-ts-heading>
     </a>
 
     <div class="bg-(--color-accent) mx-auto h-1 w-10 rounded-full"></div>

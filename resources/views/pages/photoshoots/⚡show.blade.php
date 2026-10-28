@@ -1,5 +1,6 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractForm;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\PaymentLinkForm;
@@ -16,6 +17,7 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     public PaymentLinkForm $paymentLinkForm;
 
     public Photoshoot $photoshoot;
@@ -73,7 +75,7 @@ new class extends Component
 
         $this->photoshoot = $this->photoshoot->fresh();
 
-        $this->modal('edit')->close();
+        $this->closeModal('edit');
     }
 
     public function delete()
@@ -110,16 +112,16 @@ new class extends Component
     {
         $this->paymentLinkForm->setPhotoshoot($this->photoshoot);
 
-        $this->modal('generate-payment-link')->show();
+        $this->openModal('generate-payment-link');
     }
 
     public function generatePaymentLink()
     {
         $this->generatedPaymentLink = $this->paymentLinkForm->generatePaymentLink();
 
-        $this->modal('generate-payment-link')->close();
+        $this->closeModal('generate-payment-link');
 
-        $this->modal('show-payment-link')->show();
+        $this->openModal('show-payment-link');
     }
 
     public function useTemplate(ContractTemplate $template)
@@ -128,7 +130,7 @@ new class extends Component
 
         $this->contractForm->body = $template->formatted_markdown_body;
 
-        $this->modal('templates')->close();
+        $this->closeModal('templates');
 
         $this->dispatch('template-selected');
     }
@@ -145,69 +147,71 @@ new class extends Component
 
 <div>
     <div class="max-lg:hidden">
-        <flux:button :href="route('photoshoots')" icon="chevron-left" variant="subtle" inset>
+        <x-ts-button :href="route('photoshoots')" icon="chevron-left" variant="subtle" inset>
             {{ __('Photoshoots') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ $photoshoot->name }}</x-heading>
+            <x-ts-heading level="1" size="xl">{{ $photoshoot->name }}</x-ts-heading>
         </div>
         <div class="flex gap-4">
-            <flux:dropdown>
-                <flux:button icon-trailing="chevron-down" variant="subtle">{{ __('Delete') }}</flux:button>
+            <x-dropdown position="bottom-end">
+                <x-slot:action>
+                    <x-ts-button icon-trailing="chevron-down" variant="subtle" x-on:click="show = ! show">{{ __('Delete') }}</x-ts-button>
+                </x-slot:action>
 
-                <flux:menu>
-                    <flux:modal.trigger name="delete-photoshoot">
-                        <flux:menu.item variant="danger">
-                            {{ __('Delete') }}
-                        </flux:menu.item>
-                    </flux:modal.trigger>
-                    <flux:modal.trigger name="delete-photoshoot-keeping-galleries">
-                        <flux:menu.item variant="danger">
-                            {{ __('Delete (keep galleries)') }}
-                        </flux:menu.item>
-                    </flux:modal.trigger>
-                </flux:menu>
-            </flux:dropdown>
+                <x-dropdown.items
+                    :text="__('Delete')"
+                    x-on:click="show = false; $tsui.open.modal('delete-photoshoot')"
+                    class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                />
+                <x-dropdown.items
+                    :text="__('Delete (keep galleries)')"
+                    x-on:click="show = false; $tsui.open.modal('delete-photoshoot-keeping-galleries')"
+                    class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                />
+            </x-dropdown>
 
-            <flux:modal.trigger name="edit">
-                <flux:button variant="primary" class="btn-ink">{{ __('Edit') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger name="edit">
+                <x-ts-button variant="primary" class="btn-ink">{{ __('Edit') }}</x-ts-button>
+            </x-ts-modal-trigger>
 
-            <flux:button.group>
-                <flux:modal.trigger name="create-gallery">
-                    <flux:button variant="primary">{{ __('Create gallery') }}</flux:button>
-                </flux:modal.trigger>
-                <flux:dropdown align="end">
-                    <flux:button variant="primary" icon="chevron-down"></flux:button>
+            <x-ts-button-group>
+                <x-ts-modal-trigger name="create-gallery">
+                    <x-ts-button variant="primary" class="rounded-e-none!">{{ __('Create gallery') }}</x-ts-button>
+                </x-ts-modal-trigger>
+                <x-dropdown position="bottom-end">
+                    <x-slot:action>
+                        <x-ts-button variant="primary" icon="chevron-down" class="-ms-px rounded-s-none!" x-on:click="show = ! show" />
+                    </x-slot:action>
 
-                    <flux:menu>
-                        <flux:modal.trigger name="create-contract">
-                            <flux:menu.item>{{ __('Create contract') }}</flux:menu.item>
-                        </flux:modal.trigger>
-                        <flux:menu.item wire:click="openGeneratePaymentLinkModal">
-                            {{ __('Generate Payment Link') }}
-                        </flux:menu.item>
-                    </flux:menu>
-                </flux:dropdown>
-            </flux:button.group>
+                    <x-dropdown.items
+                        :text="__('Create contract')"
+                        x-on:click="show = false; $tsui.open.modal('create-contract')"
+                    />
+                    <x-dropdown.items
+                        :text="__('Generate Payment Link')"
+                        wire:click="openGeneratePaymentLinkModal"
+                    />
+                </x-dropdown>
+            </x-ts-button-group>
         </div>
     </div>
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Summary') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Summary') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
         <x-description.list>
             @if ($photoshoot->customer)
                 <x-description.term>
                     {{ __('Customer') }}
                 </x-description.term>
                 <x-description.details>
-                    <flux:link href="/customers/{{ $photoshoot->customer->id }}">
+                    <x-ts-link href="/customers/{{ $photoshoot->customer->id }}">
                         {{ $photoshoot->customer->name }}
-                    </flux:link>
+                    </x-ts-link>
                 </x-description.details>
             @endif
 
@@ -253,33 +257,33 @@ new class extends Component
     </div>
 
     @if ($this->payments?->isNotEmpty())
-        <x-table class="mt-12">
-            <x-table.columns>
-                <x-table.column>{{ __('Payments') }}</x-table.column>
-                <x-table.column>{{ __('Amount') }}</x-table.column>
-                <x-table.column>{{ __('Payment Date') }}</x-table.column>
-                <x-table.column>{{ __('Customer Email') }}</x-table.column>
-                <x-table.column align="end">{{ __('Actions') }}</x-table.column>
-            </x-table.columns>
-            <x-table.rows>
+        <x-data-table class="mt-12">
+            <x-data-table.columns>
+                <x-data-table.column>{{ __('Payments') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Amount') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Payment Date') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Customer Email') }}</x-data-table.column>
+                <x-data-table.column align="end">{{ __('Actions') }}</x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($this->payments as $payment)
-                    <x-table.row>
-                        <x-table.cell>{{ $payment->description }}</x-table.cell>
-                        <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                        <x-table.cell>
+                    <x-data-table.row>
+                        <x-data-table.cell>{{ $payment->description }}</x-data-table.cell>
+                        <x-data-table.cell>{{ $payment->formattedAmount }}</x-data-table.cell>
+                        <x-data-table.cell>
                             {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
-                        </x-table.cell>
-                        <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                        <x-table.cell align="end">
+                        </x-data-table.cell>
+                        <x-data-table.cell>{{ $payment->customer_email }}</x-data-table.cell>
+                        <x-data-table.cell align="end">
                             @if ($payment->invoice)
-                                <flux:link
+                                <x-ts-link
                                     :href="route('invoices.show', $payment->invoice)"
                                     wire:navigate
                                 >
                                     {{ $payment->invoice->full_number }}
-                                </flux:link>
+                                </x-ts-link>
                             @else
-                                <flux:button
+                                <x-ts-button
                                     size="sm"
                                     variant="ghost"
                                     icon="document-plus"
@@ -287,16 +291,16 @@ new class extends Component
                                     wire:click="createInvoice({{ $payment->id }})"
                                 />
                             @endif
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @endif
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Galleries') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
     </div>
 
     @if ($photoshoot->galleries?->isNotEmpty())
@@ -318,13 +322,13 @@ new class extends Component
                         <div
                             class="absolute inset-x-0 bottom-0 flex gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
                         >
-                            <flux:heading>{{ $gallery->name }}</flux:heading>
-                            <flux:text>
+                            <x-ts-heading>{{ $gallery->name }}</x-ts-heading>
+                            <x-ts-text>
                                 {{ $gallery->photos()->count() }}
                                 {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
                                 {{ $gallery->getFormattedStorageSize() }} •
                                 {{ $gallery->created_at->format('M j, Y') }}
-                            </flux:text>
+                            </x-ts-text>
                         </div>
                     </div>
                 @endforeach
@@ -332,60 +336,60 @@ new class extends Component
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No galleries') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No galleries') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('We couldn\'t find any galleries. Create one to get started.') }}
-            </flux:subheading>
-            <flux:modal.trigger name="create-gallery">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger name="create-gallery">
+                <x-ts-button variant="primary">
                     {{ __('Create gallery') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
     @if ($photoshoot->contracts?->isNotEmpty())
-        <x-table class="mt-12">
-            <x-table.columns>
-                <x-table.column class="w-full">{{ __('Contract') }}</x-table.column>
-                <x-table.column>{{ __('Location') }}</x-table.column>
-                <x-table.column>{{ __('Shooting date') }}</x-table.column>
-                <x-table.column>{{ __('Signatures') }}</x-table.column>
-                <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
-            </x-table.columns>
+        <x-data-table class="mt-12">
+            <x-data-table.columns>
+                <x-data-table.column class="w-full">{{ __('Contract') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Location') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Shooting date') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Signatures') }}</x-data-table.column>
+                <x-data-table.column class="group/right-align">{{ __('Actions') }}</x-data-table.column>
+            </x-data-table.columns>
 
-            <x-table.rows>
+            <x-data-table.rows>
                 @foreach ($photoshoot->contracts as $contract)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             <div class="flex items-end gap-2">
                                 {{ $contract->title }}
 
                                 @if ($contract->isExecuted())
-                                    <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
+                                    <x-ts-badge color="lime" size="sm">{{ __('Executed') }}</x-ts-badge>
                                 @else
-                                    <flux:badge size="sm">{{ __('Waiting signatures') }}</flux:badge>
+                                    <x-ts-badge size="sm">{{ __('Waiting signatures') }}</x-ts-badge>
                                 @endif
                             </div>
-                            <flux:text>{{ $contract->description }}</flux:text>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                            <x-ts-text>{{ $contract->description }}</x-ts-text>
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->location }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->formatted_shooting_date }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
                             {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
-                        </x-table.cell>
-                        <x-table.cell class="text-end">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="text-end">
                             @if ($contract->isExecuted() && $contract->pdf_file_path)
-                                <flux:button
+                                <x-ts-button
                                     size="sm"
                                     variant="ghost"
                                     icon="document-arrow-down"
@@ -393,23 +397,23 @@ new class extends Component
                                     :aria-label="__('Download contract')"
                                 />
                             @endif
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @endif
 
-    <flux:modal name="create-gallery" class="w-full sm:max-w-lg">
+    <x-ts-modal name="create-gallery" class="w-full sm:max-w-lg">
         <form wire:submit="addGallery" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new gallery') }}</flux:heading>
-                <flux:subheading>{{ __('Enter your gallery details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new gallery') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter your gallery details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="galleryForm.name" :label="__('Gallery name')" type="text" />
+            <x-ts-input wire:model="galleryForm.name" :label="__('Gallery name')" type="text" />
 
-            <flux:input
+            <x-ts-input
                 wire:model="galleryForm.expirationDate"
                 :label="__('Expiration date')"
                 :badge="Auth::user()?->currentTeam?->subscribed() ? __('Optional') : null"
@@ -418,60 +422,60 @@ new class extends Component
             />
 
             @if (! Auth::user()?->currentTeam?->subscribed())
-                <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Subscribe for optional expiration') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary">
+                    <x-ts-callout-heading>{{ __('Subscribe for optional expiration') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Subscribe') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endif
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="galleryForm.keepOriginalSize"
                 :label="__('Keep photos at their original size')"
                 :description="__('This setting is shared with the create gallery modal.')"
             />
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="create-contract" class="w-full sm:max-w-lg">
+    <x-ts-modal name="create-contract" class="w-full sm:max-w-lg">
         <form wire:submit="addContract" class="-mb-6 space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new contract') }}</flux:heading>
-                <flux:subheading>{{ __('Enter contract details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new contract') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter contract details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="contractForm.title" :label="__('Title')" type="text" />
+            <x-ts-input wire:model="contractForm.title" :label="__('Title')" type="text" />
 
-            <flux:input wire:model="contractForm.description" :label="__('Description')" type="text" />
+            <x-ts-input wire:model="contractForm.description" :label="__('Description')" type="text" />
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="contractForm.location" :label="__('Location')" type="text" />
-                <flux:input wire:model="contractForm.shootingDate" :label="__('Shooting date')" type="date" />
+                <x-ts-input wire:model="contractForm.location" :label="__('Location')" type="text" />
+                <x-ts-input wire:model="contractForm.shootingDate" :label="__('Shooting date')" type="date" />
             </div>
 
-            <flux:input wire:model="contractForm.signature_quantity" :label="__('Signatures required')" type="number" />
+            <x-ts-input wire:model="contractForm.signature_quantity" :label="__('Signatures required')" type="number" />
 
-            <flux:field
+            <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <div data-flux-label class="flex items-center justify-between">
-                    <flux:label>{{ __('Terms') }}</flux:label>
+                <div class="flex items-center justify-between">
+                    <x-ts-label>{{ __('Terms') }}</x-ts-label>
 
-                    <flux:modal.trigger name="templates">
-                        <flux:button size="sm">{{ __('Use template') }}</flux:button>
-                    </flux:modal.trigger>
+                    <x-ts-modal-trigger name="templates">
+                        <x-ts-button size="sm">{{ __('Use template') }}</x-ts-button>
+                    </x-ts-modal-trigger>
                 </div>
 
                 <trix-editor
@@ -486,116 +490,116 @@ new class extends Component
 
                 <input wire:model="contractForm.body" id="trix" type="text" class="hidden" />
 
-                <flux:error name="contractForm.body" />
-            </flux:field>
+                <x-ts-error name="contractForm.body" />
+            </x-ts-field>
 
             <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
-                <flux:separator />
+                <x-ts-separator />
                 <div class="flex py-6">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    <x-ts-spacer />
+                    <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="templates" class="w-full sm:max-w-lg">
+    <x-ts-modal name="templates" class="w-full sm:max-w-lg">
         <form
             x-data="{ template: '' }"
             x-on:submit.prevent="if (template) $wire.useTemplate(template)"
             class="space-y-6"
         >
             <div>
-                <flux:heading size="lg">{{ __('Select template') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Select template') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Select a template to complete contract terms.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
-            <flux:select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
+            <x-ts-select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
                 @if ($templates?->isNotEmpty())
                     @foreach ($templates as $template)
                         <option value="{{ $template->id }}">{{ $template->title }}</option>
                     @endforeach
                 @endif
-            </flux:select>
+            </x-ts-select>
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Use template') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Use template') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="edit" class="w-full sm:max-w-lg">
+    <x-ts-modal name="edit" class="w-full sm:max-w-lg">
         <form wire:submit="update" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit photoshoot') }}</flux:heading>
-                <flux:subheading>{{ __('Please enter your photoshoot details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Edit photoshoot') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Please enter your photoshoot details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
+            <x-ts-input wire:model="form.name" :label="__('Photoshoot Name')" type="text" />
 
             @if ($this->customers)
-                <flux:select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
-                    <flux:select.option value="">{{ __('New customer') }}</flux:select.option>
+                <x-ts-select wire:model.live="form.customer" :label="__('Customer')" variant="listbox" searchable>
+                    <x-ts-select-option value="">{{ __('New customer') }}</x-ts-select-option>
                     @foreach ($this->customers as $customer)
-                        <flux:select.option value="{{ $customer->id }}">
+                        <x-ts-select-option value="{{ $customer->id }}">
                             {{ $customer->name }}{{ $customer->email ? " ({$customer->email})" : '' }}
-                        </flux:select.option>
+                        </x-ts-select-option>
                     @endforeach
-                </flux:select>
+                </x-ts-select>
             @endif
 
             @if (empty($this->form->customer))
-                <flux:input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
-                <flux:input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
+                <x-ts-input wire:model="form.customerName" :label="__('Customer Name')" type="text" />
+                <x-ts-input wire:model="form.customerEmail" :label="__('Customer Email')" type="email" />
             @endif
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.date" :label="__('Date')" type="date" />
-                <flux:input wire:model="form.location" :label="__('Location')" type="text" />
+                <x-ts-input wire:model="form.date" :label="__('Date')" type="date" />
+                <x-ts-input wire:model="form.location" :label="__('Location')" type="text" />
             </div>
-            <flux:input wire:model="form.price" :label="__('Price')" type="text" />
-            <flux:textarea wire:model="form.comment" :label="__('Comment')" rows="3" />
+            <x-ts-input wire:model="form.price" :label="__('Price')" type="text" />
+            <x-ts-textarea wire:model="form.comment" :label="__('Comment')" rows="3" />
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
-    <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+    </x-ts-modal>
+    <x-ts-modal name="generate-payment-link" class="w-full sm:max-w-lg">
         <form wire:submit="generatePaymentLink" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Generate a New Payment Link') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Fill out the details below to generate a payment link you can send to your client.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
-            <flux:input
+            <x-ts-input
                 wire:model="paymentLinkForm.amount"
                 type="number"
                 :label="__('Amount (in :currency)', ['currency' => strtoupper(Auth::user()?->currentTeam?->stripe_currency ?? 'EUR')])"
                 required
             />
-            <flux:input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
+            <x-ts-input wire:model="paymentLinkForm.description" :label="__('Description')" type="text" required />
             <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-spacer />
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="show-payment-link" class="w-full sm:max-w-lg">
+    <x-ts-modal name="show-payment-link" class="w-full sm:max-w-lg">
         <div class="space-y-6">
-            <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
-            <flux:subheading>{{ __('Share this link with your client to request payment.') }}</flux:subheading>
-            <flux:input icon="link" :value="$generatedPaymentLink" readonly copyable />
+            <x-ts-heading size="lg">{{ __('Your payment link is ready!') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('Share this link with your client to request payment.') }}</x-ts-subheading>
+            <x-ts-input icon="link" :value="$generatedPaymentLink" readonly copyable />
         </div>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="delete-photoshoot"

@@ -1,10 +1,10 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Notifications\GuestPhotoCommented;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -14,6 +14,7 @@ use Livewire\Component;
 
 new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 {
+    use InteractsWithTallStackModals;
     public Photo $photo;
 
     public Gallery $gallery;
@@ -93,7 +94,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         $this->pendingPinX = round(max(0, min(100, $x)), 2);
         $this->pendingPinY = round(max(0, min(100, $y)), 2);
 
-        Flux::modal('add-comment')->show();
+        $this->openModal('add-comment');
     }
 
     public function cancelPendingPin(): void
@@ -134,7 +135,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             $this->pendingPinX = null;
             $this->pendingPinY = null;
 
-            Flux::modal('add-comment')->close();
+            $this->closeModal('add-comment');
         }
     }
 
@@ -144,7 +145,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     {
         $this->pendingCommentId = $id;
 
-        Flux::modal('delete-comment')->show();
+        $this->openModal('delete-comment');
     }
 
     public function deleteComment(PhotoComment $comment)
@@ -334,7 +335,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             updateDimensions()
         })()
     "
-    x-on:selection-limit-reached.window="$flux.modal('selection-limit').show()"
+    x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')"
     x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
@@ -459,17 +460,17 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 </video>
             @elseif ($photo->isPdf())
                 <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
-                    <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
-                    <flux:heading size="lg" class="max-w-full truncate">{{ $photo->name }}</flux:heading>
-                    <flux:text>{{ $photo->formattedSize() }}</flux:text>
-                    <flux:button
+                    <x-icon name="document-text" class="size-16 text-zinc-400 dark:text-white/50" />
+                    <x-ts-heading size="lg" class="max-w-full truncate">{{ $photo->name }}</x-ts-heading>
+                    <x-ts-text>{{ $photo->formattedSize() }}</x-ts-text>
+                    <x-ts-button
                         :href="route('shares.photos.inline', ['gallery' => $photo->gallery, 'photo' => $photo])"
                         icon="arrow-top-right-on-square"
                         target="_blank"
                         variant="primary"
                     >
                         {{ __('Open PDF') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
             @else
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
@@ -501,7 +502,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($previous)
-                <flux:button
+                <x-ts-button
                     href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                     wire:navigate.hover
                     x-ref="previous"
@@ -517,7 +518,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($next)
-                <flux:button
+                <x-ts-button
                     href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
                     wire:navigate.hover
                     x-ref="next"
@@ -533,7 +534,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             <div class="flex gap-3">
-                <flux:button
+                <x-ts-button
                     :href="$this->galleryUrl"
                     wire:navigate.hover
                     icon="arrow-left"
@@ -543,7 +544,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     class="btn-ink"
                 >
                     {{ __('Back') }}
-                </flux:button>
+                </x-ts-button>
             </div>
             <div
                 class="flex gap-3"
@@ -552,17 +553,25 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             >
                 @if ($photo->gallery->are_comments_enabled)
                     <div class="contents" x-show="! annotating">
-                        <flux:modal.trigger name="add-comment">
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
+                        <x-ts-modal-trigger name="add-comment">
+                            <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
                                 @if ($this->comments->isEmpty())
                                     {{ __('Add comment') }}
                                 @else
                                     {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
                                 @endif
-                            </flux:button>
+                            </x-ts-button>
 
-                            <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
-                        </flux:modal.trigger>
+                            <x-ts-button
+                                icon="chat-bubble-left-ellipsis"
+                                size="sm"
+                                class="sm:hidden"
+                                variant="primary"
+                                square
+                                :aria-label="__('Comments')"
+                                data-mobile-comments
+                            />
+                        </x-ts-modal-trigger>
                     </div>
 
                     <x-photo-annotate-button
@@ -572,25 +581,24 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
                 @if ($this->photo->gallery->is_share_downloadable)
                     @if ($photo->path && $photo->raw_path)
-                        <flux:dropdown>
-                            <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" variant="primary" class="btn-ink" square />
-                            <flux:menu>
-                                <flux:menu.item
-                                    :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
-                                    icon="cloud-arrow-down"
-                                >
-                                    {{ __('Download JPG') }}
-                                </flux:menu.item>
-                                <flux:menu.item
-                                    :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
-                                    icon="cloud-arrow-down"
-                                >
-                                    {{ __('Download Raw') }}
-                                </flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
+                        <x-dropdown position="bottom-end">
+                            <x-slot:action>
+                                <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" class="btn-ink" square x-on:click="show = ! show" />
+                            </x-slot:action>
+
+                            <x-dropdown.items
+                                :text="__('Download JPG')"
+                                icon="cloud-arrow-down"
+                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                            />
+                            <x-dropdown.items
+                                :text="__('Download Raw')"
+                                icon="cloud-arrow-down"
+                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                            />
+                        </x-dropdown>
                     @else
-                        <flux:button
+                        <x-ts-button
                             :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
                             icon="cloud-arrow-down"
                             icon:variant="mini"
@@ -603,7 +611,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @endif
 
                 @if ($this->photo->gallery->is_share_selectable)
-                    <flux:button
+                    <x-ts-button
                         name="favorite"
                         wire:click="favorite"
                         icon="heart"
@@ -634,11 +642,11 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         </div>
     </div>
     @if ($photo->gallery->are_comments_enabled)
-        <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+        <x-ts-modal name="add-comment" class="w-full sm:max-w-lg">
             <div class="space-y-6">
                 <div>
-                    <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
-                    <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
+                    <x-ts-heading size="lg">{{ __('Comments') }}</x-ts-heading>
+                    <x-ts-subheading>{{ __('All comments for this photo.') }}</x-ts-subheading>
                 </div>
 
                 @if ($this->staleAnnotationsCount > 0)
@@ -664,15 +672,15 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @endif
 
                 <form wire:submit="addComment" class="space-y-4 pt-2">
-                    <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
-                    <flux:error name="commentText" />
+                    <x-ts-textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+
                     <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                        <x-ts-spacer />
+                        <x-ts-button type="submit" variant="primary">{{ __('Submit') }}</x-ts-button>
                     </div>
                 </form>
             </div>
-        </flux:modal>
+        </x-ts-modal>
     @endif
 
     @unlesssubscribed($photo->gallery->team)

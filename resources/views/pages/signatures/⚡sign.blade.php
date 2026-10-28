@@ -1,7 +1,7 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Models\Signature;
-use Flux\Flux;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -13,6 +13,7 @@ use Livewire\WithFileUploads;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithFileUploads;
 
     public Signature $signature;
@@ -105,7 +106,7 @@ new #[Layout('layouts.guest')] class extends Component
             $this->signature->contract->execute();
         }
 
-        Flux::modals()->close();
+        $this->closeModal('sign');
     }
 
     protected function ensureIsNotRateLimited(): void
@@ -142,27 +143,27 @@ new #[Layout('layouts.guest')] class extends Component
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
             <div class="flex items-center gap-4">
-                <x-heading level="1" size="xl">{{ $signature->contract->title }}</x-heading>
+                <x-ts-heading level="1" size="xl">{{ $signature->contract->title }}</x-ts-heading>
                 @if ($signature->isSigned())
-                    <flux:badge color="lime">{{ __('Signed') }}</flux:badge>
+                    <x-ts-badge color="lime">{{ __('Signed') }}</x-ts-badge>
                 @endif
             </div>
-            <x-subheading class="mt-2">{{ $signature->contract->description }}</x-subheading>
+            <x-ts-subheading class="mt-2">{{ $signature->contract->description }}</x-ts-subheading>
         </div>
         <div class="flex gap-4">
             @unless ($signature->isSigned())
-                <flux:modal.trigger name="sign">
-                    <flux:button variant="primary">
+                <x-ts-modal-trigger name="sign">
+                    <x-ts-button variant="primary">
                         {{ __('Sign contract') }}
-                    </flux:button>
-                </flux:modal.trigger>
+                    </x-ts-button>
+                </x-ts-modal-trigger>
             @endunless
         </div>
     </div>
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Details') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Details') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
         <x-description.list>
             <x-description.term>{{ __('Signature number') }}</x-description.term>
             <x-description.details>
@@ -186,14 +187,14 @@ new #[Layout('layouts.guest')] class extends Component
     </div>
 
     @if (! $signature->isSigned())
-        <flux:modal name="sign" class="w-full sm:max-w-lg">
+        <x-ts-modal name="sign" class="w-full sm:max-w-lg">
             <form wire:submit="sign" class="space-y-6">
                 <div>
-                    <flux:heading size="lg">{{ __('Submit signature') }}</flux:heading>
-                    <flux:subheading>{{ __('Enter your personal details and signature.') }}</flux:subheading>
+                    <x-ts-heading size="lg">{{ __('Submit signature') }}</x-ts-heading>
+                    <x-ts-subheading>{{ __('Enter your personal details and signature.') }}</x-ts-subheading>
                 </div>
 
-                <flux:select wire:model="role" :label="__('Role')" :placeholder="__('Select a role')">
+                <x-ts-select wire:model="role" :label="__('Role')" :placeholder="__('Select a role')">
                     <option value="Model">{{ __('Model') }}</option>
                     <option value="Client">{{ __('Client') }}</option>
                     <option value="Photographer">{{ __('Photographer') }}</option>
@@ -201,48 +202,48 @@ new #[Layout('layouts.guest')] class extends Component
                     <option value="Stylist">{{ __('Stylist') }}</option>
                     <option value="Parent">{{ __('Parent') }}</option>
                     <option value="Others">{{ __('Others') }}</option>
-                </flux:select>
+                </x-ts-select>
 
-                <flux:input wire:model="legalName" :label="__('Legal name')" type="text" />
+                <x-ts-input wire:model="legalName" :label="__('Legal name')" type="text" />
 
-                <flux:input wire:model="documentNumber" :label="__('Document number')" type="text" />
+                <x-ts-input wire:model="documentNumber" :label="__('Document number')" type="text" />
 
                 <div class="grid grid-cols-2 gap-5">
-                    <flux:input wire:model="nationality" :label="__('Nationality')" type="text" />
+                    <x-ts-input wire:model="nationality" :label="__('Nationality')" type="text" />
 
-                    <flux:input wire:model="birthday" :label="__('Birthday')" type="date" />
+                    <x-ts-input wire:model="birthday" :label="__('Birthday')" type="date" />
                 </div>
 
-                <flux:input wire:model="email" :label="__('Email')" type="email" />
+                <x-ts-input wire:model="email" :label="__('Email')" type="email" />
 
-                <flux:field x-data="signaturePad">
-                    <flux:label>{{ __('Sign bellow') }}</flux:label>
+                <x-ts-field x-data="signaturePad">
+                    <x-ts-label>{{ __('Sign bellow') }}</x-ts-label>
 
                     <div
-                        data-flux-control
+
                         class="block w-full touch-none overflow-hidden rounded-lg border border-zinc-200 border-b-zinc-300/80 bg-white shadow-xs dark:border-white/10 dark:bg-white/10 dark:text-zinc-300 dark:shadow-none"
                     >
                         <canvas x-ref="canvas"></canvas>
                     </div>
 
-                    <flux:error name="signature_image" />
+                    <x-ts-error name="signature_image" />
 
                     <div x-show="$wire.signature_image" class="mt-2">
-                        <flux:button type="button" @click="clearSignature" size="sm">
+                        <x-ts-button type="button" @click="clearSignature" size="sm">
                             {{ __('Clear') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
-                </flux:field>
+                </x-ts-field>
 
-                <flux:error name="signing" />
+                <x-ts-error name="signing" />
 
                 <div class="flex">
-                    <flux:spacer />
+                    <x-ts-spacer />
 
-                    <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                    <x-ts-button type="submit" variant="primary">{{ __('Submit') }}</x-ts-button>
                 </div>
             </form>
-        </flux:modal>
+        </x-ts-modal>
 
         @assets
             <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>

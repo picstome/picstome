@@ -56,7 +56,7 @@ new class extends Component
         subheading="{{ __('Ensure your account is using a long, random password to stay secure') }}"
     >
         <form wire:submit="updatePassword" class="mt-6 space-y-6">
-            <flux:input
+            <x-ts-input
                 wire:model="current_password"
                 id="update_password_current_passwordpassword"
                 label="{{ __('Current password') }}"
@@ -65,7 +65,7 @@ new class extends Component
                 required
                 autocomplete="current-password"
             />
-            <flux:input
+            <x-ts-input
                 wire:model="password"
                 id="update_password_password"
                 label="{{ __('New password') }}"
@@ -74,7 +74,7 @@ new class extends Component
                 required
                 autocomplete="new-password"
             />
-            <flux:input
+            <x-ts-input
                 wire:model="password_confirmation"
                 id="update_password_password_confirmation"
                 label="{{ __('Confirm Password') }}"
@@ -86,9 +86,9 @@ new class extends Component
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full">
+                    <x-ts-button variant="primary" type="submit" class="w-full">
                         {{ __('Save') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
 
                 <x-action-message class="me-3" on="password-updated">

@@ -26,6 +26,50 @@ test('shared gallery can be viewed', function () {
     $response->assertStatus(200);
 });
 
+test('shared gallery tabs switch without javascript errors', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create([
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->favorited()->create(['status' => 'processed']);
+    PhotoComment::factory()->for($photo)->create();
+
+    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug);
+
+    $page->assertNoJavaScriptErrors();
+
+    $page->click('button[aria-label="Comments (1)"]');
+    $page->wait(0.3);
+
+    expect($page->script("document.querySelector('[role=tablist] [data-current=true]').textContent.trim()"))
+        ->toContain('Comments');
+
+    $page->click('button[aria-label="Favorites (1)"]');
+    $page->wait(0.3);
+
+    expect($page->script("document.querySelector('[role=tablist] [data-current=true]').textContent.trim()"))
+        ->toContain('Favorites');
+
+    $page->assertNoJavaScriptErrors();
+});
+
+test('shared gallery opens the requested tab from the url', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create([
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->favorited()->create(['status' => 'processed']);
+    PhotoComment::factory()->for($photo)->create();
+
+    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug.'?activeTab=commented#photo-'.$photo->id);
+
+    $page->assertNoJavaScriptErrors();
+
+    expect($page->script("document.querySelector('[role=tablist] [data-current=true]').textContent.trim()"))
+        ->toContain('Comments');
+
+    expect($page->script("Array.from(document.querySelectorAll('[role=tablist] ~ div')).map(e => getComputedStyle(e).display).join('|')"))
+        ->toBe('none|block|none');
+});
+
 test('shared gallery applies the team brand color', function () {
     $this->team->update(['brand_color' => 'violet']);
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
@@ -302,4 +346,19 @@ test('shared gallery does not display cover image when cover photo is not set', 
 
     expect($gallery->fresh()->coverPhoto)->toBeNull();
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
+});
+
+test('shared gallery does not overflow on mobile', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->count(2)->for($gallery)->create(['status' => 'processed']);
+
+    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug);
+
+    foreach ([320, 375] as $width) {
+        $page->resize($width, 900);
+        $page->wait(0.1);
+
+        expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
+            ->toBeTrue();
+    }
 });

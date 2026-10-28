@@ -31,6 +31,24 @@
                         return rect.width > 0 && rect.height > 0
                     }) ?? null
             },
+            watchImage() {
+                const container = this.$el.parentElement
+
+                if (!container) {
+                    return
+                }
+
+                container.querySelectorAll('img').forEach((image) => {
+                    if (image.complete) {
+                        this.updateBox()
+
+                        return
+                    }
+
+                    image.addEventListener('load', () => this.updateBox(), { once: true })
+                    image.addEventListener('error', () => this.updateBox(), { once: true })
+                })
+            },
             updateBox() {
                 if (!this.$el.offsetParent) {
                     return
@@ -80,9 +98,17 @@
                 this.$dispatch('annotations-visibility-changed', { visible: this.annotationsVisible })
             },
             startPointer(event) {
+                if (!this.annotating) {
+                    return
+                }
+
                 this.pointerStart = { x: event.clientX, y: event.clientY }
             },
             placePin(event) {
+                if (!this.annotating) {
+                    return
+                }
+
                 const start = this.pointerStart
                 this.pointerStart = null
 
@@ -103,7 +129,7 @@
                 $wire.addAnnotation(Number(x.toFixed(2)), Number(y.toFixed(2)))
             },
         }"
-        x-init="updateBox()"
+        x-init="updateBox(); watchImage(); $nextTick(() => updateBox())"
         x-on:toggle-annotations.window="toggle()"
         x-on:toggle-annotations-visibility.window="toggleVisibility()"
         x-on:resize.window.debounce.100ms="updateBox()"
@@ -116,7 +142,7 @@
             x-cloak
             style="display: none"
             class="pointer-events-auto absolute cursor-crosshair"
-            :style="`left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;`"
+            :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             x-on:pointerdown="startPointer($event)"
             x-on:click="placePin($event)"
         ></div>
@@ -125,7 +151,7 @@
             <div
                 x-show="annotationsVisible"
                 class="absolute"
-                :style="`left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;`"
+                :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             >
                 @foreach ($pins as $pin)
                     @php
@@ -142,9 +168,9 @@
                         ])
                         style="left: {{ $pin->x }}%; top: {{ $pin->y }}%;"
                         title="{{ $isOtherVersion ? __('Annotated on version :number', ['number' => $pin->annotated_version_number]) : __('Photo annotation') }}"
-                        x-on:click.stop="$flux.modal('add-comment').show(); $dispatch('focus-comment', { id: {{ $pin->id }} })"
+                        x-on:click.stop="$tsui.open.modal('add-comment'); $dispatch('focus-comment', { id: {{ $pin->id }} })"
                     >
-                        <flux:icon.map-pin variant="micro" class="size-3.5" />
+                        <x-icon name="map-pin" variant="micro" class="size-3.5" />
                     </button>
                 @endforeach
             </div>

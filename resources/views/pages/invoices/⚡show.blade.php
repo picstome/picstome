@@ -1,5 +1,6 @@
 <?php
 
+use TallStackUi\Traits\Interactions;
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Models\Payment;
@@ -8,7 +9,6 @@ use App\Services\InvoiceDuplicationService;
 use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
@@ -16,6 +16,7 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use Interactions;
     use FormatsMoney;
 
     public Invoice $invoice;
@@ -80,7 +81,7 @@ new class extends Component
 
         $this->invoice->recordEvent(InvoiceEvent::LINK_REVOKED, Auth::user());
 
-        Flux::toast(__('The public link has been deactivated.'), variant: 'success');
+        $this->toast()->success(__('The public link has been deactivated.'))->send();
     }
 
     /**
@@ -97,7 +98,7 @@ new class extends Component
 
         $this->invoice->recordEvent(InvoiceEvent::LINK_REGENERATED, Auth::user());
 
-        Flux::toast(__('A new public link has been generated.'), variant: 'success');
+        $this->toast()->success(__('A new public link has been generated.'))->send();
     }
 
     /**
@@ -187,86 +188,86 @@ new class extends Component
 
 <div>
     <div class="mb-6 flex items-center gap-2">
-        <flux:button variant="ghost" icon="chevron-left" :href="route('invoices')" wire:navigate class="-ml-2">
+        <x-ts-button variant="ghost" icon="chevron-left" :href="route('invoices')" wire:navigate class="-ml-2">
             {{ __('Invoices') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <x-heading level="1" size="xl">
+            <x-ts-heading level="1" size="xl">
                 {{ $this->invoice->full_number ?? __('Draft') }}
-            </x-heading>
-            <x-subheading>
+            </x-ts-heading>
+            <x-ts-subheading>
                 {{ $this->invoice->isRectificative() ? __('Corrective invoice') : __('Invoice') }}
                 @if ($this->invoice->issue_date)
                     · {{ $this->invoice->issue_date->format('Y-m-d') }}
                 @endif
-            </x-subheading>
+            </x-ts-subheading>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
-            <flux:badge :color="$this->invoice->isIssued() ? 'green' : ($this->invoice->isRectified() ? 'orange' : 'zinc')" inset>
+            <x-ts-badge :color="$this->invoice->isIssued() ? 'green' : ($this->invoice->isRectified() ? 'orange' : 'zinc')" inset>
                 {{ $this->invoice->status_label }}
-            </flux:badge>
+            </x-ts-badge>
 
             @if ($this->isPaid)
-                <flux:badge color="lime" inset>{{ __('Paid') }}</flux:badge>
+                <x-ts-badge color="lime" inset>{{ __('Paid') }}</x-ts-badge>
             @endif
 
             @if ($this->invoice->pdf_path)
-                <flux:button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
+                <x-ts-button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
                     {{ __('Download PDF') }}
-                </flux:button>
+                </x-ts-button>
             @endif
 
             @if ($this->invoice->isIssued())
-                <flux:button variant="primary" class="btn-ink" icon="document-duplicate" wire:click="duplicate">
+                <x-ts-button variant="primary" class="btn-ink" icon="document-duplicate" wire:click="duplicate">
                     {{ __('Duplicate') }}
-                </flux:button>
+                </x-ts-button>
             @endif
 
             @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative() && ! $this->invoice->rectifications()->exists())
-                <flux:modal.trigger name="rectify-invoice">
-                    <flux:button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</flux:button>
-                </flux:modal.trigger>
+                <x-ts-modal-trigger name="rectify-invoice">
+                    <x-ts-button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</x-ts-button>
+                </x-ts-modal-trigger>
             @endif
 
             @if ($this->invoice->isDraft())
-                <flux:button variant="primary" class="btn-ink" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
+                <x-ts-button variant="primary" class="btn-ink" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
                     {{ __('Edit') }}
-                </flux:button>
+                </x-ts-button>
 
-                <flux:modal.trigger name="delete-invoice">
-                    <flux:button variant="primary" class="btn-coral" icon="trash">{{ __('Delete') }}</flux:button>
-                </flux:modal.trigger>
+                <x-ts-modal-trigger name="delete-invoice">
+                    <x-ts-button variant="primary" class="btn-coral" icon="trash">{{ __('Delete') }}</x-ts-button>
+                </x-ts-modal-trigger>
             @endif
         </div>
     </div>
 
     @if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice)
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This invoice corrects :number.', ['number' => $this->invoice->rectifiesInvoice->full_number]) }}
                 @if (filled($this->invoice->rectification_reason))
                     {{ __('Reason: :reason', ['reason' => $this->invoice->rectification_reason]) }}
                 @endif
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->invoice->rectification)
-        <flux:callout icon="check-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="check-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This invoice was corrected by :number.', ['number' => $this->invoice->rectification->full_number]) }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     <div class="mt-8 grid gap-8 lg:grid-cols-2">
         <div class="space-y-6">
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Issuer') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Issuer') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['issuer']['legal_name'] ?? '' }}</div>
                     @if (filled($this->invoice->invoice_data['issuer']['tax_id'] ?? null))
@@ -283,7 +284,7 @@ new class extends Component
             </div>
 
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Client') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Client') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-sm">
                     <div>{{ $this->invoice->invoice_data['customer']['legal_name'] ?? ($this->invoice->customer?->name ?? '—') }}</div>
                     @if (filled($this->invoice->invoice_data['customer']['tax_id'] ?? null))
@@ -301,13 +302,13 @@ new class extends Component
 
             @if (! $this->invoice->isDraft())
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <flux:heading level="3" size="sm">{{ __('Public link') }}</flux:heading>
-                    <flux:subheading size="sm">
+                    <x-ts-heading level="3" size="sm">{{ __('Public link') }}</x-ts-heading>
+                    <x-ts-subheading size="sm">
                         {{ __('Share it with your client so they can check the invoice online.') }}
-                    </flux:subheading>
+                    </x-ts-subheading>
 
                     @if (filled($this->invoice->public_token))
-                        <flux:input
+                        <x-ts-input
                             icon="link"
                             :value="route('invoices.public.show', $this->invoice->public_token)"
                             readonly
@@ -316,7 +317,7 @@ new class extends Component
                         />
 
                         <div class="mt-3 flex flex-wrap items-center gap-2">
-                            <flux:button
+                            <x-ts-button
                                 size="sm"
                                 variant="primary"
                                 class="btn-ink"
@@ -326,31 +327,31 @@ new class extends Component
                                 rel="noopener noreferrer"
                             >
                                 {{ __('View invoice') }}
-                            </flux:button>
+                            </x-ts-button>
 
-                            <flux:modal.trigger name="revoke-link">
-                                <flux:button size="sm" variant="ghost" icon="link-slash">
+                            <x-ts-modal-trigger name="revoke-link">
+                                <x-ts-button size="sm" variant="ghost" icon="link-slash">
                                     {{ __('Deactivate link') }}
-                                </flux:button>
-                            </flux:modal.trigger>
+                                </x-ts-button>
+                            </x-ts-modal-trigger>
                         </div>
                     @else
                         <div class="mt-3 flex flex-wrap items-center gap-2">
-                            <flux:button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
+                            <x-ts-button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
                                 {{ __('Generate a new link') }}
-                            </flux:button>
+                            </x-ts-button>
 
                             @if ($this->invoice->public_token_revoked_at)
-                                <flux:text size="sm" class="text-zinc-500">
+                                <x-ts-text size="sm" class="text-zinc-500">
                                     {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
-                                </flux:text>
+                                </x-ts-text>
                             @endif
                         </div>
                     @endif
 
-                    <flux:text size="sm" class="mt-3 text-zinc-500">
+                    <x-ts-text size="sm" class="mt-3 text-zinc-500">
                         {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
-                    </flux:text>
+                    </x-ts-text>
                 </div>
             @endif
         </div>
@@ -426,7 +427,7 @@ new class extends Component
 
             @if ($this->invoice->payments->isNotEmpty())
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <flux:heading level="3" size="sm">{{ __('Payments') }}</flux:heading>
+                    <x-ts-heading level="3" size="sm">{{ __('Payments') }}</x-ts-heading>
 
                     <dl class="mt-3 space-y-2 text-sm">
                         <div class="flex justify-between">
@@ -453,15 +454,15 @@ new class extends Component
                         @endforeach
                     </ul>
 
-                    <flux:text size="sm" class="mt-3 text-zinc-500">
+                    <x-ts-text size="sm" class="mt-3 text-zinc-500">
                         {{ __('A payment does not replace the invoice: it is issued by the photographer.') }}
-                    </flux:text>
+                    </x-ts-text>
                 </div>
             @endif
 
             @if (filled($this->invoice->fingerprint))
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <flux:heading level="3" size="sm">{{ __('Traceability') }}</flux:heading>
+                    <x-ts-heading level="3" size="sm">{{ __('Traceability') }}</x-ts-heading>
                     <dl class="mt-3 space-y-1 text-xs text-zinc-500">
                         <div class="break-all font-mono">{{ $this->invoice->fingerprint }}</div>
                         <div class="mt-2">
@@ -478,7 +479,7 @@ new class extends Component
             @endif
 
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <flux:heading level="3" size="sm">{{ __('Activity') }}</flux:heading>
+                <x-ts-heading level="3" size="sm">{{ __('Activity') }}</x-ts-heading>
                 <ul class="mt-3 space-y-2 text-sm">
                     @forelse ($this->events as $event)
                         <li wire:key="event-{{ $event->id }}" class="flex items-center justify-between gap-4">
@@ -493,42 +494,42 @@ new class extends Component
         </div>
     </div>
 
-    <flux:modal name="rectify-invoice" class="w-full sm:max-w-lg">
+    <x-ts-modal name="rectify-invoice" class="w-full sm:max-w-lg">
         <form wire:submit="rectify" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Rectify invoice') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Rectify invoice') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('The corrective invoice is issued with the same client and line items. The original invoice keeps its number and its PDF.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
-            <flux:textarea wire:model="rectificationReason" :label="__('Reason')" rows="3" />
+            <x-ts-textarea wire:model="rectificationReason" :label="__('Reason')" rows="3" />
 
             @php
                 $rectificationErrors = $errors->get('invoice');
             @endphp
 
             @if ($rectificationErrors !== [])
-                <flux:callout icon="exclamation-triangle" variant="danger">
-                    <flux:callout.text>
+                <x-ts-callout icon="exclamation-triangle" variant="danger">
+                    <x-ts-callout-text>
                         @foreach ($rectificationErrors as $rectificationError)
                             <div>{{ $rectificationError }}</div>
                         @endforeach
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
             @endif
 
             <div class="flex flex-wrap items-center justify-end gap-2">
-                <flux:button type="button" variant="outline" class="btn-outline-brand" wire:click="rectify(true)">
+                <x-ts-button type="button" variant="outline" class="btn-outline-brand" wire:click="rectify(true)">
                     {{ __('Review before issuing') }}
-                </flux:button>
+                </x-ts-button>
 
-                <flux:button type="submit" variant="primary" class="btn-coral">
+                <x-ts-button type="submit" variant="primary" class="btn-coral">
                     {{ __('Issue corrective invoice') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="delete-invoice"

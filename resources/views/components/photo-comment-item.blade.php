@@ -34,31 +34,31 @@
         ])
     >
         @if ($comment->user)
-            <flux:text variant="strong" class="text-sm font-semibold">
+            <x-ts-text variant="strong" class="text-sm font-semibold">
                 {{ $comment->user->name }}
-            </flux:text>
-            <flux:text>&middot;</flux:text>
+            </x-ts-text>
+            <x-ts-text>&middot;</x-ts-text>
         @endif
 
-        <flux:text class="text-xs">
+        <x-ts-text class="text-xs">
             {{ $comment->created_at->diffForHumans() }}
-        </flux:text>
+        </x-ts-text>
 
         @if ($isAnnotation)
-            <flux:icon.map-pin
+            <x-icon name="map-pin"
                 class="text-brand-green dark:text-brand-sage size-3.5 shrink-0"
                 :title="__('Photo annotation')"
             />
         @endif
 
         @if ($isOtherVersion)
-            <flux:badge size="sm" color="amber" variant="pill">
+            <x-ts-badge size="sm" color="amber" variant="pill">
                 {{ __('Version :number', ['number' => $comment->annotated_version_number]) }}
-            </flux:badge>
+            </x-ts-badge>
         @endif
 
         @if ($canDelete)
-            <flux:button
+            <x-ts-button
                 wire:click="requestDeleteComment({{ $comment->id }})"
                 icon="x-mark"
                 variant="subtle"
@@ -69,16 +69,16 @@
         @endif
     </div>
 
-    <flux:text variant="strong">
+    <x-ts-text variant="strong">
         {{ $comment->comment }}
-    </flux:text>
+    </x-ts-text>
 
     @if ($isOtherVersion)
-        <flux:text class="mt-1 block text-xs text-amber-600 dark:text-amber-400">
+        <x-ts-text class="mt-1 block text-xs text-amber-600 dark:text-amber-400">
             {{ __('This annotation was made on version :number.', ['number' => $comment->annotated_version_number]) }}
             @unless ($versionAvailable)
                 {{ __('That version is no longer available.') }}
             @endunless
-        </flux:text>
+        </x-ts-text>
     @endif
 </div>

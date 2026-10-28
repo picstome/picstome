@@ -1,15 +1,16 @@
 <?php
 
+use TallStackUi\Traits\Interactions;
 use App\Services\AdminUsageStatsService;
 use App\Traits\FormatsFileSize;
 use Carbon\Carbon;
-use Flux\Flux;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
 {
+    use Interactions;
     use FormatsFileSize;
 
     #[Url]
@@ -20,8 +21,8 @@ new class extends Component
     public function mount(): void
     {
         $this->customRange = [
-            'start' => now()->startOfMonth()->toDateString(),
-            'end' => now()->toDateString(),
+            now()->startOfMonth()->toDateString(),
+            now()->toDateString(),
         ];
     }
 
@@ -84,7 +85,7 @@ new class extends Component
     }
 
     /**
-     * Flux modal content is ignored by Livewire after its first render, so
+     * Modal content is ignored by Livewire after its first render, so
      * every series is prepared server-side up front and swapped with Alpine.
      *
      * @return array<string, list<array{month: string, label: string, value: int}>>
@@ -108,7 +109,7 @@ new class extends Component
 
         unset($this->snapshot, $this->rangeStats, $this->updatedLabel);
 
-        Flux::toast(__('Usage stats refreshed.'));
+        $this->toast()->success(__('Usage stats refreshed.'))->send();
     }
 
     /**
@@ -133,8 +134,8 @@ new class extends Component
      */
     private function customPeriod(): array
     {
-        $start = Carbon::parse($this->customRange['start'] ?? now()->startOfMonth())->startOfDay();
-        $end = Carbon::parse($this->customRange['end'] ?? now())->endOfDay();
+        $start = Carbon::parse($this->customRange[0] ?? now()->startOfMonth())->startOfDay();
+        $end = Carbon::parse($this->customRange[1] ?? now())->endOfDay();
 
         if ($end->lt($start)) {
             [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
@@ -147,34 +148,34 @@ new class extends Component
 <div x-data="{ chart: null, titles: @js($this->chartTitles) }">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <flux:heading size="xl" class="text-brand-green dark:text-brand-cream font-semibold">
+            <x-ts-heading size="xl" class="text-brand-green dark:text-brand-cream font-semibold">
                 {{ __('Usage stats') }}
-            </flux:heading>
-            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
+            </x-ts-heading>
+            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Content, users and revenue across Picstome.') }}
-            </flux:text>
+            </x-ts-text>
         </div>
 
         <div class="flex flex-wrap items-end gap-3">
-            <flux:select wire:model.live="preset" :label="__('Period')" class="w-full sm:w-52">
-                <flux:select.option value="current_month">{{ __('Current month') }}</flux:select.option>
-                <flux:select.option value="last_30_days">{{ __('Last 30 days') }}</flux:select.option>
-                <flux:select.option value="last_90_days">{{ __('Last 90 days') }}</flux:select.option>
-                <flux:select.option value="last_year">{{ __('Last year') }}</flux:select.option>
-                <flux:select.option value="always">{{ __('Always') }}</flux:select.option>
-                <flux:select.option value="custom">{{ __('Custom range') }}</flux:select.option>
-            </flux:select>
+            <x-ts-select wire:model.live="preset" :label="__('Period')" class="w-full sm:w-52">
+                <x-ts-select-option value="current_month">{{ __('Current month') }}</x-ts-select-option>
+                <x-ts-select-option value="last_30_days">{{ __('Last 30 days') }}</x-ts-select-option>
+                <x-ts-select-option value="last_90_days">{{ __('Last 90 days') }}</x-ts-select-option>
+                <x-ts-select-option value="last_year">{{ __('Last year') }}</x-ts-select-option>
+                <x-ts-select-option value="always">{{ __('Always') }}</x-ts-select-option>
+                <x-ts-select-option value="custom">{{ __('Custom range') }}</x-ts-select-option>
+            </x-ts-select>
 
             @if ($preset === 'custom')
-                <flux:date-picker
-                    mode="range"
+                <x-date
+                    range
                     wire:model.live="customRange"
                     :label="__('Date range')"
                     class="w-full sm:w-64"
                 />
             @endif
 
-            <flux:button
+            <x-ts-button
                 wire:click="refreshStats"
                 icon="arrow-path"
                 variant="primary"
@@ -182,7 +183,7 @@ new class extends Component
                 class="btn-ink"
             >
                 {{ __('Refresh') }}
-            </flux:button>
+            </x-ts-button>
         </div>
     </div>
 
@@ -190,27 +191,27 @@ new class extends Component
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
                 <div class="flex items-center gap-2">
-                    <flux:icon.arrow-trending-up class="text-brand-coral size-5" />
+                    <x-icon name="arrow-trending-up" class="text-brand-coral size-5" />
 
-                    <flux:heading
+                    <x-ts-heading
                         id="period-heading"
                         size="lg"
                         class="text-brand-green dark:text-brand-cream font-semibold"
                     >
                         {{ __('New in period') }}
-                    </flux:heading>
+                    </x-ts-heading>
                 </div>
 
-                <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">{{ $this->periodLabel }}</flux:text>
+                <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">{{ $this->periodLabel }}</x-ts-text>
             </div>
 
-            <flux:text class="text-brand-ink/55 dark:text-brand-sage/70 flex items-center gap-2 text-xs font-medium">
-                <flux:icon.chart-bar class="size-4" />
+            <x-ts-text class="text-brand-ink/55 dark:text-brand-sage/70 flex items-center gap-2 text-xs font-medium">
+                <x-icon name="chart-bar" class="size-4" />
                 {{ __('Click a metric to see its 12-month chart') }}
-            </flux:text>
+            </x-ts-text>
         </div>
 
-        <flux:card class="mt-4 overflow-hidden p-0!">
+        <x-ts-card class="mt-4 overflow-hidden p-0!">
             <div class="divide-brand-green/10 dark:divide-white/10 grid divide-y lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                 <x-stat-group :title="__('Content')" :description="__('Created in the period')" icon="photo" tone="green">
                     <x-stat-row
@@ -218,21 +219,21 @@ new class extends Component
                         :value="number_format($this->rangeStats['photos'])"
                         data-test="photos-card"
                         clickable
-                        x-on:click="chart = 'photos'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'photos'; $tsui.open.modal('usage-chart')"
                     />
 
                     <x-stat-row
                         :label="__('Galleries')"
                         :value="number_format($this->rangeStats['galleries'])"
                         clickable
-                        x-on:click="chart = 'galleries'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'galleries'; $tsui.open.modal('usage-chart')"
                     />
 
                     <x-stat-row
                         :label="__('Contracts')"
                         :value="number_format($this->rangeStats['contracts'])"
                         clickable
-                        x-on:click="chart = 'contracts'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'contracts'; $tsui.open.modal('usage-chart')"
                     />
                 </x-stat-group>
 
@@ -241,7 +242,7 @@ new class extends Component
                         :label="__('Users')"
                         :value="number_format($this->rangeStats['users'])"
                         clickable
-                        x-on:click="chart = 'users'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'users'; $tsui.open.modal('usage-chart')"
                     />
 
                     <x-stat-row
@@ -249,7 +250,7 @@ new class extends Component
                         :value="number_format($this->rangeStats['paid_users'])"
                         :hint="__('Subscription started')"
                         clickable
-                        x-on:click="chart = 'paid_users'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'paid_users'; $tsui.open.modal('usage-chart')"
                     />
 
                     <x-stat-row
@@ -257,7 +258,7 @@ new class extends Component
                         :value="number_format($this->rangeStats['lifetime_users'])"
                         :hint="__('Purchased or granted')"
                         clickable
-                        x-on:click="chart = 'lifetime_users'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'lifetime_users'; $tsui.open.modal('usage-chart')"
                     />
                 </x-stat-group>
 
@@ -270,7 +271,7 @@ new class extends Component
                             : __('No issued invoices')"
                         data-test="invoices-card"
                         clickable
-                        x-on:click="chart = 'invoices'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'invoices'; $tsui.open.modal('usage-chart')"
                     />
 
                     <x-stat-row
@@ -279,34 +280,34 @@ new class extends Component
                         :hint="__('Completed through Stripe')"
                         data-test="stripe-payments-card"
                         clickable
-                        x-on:click="chart = 'stripe_payments'; $flux.modal('usage-chart').show()"
+                        x-on:click="chart = 'stripe_payments'; $tsui.open.modal('usage-chart')"
                     />
                 </x-stat-group>
             </div>
-        </flux:card>
+        </x-ts-card>
     </section>
 
     <section class="mt-8" aria-labelledby="totals-heading">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div class="flex items-center gap-2">
-                <flux:icon.chart-pie class="text-brand-coral size-5" />
+                <x-icon name="chart-pie" class="text-brand-coral size-5" />
 
-                <flux:heading
+                <x-ts-heading
                     id="totals-heading"
                     size="lg"
                     class="text-brand-green dark:text-brand-cream font-semibold"
                 >
                     {{ __('Current totals') }}
-                </flux:heading>
+                </x-ts-heading>
             </div>
 
             <div class="text-brand-ink/70 dark:text-brand-sage/80 flex items-center gap-2 text-sm font-medium">
-                <flux:icon.clock class="size-4" />
+                <x-icon name="clock" class="size-4" />
                 <span>{{ __('Updated :time', ['time' => $this->updatedLabel]) }}</span>
             </div>
         </div>
 
-        <flux:card class="mt-4 overflow-hidden p-0!">
+        <x-ts-card class="mt-4 overflow-hidden p-0!">
             <div class="divide-brand-green/10 dark:divide-white/10 grid divide-y lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                 <x-stat-group :title="__('Library')" :description="__('Storage and documents')" icon="rectangle-stack" tone="green">
                     <x-stat-row
@@ -367,22 +368,22 @@ new class extends Component
                     />
                 </x-stat-group>
             </div>
-        </flux:card>
+        </x-ts-card>
     </section>
 
     <div class="mt-8 flex flex-wrap items-end justify-between gap-2">
         <div>
             <div class="flex items-center gap-2">
-                <flux:icon.user-group class="text-brand-coral size-5" />
+                <x-icon name="user-group" class="text-brand-coral size-5" />
 
-                <flux:heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
                     {{ __('Average photos per user') }}
-                </flux:heading>
+                </x-ts-heading>
             </div>
 
-            <flux:text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
+            <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
                 {{ __('Paid users have an active subscription. Lifetime includes purchased plans and admin grants.') }}
-            </flux:text>
+            </x-ts-text>
         </div>
     </div>
 
@@ -412,14 +413,14 @@ new class extends Component
         />
     </div>
 
-    <flux:modal name="usage-chart" class="w-full max-w-3xl">
+    <x-ts-modal name="usage-chart" class="w-full max-w-3xl">
         <div class="space-y-6" data-test="usage-chart-content">
             <div>
-                <flux:heading size="lg" x-text="titles[chart] ?? ''"></flux:heading>
+                <x-ts-heading size="lg" x-text="titles[chart] ?? ''"></x-ts-heading>
 
-                <flux:text class="mt-1">
+                <x-ts-text class="mt-1">
                     {{ __('Last 12 months, including the current month.') }}
-                </flux:text>
+                </x-ts-text>
             </div>
 
             @foreach ($this->chartSeries as $metric => $series)
@@ -430,5 +431,5 @@ new class extends Component
                 </template>
             @endforeach
         </div>
-    </flux:modal>
+    </x-ts-modal>
 </div>

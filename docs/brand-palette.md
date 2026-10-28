@@ -30,18 +30,16 @@ painted with the Picstome palette: they keep the team accent chosen in
 
 ## App shell vs. public pages
 
-The app shell is marked with the `app-shell` class on `<body>`. It remaps the
-Flux accent variables to the Picstome palette:
-
-- light mode → accent `#316d61`, foreground white
-- dark mode → accent `#c6d8af`, foreground `#2a2625`
+The app shell is marked with the `app-shell` class on `<body>`. TallStackUI
+reads the Picstome palette from the `--color-primary-*`, `--color-secondary-*`
+and `--color-dark-*` tokens defined in `resources/css/app.css`.
 
 Public pages keep the team accent. `layouts/guest.blade.php` resolves it from
-the `color` slot and falls back to the Picstome palette when a team has no
-accent selected, so an unbranded studio still looks consistent.
+the `color` slot and maps it to `--color-primary-*`, falling back to the
+Picstome palette when a team has no accent selected, so an unbranded studio
+still looks consistent.
 
-Three helper classes build on top of the accent variables and are meant to be
-used with `variant="primary"` on Flux buttons:
+Three helper classes are meant to be used with `<x-ts-button>`:
 
 - `.btn-ink` – secondary action, ink background with cream text
 - `.btn-coral` – destructive action, coral background with cream text
@@ -49,8 +47,8 @@ used with `variant="primary"` on Flux buttons:
 
 ## Sidebar navigation
 
-The sidebar navigation scrolls on its own (`data-sidebar-scroll`) so the logo,
-the search field and the account footer stay pinned while the menu is long.
+The sidebar navigation scrolls on its own (`overflow-y-auto`) so the logo, the
+search field and the account footer stay pinned while the menu is long.
 Expanding a group scrolls the newly revealed items into view, so no option is
 hidden below the fold. The logo links back to the dashboard.
 

@@ -285,13 +285,14 @@ class Photo extends Model
 
             $disk = $this->diskOrDefault();
             $diskConfig = config("filesystems.disks.$disk");
-            $baseUrl = ($diskConfig['origin'] ?? null).'/'.($diskConfig['bucket'] ?? null);
+            $baseUrl = $diskConfig['url'] ?? null;
+
+            if (! $baseUrl && isset($diskConfig['origin'], $diskConfig['bucket'])) {
+                $baseUrl = rtrim($diskConfig['origin'], '/').'/'.$diskConfig['bucket'];
+            }
 
             if ($baseUrl) {
-                $baseUrl = rtrim($baseUrl, '/');
-                $path = ltrim($this->path, '/');
-
-                return $baseUrl.'/'.$path;
+                return rtrim($baseUrl, '/').'/'.ltrim($this->path, '/');
             }
 
             return Storage::disk($disk)->url($this->path);

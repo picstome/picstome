@@ -66,6 +66,20 @@ describe('Gallery Viewing', function () {
             ->assertSee('Comments (3)');
     });
 
+    it('shows the public gallery explanation tooltip on hover', function () {
+        $user = User::factory()->withPersonalTeam()->create(['language' => 'en']);
+        $gallery = Gallery::factory()->for($user->currentTeam)->public()->create();
+
+        $this->actingAs($user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[x-tooltip]');
+        $page->wait(0.3);
+
+        expect($page->script("document.querySelector('[data-tsui-tooltip]')?.innerText.trim()"))
+            ->toContain('This gallery is public and visible in your portfolio section.');
+    });
+
     it('does not show a download tab on the owner gallery page', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create();
@@ -73,6 +87,61 @@ describe('Gallery Viewing', function () {
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
 
         $component->assertDontSee('Download gallery');
+    });
+
+    it('selects a cover photo from the photo actions menu', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+        $page->wait(0.2);
+        $page->click('[data-photo-actions]');
+        $page->wait(0.2);
+        $page->click('Set as Cover');
+        $page->wait(0.3);
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('opens the favorite list from the actions menu', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+
+        $page->click('[data-gallery-actions]');
+        $page->wait(0.2);
+        $page->click('Favorite list');
+        $page->wait(0.3);
+
+        expect($page->script("getComputedStyle(document.querySelector('#favorite-list')).display"))
+            ->not->toBe('none');
+
+        $page->click('Finder/Explorer');
+        $page->wait(0.2);
+
+        expect($page->script("document.getElementById('finder-textarea').value"))
+            ->not->toBeEmpty();
+    });
+
+    it('opens the favorites tab from the url', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}?activeTab=favorited");
+        $page->wait(0.2);
+
+        expect($page->script("document.querySelector('[role=tablist] [data-current=true]')?.textContent.trim()"))
+            ->toContain('Favorites');
     });
 
     it('does not overflow horizontally on small mobile screens', function () {

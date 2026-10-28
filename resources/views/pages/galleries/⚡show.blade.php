@@ -1,5 +1,7 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Events\PhotoAdded;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
@@ -7,7 +9,6 @@ use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Traits\SummarizesGalleryTabs;
-use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,8 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     use SummarizesGalleryTabs, WithFileUploads;
 
     public Gallery $gallery;
@@ -55,7 +58,7 @@ new class extends Component
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
         if (request()->boolean('live')) {
-            Flux::modal('live-upload')->show();
+            $this->openModal('live-upload');
         }
     }
 
@@ -219,9 +222,9 @@ new class extends Component
 
         $this->shareForm->update();
 
-        Flux::modal('share')->close();
+        $this->closeModal('share');
 
-        Flux::modal('share-link')->show();
+        $this->openModal('share-link');
 
         $this->gallery = $this->gallery->fresh();
 
@@ -249,7 +252,7 @@ new class extends Component
     {
         $this->pendingPhotoId = $id;
 
-        Flux::modal('delete-photo')->show();
+        $this->openModal('delete-photo');
     }
 
     public function deletePhoto(Photo $photo)
@@ -270,7 +273,7 @@ new class extends Component
         // The camera upload modal shows the same gallery setting.
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
-        $this->modal('edit')->close();
+        $this->closeModal('edit');
     }
 
     public function delete()
@@ -321,7 +324,7 @@ new class extends Component
         $this->getFavorites();
         $this->favoriteFileNames = '';
 
-        Flux::modal('mark-favorites')->close();
+        $this->closeModal('mark-favorites');
 
         $this->dispatch('photo-favorited');
     }
@@ -373,7 +376,7 @@ new class extends Component
             $account = FtpAccount::provisionForTeam($this->gallery->team);
 
             if (! $account) {
-                Flux::toast(__('Could not reach the upload server. Please try again.'), variant: 'danger');
+                $this->toast()->error(__('Could not reach the upload server. Please try again.'))->send();
 
                 return;
             }
@@ -413,41 +416,39 @@ new class extends Component
 
 <div>
     <div class="max-lg:hidden">
-        <flux:button :href="route('galleries')" icon="chevron-left" variant="subtle" inset>
+        <x-ts-button :href="route('galleries')" icon="chevron-left" variant="subtle" inset>
             {{ __('Galleries') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full min-w-0 sm:flex-1">
             <div class="flex flex-wrap items-center gap-4">
-                <x-heading level="1" size="xl" class="min-w-0 break-words">{{ $gallery->name }}</x-heading>
+                <x-ts-heading level="1" size="xl" class="min-w-0 break-words">{{ $gallery->name }}</x-ts-heading>
                 <div class="flex flex-wrap items-center gap-2">
                     @if ($gallery->is_shared)
-                        <flux:badge color="lime" size="sm">{{ __('Sharing') }}</flux:badge>
+                        <x-ts-badge color="lime" size="sm">{{ __('Sharing') }}</x-ts-badge>
                     @endif
 
                     @if ($gallery->is_public)
                         <div class="flex items-center gap-1">
-                            <flux:badge color="blue" size="sm">{{ __('Public') }}</flux:badge>
-                            <flux:tooltip toggleable>
-                                <flux:button icon="information-circle" size="xs" variant="subtle" />
-                                <flux:tooltip.content class="max-w-[20rem]">
-                                    <p>
-                                        {{ __('This gallery is public and visible in your portfolio section.') }}
-                                    </p>
-                                </flux:tooltip.content>
-                            </flux:tooltip>
+                            <x-ts-badge color="blue" size="sm">{{ __('Public') }}</x-ts-badge>
+                            <x-tooltip
+                                :text="__('This gallery is public and visible in your portfolio section.')"
+                                icon="information-circle"
+                                color="zinc"
+                                xs
+                            />
                         </div>
                     @endif
                 </div>
             </div>
-            <x-subheading class="mt-2">
+            <x-ts-subheading class="mt-2">
                 {{ __('View, upload, and manage your gallery media.') }}
                 @if ($gallery->expiration_date)
                         &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                 @endif
-            </x-subheading>
+            </x-ts-subheading>
             @if ($this->allPhotos?->isNotEmpty())
                 <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
                     {{ $this->allPhotos->count() }}
@@ -457,72 +458,86 @@ new class extends Component
             @endif
         </div>
         <div class="flex flex-wrap justify-end gap-4 max-sm:justify-start">
-            <flux:dropdown>
-                <flux:button icon="ellipsis-horizontal" variant="subtle" />
+            <x-dropdown position="bottom-end">
+                <x-slot:action>
+                    <x-ts-button
+                        icon="ellipsis-horizontal"
+                        variant="subtle"
+                        x-on:click="show = ! show"
+                        :aria-label="__('Actions')"
+                        data-gallery-actions
+                    />
+                </x-slot:action>
 
-                <flux:menu>
-                    <flux:menu.item
-                        :href="route('galleries.download', ['gallery' => $gallery])"
-                        icon="cloud-arrow-down"
-                    >
-                        {{ __('Download') }}
-                    </flux:menu.item>
+                <x-dropdown.items
+                    :text="__('Download')"
+                    icon="cloud-arrow-down"
+                    :href="route('galleries.download', ['gallery' => $gallery])"
+                />
 
-                    @if ($favorites->isNotEmpty())
-                        <flux:modal.trigger name="favorite-list">
-                            <flux:menu.item icon="heart">{{ __('Favorite list') }}</flux:menu.item>
-                        </flux:modal.trigger>
-                    @endif
+                @if ($favorites->isNotEmpty())
+                    <x-dropdown.items
+                        :text="__('Favorite list')"
+                        icon="heart"
+                        x-on:click="show = false; $tsui.open.modal('favorite-list')"
+                    />
+                @endif
 
-                    <flux:modal.trigger name="live-upload">
-                        <flux:menu.item icon="camera">{{ __('Camera upload') }}</flux:menu.item>
-                    </flux:modal.trigger>
-
-                    <flux:modal.trigger name="edit">
-                        <flux:menu.item icon="pencil-square">{{ __('Edit') }}</flux:menu.item>
-                    </flux:modal.trigger>
-
-                    <flux:menu.item wire:click="togglePublic" :icon="$gallery->is_public ? 'eye-slash' : 'eye'">
-                        {{ $gallery->is_public ? __('Make private') : __('Make public') }}
-                    </flux:menu.item>
-
-                    <flux:menu.separator />
-
-                    <flux:modal.trigger name="delete-gallery">
-                        <flux:menu.item variant="danger" icon="trash">
-                            {{ __('Delete') }}
-                        </flux:menu.item>
-                    </flux:modal.trigger>
-                </flux:menu>
-            </flux:dropdown>
+                <x-dropdown.items
+                    :text="__('Camera upload')"
+                    icon="camera"
+                    x-on:click="show = false; $tsui.open.modal('live-upload')"
+                />
+                <x-dropdown.items
+                    :text="__('Edit')"
+                    icon="pencil-square"
+                    x-on:click="show = false; $tsui.open.modal('edit')"
+                />
+                <x-dropdown.items
+                    :text="$gallery->is_public ? __('Make private') : __('Make public')"
+                    :icon="$gallery->is_public ? 'eye-slash' : 'eye'"
+                    wire:click="togglePublic"
+                    x-on:click="show = false"
+                />
+                <x-dropdown.items
+                    :text="__('Delete')"
+                    icon="trash"
+                    x-on:click="show = false; $tsui.open.modal('delete-gallery')"
+                    class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                />
+            </x-dropdown>
 
             @if ($gallery->is_shared)
-                <flux:button.group>
-                    <flux:button wire:click="disableSharing" variant="primary" class="btn-ink">
+                <x-ts-button-group>
+                    <x-ts-button wire:click="disableSharing" variant="primary" class="btn-ink rounded-e-none!">
                         {{ __('Stop sharing') }}
-                    </flux:button>
-                    <flux:dropdown align="end">
-                        <flux:button icon="chevron-down" variant="primary" class="btn-ink" />
+                    </x-ts-button>
+                    <x-dropdown position="bottom-end">
+                        <x-slot:action>
+                            <x-ts-button icon="chevron-down" variant="primary" class="btn-ink -ms-px rounded-s-none!" x-on:click="show = ! show" />
+                        </x-slot:action>
 
-                        <flux:menu>
-                            <flux:modal.trigger name="share-link">
-                                <flux:menu.item icon="link">{{ __('Get share link') }}</flux:menu.item>
-                            </flux:modal.trigger>
-                            <flux:modal.trigger name="share">
-                                <flux:menu.item icon="cog">{{ __('Share settings') }}</flux:menu.item>
-                            </flux:modal.trigger>
-                        </flux:menu>
-                    </flux:dropdown>
-                </flux:button.group>
+                        <x-dropdown.items
+                            :text="__('Get share link')"
+                            icon="link"
+                            x-on:click="show = false; $tsui.open.modal('share-link')"
+                        />
+                        <x-dropdown.items
+                            :text="__('Share settings')"
+                            icon="cog"
+                            x-on:click="show = false; $tsui.open.modal('share')"
+                        />
+                    </x-dropdown>
+                </x-ts-button-group>
             @else
-                <flux:modal.trigger name="share">
-                    <flux:button variant="primary" class="btn-ink">{{ __('Share') }}</flux:button>
-                </flux:modal.trigger>
+                <x-ts-modal-trigger name="share">
+                    <x-ts-button variant="primary" class="btn-ink">{{ __('Share') }}</x-ts-button>
+                </x-ts-modal-trigger>
             @endif
 
-            <flux:modal.trigger name="add-photos">
-                <flux:button variant="primary">{{ __('Add media') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger name="add-photos">
+                <x-ts-button variant="primary">{{ __('Add media') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
@@ -535,9 +550,9 @@ new class extends Component
             >
                 <x-slot name="afterFavorites">
                     @if ($favorites->isNotEmpty())
-                        <flux:modal.trigger name="favorite-list">
-                            <flux:badge size="sm" as="button">{{ __('Export') }}</flux:badge>
-                        </flux:modal.trigger>
+                        <x-ts-modal-trigger name="favorite-list">
+                            <x-ts-badge size="sm" as="button">{{ __('Export') }}</x-ts-badge>
+                        </x-ts-modal-trigger>
                     @endif
                 </x-slot>
             </x-gallery-tabs>
@@ -584,63 +599,63 @@ new class extends Component
                     </div>
                 @else
                     <div class="flex flex-col items-center justify-center py-14">
-                        <flux:text class="mb-4 max-w-72 text-center">
+                        <x-ts-text class="mb-4 max-w-72 text-center">
                             {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
-                        </flux:text>
-                        <flux:modal.trigger name="mark-favorites">
-                            <flux:button variant="primary" icon="star">
+                        </x-ts-text>
+                        <x-ts-modal-trigger name="mark-favorites">
+                            <x-ts-button variant="primary" icon="star">
                                 {{ __('Add bulk favorites') }}
-                            </flux:button>
-                        </flux:modal.trigger>
+                            </x-ts-button>
+                        </x-ts-modal-trigger>
                     </div>
                 @endif
             </div>
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.photo class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No photos') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No photos') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('We couldn\'t find any photos. Add one to get started.') }}
-            </flux:subheading>
-            <flux:modal.trigger name="add-photos">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger name="add-photos">
+                <x-ts-button variant="primary">
                     {{ __('Add media') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="add-photos" class="w-full sm:max-w-lg">
+    <x-ts-modal name="add-photos" class="w-full sm:max-w-lg">
         <form class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Add media') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Add media') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Upload images or videos to your gallery.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
             @if (auth()->user()?->currentTeam->storage_used_percent > 95)
-                <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Low storage space') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary">
+                    <x-ts-callout-heading>{{ __('Low storage space') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('You have less than 5% storage remaining. ') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Upgrade') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endif
 
             @if ($gallery->keep_original_size)
-                <flux:callout icon="information-circle" variant="secondary" class="mb-4">
-                    <flux:callout.heading>{{ __('Original size enabled') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="information-circle" variant="secondary" class="mb-4">
+                    <x-ts-callout-heading>{{ __('Original size enabled') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('There is a maximum photo pixel limit of :max pixels because original size is enabled for this gallery.', ['max' => number_format(config('picstome.max_photo_pixels') / 1000000, 0).'M']) }}
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
             @endif
 
             <div
@@ -655,53 +670,53 @@ new class extends Component
                 id="add-photos-uploader"
             >
                 <!-- File Input -->
-                <flux:input
+                <x-ts-input
                     @change="handleFileSelect($event)"
                     type="file"
                     accept="{{ '.'.implode(',.', config('picstome.upload_extensions')) }}"
                     multiple
                 />
-                <flux:description class="mt-2 max-sm:hidden">
+                <x-ts-description class="mt-2 max-sm:hidden">
                     {{ __('Drag and drop files anywhere on the screen, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
-                </flux:description>
+                </x-ts-description>
 
-                <flux:error name="photos" />
+                <x-ts-error name="photos" />
 
-                <flux:callout
+                <x-ts-callout
                     x-show="oversizedFiles.length > 0"
                     x-cloak
                     icon="exclamation-triangle"
                     variant="danger"
                     class="mt-2"
                 >
-                    <flux:callout.heading>{{ __('Files too large') }}</flux:callout.heading>
-                    <flux:callout.text>
+                    <x-ts-callout-heading>{{ __('Files too large') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         <p>{{ __('The following files exceed the 5 GB upload limit and were skipped:') }}</p>
                         <ul class="mt-1 list-disc pl-4">
                             <template x-for="(file, i) in oversizedFiles" :key="i">
                                 <li x-text="file.name"></li>
                             </template>
                         </ul>
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
 
-                <flux:callout
+                <x-ts-callout
                     x-show="unsupportedFiles.length > 0"
                     x-cloak
                     icon="exclamation-triangle"
                     variant="danger"
                     class="mt-2"
                 >
-                    <flux:callout.heading>{{ __('Unsupported file type') }}</flux:callout.heading>
-                    <flux:callout.text>
+                    <x-ts-callout-heading>{{ __('Unsupported file type') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         <p>{{ __('The following files have an unsupported format and were skipped:') }}</p>
                         <ul class="mt-1 list-disc pl-4">
                             <template x-for="(file, i) in unsupportedFiles" :key="i">
                                 <li x-text="file.name"></li>
                             </template>
                         </ul>
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
 
                 <div
                     x-show="
@@ -741,17 +756,17 @@ new class extends Component
                         ></span>
                         <div class="flex flex-wrap gap-2">
                             @if (config('picstome.file_versions_enabled'))
-                                <flux:button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
+                                <x-ts-button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
                                     {{ __('Version all') }}
-                                </flux:button>
+                                </x-ts-button>
                             @endif
 
-                            <flux:button size="sm" variant="subtle" x-on:click="askReplaceAll()">
+                            <x-ts-button size="sm" variant="subtle" x-on:click="askReplaceAll()">
                                 {{ __('Replace all') }}
-                            </flux:button>
-                            <flux:button size="sm" variant="ghost" x-on:click="resolveAllConflicts('skip')">
+                            </x-ts-button>
+                            <x-ts-button size="sm" variant="ghost" x-on:click="resolveAllConflicts('skip')">
                                 {{ __('Skip all') }}
-                            </flux:button>
+                            </x-ts-button>
                         </div>
                     </div>
                 </div>
@@ -774,58 +789,58 @@ new class extends Component
                                 >
                                     <span x-text="fileObj.progress + '%'"></span>
                                 </div>
-                                <flux:badge
+                                <x-ts-badge
                                     x-show="! ['failed', 'conflict', 'skipped'].includes(fileObj.status)"
                                     x-text="fileObj.status"
                                     size="sm"
                                     color="zinc"
-                                ></flux:badge>
-                                <flux:badge
+                                ></x-ts-badge>
+                                <x-ts-badge
                                     x-show="fileObj.status === 'failed'"
                                     x-text="fileObj.status"
                                     size="sm"
                                     color="red"
-                                ></flux:badge>
-                                <flux:badge
+                                ></x-ts-badge>
+                                <x-ts-badge
                                     x-show="fileObj.status === 'conflict'"
                                     x-text="{{ Js::from(__('Already exists')) }}"
                                     size="sm"
                                     color="yellow"
-                                ></flux:badge>
-                                <flux:badge
+                                ></x-ts-badge>
+                                <x-ts-badge
                                     x-show="fileObj.status === 'skipped'"
                                     x-text="{{ Js::from(__('Skipped')) }}"
                                     size="sm"
                                     color="zinc"
-                                ></flux:badge>
+                                ></x-ts-badge>
 
                                 <div
                                     class="flex flex-wrap items-center gap-2"
                                     x-show="fileObj.status === 'conflict'"
                                 >
                                     @if (config('picstome.file_versions_enabled'))
-                                        <flux:button
+                                        <x-ts-button
                                             size="sm"
                                             variant="primary"
                                             x-on:click="resolveConflict(index, 'version')"
                                         >
                                             {{ __('Save as new version') }}
-                                        </flux:button>
+                                        </x-ts-button>
                                     @endif
 
-                                    <flux:button size="sm" variant="subtle" x-on:click="askReplaceConflict(index)">
+                                    <x-ts-button size="sm" variant="subtle" x-on:click="askReplaceConflict(index)">
                                         {{ __('Replace current') }}
-                                    </flux:button>
-                                    <flux:button
+                                    </x-ts-button>
+                                    <x-ts-button
                                         size="sm"
                                         variant="ghost"
                                         x-on:click="resolveConflict(index, 'skip')"
                                     >
                                         {{ __('Skip') }}
-                                    </flux:button>
+                                    </x-ts-button>
                                 </div>
 
-                                <flux:button
+                                <x-ts-button
                                     class="z-10"
                                     x-show="fileObj.status === 'failed'"
                                     x-on:click="retryUpload(index)"
@@ -843,66 +858,66 @@ new class extends Component
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="share" class="w-full sm:max-w-lg">
+    <x-ts-modal name="share" class="w-full sm:max-w-lg">
         <form wire:submit="share" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Share gallery') }}</flux:heading>
-                <flux:subheading>{{ __('Customize your shared gallery.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Share gallery') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Customize your shared gallery.') }}</x-ts-subheading>
             </div>
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.watermarked"
                 :label="__('Watermark photos')"
                 @click="$wire.shareForm.downloadable = false"
             />
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.downloadable"
                 :label="__('Visitors can download photos')"
                 x-bind:disabled="$wire.shareForm.watermarked"
             />
 
             @if (config('picstome.file_versions_enabled'))
-                <flux:switch
+                <x-ts-switch
                     wire:model="shareForm.versionsVisible"
                     :label="__('Visitors can view and compare versions')"
                 />
             @endif
 
-            <flux:switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
+            <x-ts-switch wire:model="shareForm.selectable" :label="__('Visitors can select photos')" />
 
             <div x-show="$wire.shareForm.selectable">
-                <flux:switch wire:model="shareForm.limitedSelection" :label="__('Limit selection')" />
+                <x-ts-switch wire:model="shareForm.limitedSelection" :label="__('Limit selection')" />
             </div>
 
             <div x-show="$wire.shareForm.limitedSelection">
-                <flux:input wire:model="shareForm.selectionLimit" :label="__('Limit photo selection')" type="number" />
+                <x-ts-input wire:model="shareForm.selectionLimit" :label="__('Limit photo selection')" type="number" />
             </div>
 
             @if (! $this->team->subscribed())
-                <flux:callout icon="bolt" variant="secondary" class="mb-4">
-                    <flux:callout.heading>{{ __('Unlock more sharing features') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary" class="mb-4">
+                    <x-ts-callout-heading>{{ __('Unlock more sharing features') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Subscribe') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endif
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.passwordProtected"
                 :label="__('Protect with a password')"
                 :disabled="!$this->team->subscribed()"
             />
 
             <div x-show="$wire.shareForm.passwordProtected">
-                <flux:input
+                <x-ts-input
                     wire:model="shareForm.password"
                     type="password"
                     :label="__('Password')"
@@ -910,20 +925,20 @@ new class extends Component
                 />
             </div>
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.descriptionEnabled"
                 :label="__('Add description')"
                 :disabled="!$this->team->subscribed()"
             />
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.commentsEnabled"
                 :label="__('Enable photo comments')"
                 :disabled="!$this->team->subscribed()"
                 x-on:change="if (! $event.target.checked) $wire.set('shareForm.annotationsEnabled', false)"
             />
 
-            <flux:switch
+            <x-ts-switch
                 wire:model="shareForm.annotationsEnabled"
                 :label="__('Enable photo annotations')"
                 :description="__('Visitors can pin a comment to a spot on the photo. Requires photo comments.')"
@@ -931,7 +946,7 @@ new class extends Component
             />
 
             <div x-show="$wire.shareForm.descriptionEnabled">
-                <flux:textarea
+                <x-ts-textarea
                     wire:model="shareForm.description"
                     :label="__('Description')"
                     :placeholder="__('Add a description for your shared gallery...')"
@@ -940,18 +955,18 @@ new class extends Component
             </div>
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="share-link" class="w-full sm:max-w-lg">
+    <x-ts-modal name="share-link" class="w-full sm:max-w-lg">
         <div class="space-y-6">
-            <flux:heading size="lg">{{ __('Gallery shared') }}</flux:heading>
+            <x-ts-heading size="lg">{{ __('Gallery shared') }}</x-ts-heading>
 
-            <flux:input
+            <x-ts-input
                 icon="link"
                 :value="route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug])"
                 :label="__('Share URL')"
@@ -959,47 +974,47 @@ new class extends Component
                 copyable
             />
         </div>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="live-upload" class="w-full sm:max-w-lg">
+    <x-ts-modal name="live-upload" class="w-full sm:max-w-lg">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Camera upload') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Camera upload') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Set your camera up once — every shot lands in the gallery receiving uploads.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
             @if (! $this->team->subscribed())
-                <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Unlock camera upload') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary">
+                    <x-ts-callout-heading>{{ __('Unlock camera upload') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('Subscribe to connect your camera: it uploads photos straight to this gallery over FTP/SFTP while you shoot.') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Subscribe') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endif
 
             @if ($this->ftpAccount && ! $this->ftpAccount->routesTo($gallery) && $this->ftpAccount->activeGallery)
-                <flux:callout
+                <x-ts-callout
                     icon="exclamation-triangle"
                     variant="warning"
                     :text="__('Photos currently upload to :gallery.', ['gallery' => $this->ftpAccount->activeGallery->name])"
                 />
             @endif
 
-            <flux:switch
+            <x-ts-switch
                 wire:click="toggleFtpUploads"
                 :checked="$this->ftpAccount?->routesTo($gallery)"
                 :label="__('Receive photos in this gallery')"
                 :disabled="!$this->team->subscribed()"
             />
 
-            <flux:switch
+            <x-ts-switch
                 wire:model.live="keepOriginalSize"
                 :label="__('Keep photos at their original size')"
                 :description="__('Applies to photos uploaded from now on. Photos already uploaded keep their current size.')"
@@ -1007,17 +1022,17 @@ new class extends Component
 
             @if ($this->ftpAccount)
                 <div class="space-y-4">
-                    <flux:input :value="config('picstome.ftp_uploads.host')" :label="__('Host')" readonly copyable />
+                    <x-ts-input :value="config('picstome.ftp_uploads.host')" :label="__('Host')" readonly copyable />
 
                     <div class="grid grid-cols-2 gap-4">
-                        <flux:input
+                        <x-ts-input
                             :value="config('picstome.ftp_uploads.sftp_port')"
                             :label="__('SFTP port')"
                             readonly
                             copyable
                         />
 
-                        <flux:input
+                        <x-ts-input
                             :value="config('picstome.ftp_uploads.ftp_port')"
                             :label="__('FTP port')"
                             readonly
@@ -1025,35 +1040,35 @@ new class extends Component
                         />
                     </div>
 
-                    <flux:input :value="$this->ftpAccount->username" :label="__('Username')" readonly copyable />
+                    <x-ts-input :value="$this->ftpAccount->username" :label="__('Username')" readonly copyable />
 
-                    <flux:field>
-                        <flux:label>{{ __('Password') }}</flux:label>
+                    <x-ts-field>
+                        <x-ts-label>{{ __('Password') }}</x-ts-label>
                         <div class="flex gap-2">
-                            <flux:input
+                            <x-ts-input
                                 class="flex-1"
                                 type="{{ $showFtpPassword ? 'text' : 'password' }}"
                                 :value="$this->ftpAccount->password"
                                 readonly
                                 copyable
                             />
-                            <flux:button
+                            <x-ts-button
                                 variant="subtle"
                                 icon="{{ $showFtpPassword ? 'eye-slash' : 'eye' }}"
                                 wire:click="toggleFtpPassword"
                             />
                         </div>
-                    </flux:field>
+                    </x-ts-field>
 
                     @if ($this->ftpAccount->last_upload_at)
-                        <flux:callout
+                        <x-ts-callout
                             icon="check-circle"
                             variant="success"
                             :heading="__('Last photo received')"
                             :text="$this->ftpAccount->last_upload_at->diffForHumans()"
                         />
                     @else
-                        <flux:callout
+                        <x-ts-callout
                             icon="clock"
                             variant="secondary"
                             :text="__('Waiting for the first photo. It will appear here within a minute of shooting.')"
@@ -1061,93 +1076,62 @@ new class extends Component
                     @endif
 
                     <div>
-                        <flux:heading size="sm">{{ __('Camera setup') }}</flux:heading>
+                        <x-ts-heading size="sm">{{ __('Camera setup') }}</x-ts-heading>
 
-                        <flux:timeline class="mt-2">
-                            <flux:timeline.item>
-                                <flux:timeline.indicator>
-                                    <flux:icon name="wifi" variant="micro" />
-                                </flux:timeline.indicator>
-
-                                <flux:timeline.content>
-                                    <flux:heading size="xs">{{ __('Connect to Wi-Fi') }}</flux:heading>
-                                    <flux:text size="sm">
-                                        {{ __('Use a network with internet. A phone hotspot works best.') }}
-                                    </flux:text>
-                                </flux:timeline.content>
-                            </flux:timeline.item>
-
-                            <flux:timeline.item>
-                                <flux:timeline.indicator>
-                                    <flux:icon name="server-stack" variant="micro" />
-                                </flux:timeline.indicator>
-
-                                <flux:timeline.content>
-                                    <flux:heading size="xs">{{ __('Add the FTP server') }}</flux:heading>
-                                    <flux:text size="sm">
-                                        {{ __('In your camera network menu, add a server with the settings above.') }}
-                                    </flux:text>
-                                </flux:timeline.content>
-                            </flux:timeline.item>
-
-                            <flux:timeline.item>
-                                <flux:timeline.indicator>
-                                    <flux:icon name="arrow-up-tray" variant="micro" />
-                                </flux:timeline.indicator>
-
-                                <flux:timeline.content>
-                                    <flux:heading size="xs">{{ __('Send JPEGs automatically') }}</flux:heading>
-                                    <flux:text size="sm">
-                                        {{ __('Enable auto send. Shoot RAW+JPEG and send the JPEG only for the fastest uploads.') }}
-                                    </flux:text>
-                                </flux:timeline.content>
-                            </flux:timeline.item>
-
-                            <flux:timeline.item>
-                                <flux:timeline.indicator>
-                                    <flux:icon name="camera" variant="micro" />
-                                </flux:timeline.indicator>
-
-                                <flux:timeline.content>
-                                    <flux:heading size="xs">{{ __('Take a test shot') }}</flux:heading>
-                                    <flux:text size="sm">
-                                        {{ __('New photos appear in this gallery automatically within a minute.') }}
-                                    </flux:text>
-                                </flux:timeline.content>
-                            </flux:timeline.item>
-                        </flux:timeline>
+                        <x-timeline class="mt-2" compact>
+                            <x-timeline.items
+                                :title="__('Connect to Wi-Fi')"
+                                :description="__('Use a network with internet. A phone hotspot works best.')"
+                                icon="wifi"
+                            />
+                            <x-timeline.items
+                                :title="__('Add the FTP server')"
+                                :description="__('In your camera network menu, add a server with the settings above.')"
+                                icon="server-stack"
+                            />
+                            <x-timeline.items
+                                :title="__('Send JPEGs automatically')"
+                                :description="__('Enable auto send. Shoot RAW+JPEG and send the JPEG only for the fastest uploads.')"
+                                icon="arrow-up-tray"
+                            />
+                            <x-timeline.items
+                                :title="__('Take a test shot')"
+                                :description="__('New photos appear in this gallery automatically within a minute.')"
+                                icon="camera"
+                            />
+                        </x-timeline>
                     </div>
                 </div>
             @endif
         </div>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="edit" class="w-full sm:max-w-lg">
+    <x-ts-modal name="edit" class="w-full sm:max-w-lg">
         <form wire:submit="update" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit gallery') }}</flux:heading>
-                <flux:subheading>{{ __('Enter your gallery details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Edit gallery') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter your gallery details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.name" :label="__('Gallery name')" type="text" />
+            <x-ts-input wire:model="form.name" :label="__('Gallery name')" type="text" />
 
             @if ($photoshoots)
-                <flux:select
+                <x-ts-select
                     wire:model="form.photoshoot_id"
                     :label="__('Photoshoot')"
                     :placeholder="__('Choose photoshoot...')"
                 >
-                    <flux:select.option value="">{{ __('No photoshoot') }}</flux:select.option>
+                    <x-ts-select-option value="">{{ __('No photoshoot') }}</x-ts-select-option>
                     <hr />
                     @foreach ($photoshoots as $photoshoot)
-                        <flux:select.option value="{{ $photoshoot->id }}">
+                        <x-ts-select-option value="{{ $photoshoot->id }}">
                             {{ $photoshoot->name }}
-                        </flux:select.option>
+                        </x-ts-select-option>
                     @endforeach
-                </flux:select>
+                </x-ts-select>
             @endif
 
-            <flux:input
+            <x-ts-input
                 wire:model="form.expirationDate"
                 :label="__('Expiration date')"
                 :badge="$this->team?->subscribed() ? __('Optional') : null"
@@ -1156,52 +1140,44 @@ new class extends Component
                 :disabled="$gallery->is_public"
             />
 
-            <flux:error name="form.expirationDate" />
 
-            <flux:switch
+
+            <x-ts-switch
                 wire:model="form.keepOriginalSize"
                 :label="__('Keep photos at their original size')"
                 :description="__('Applies to photos uploaded from now on. Photos already uploaded keep their current size.')"
             />
 
             @if ($gallery->is_public)
-                <flux:callout variant="secondary" icon="information-circle" class="mt-2">
-                    <flux:callout.text>
+                <x-ts-callout variant="secondary" icon="information-circle" class="mt-2">
+                    <x-ts-callout-text>
                         {{ __('Public galleries do not expire. You cannot set an expiration date while the gallery is public.') }}
-                    </flux:callout.text>
-                </flux:callout>
+                    </x-ts-callout-text>
+                </x-ts-callout>
             @endif
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
+    <x-ts-modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Export favorite list') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Export favorite list') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __(':count medias in your favorite list.', ['count' => $favorites->count()]) }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
-            <flux:tab.group x-data="{ tab: 'rater' }">
-                <flux:tabs size="sm" class="w-full" scrollable scrollable:fade>
-                    <flux:tab name="rater">{{ __('App') }}</flux:tab>
-                    <flux:tab name="lightroom">{{ __('Lightroom') }}</flux:tab>
-                    <flux:tab name="captureone">{{ __('Capture One') }}</flux:tab>
-                    <flux:tab name="finder">{{ __('Finder/Explorer') }}</flux:tab>
-                    <flux:tab name="list">{{ __('List') }}</flux:tab>
-                </flux:tabs>
-
-                <flux:tab.panel name="rater" class="pt-4!">
-                    <flux:text>
+            <x-tab selected="rater" scroll-on-mobile class="w-full" paddingless shadowless>
+<x-tab.items tab="rater" :title="__('App')">
+                    <x-ts-text>
                         {{ __('Rate your favorited images with the Picstome Rater desktop app.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <div class="mt-6 flex items-center gap-2">
                         @php
@@ -1210,115 +1186,115 @@ new class extends Component
                             })->implode(',');
                         @endphp
 
-                        <flux:button :href="'picstome://rate?files=' . $rateFiles . '&rating=1'" variant="primary">
+                        <x-ts-button :href="'picstome://rate?files=' . $rateFiles . '&rating=1'" variant="primary">
                             {{ __('Rate my images') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
 
-                    <flux:text class="mt-2 text-sm">
+                    <x-ts-text class="mt-2 text-sm">
                         {{ __(':count favorited photos will be rated.', ['count' => $favorites->count()]) }}
-                    </flux:text>
+                    </x-ts-text>
 
-                    <flux:text class="mt-1">
+                    <x-ts-text class="mt-1">
                         {{ __("Don't have the app?") }}
-                        <flux:link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">
+                        <x-ts-link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">
                             {{ __('Download Picstome Rater') }}
-                        </flux:link>
-                    </flux:text>
-                </flux:tab.panel>
+                        </x-ts-link>
+                    </x-ts-text>
+                </x-tab.items>
 
-                <flux:tab.panel name="lightroom" class="pt-4!">
-                    <flux:textarea x-ref="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
+                <x-tab.items tab="lightroom" :title="__('Lightroom')">
+                    <x-ts-textarea id="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
                             implode(', ', $favorites->pluck('name')->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
-                    </flux:textarea>
+                    </x-ts-textarea>
 
-                    <flux:text class="mt-2">
+                    <x-ts-text class="mt-2">
                         {{ __('Paste this filter text to the tool of your choice.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <div class="mt-6 flex justify-end">
-                        <flux:button variant="primary" size="sm" x-on:click="copy('lightroom-textarea')">
+                        <x-ts-button variant="primary" size="sm" x-on:click="navigator.clipboard.writeText(document.getElementById('lightroom-textarea').value)">
                             {{ __('Copy') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
-                </flux:tab.panel>
+                </x-tab.items>
 
-                <flux:tab.panel name="captureone" class="pt-4!">
-                    <flux:textarea x-ref="captureone-textarea" readonly rows="4" class="font-mono text-sm">
+                <x-tab.items tab="captureone" :title="__('Capture One')">
+                    <x-ts-textarea id="captureone-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
                             implode(' ', $favorites->pluck('name')->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
-                    </flux:textarea>
+                    </x-ts-textarea>
 
-                    <flux:text class="mt-2">
+                    <x-ts-text class="mt-2">
                         {{ __('Paste this filter text to the tool of your choice.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <div class="mt-6 flex justify-end">
-                        <flux:button variant="primary" size="sm" x-on:click="copy('captureone-textarea')">
+                        <x-ts-button variant="primary" size="sm" x-on:click="navigator.clipboard.writeText(document.getElementById('captureone-textarea').value)">
                             {{ __('Copy') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
-                </flux:tab.panel>
+                </x-tab.items>
 
-                <flux:tab.panel name="finder" class="pt-4!">
-                    <flux:textarea x-ref="finder-textarea" readonly rows="4" class="font-mono text-sm">
+                <x-tab.items tab="finder" :title="__('Finder/Explorer')">
+                    <x-ts-textarea id="finder-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
                             implode(' OR ', $favorites->pluck('name')->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
 
-                    </flux:textarea>
+                    </x-ts-textarea>
 
-                    <flux:text class="mt-2">
+                    <x-ts-text class="mt-2">
                         {{ __('Paste this filter text to the tool of your choice.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <div class="mt-6 flex justify-end">
-                        <flux:button variant="primary" size="sm" x-on:click="copy('finder-textarea')">
+                        <x-ts-button variant="primary" size="sm" x-on:click="navigator.clipboard.writeText(document.getElementById('finder-textarea').value)">
                             {{ __('Copy') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
-                </flux:tab.panel>
+                </x-tab.items>
 
-                <flux:tab.panel name="list" class="pt-4!">
-                    <flux:textarea x-ref="list-textarea" readonly rows="auto" class="max-h-96 min-h-26 text-sm">
+                <x-tab.items tab="list" :title="__('List')">
+                    <x-ts-textarea id="list-textarea" readonly rows="auto" class="max-h-96 min-h-26 text-sm">
                         {{ implode(PHP_EOL, $favorites->pluck('name')->toArray()) }}
-                    </flux:textarea>
+                    </x-ts-textarea>
 
-                    <flux:text class="mt-2">
+                    <x-ts-text class="mt-2">
                         {{ __('Paste this filter text to the tool of your choice.') }}
-                    </flux:text>
+                    </x-ts-text>
 
                     <div class="mt-6 flex justify-end">
-                        <flux:button variant="primary" size="sm" x-on:click="copy('list-textarea')">
+                        <x-ts-button variant="primary" size="sm" x-on:click="navigator.clipboard.writeText(document.getElementById('list-textarea').value)">
                             {{ __('Copy') }}
-                        </flux:button>
+                        </x-ts-button>
                     </div>
-                </flux:tab.panel>
-            </flux:tab.group>
+                </x-tab.items>
+            </x-tab>
         </div>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="mark-favorites" class="w-full sm:max-w-lg">
+    <x-ts-modal name="mark-favorites" class="w-full sm:max-w-lg">
         <form wire:submit="markFavorites" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Mark favorites') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Mark favorites') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Paste a list of filenames to mark them as favorites.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
-            <flux:textarea
+            <x-ts-textarea
                 wire:model="favoriteFileNames"
                 :label="__('Filenames')"
                 :description:trailing="__('One filename per line.')"
@@ -1326,15 +1302,15 @@ new class extends Component
                 class="font-mono text-sm"
             />
 
-            <flux:error name="favoriteFileNames" />
+            <x-ts-error name="favoriteFileNames" />
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Mark as favorites') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Mark as favorites') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="replace-conflict"
@@ -1440,7 +1416,9 @@ new class extends Component
             },
 
             isAddPhotosModalOpen() {
-                return document.querySelector('dialog[data-modal="add-photos"]')?.open === true;
+                const modal = this.$el.closest('#add-photos');
+
+                return !!modal && modal.offsetParent !== null;
             },
 
             hasDraggedFiles(event) {
@@ -1515,7 +1493,7 @@ new class extends Component
 
             closeIfAllResolved() {
                 if (this.checkAllUploadsComplete()) {
-                    $flux.modals('add-photos').close();
+                    $tsui.close.modal('add-photos');
                 }
             },
 
@@ -1552,13 +1530,13 @@ new class extends Component
             },
 
             askReplaceAll() {
-                this.$flux.modal('replace-conflicts').show();
+                this.$tsui.open.modal('replace-conflicts');
             },
 
             askReplaceConflict(index) {
                 this.pendingConflictIndex = index;
 
-                this.$flux.modal('replace-conflict').show();
+                this.$tsui.open.modal('replace-conflict');
             },
 
             confirmReplaceAll() {

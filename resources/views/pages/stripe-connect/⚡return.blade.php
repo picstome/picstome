@@ -23,29 +23,29 @@ new class extends Component
 
 <section class="mx-auto max-w-lg mt-10">
     <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">Stripe Connect</flux:heading>
-        <flux:subheading size="lg">
+        <x-ts-heading size="xl" level="1">Stripe Connect</x-ts-heading>
+        <x-ts-subheading size="lg">
             Check your Stripe onboarding status and start accepting payments.
-        </flux:subheading>
-        <flux:separator variant="subtle" class="mt-6" />
+        </x-ts-subheading>
+        <x-ts-separator variant="subtle" class="mt-6" />
     </div>
 
     @if ($onboardingComplete)
-        <flux:callout variant="secondary" icon="check-circle">
-            <flux:callout.heading>Stripe onboarding complete!</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout variant="secondary" icon="check-circle">
+            <x-ts-callout-heading>Stripe onboarding complete!</x-ts-callout-heading>
+            <x-ts-callout-text>
                 Your Stripe account is now connected. You can start accepting payments.
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @else
-        <flux:callout variant="secondary" icon="exclamation-circle">
-            <flux:callout.heading>Stripe onboarding not complete</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout variant="secondary" icon="exclamation-circle">
+            <x-ts-callout-heading>Stripe onboarding not complete</x-ts-callout-heading>
+            <x-ts-callout-text>
                 You have not finished connecting your Stripe account. Please complete onboarding to accept payments.
-            </flux:callout.text>
+            </x-ts-callout-text>
             <x-slot name="actions">
-                <flux:button href="{{ $onboardingUrl }}" variant="primary" target="_blank">Continue Stripe Onboarding</flux:button>
+                <x-ts-button href="{{ $onboardingUrl }}" variant="primary" target="_blank">Continue Stripe Onboarding</x-ts-button>
             </x-slot>
-        </flux:callout>
+        </x-ts-callout>
     @endif
 </section>

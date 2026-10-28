@@ -67,54 +67,41 @@ new #[Layout('layouts.guest')] class extends Component
             <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
         </div>
 
-        <flux:input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
+        <x-ts-input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
 
-        <flux:input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
+        <x-ts-input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
 
-        <flux:input
+        <x-ts-input
             wire:model="password"
             type="password"
             :label="__('Password')"
             :placeholder="__('Your password')"
         />
 
-        <flux:input
+        <x-ts-input
             wire:model="password_confirmation"
             type="password"
             :label="__('Confirm Password')"
             :placeholder="__('Confirm your password')"
         />
 
-        <flux:field variant="inline">
-            <flux:checkbox wire:model="terms" />
-            <flux:label>
-                <div class="flex items-center gap-1">
-                    @if (app()->getLocale() === 'es')
-                        {{ __('I accept the terms and conditions') }}
-                        <flux:link
-                            href="https://picstome.com/es/terminos-y-condiciones/"
-                            target="_blank"
-                            variant="subtle"
-                        >
-                            <flux:icon.arrow-top-right-on-square variant="micro" />
-                        </flux:link>
-                    @else
-                        {{ __('I accept the terms and conditions') }}
-                        <flux:link
-                            href="https://picstome.com/terms-and-conditions/"
-                            target="_blank"
-                            variant="subtle"
-                        >
-                            <flux:icon.arrow-top-right-on-square variant="micro" />
-                        </flux:link>
-                    @endif
-                </div>
-            </flux:label>
-            <flux:error name="terms" />
-        </flux:field>
+        <x-checkbox wire:model="terms">
+            <x-slot:label>
+                {{ __('I accept the terms and conditions') }}
+                <x-ts-link
+                    :href="app()->getLocale() === 'es' ? 'https://picstome.com/es/terminos-y-condiciones/' : 'https://picstome.com/terms-and-conditions/'"
+                    target="_blank"
+                    variant="subtle"
+                    class="ml-1 inline-flex align-middle"
+                    :aria-label="__('Read the terms and conditions')"
+                >
+                    <x-icon name="arrow-top-right-on-square" variant="micro" />
+                </x-ts-link>
+            </x-slot:label>
+        </x-checkbox>
 
-        <flux:button type="submit" variant="primary" class="w-full">
+        <x-ts-button type="submit" variant="primary" class="w-full">
             {{ __('Register') }}
-        </flux:button>
+        </x-ts-button>
     </form>
 </div>

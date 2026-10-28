@@ -1,5 +1,6 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
 use App\Traits\FormatsMoney;
@@ -10,6 +11,7 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use FormatsMoney;
 
     public Customer $customer;
@@ -45,7 +47,7 @@ new class extends Component
 
         $this->customer = $this->customer->fresh();
 
-        $this->modal('edit')->close();
+        $this->closeModal('edit');
     }
 
     public function startEditingNotes()
@@ -135,67 +137,67 @@ new class extends Component
 
 <div>
     <div class="max-lg:hidden">
-        <flux:button :href="route('customers')" icon="chevron-left" variant="subtle" inset wire:navigate>
+        <x-ts-button :href="route('customers')" icon="chevron-left" variant="subtle" inset wire:navigate>
             {{ __('Customers') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ $customer->name }}</x-heading>
+            <x-ts-heading level="1" size="xl">{{ $customer->name }}</x-ts-heading>
             @if ($this->sharedGalleriesCount === 0)
-                <flux:text class="mt-1">{{ __('This client has no shared galleries.') }}</flux:text>
+                <x-ts-text class="mt-1">{{ __('This client has no shared galleries.') }}</x-ts-text>
             @endif
         </div>
         <div class="flex gap-4">
             @if ($this->sharedGalleriesCount > 0)
-                <flux:modal.trigger name="client-link">
-                    <flux:button icon="link" variant="primary">{{ __('Client link') }}</flux:button>
-                </flux:modal.trigger>
+                <x-ts-modal-trigger name="client-link">
+                    <x-ts-button icon="link" variant="primary">{{ __('Client link') }}</x-ts-button>
+                </x-ts-modal-trigger>
             @endif
-            <flux:modal.trigger name="delete-customer">
-                <flux:button variant="primary" class="btn-coral">
+            <x-ts-modal-trigger name="delete-customer">
+                <x-ts-button variant="primary" class="btn-coral">
                     {{ __('Delete') }}
-                </flux:button>
-            </flux:modal.trigger>
-            <flux:modal.trigger name="edit">
-                <flux:button variant="primary" class="btn-ink">{{ __('Edit') }}</flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
+            <x-ts-modal-trigger name="edit">
+                <x-ts-button variant="primary" class="btn-ink">{{ __('Edit') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
     <div class="mt-6 mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         @foreach ($this->stats as $stat)
             <div class="relative rounded-lg bg-zinc-50 px-6 py-4 dark:bg-zinc-700">
-                <flux:subheading>{{ $stat['title'] }}</flux:subheading>
-                <flux:heading size="xl" class="mb-2">{{ $stat['value'] }}</flux:heading>
+                <x-ts-subheading>{{ $stat['title'] }}</x-ts-subheading>
+                <x-ts-heading size="xl" class="mb-2">{{ $stat['value'] }}</x-ts-heading>
             </div>
         @endforeach
     </div>
 
     <div class="mt-12">
-        <flux:heading level="2">{{ __('Customer Details') }}</flux:heading>
-        <flux:separator class="mt-4" />
+        <x-ts-heading level="2">{{ __('Customer Details') }}</x-ts-heading>
+        <x-ts-separator class="mt-4" />
         <x-description.list>
             <x-description.term>{{ __('Name') }}</x-description.term>
             <x-description.details>{{ $customer->name }}</x-description.details>
             <x-description.term>{{ __('Email') }}</x-description.term>
             <x-description.details>
                 @if ($customer->email)
-                    <flux:link href="mailto:{{ $customer->email }}">{{ $customer->email }}</flux:link>
+                    <x-ts-link href="mailto:{{ $customer->email }}">{{ $customer->email }}</x-ts-link>
                 @else
                     &mdash;
                 @endif
             </x-description.details>
             <x-description.term>{{ __('Phone') }}</x-description.term>
             <x-description.details>
-                <flux:link
+                <x-ts-link
                     href="https://wa.me/{{ $customer->formatted_whatsapp_phone }}"
                     target="_blank"
                     rel="noopener noreferrer"
                 >
                     {{ $customer->phone }}
-                </flux:link>
+                </x-ts-link>
             </x-description.details>
             <x-description.term>{{ __('Birthdate') }}</x-description.term>
             <x-description.details>{{ $customer->formatted_birthdate }}</x-description.details>
@@ -211,27 +213,27 @@ new class extends Component
             <x-description.details>
                 @if ($editingNotes)
                     <div class="flex flex-col gap-2">
-                        <flux:field>
-                            <flux:textarea wire:model="editedNotes" rows="3" placeholder="{{ __('Notes') }}" />
-                            <flux:error name="editedNotes" />
-                        </flux:field>
+                        <x-ts-field>
+                            <x-ts-textarea wire:model="editedNotes" rows="3" placeholder="{{ __('Notes') }}" />
+
+                        </x-ts-field>
                         <div class="flex gap-2">
-                            <flux:button wire:click="saveNotes" variant="primary" size="sm">
+                            <x-ts-button wire:click="saveNotes" variant="primary" size="sm">
                                 {{ __('Save') }}
-                            </flux:button>
-                            <flux:button wire:click="cancelEditingNotes" variant="subtle" size="sm">
+                            </x-ts-button>
+                            <x-ts-button wire:click="cancelEditingNotes" variant="subtle" size="sm">
                                 {{ __('Cancel') }}
-                            </flux:button>
+                            </x-ts-button>
                         </div>
                     </div>
                 @else
                     <div class="flex items-start gap-2">
                         @if (empty($customer->notes))
-                            <flux:text>{{ __('No notes yet') }}</flux:text>
+                            <x-ts-text>{{ __('No notes yet') }}</x-ts-text>
                         @else
                             <div class="prose prose-sm dark:prose-invert">{!! $customer->formatted_notes !!}</div>
                         @endif
-                        <flux:button
+                        <x-ts-button
                             wire:click="startEditingNotes"
                             icon="pencil"
                             icon:variant="micro"
@@ -248,40 +250,40 @@ new class extends Component
     </div>
 
     @if ($customer->photoshoots->isNotEmpty())
-        <x-table class="mt-12">
-            <x-table.columns>
-                <x-table.column>{{ __('Photoshoot') }}</x-table.column>
-                <x-table.column>{{ __('Location') }}</x-table.column>
-            </x-table.columns>
-            <x-table.rows>
+        <x-data-table class="mt-12">
+            <x-data-table.columns>
+                <x-data-table.column>{{ __('Photoshoot') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Location') }}</x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($customer->photoshoots as $photoshoot)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a
                                 href="/photoshoots/{{ $photoshoot->id }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             <p>{{ $photoshoot->name }}</p>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="/photoshoots/{{ $photoshoot->id }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             <p>{{ $photoshoot->formatted_date }}, {{ $photoshoot->location }}</p>
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @endif
 
     @if ($this->galleries->isNotEmpty())
         <div class="mt-12">
-            <flux:heading level="2">{{ __('Galleries') }}</flux:heading>
-            <flux:separator class="mt-4" />
+            <x-ts-heading level="2">{{ __('Galleries') }}</x-ts-heading>
+            <x-ts-separator class="mt-4" />
         </div>
 
         <div class="mt-12">
@@ -302,13 +304,13 @@ new class extends Component
                         <div
                             class="absolute inset-x-0 bottom-0 flex gap-2 border-t border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900"
                         >
-                            <flux:heading>{{ $gallery->name }}</flux:heading>
-                            <flux:text>
+                            <x-ts-heading>{{ $gallery->name }}</x-ts-heading>
+                            <x-ts-text>
                                 {{ $gallery->photos()->count() }}
                                 {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
                                 {{ $gallery->getFormattedStorageSize() }} •
                                 {{ $gallery->created_at->format('M j, Y') }}
-                            </flux:text>
+                            </x-ts-text>
                         </div>
                     </div>
                 @endforeach
@@ -317,17 +319,17 @@ new class extends Component
     @endif
 
     @if ($this->contracts->isNotEmpty())
-        <x-table class="mt-12">
-            <x-table.columns>
-                <x-table.column class="w-full">{{ __('Contract') }}</x-table.column>
-                <x-table.column>{{ __('Location') }}</x-table.column>
-                <x-table.column>{{ __('Shooting date') }}</x-table.column>
-                <x-table.column>{{ __('Signatures') }}</x-table.column>
-            </x-table.columns>
-            <x-table.rows>
+        <x-data-table class="mt-12">
+            <x-data-table.columns>
+                <x-data-table.column class="w-full">{{ __('Contract') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Location') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Shooting date') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Signatures') }}</x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($this->contracts as $contract)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 wire:navigate
@@ -337,71 +339,71 @@ new class extends Component
                                 {{ $contract->title }}
 
                                 @if ($contract->isExecuted())
-                                    <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
+                                    <x-ts-badge color="lime" size="sm">{{ __('Executed') }}</x-ts-badge>
                                 @else
-                                    <flux:badge size="sm">{{ __('Waiting signatures') }}</flux:badge>
+                                    <x-ts-badge size="sm">{{ __('Waiting signatures') }}</x-ts-badge>
                                 @endif
                             </div>
-                            <flux:text>{{ $contract->description }}</flux:text>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                            <x-ts-text>{{ $contract->description }}</x-ts-text>
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->location }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->formatted_shooting_date }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @endif
 
     @if ($this->payments->isNotEmpty())
-        <x-table class="mt-12">
-            <x-table.columns>
-                <x-table.column>{{ __('Payments') }}</x-table.column>
-                <x-table.column>{{ __('Amount') }}</x-table.column>
-                <x-table.column>{{ __('Payment Date') }}</x-table.column>
-                <x-table.column>{{ __('Customer Email') }}</x-table.column>
-            </x-table.columns>
-            <x-table.rows>
+        <x-data-table class="mt-12">
+            <x-data-table.columns>
+                <x-data-table.column>{{ __('Payments') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Amount') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Payment Date') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Customer Email') }}</x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($this->payments as $payment)
-                    <x-table.row>
-                        <x-table.cell>{{ $payment->description }}</x-table.cell>
-                        <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                        <x-table.cell>
+                    <x-data-table.row>
+                        <x-data-table.cell>{{ $payment->description }}</x-data-table.cell>
+                        <x-data-table.cell>{{ $payment->formattedAmount }}</x-data-table.cell>
+                        <x-data-table.cell>
                             {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
-                        </x-table.cell>
-                        <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                        <x-data-table.cell>{{ $payment->customer_email }}</x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @endif
 
     <div class="mt-12">
         <div class="flex flex-wrap items-center justify-between gap-4">
-            <flux:heading level="2">{{ __('Invoices') }}</flux:heading>
+            <x-ts-heading level="2">{{ __('Invoices') }}</x-ts-heading>
 
-            <flux:button
+            <x-ts-button
                 variant="primary"
                 class="btn-ink"
                 icon="document-plus"
@@ -409,23 +411,23 @@ new class extends Component
                 wire:navigate
             >
                 {{ __('Create invoice') }}
-            </flux:button>
+            </x-ts-button>
         </div>
-        <flux:separator class="mt-4" />
+        <x-ts-separator class="mt-4" />
     </div>
 
     @if ($this->invoices->isNotEmpty())
-        <x-table class="mt-6 [&_table]:table-auto [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3">
-            <x-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
-                <x-table.column>{{ __('Number') }}</x-table.column>
-                <x-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-table.column>
-                <x-table.column class="group/right-align">{{ __('Total') }}</x-table.column>
-                <x-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-table.column>
-            </x-table.columns>
-            <x-table.rows>
+        <x-data-table class="mt-6 [&_table]:table-auto [&_td:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:first-child]:pl-3 [&_th:last-child]:pr-3">
+            <x-data-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
+                <x-data-table.column>{{ __('Number') }}</x-data-table.column>
+                <x-data-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-data-table.column>
+                <x-data-table.column class="group/right-align">{{ __('Total') }}</x-data-table.column>
+                <x-data-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($this->invoices as $invoice)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative whitespace-nowrap">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative whitespace-nowrap">
                             <a
                                 href="{{ route('invoices.show', $invoice) }}"
                                 wire:navigate
@@ -437,7 +439,7 @@ new class extends Component
                                     @if ($invoice->issue_date)
                                         <span>{{ $invoice->issue_date->format('Y-m-d') }}</span>
                                     @endif
-                                    <flux:badge
+                                    <x-ts-badge
                                         size="sm"
                                         :color="match ($invoice->status) {
                                             'issued' => 'green',
@@ -447,16 +449,16 @@ new class extends Component
                                         inset
                                     >
                                         {{ $invoice->status_label }}
-                                    </flux:badge>
+                                    </x-ts-badge>
                                 </span>
                             </div>
-                        </x-table.cell>
-                        <x-table.cell variant="muted" class="hidden whitespace-nowrap xl:table-cell">{{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}</x-table.cell>
-                        <x-table.cell class="whitespace-nowrap text-end">
+                        </x-data-table.cell>
+                        <x-data-table.cell variant="muted" class="hidden whitespace-nowrap xl:table-cell">{{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}</x-data-table.cell>
+                        <x-data-table.cell class="whitespace-nowrap text-end">
                             {{ $this->money($invoice->total) }} {{ $invoice->currency }}
-                        </x-table.cell>
-                        <x-table.cell class="hidden text-end xl:table-cell">
-                            <flux:badge
+                        </x-data-table.cell>
+                        <x-data-table.cell class="hidden text-end xl:table-cell">
+                            <x-ts-badge
                                 :color="match ($invoice->status) {
                                     'issued' => 'green',
                                     'rectified' => 'orange',
@@ -465,36 +467,36 @@ new class extends Component
                                 inset
                             >
                                 {{ $invoice->status_label }}
-                            </flux:badge>
-                        </x-table.cell>
-                    </x-table.row>
+                            </x-ts-badge>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
     @else
         <p class="mt-4 text-sm text-zinc-500">{{ __('This client has no invoices yet.') }}</p>
     @endif
 
-    <flux:modal name="edit" class="w-full sm:max-w-lg">
+    <x-ts-modal name="edit" class="w-full sm:max-w-lg">
         <form wire:submit="update" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit customer') }}</flux:heading>
-                <flux:subheading>{{ __('Please enter your customer details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Edit customer') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Please enter your customer details.') }}</x-ts-subheading>
             </div>
             <x-customer-form-fields />
             <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-spacer />
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
     @if ($this->sharedGalleriesCount > 0)
-        <flux:modal name="client-link" class="w-full sm:max-w-lg">
+        <x-ts-modal name="client-link" class="w-full sm:max-w-lg">
             <div class="space-y-6">
-                <flux:heading size="lg">{{ __('Client link') }}</flux:heading>
+                <x-ts-heading size="lg">{{ __('Client link') }}</x-ts-heading>
 
-                <flux:input
+                <x-ts-input
                     icon="link"
                     :value="route('clients.show', $customer)"
                     :label="__('Share URL')"
@@ -502,19 +504,19 @@ new class extends Component
                     copyable
                 />
 
-                <flux:text variant="subtle">
+                <x-ts-text variant="subtle">
                     {{ __('Share this link with your client so they can view all their shared galleries in one place.') }}
-                </flux:text>
+                </x-ts-text>
 
-                <flux:text variant="subtle">
+                <x-ts-text variant="subtle">
                     {{ __('Shared galleries: :count', ['count' => $this->sharedGalleriesCount]) }}
-                </flux:text>
+                </x-ts-text>
 
-                <flux:text variant="subtle">
+                <x-ts-text variant="subtle">
                     {{ __('Remember that the link only shows shared galleries without a password.') }}
-                </flux:text>
+                </x-ts-text>
             </div>
-        </flux:modal>
+        </x-ts-modal>
     @endif
 
     <x-confirm-modal

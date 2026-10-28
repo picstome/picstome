@@ -24,46 +24,46 @@ new class extends Component
 
 <section class="mx-auto max-w-lg">
     <div class="relative mb-6 w-full">
-        <flux:heading size="xl" level="1">{{ __("Stripe Connect") }}</flux:heading>
-        <flux:subheading size="lg">
+        <x-ts-heading size="xl" level="1">{{ __("Stripe Connect") }}</x-ts-heading>
+        <x-ts-subheading size="lg">
             {{ __("Connect your account to Stripe to start accepting payments.") }}
-        </flux:subheading>
-        <flux:separator variant="subtle" class="mt-6" />
+        </x-ts-subheading>
+        <x-ts-separator variant="subtle" class="mt-6" />
     </div>
     @if (FakePaymentService::enabled())
-        <flux:callout icon="beaker" variant="secondary" class="mt-6">
-            <flux:callout.heading>{{ __('Fake payments mode is enabled') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="beaker" variant="secondary" class="mt-6">
+            <x-ts-callout-heading>{{ __('Fake payments mode is enabled') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('Payments are created without Stripe, so you can test the whole flow without a connected account. Turn it off in your .env file (PAYMENTS_FAKE=false) to use Stripe for real.') }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->onboardingComplete)
-        <flux:callout icon="check-circle" variant="secondary" class="mt-6">
-            <flux:callout.heading>{{ __('Stripe is connected') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="check-circle" variant="secondary" class="mt-6">
+            <x-ts-callout-heading>{{ __('Stripe is connected') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('Your account is ready to accept payments.') }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->accountEmail && $this->accountEmail !== Auth::user()->currentTeam->stripeEmail())
-        <flux:callout icon="exclamation-triangle" variant="secondary" class="mt-6">
-            <flux:callout.heading>{{ __('Stripe is still using an old email') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="exclamation-triangle" variant="secondary" class="mt-6">
+            <x-ts-callout-heading>{{ __('Stripe is still using an old email') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('Stripe sends the onboarding emails to :email. Update it in your Stripe dashboard to receive them in your current inbox.', ['email' => $this->accountEmail]) }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
-    <flux:callout icon="banknotes" variant="secondary">
-        <flux:callout.heading>{{ __("Start accepting payments") }}</flux:callout.heading>
-        <flux:callout.text>
+    <x-ts-callout icon="banknotes" variant="secondary">
+        <x-ts-callout-heading>{{ __("Start accepting payments") }}</x-ts-callout-heading>
+        <x-ts-callout-text>
             {{ __("To begin accepting payments, you need to complete your Stripe onboarding. Click the button below to get started or continue the process.") }}
-        </flux:callout.text>
+        </x-ts-callout-text>
         <x-slot name="actions">
-            <flux:button href="{{ $onboardingUrl }}" variant="primary" target="_blank">{{ __("Begin Stripe Onboarding") }}</flux:button>
+            <x-ts-button href="{{ $onboardingUrl }}" variant="primary" target="_blank">{{ __("Begin Stripe Onboarding") }}</x-ts-button>
         </x-slot>
-    </flux:callout>
+    </x-ts-callout>
 </section>

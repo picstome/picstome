@@ -1,8 +1,8 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Models\Photo;
 use App\Models\PhotoComment;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -12,6 +12,7 @@ use Livewire\Component;
 
 new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 {
+    use InteractsWithTallStackModals;
     public Photo $photo;
 
     public ?Photo $next;
@@ -69,7 +70,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         }
 
         $this->dispatch('focus-comment', id: $comment->id);
-        Flux::modal('add-comment')->show();
+        $this->openModal('add-comment');
     }
 
     public function favorite()
@@ -90,6 +91,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     {
         $this->authorize('updateCover', $this->photo->gallery);
 
+        abort_unless($this->photo->isImage(), 422);
+
         $this->photo->gallery->setCoverPhoto($this->photo);
     }
 
@@ -106,7 +109,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $this->pendingPinX = round(max(0, min(100, $x)), 2);
         $this->pendingPinY = round(max(0, min(100, $y)), 2);
 
-        Flux::modal('add-comment')->show();
+        $this->openModal('add-comment');
     }
 
     public function cancelPendingPin(): void
@@ -137,7 +140,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             $this->pendingPinX = null;
             $this->pendingPinY = null;
 
-            Flux::modal('add-comment')->close();
+            $this->closeModal('add-comment');
         }
     }
 
@@ -147,7 +150,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     {
         $this->pendingCommentId = $id;
 
-        Flux::modal('delete-comment')->show();
+        $this->openModal('delete-comment');
     }
 
     public function deleteComment(PhotoComment $comment)
@@ -345,17 +348,17 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             </video>
         @elseif ($photo->isPdf())
             <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
-                <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
-                <flux:heading size="lg" class="max-w-full truncate">{{ $photo->name }}</flux:heading>
-                <flux:text>{{ $photo->formattedSize() }}</flux:text>
-                <flux:button
+                <x-icon name="document-text" class="size-16 text-zinc-400 dark:text-white/50" />
+                <x-ts-heading size="lg" class="max-w-full truncate">{{ $photo->name }}</x-ts-heading>
+                <x-ts-text>{{ $photo->formattedSize() }}</x-ts-text>
+                <x-ts-button
                     :href="route('galleries.photos.inline', ['gallery' => $photo->gallery, 'photo' => $photo])"
                     icon="arrow-top-right-on-square"
                     target="_blank"
                     variant="primary"
                 >
                     {{ __('Open PDF') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         @else
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
@@ -366,7 +369,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($previous)
-                <flux:button
+                <x-ts-button
                     href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
                     wire:navigate
                     x-ref="previous"
@@ -382,7 +385,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             @if ($next)
-                <flux:button
+                <x-ts-button
                     href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
                     wire:navigate
                     x-ref="next"
@@ -398,7 +401,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             :class="zoom ? 'hidden' : 'flex'"
         >
             <div class="flex gap-3">
-                <flux:button
+                <x-ts-button
                     :href="$this->galleryUrl"
                     wire:navigate
                     icon="arrow-left"
@@ -408,77 +411,72 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     class="btn-ink"
                 >
                     {{ __('Back') }}
-                </flux:button>
+                </x-ts-button>
             </div>
             <div
                 class="flex gap-3"
                 x-data="{ annotating: false }"
                 x-on:annotations-toggled.window="annotating = $event.detail.active"
             >
-                <flux:tooltip toggleable>
-                    <flux:button icon="information-circle" size="sm" variant="subtle" />
-                    <flux:tooltip.content class="max-w-[20rem] space-y-2">
-                        <p>{{ $photo->name }}</p>
-                    </flux:tooltip.content>
-                </flux:tooltip>
-                <flux:dropdown>
-                    <flux:button icon="ellipsis-vertical" size="sm" variant="subtle" />
-                    <flux:menu>
-                        @if (! $photo->isPdf())
-                            @if ($photo->gallery->coverPhoto?->is($photo))
-                                <flux:menu.item wire:click="removeAsCover" icon="x-mark">
-                                    {{ __('Remove as Cover') }}
-                                </flux:menu.item>
-                            @else
-                                <flux:menu.item wire:click="setAsCover" icon="star">
-                                    {{ __('Set as Cover') }}
-                                </flux:menu.item>
-                            @endif
+                <span x-data x-tooltip="{{ $photo->name }}">
+                    <x-ts-button icon="information-circle" size="sm" variant="subtle" />
+                </span>
+                <x-dropdown position="bottom-end">
+                    <x-slot:action>
+                        <x-ts-button icon="ellipsis-vertical" size="sm" variant="subtle" x-on:click="show = ! show" />
+                    </x-slot:action>
+
+                    @if ($photo->isImage())
+                        @if ($photo->gallery->coverPhoto?->is($photo))
+                            <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover" />
+                        @else
+                            <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover" />
                         @endif
-                        <flux:modal.trigger name="delete-photo">
-                            <flux:menu.item icon="trash" variant="danger">
-                                {{ __('Delete') }}
-                            </flux:menu.item>
-                        </flux:modal.trigger>
-                    </flux:menu>
-                </flux:dropdown>
+                    @endif
+
+                    <x-dropdown.items
+                        :text="__('Delete')"
+                        icon="trash"
+                        x-on:click="show = false; $tsui.open.modal('delete-photo')"
+                        class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                    />
+                </x-dropdown>
 
                 <div class="contents" x-show="! annotating">
-                    <flux:modal.trigger name="add-comment">
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
+                    <x-ts-modal-trigger name="add-comment">
+                        <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
                             @if ($this->comments->isEmpty())
                                 {{ __('Add comment') }}
                             @else
                                 {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
                             @endif
-                        </flux:button>
+                        </x-ts-button>
 
-                        <flux:button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
-                    </flux:modal.trigger>
+                        <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
+                    </x-ts-modal-trigger>
                 </div>
 
                 <x-photo-annotate-button :can-annotate="$photo->isImage()" />
 
                 @if ($photo->path && $photo->raw_path)
-                    <flux:dropdown>
-                        <flux:button icon="cloud-arrow-down" icon:variant="mini" size="sm" variant="primary" class="btn-ink" square />
-                        <flux:menu>
-                            <flux:menu.item
-                                :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
-                                icon="cloud-arrow-down"
-                            >
-                                {{ __('Download JPG') }}
-                            </flux:menu.item>
-                            <flux:menu.item
-                                :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
-                                icon="cloud-arrow-down"
-                            >
-                                {{ __('Download Raw') }}
-                            </flux:menu.item>
-                        </flux:menu>
-                    </flux:dropdown>
+                    <x-dropdown position="bottom-end">
+                        <x-slot:action>
+                            <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" class="btn-ink" square x-on:click="show = ! show" />
+                        </x-slot:action>
+
+                        <x-dropdown.items
+                            :text="__('Download JPG')"
+                            icon="cloud-arrow-down"
+                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                        />
+                        <x-dropdown.items
+                            :text="__('Download Raw')"
+                            icon="cloud-arrow-down"
+                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                        />
+                    </x-dropdown>
                 @else
-                    <flux:button
+                    <x-ts-button
                         :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
                         icon="cloud-arrow-down"
                         icon:variant="mini"
@@ -488,7 +486,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                         square
                     />
                 @endif
-                <flux:button
+                <x-ts-button
                     wire:click="favorite"
                     icon="heart"
                     :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
@@ -517,11 +515,11 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         </div>
     </div>
 
-    <flux:modal name="add-comment" class="w-full sm:max-w-lg">
+    <x-ts-modal name="add-comment" class="w-full sm:max-w-lg">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Comments') }}</flux:heading>
-                <flux:subheading>{{ __('All comments for this photo.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Comments') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('All comments for this photo.') }}</x-ts-subheading>
             </div>
 
             @if ($this->staleAnnotationsCount > 0)
@@ -547,15 +545,15 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             @endif
 
             <form wire:submit="addComment" class="space-y-4 pt-2">
-                <flux:textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
-                <flux:error name="commentText" />
+                <x-ts-textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
+
                 <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Submit') }}</flux:button>
+                    <x-ts-spacer />
+                    <x-ts-button type="submit" variant="primary">{{ __('Submit') }}</x-ts-button>
                 </div>
             </form>
         </div>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="delete-photo"

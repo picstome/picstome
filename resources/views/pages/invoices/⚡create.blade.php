@@ -1,5 +1,7 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
+use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\CustomerForm;
 use App\Livewire\Forms\InvoiceForm;
 use App\Models\Customer;
@@ -9,7 +11,6 @@ use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePlanLimitService;
 use App\Services\InvoiceService;
 use App\Traits\FormatsMoney;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -18,6 +19,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
+    use Interactions;
     use FormatsMoney;
 
     public InvoiceForm $form;
@@ -184,7 +187,7 @@ new class extends Component
 
         $this->customerForm->reset();
 
-        $this->modal('customer')->show();
+        $this->openModal('customer');
     }
 
     /**
@@ -202,7 +205,7 @@ new class extends Component
 
         $this->customerForm->setCustomer($customer);
 
-        $this->modal('customer')->show();
+        $this->openModal('customer');
     }
 
     public function saveCustomer(): void
@@ -215,9 +218,9 @@ new class extends Component
             $this->form->customer_id = $customer->id;
         }
 
-        $this->modal('customer')->close();
+        $this->closeModal('customer');
 
-        Flux::toast(__('The client details have been saved.'), variant: 'success');
+        $this->toast()->success(__('The client details have been saved.'))->send();
 
         if (! $this->editingCustomer) {
             $this->nextStep();
@@ -317,7 +320,7 @@ new class extends Component
 
         $this->form->setInvoice($invoice);
 
-        Flux::toast(__('The invoice has been saved as a draft.'), variant: 'success');
+        $this->toast()->success(__('The invoice has been saved as a draft.'))->send();
     }
 
     public function issue(): void
@@ -340,7 +343,7 @@ new class extends Component
 
 <div>
     <div class="mb-6 flex items-center gap-2">
-        <flux:button
+        <x-ts-button
             variant="ghost"
             icon="chevron-left"
             :href="$this->form->invoice ? route('invoices.show', $this->form->invoice) : route('invoices')"
@@ -348,53 +351,53 @@ new class extends Component
             class="-ml-2"
         >
             {{ __('Invoices') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
-    <x-heading level="1" size="xl">
+    <x-ts-heading level="1" size="xl">
         {{ $this->form->invoice ? __('Edit invoice') : __('New invoice') }}
-    </x-heading>
-    <x-subheading>{{ __('Step :step of 3', ['step' => $this->step]) }}</x-subheading>
+    </x-ts-heading>
+    <x-ts-subheading>{{ __('Step :step of 3', ['step' => $this->step]) }}</x-ts-subheading>
 
     @if ($this->form->invoice && ! $this->form->invoice->isRectificative())
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('You are editing a draft invoice. It keeps no number until you issue it.') }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->form->invoice?->payments->isNotEmpty())
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This invoice was created from a payment. A payment does not replace the invoice: it is issued by the photographer.') }}
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->form->invoice?->isRectificative())
-        <flux:callout icon="information-circle" variant="outline" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
+            <x-ts-callout-text>
                 {{ __('This is a corrective invoice of :number.', ['number' => $this->form->invoice->rectifiesInvoice?->full_number]) }}
                 @if (filled($this->form->invoice->rectification_reason))
                     {{ __('Reason: :reason', ['reason' => $this->form->invoice->rectification_reason]) }}
                 @endif
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->selectedCustomer() && $this->missingCustomerFields() !== [])
-        <flux:callout icon="exclamation-triangle" variant="outline" class="mt-6">
-            <flux:callout.heading>{{ __('The client is missing fiscal data') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="exclamation-triangle" variant="outline" class="mt-6">
+            <x-ts-callout-heading>{{ __('The client is missing fiscal data') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('A complete invoice needs the legal name, the tax ID and the address of the client.') }}
-            </flux:callout.text>
+            </x-ts-callout-text>
             <x-slot name="actions">
-                <flux:button variant="primary" wire:click="editCustomer">
+                <x-ts-button variant="primary" wire:click="editCustomer">
                     {{ __('Complete the client data') }}
-                </flux:button>
+                </x-ts-button>
             </x-slot>
-        </flux:callout>
+        </x-ts-callout>
     @endif
 
     <div class="mt-8 grid gap-2 sm:grid-cols-3">
@@ -410,18 +413,18 @@ new class extends Component
     </div>
 
     @if ($this->hiddenErrorMessages !== [])
-        <flux:callout icon="exclamation-triangle" variant="danger" class="mt-6">
-            <flux:callout.text>
+        <x-ts-callout icon="exclamation-triangle" variant="danger" class="mt-6">
+            <x-ts-callout-text>
                 @foreach ($this->hiddenErrorMessages as $hiddenError)
                     <div>{{ $hiddenError }}</div>
                 @endforeach
-            </flux:callout.text>
-        </flux:callout>
+            </x-ts-callout-text>
+        </x-ts-callout>
     @endif
 
     @if ($this->step === 1)
         <section class="mt-8">
-            <flux:input
+            <x-ts-input
                 wire:model.live.debounce.300ms="customerSearch"
                 :label="__('Search a client')"
                 icon="magnifying-glass"
@@ -441,46 +444,46 @@ new class extends Component
                                 <span class="ms-2 text-zinc-500">{{ $customer->tax_id }}</span>
                             @endif
                             @if ($customer->missing_fiscal_data)
-                                <flux:badge color="yellow" inset size="sm" class="ms-2">
+                                <x-ts-badge color="yellow" inset size="sm" class="ms-2">
                                     {{ __('Missing fiscal data') }}
-                                </flux:badge>
+                                </x-ts-badge>
                             @endif
                         </span>
-                        <flux:icon.chevron-right class="size-4 text-zinc-400" />
+                        <x-icon name="chevron-right" class="size-4 text-zinc-400" />
                     </button>
                 @empty
                     <p class="text-sm text-zinc-500">{{ __('No clients found.') }}</p>
                 @endforelse
             </div>
 
-            <flux:button variant="primary" class="btn-ink mt-6" icon="plus" wire:click="addCustomer">
+            <x-ts-button variant="primary" class="btn-ink mt-6" icon="plus" wire:click="addCustomer">
                 {{ __('Add a new client') }}
-            </flux:button>
+            </x-ts-button>
         </section>
     @elseif ($this->step === 2)
         <section class="mt-8">
             <div class="space-y-3">
                 @foreach ($this->form->lineItems as $index => $lineItem)
                     <div wire:key="line-item-{{ $lineItem['id'] ?? $index }}" class="grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs sm:grid-cols-[1fr_6rem_8rem_auto] dark:border-white/10 dark:bg-white/5">
-                        <flux:input
+                        <x-ts-input
                             wire:model="form.lineItems.{{ $index }}.description"
                             :label="__('Description')"
                         />
-                        <flux:input
+                        <x-ts-input
                             wire:model="form.lineItems.{{ $index }}.quantity"
                             :label="__('Qty')"
                             type="number"
                             step="0.01"
                             min="0"
                         />
-                        <flux:input
+                        <x-ts-input
                             wire:model="form.lineItems.{{ $index }}.unit_price"
                             :label="__('Price')"
                             type="number"
                             step="0.01"
                             min="0"
                         />
-                        <flux:button
+                        <x-ts-button
                             variant="ghost"
                             icon="trash"
                             class="sm:mt-6"
@@ -492,14 +495,14 @@ new class extends Component
                 @endforeach
             </div>
 
-            <flux:button variant="primary" class="btn-ink mt-4" icon="plus" wire:click="addLine">
+            <x-ts-button variant="primary" class="btn-ink mt-4" icon="plus" wire:click="addLine">
                 {{ __('Add line item') }}
-            </flux:button>
+            </x-ts-button>
         </section>
     @else
         <section class="mt-8 grid gap-8 lg:grid-cols-2">
             <div class="space-y-4">
-                <flux:select
+                <x-ts-select
                     wire:model="form.invoice_type"
                     :label="__('Invoice type')"
                     :disabled="$this->form->invoice?->isRectificative() ?? false"
@@ -507,39 +510,39 @@ new class extends Component
                 >
                     <option value="full">{{ __('Complete invoice') }}</option>
                     <option value="simplified">{{ __('Simplified invoice') }}</option>
-                </flux:select>
+                </x-ts-select>
 
                 @if ($this->form->invoice_type === 'simplified')
-                    <flux:callout icon="information-circle" variant="outline">
-                        <flux:callout.text>
+                    <x-ts-callout icon="information-circle" variant="outline">
+                        <x-ts-callout-text>
                             {{ __('A simplified invoice does not identify the client and is limited to :limit euros.', [
                                 'limit' => number_format((float) $this->settings->simplified_invoice_limit, 2, ',', '.'),
                             ]) }}
-                        </flux:callout.text>
-                    </flux:callout>
+                        </x-ts-callout-text>
+                    </x-ts-callout>
                 @endif
 
-                <flux:input wire:model="form.issue_date" :label="__('Issue date')" type="date" />
-                <flux:input wire:model="form.due_date" :label="__('Due date')" type="date" />
+                <x-ts-input wire:model="form.issue_date" :label="__('Issue date')" type="date" />
+                <x-ts-input wire:model="form.due_date" :label="__('Due date')" type="date" />
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:select wire:model.live="form.vat_percent" :label="__('VAT rate')">
+                    <x-ts-select wire:model.live="form.vat_percent" :label="__('VAT rate')">
                         @foreach (config('invoices.vat_rates') as $rate)
                             <option value="{{ $rate }}"><x-vat-rate-label :rate="$rate" /></option>
                         @endforeach
-                    </flux:select>
+                    </x-ts-select>
 
-                    <flux:input wire:model.live.debounce.500ms="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
+                    <x-ts-input wire:model.live.debounce.500ms="form.irpf_percent" :label="__('IRPF withholding')" type="number" step="0.01" min="0" max="100" />
                 </div>
 
-                <flux:checkbox
+                <x-ts-checkbox
                     wire:model.live="form.apply_irpf"
                     :label="__('Apply IRPF withholding')"
                     :description="__('The withholding is deducted from the amount the client pays.')"
                 />
 
                 @if ((float) $this->form->vat_percent === 0.0)
-                    <flux:input
+                    <x-ts-input
                         wire:model.live.debounce.500ms="form.vat_exemption_reason"
                         :label="__('Reason for the exemption')"
                         :description="__('An exempt invoice must state why it has no VAT. For example: «Operación exenta por el artículo 20 de la LIVA».')"
@@ -548,7 +551,7 @@ new class extends Component
                 @endif
 
                 @if ($this->settings->country === 'ES' && $this->settings->currency !== 'EUR')
-                    <flux:input
+                    <x-ts-input
                         wire:model="form.exchange_rate"
                         :label="__('Exchange rate to euros')"
                         type="number"
@@ -559,22 +562,22 @@ new class extends Component
                 @endif
 
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <flux:select wire:model.live="form.discount_type" :label="__('Discount')">
+                    <x-ts-select wire:model.live="form.discount_type" :label="__('Discount')">
                         <option value="">{{ __('No discount') }}</option>
                         <option value="percentage">{{ __('Percentage') }}</option>
                         <option value="fixed">{{ __('Fixed amount') }}</option>
-                    </flux:select>
+                    </x-ts-select>
 
-                    <flux:input wire:model.live.debounce.500ms="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
+                    <x-ts-input wire:model.live.debounce.500ms="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
                 </div>
 
-                <flux:textarea wire:model="form.payment_terms" :label="__('Payment terms')" rows="2" />
-                <flux:textarea wire:model="form.notes" :label="__('Invoice footer')" rows="2" />
+                <x-ts-textarea wire:model="form.payment_terms" :label="__('Payment terms')" rows="2" />
+                <x-ts-textarea wire:model="form.notes" :label="__('Invoice footer')" rows="2" />
             </div>
 
             <div>
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <flux:heading level="3" size="sm">{{ __('Summary') }}</flux:heading>
+                    <x-ts-heading level="3" size="sm">{{ __('Summary') }}</x-ts-heading>
 
                     <dl class="mt-4 space-y-2 text-sm">
                         <div class="flex justify-between">
@@ -609,49 +612,49 @@ new class extends Component
                 </div>
 
                 @unless ($this->canIssue)
-                    <flux:callout icon="exclamation-triangle" variant="outline" class="mt-4">
-                        <flux:callout.heading>{{ __('Monthly limit reached') }}</flux:callout.heading>
-                        <flux:callout.text>{{ __('Your plan allows one invoice per month. Upgrade to issue more invoices.') }}</flux:callout.text>
+                    <x-ts-callout icon="exclamation-triangle" variant="outline" class="mt-4">
+                        <x-ts-callout-heading>{{ __('Monthly limit reached') }}</x-ts-callout-heading>
+                        <x-ts-callout-text>{{ __('Your plan allows one invoice per month. Upgrade to issue more invoices.') }}</x-ts-callout-text>
                         <x-slot name="actions">
-                            <flux:button variant="primary" :href="route('subscribe')">{{ __('Upgrade') }}</flux:button>
+                            <x-ts-button variant="primary" :href="route('subscribe')">{{ __('Upgrade') }}</x-ts-button>
                         </x-slot>
-                    </flux:callout>
+                    </x-ts-callout>
                 @endunless
             </div>
         </section>
     @endif
 
     <div class="mt-8 flex items-center justify-between gap-3">
-        <flux:button variant="ghost" wire:click="previousStep" :disabled="$this->step === 1">
+        <x-ts-button variant="ghost" wire:click="previousStep" :disabled="$this->step === 1">
             {{ __('Back') }}
-        </flux:button>
+        </x-ts-button>
 
         <div class="flex items-center gap-3">
-            <flux:button variant="primary" class="btn-ink" wire:click="saveDraft">{{ __('Save draft') }}</flux:button>
+            <x-ts-button variant="primary" class="btn-ink" wire:click="saveDraft">{{ __('Save draft') }}</x-ts-button>
 
             @if ($this->step < 3)
-                <flux:button variant="primary" wire:click="nextStep">{{ __('Continue') }}</flux:button>
+                <x-ts-button variant="primary" wire:click="nextStep">{{ __('Continue') }}</x-ts-button>
             @else
-                <flux:button variant="primary" wire:click="issue" :disabled="! $this->canIssue">
+                <x-ts-button variant="primary" wire:click="issue" :disabled="! $this->canIssue">
                     {{ __('Issue') }}
-                </flux:button>
+                </x-ts-button>
             @endif
         </div>
     </div>
 
-    <flux:modal name="customer" class="w-full sm:max-w-lg">
+    <x-ts-modal name="customer" class="w-full sm:max-w-lg">
         <form wire:submit="saveCustomer" class="space-y-6">
             <div>
-                <flux:heading size="lg">
+                <x-ts-heading size="lg">
                     {{ $this->editingCustomer ? __('Edit client') : __('Add a new client') }}
-                </flux:heading>
-                <flux:subheading>{{ __('Please enter your client details.') }}</flux:subheading>
+                </x-ts-heading>
+                <x-ts-subheading>{{ __('Please enter your client details.') }}</x-ts-subheading>
             </div>
             <x-customer-form-fields prefix="customerForm" />
             <div class="flex">
-                <flux:spacer />
-                <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                <x-ts-spacer />
+                <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>

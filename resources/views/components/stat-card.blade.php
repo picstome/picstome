@@ -34,20 +34,20 @@
         : 'text-brand-ink/70 dark:text-brand-sage/80';
 @endphp
 
-<flux:card {{ $attributes }}>
+<x-ts-card {{ $attributes }}>
     @if ($clickable)
-        <flux:icon.chart-bar class="{{ $iconClasses }}" />
+        <x-icon name="chart-bar" class="{{ $iconClasses }}" />
     @endif
 
-    <flux:text class="text-xs font-semibold tracking-wide uppercase {{ $labelClasses }}">
+    <x-ts-text class="text-xs font-semibold tracking-wide uppercase {{ $labelClasses }}">
         {{ $label }}
-    </flux:text>
+    </x-ts-text>
 
-    <flux:heading size="xl" class="tabular-nums {{ $hasTone ? 'text-brand-cream dark:text-brand-cream' : '' }}">
+    <x-ts-heading size="xl" class="tabular-nums {{ $hasTone ? 'text-brand-cream dark:text-brand-cream' : '' }}">
         {{ $value }}
-    </flux:heading>
+    </x-ts-heading>
 
     @if ($hint)
-        <flux:text class="text-xs font-medium {{ $hintClasses }}">{{ $hint }}</flux:text>
+        <x-ts-text class="text-xs font-medium {{ $hintClasses }}">{{ $hint }}</x-ts-text>
     @endif
-</flux:card>
+</x-ts-card>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractForm;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public ContractForm $form;
@@ -29,7 +31,7 @@ new class extends Component
 
         $this->form->body = $template->formatted_markdown_body;
 
-        $this->modal('templates')->close();
+        $this->closeModal('templates');
 
         $this->dispatch('template-selected');
     }
@@ -56,11 +58,11 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Contracts') }}</x-heading>
-            <x-subheading>{{ __('View, create, and manage your contracts.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Contracts') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('View, create, and manage your contracts.') }}</x-ts-subheading>
         </div>
         <div class="flex flex-wrap gap-2">
-            <flux:button
+            <x-ts-button
                 :href="route('contract-templates')"
                 icon="clipboard-document-list"
                 wire:navigate
@@ -68,27 +70,27 @@ new class extends Component
                 class="btn-ink"
             >
                 {{ __('Templates') }}
-            </flux:button>
-            <flux:modal.trigger :name="auth()->check() ? 'create-contract' : 'login'">
-                <flux:button variant="primary">{{ __('Create contract') }}</flux:button>
-            </flux:modal.trigger>
+            </x-ts-button>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-contract' : 'login'">
+                <x-ts-button variant="primary">{{ __('Create contract') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
     @if ($this->contracts?->isNotEmpty())
-        <x-table id="table" class="mt-8">
-            <x-table.columns>
-                <x-table.column class="w-full">{{ __('Title') }}</x-table.column>
-                <x-table.column>{{ __('Location') }}</x-table.column>
-                <x-table.column>{{ __('Shooting date') }}</x-table.column>
-                <x-table.column>{{ __('Signatures') }}</x-table.column>
-                <x-table.column class="group/right-align">{{ __('Actions') }}</x-table.column>
-            </x-table.columns>
+        <x-data-table id="table" class="mt-8">
+            <x-data-table.columns>
+                <x-data-table.column class="w-full">{{ __('Title') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Location') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Shooting date') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Signatures') }}</x-data-table.column>
+                <x-data-table.column class="group/right-align">{{ __('Actions') }}</x-data-table.column>
+            </x-data-table.columns>
 
-            <x-table.rows>
+            <x-data-table.rows>
                 @foreach ($this->contracts as $contract)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
@@ -97,37 +99,37 @@ new class extends Component
                                 {{ $contract->title }}
 
                                 @if ($contract->isExecuted())
-                                    <flux:badge color="lime" size="sm">{{ __('Executed') }}</flux:badge>
+                                    <x-ts-badge color="lime" size="sm">{{ __('Executed') }}</x-ts-badge>
                                 @else
-                                    <flux:badge size="sm">{{ __('Waiting signatures') }}</flux:badge>
+                                    <x-ts-badge size="sm">{{ __('Waiting signatures') }}</x-ts-badge>
                                 @endif
                             </div>
-                            <flux:text>{{ $contract->description }}</flux:text>
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                            <x-ts-text>{{ $contract->description }}</x-ts-text>
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->location }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->formatted_shooting_date }}
-                        </x-table.cell>
-                        <x-table.cell class="relative">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
-                        </x-table.cell>
-                        <x-table.cell class="text-end">
+                        </x-data-table.cell>
+                        <x-data-table.cell class="text-end">
                             @if ($contract->isExecuted() && $contract->pdf_file_path)
-                                <flux:button
+                                <x-ts-button
                                     size="sm"
                                     variant="ghost"
                                     icon="document-arrow-down"
@@ -135,11 +137,11 @@ new class extends Component
                                     :aria-label="__('Download contract')"
                                 />
                             @endif
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
 
         <div
             x-data
@@ -154,64 +156,64 @@ new class extends Component
                 }
             "
         >
-            <flux:pagination :paginator="$this->contracts" />
+            <x-ts-pagination :paginator="$this->contracts" />
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.document-text class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No contracts') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="document-text" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No contracts') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __("We couldn't find any contracts. Create one to get started.") }}
-            </flux:subheading>
-            <flux:modal.trigger :name="auth()->check() ? 'create-contract' : 'login'">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-contract' : 'login'">
+                <x-ts-button variant="primary">
                     {{ __('Create contract') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="create-contract" class="w-full max-w-[794px]">
+    <x-ts-modal name="create-contract" class="w-full max-w-[794px]">
         <form wire:submit="save" class="-mb-6 space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new contract') }}</flux:heading>
-                <flux:subheading>{{ __('Enter the contract details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new contract') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter the contract details.') }}</x-ts-subheading>
             </div>
 
             @cannot('create', App\Models\Contract::class)
-                <flux:callout icon="bolt" variant="secondary">
-                    <flux:callout.heading>{{ __('Plan limit reached') }}</flux:callout.heading>
-                    <flux:callout.text>
+                <x-ts-callout icon="bolt" variant="secondary">
+                    <x-ts-callout-heading>{{ __('Plan limit reached') }}</x-ts-callout-heading>
+                    <x-ts-callout-text>
                         {{ __('Your current plan does not support creating more contracts. Upgrade your plan to create additional contracts.') }}
-                    </flux:callout.text>
+                    </x-ts-callout-text>
                     <x-slot name="actions">
-                        <flux:button :href="route('subscribe')" variant="primary">
+                        <x-ts-button :href="route('subscribe')" variant="primary">
                             {{ __('Upgrade') }}
-                        </flux:button>
+                        </x-ts-button>
                     </x-slot>
-                </flux:callout>
+                </x-ts-callout>
             @endcannot
 
-            <flux:input wire:model="form.title" :label="__('Title')" type="text" />
+            <x-ts-input wire:model="form.title" :label="__('Title')" type="text" />
 
-            <flux:input wire:model="form.description" :label="__('Description')" type="text" />
+            <x-ts-input wire:model="form.description" :label="__('Description')" type="text" />
 
             <div class="grid grid-cols-2 gap-4">
-                <flux:input wire:model="form.location" :label="__('Location')" type="text" />
-                <flux:input wire:model="form.shootingDate" :label="__('Shooting date')" type="date" />
+                <x-ts-input wire:model="form.location" :label="__('Location')" type="text" />
+                <x-ts-input wire:model="form.shootingDate" :label="__('Shooting date')" type="date" />
             </div>
 
-            <flux:input wire:model="form.signature_quantity" :label="__('Signatures required')" type="number" />
+            <x-ts-input wire:model="form.signature_quantity" :label="__('Signatures required')" type="number" />
 
-            <flux:field
+            <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <div data-flux-label class="flex items-center justify-between">
-                    <flux:label>{{ __('Terms') }}</flux:label>
+                <div class="flex items-center justify-between">
+                    <x-ts-label>{{ __('Terms') }}</x-ts-label>
 
-                    <flux:modal.trigger name="templates">
-                        <flux:button size="sm" variant="primary" class="btn-ink">{{ __('Use template') }}</flux:button>
-                    </flux:modal.trigger>
+                    <x-ts-modal-trigger name="templates">
+                        <x-ts-button size="sm" variant="primary" class="btn-ink">{{ __('Use template') }}</x-ts-button>
+                    </x-ts-modal-trigger>
                 </div>
 
                 <trix-editor
@@ -226,53 +228,53 @@ new class extends Component
 
                 <input wire:model="form.body" id="trix" type="text" class="hidden" />
 
-                <flux:error name="form.body" />
-            </flux:field>
+                <x-ts-error name="form.body" />
+            </x-ts-field>
 
             <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
-                <flux:separator />
+                <x-ts-separator />
                 <div class="flex py-6">
-                    <flux:spacer />
-                    <flux:button
+                    <x-ts-spacer />
+                    <x-ts-button
                         type="submit"
                         variant="primary"
                         :disabled="auth()->user()->cannot('create', App\Models\Contract::class)"
                     >
                         {{ __('Save') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
-    <flux:modal name="templates" class="w-full sm:max-w-lg">
+    <x-ts-modal name="templates" class="w-full sm:max-w-lg">
         <form
             x-data="{ template: '' }"
             x-on:submit.prevent="if (template) $wire.useTemplate(template)"
             class="space-y-6"
         >
             <div>
-                <flux:heading size="lg">{{ __('Select template') }}</flux:heading>
-                <flux:subheading>
+                <x-ts-heading size="lg">{{ __('Select template') }}</x-ts-heading>
+                <x-ts-subheading>
                     {{ __('Select a template to complete the contract terms.') }}
-                </flux:subheading>
+                </x-ts-subheading>
             </div>
 
-            <flux:select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
+            <x-ts-select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
                 @if ($this->templates?->isNotEmpty())
                     @foreach ($this->templates as $template)
                         <option value="{{ $template->id }}">{{ $template->title }}</option>
                     @endforeach
                 @endif
-            </flux:select>
+            </x-ts-select>
 
             <div class="flex">
-                <flux:spacer />
+                <x-ts-spacer />
 
-                <flux:button type="submit" variant="primary">{{ __('Use template') }}</flux:button>
+                <x-ts-button type="submit" variant="primary">{{ __('Use template') }}</x-ts-button>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>
 @assets
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />

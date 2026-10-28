@@ -32,7 +32,7 @@ decides when it reaches `main`. Report the state of the work and wait.
 
 ## Definition of done
 
-- Code follows Laravel, Livewire and Flux conventions already used in the app.
+- Code follows Laravel, Livewire and TallStackUI conventions already used in the app.
 - Inline documentation explains non-obvious domain rules, jobs, services,
   migrations and public component props.
 - DRY has been reviewed: reuse existing services, traits and components before

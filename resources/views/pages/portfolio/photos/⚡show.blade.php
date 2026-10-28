@@ -130,15 +130,15 @@ class extends Component
             />
         @else
             <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
-                <flux:icon.document-text class="size-16 text-zinc-400 dark:text-white/50" />
-                <flux:text class="max-w-full truncate">{{ $photo->name }}</flux:text>
+                <x-icon name="document-text" class="size-16 text-zinc-400 dark:text-white/50" />
+                <x-ts-text class="max-w-full truncate">{{ $photo->name }}</x-ts-text>
             </div>
         @endif
 
         <div class="absolute top-0 bottom-0 left-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
             :class="zoom ? 'hidden' : 'flex'">
             @if ($previous)
-                <flux:button
+                <x-ts-button
                     href="{{ route('portfolio.photos.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery, 'photo' => $previous]) }}"
                     wire:navigate
                     x-ref="previous"
@@ -152,7 +152,7 @@ class extends Component
         <div class="absolute top-0 bottom-0 right-0 items-center max-sm:top-auto max-sm:py-1 flex px-3 max-sm:px-1"
             :class="zoom ? 'hidden' : 'flex'">
             @if ($next)
-                <flux:button
+                <x-ts-button
                     href="{{ route('portfolio.photos.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery, 'photo' => $next]) }}"
                     wire:navigate
                     x-ref="next"
@@ -166,7 +166,7 @@ class extends Component
         <div class="flex items-center justify-between gap-4 absolute top-0 left-0 right-0 p-3 max-sm:p-1"
             :class="zoom ? 'hidden' : 'flex'">
             <div class="flex gap-3">
-                <flux:button
+                <x-ts-button
                     href="{{ route('portfolio.show', ['handle' => $photo->gallery->team->handle, 'gallery' => $photo->gallery]) }}"
                     wire:navigate
                     icon="arrow-left"
@@ -174,7 +174,7 @@ class extends Component
                     icon:variant="micro"
                 >
                     {{ __('Back') }}
-                </flux:button>
+                </x-ts-button>
             </div>
         </div>
     </div>

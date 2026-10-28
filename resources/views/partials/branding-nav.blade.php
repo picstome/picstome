@@ -1,17 +1,17 @@
-<flux:navlist>
-    <flux:navlist.item href="{{ route('branding.general') }}" wire:navigate :active="request()->routeIs('branding.general')">
+<nav class="space-y-1">
+    <x-app-nav-link quiet :href="route('branding.general')" :current="request()->routeIs('branding.general')">
         {{ __('General') }}
-    </flux:navlist.item>
-    <flux:navlist.item href="{{ route('branding.logos') }}" wire:navigate :active="request()->routeIs('branding.logos')">
+    </x-app-nav-link>
+    <x-app-nav-link quiet :href="route('branding.logos')" :current="request()->routeIs('branding.logos')">
         {{ __('Logos') }}
-    </flux:navlist.item>
-    <flux:navlist.item href="{{ route('branding.watermark') }}" wire:navigate :active="request()->routeIs('branding.watermark')">
+    </x-app-nav-link>
+    <x-app-nav-link quiet :href="route('branding.watermark')" :current="request()->routeIs('branding.watermark')">
         {{ __('Watermark') }}
-    </flux:navlist.item>
-    <flux:navlist.item href="{{ route('branding.styling') }}" wire:navigate :active="request()->routeIs('branding.styling')">
+    </x-app-nav-link>
+    <x-app-nav-link quiet :href="route('branding.styling')" :current="request()->routeIs('branding.styling')">
         {{ __('Styling') }}
-    </flux:navlist.item>
-    <flux:navlist.item href="{{ route('branding.payments') }}" wire:navigate :active="request()->routeIs('branding.payments')">
+    </x-app-nav-link>
+    <x-app-nav-link quiet :href="route('branding.payments')" :current="request()->routeIs('branding.payments')">
         {{ __('Payments') }}
-    </flux:navlist.item>
-</flux:navlist>
+    </x-app-nav-link>
+</nav>

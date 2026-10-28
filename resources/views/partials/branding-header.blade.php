@@ -1,7 +1,7 @@
 <div class="relative mb-6 w-full">
-    <flux:heading size="xl" level="1">{{ __('Branding') }}</flux:heading>
-    <flux:subheading size="lg" class="mb-6">
+    <x-ts-heading size="xl" level="1">{{ __('Branding') }}</x-ts-heading>
+    <x-ts-subheading size="lg" class="mb-6">
         {{ __('Customize your studio branding and visual identity.') }}
-    </flux:subheading>
-    <flux:separator variant="subtle" />
+    </x-ts-subheading>
+    <x-ts-separator variant="subtle" />
 </div>

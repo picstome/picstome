@@ -35,45 +35,45 @@ new class extends Component
 <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div class="max-sm:w-full sm:flex-1">
-            <x-heading level="1" size="xl">{{ __('Contract templates') }}</x-heading>
-            <x-subheading>{{ __('View, create, and manage your templates.') }}</x-subheading>
+            <x-ts-heading level="1" size="xl">{{ __('Contract templates') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('View, create, and manage your templates.') }}</x-ts-subheading>
         </div>
         <div>
-            <flux:modal.trigger :name="auth()->check() ? 'create-template' : 'login'">
-                <flux:button variant="primary">{{ __('Create template') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-template' : 'login'">
+                <x-ts-button variant="primary">{{ __('Create template') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
     @if ($this->templates?->isNotEmpty())
-        <x-table id="table" class="mt-8">
-            <x-table.columns>
-                <x-table.column class="w-full">{{ __('Title') }}</x-table.column>
-                <x-table.column class="w-full">{{ __('Date modified') }}</x-table.column>
-            </x-table.columns>
+        <x-data-table id="table" class="mt-8">
+            <x-data-table.columns>
+                <x-data-table.column class="w-full">{{ __('Title') }}</x-data-table.column>
+                <x-data-table.column class="w-full">{{ __('Date modified') }}</x-data-table.column>
+            </x-data-table.columns>
 
-            <x-table.rows>
+            <x-data-table.rows>
                 @foreach ($this->templates as $template)
-                    <x-table.row>
-                        <x-table.cell variant="strong" class="relative">
+                    <x-data-table.row>
+                        <x-data-table.cell variant="strong" class="relative">
                             <a
                                 href="{{ route('contract-templates.show', ['contractTemplate' => $template]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $template->title }}
-                        </x-table.cell>
+                        </x-data-table.cell>
 
-                        <x-table.cell class="relative">
+                        <x-data-table.cell class="relative">
                             <a
                                 href="{{ route('contract-templates.show', ['contractTemplate' => $template]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
                             {{ $template->formatted_updated_at }}
-                        </x-table.cell>
-                    </x-table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </x-table.rows>
-        </x-table>
+            </x-data-table.rows>
+        </x-data-table>
 
         <div
             x-data
@@ -89,55 +89,55 @@ new class extends Component
             "
             class="mt-6"
         >
-            <flux:pagination :paginator="$this->templates" />
+            <x-ts-pagination :paginator="$this->templates" />
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-            <flux:icon.clipboard-document-list class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-            <flux:heading size="lg" level="2">{{ __('No templates') }}</flux:heading>
-            <flux:subheading class="mb-6 max-w-72 text-center">
+            <x-icon name="clipboard-document-list" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+            <x-ts-heading size="lg" level="2">{{ __('No templates') }}</x-ts-heading>
+            <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __("We couldn't find any templates. Create one to get started.") }}
-            </flux:subheading>
-            <flux:modal.trigger :name="auth()->check() ? 'create-template' : 'login'">
-                <flux:button variant="primary">
+            </x-ts-subheading>
+            <x-ts-modal-trigger :name="auth()->check() ? 'create-template' : 'login'">
+                <x-ts-button variant="primary">
                     {{ __('Create template') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     @endif
 
-    <flux:modal name="create-template" class="w-full max-w-[794px]">
+    <x-ts-modal name="create-template" class="w-full max-w-[794px]">
         <form wire:submit="save" class="-mb-6 space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Create a new template') }}</flux:heading>
-                <flux:subheading>{{ __('Enter template details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Create a new template') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter template details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.title" :label="__('Title')" type="text" />
+            <x-ts-input wire:model="form.title" :label="__('Title')" type="text" />
 
-            <flux:field
+            <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <flux:label>{{ __('Terms') }}</flux:label>
+                <x-ts-label>{{ __('Terms') }}</x-ts-label>
 
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                     x-on:trix-change="$wire.form.body = $event.target.value"
                 ></trix-editor>
 
-                <flux:error name="form.body" />
-            </flux:field>
+                <x-ts-error name="form.body" />
+            </x-ts-field>
 
             <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
-                <flux:separator />
+                <x-ts-separator />
                 <div class="flex py-6">
-                    <flux:spacer />
+                    <x-ts-spacer />
 
-                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 </div>
 
 @assets

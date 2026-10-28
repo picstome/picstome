@@ -75,23 +75,23 @@ class extends Component
                 @if($this->team->brand_logo_icon_url)
                     <img src="{{ $this->team->brand_logo_icon_url . '&w=256&h=256' }}" class="mx-auto size-32" alt="{{ $this->team->name }}" />
                 @else
-                    <flux:heading size="xl">{{ $this->team->name }}</flux:heading>
+                    <x-ts-heading size="xl">{{ $this->team->name }}</x-ts-heading>
                 @endif
             </a>
         </div>
 
-        <flux:heading size="lg" class="mt-8 mb-6">{{ __('Your galleries') }}</flux:heading>
+        <x-ts-heading size="lg" class="mt-8 mb-6">{{ __('Your galleries') }}</x-ts-heading>
 
         @if ($this->hasLockedGalleries)
             <form wire:submit="unlock" class="mx-auto mb-8 w-full space-y-6 md:w-96">
                 <div>
-                    <flux:heading size="lg">{{ __('Protected galleries') }}</flux:heading>
-                    <flux:subheading>{{ __('Enter a password to view protected galleries.') }}</flux:subheading>
+                    <x-ts-heading size="lg">{{ __('Protected galleries') }}</x-ts-heading>
+                    <x-ts-subheading>{{ __('Enter a password to view protected galleries.') }}</x-ts-subheading>
                 </div>
-                <flux:input wire:model="password" :label="__('Password')" type="text" />
+                <x-ts-input wire:model="password" :label="__('Password')" type="text" />
                 <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Unlock') }}</flux:button>
+                    <x-ts-spacer />
+                    <x-ts-button type="submit" variant="primary">{{ __('Unlock') }}</x-ts-button>
                 </div>
             </form>
         @endif
@@ -99,7 +99,7 @@ class extends Component
         @if ($this->galleries->isNotEmpty())
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($this->galleries as $gallery)
-                    <flux:card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
+                    <x-ts-card class="group relative overflow-hidden hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors p-0!">
                         <a
                             wire:navigate
                             href="{{ route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]) }}"
@@ -119,33 +119,33 @@ class extends Component
                                 />
                             @else
                                 <div class="w-full h-48 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
-                                    <flux:icon.photo class="size-12 text-zinc-400 dark:text-zinc-500" />
+                                    <x-icon name="photo" class="size-12 text-zinc-400 dark:text-zinc-500" />
                                 </div>
                             @endif
 
                             <div class="p-4">
-                                <flux:heading size="lg" class="mb-2">
+                                <x-ts-heading size="lg" class="mb-2">
                                     {{ $gallery->name }}
-                                </flux:heading>
+                                </x-ts-heading>
 
                                 <div class="flex items-center justify-between">
-                                    <flux:text variant="subtle" size="sm">
+                                    <x-ts-text variant="subtle" size="sm">
                                         {{ $gallery->photosCount() }} {{ __('photos') }}
-                                    </flux:text>
+                                    </x-ts-text>
 
                                     @if($gallery->created_at)
-                                        <flux:text variant="subtle" size="sm">
+                                        <x-ts-text variant="subtle" size="sm">
                                             {{ $gallery->created_at->format('M j, Y') }}
-                                        </flux:text>
+                                        </x-ts-text>
                                     @endif
                                 </div>
                             </div>
                         </a>
-                    </flux:card>
+                    </x-ts-card>
                 @endforeach
             </div>
         @else
-            <flux:text>{{ __('No galleries yet') }}</flux:text>
+            <x-ts-text>{{ __('No galleries yet') }}</x-ts-text>
         @endif
 
         @include('partials.social-links', ['team' => $this->team])

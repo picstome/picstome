@@ -1,8 +1,8 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
-use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -10,6 +10,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public $sortBy = 'created_at';
@@ -39,13 +40,13 @@ new class extends Component
     public function editUser(User $user)
     {
         $this->userForm->setUser($user);
-        Flux::modal('edit-user')->show();
+        $this->openModal('edit-user');
     }
 
     public function saveUser()
     {
         $this->userForm->update();
-        Flux::modal('edit-user')->close();
+        $this->closeModal('edit-user');
     }
 
     public function exportCsv()
@@ -146,11 +147,11 @@ new class extends Component
 }; ?>
 
 <div>
-    <flux:heading size="xl">{{ __('Users') }}</flux:heading>
+    <x-ts-heading size="xl">{{ __('Users') }}</x-ts-heading>
 
     <div class="mt-4 flex flex-wrap items-end gap-4">
         <div class="flex-1">
-            <flux:input
+            <x-ts-input
                 wire:model.live="search"
                 :label="__('Search users')"
                 :placeholder="__('Search by name or email')"
@@ -158,15 +159,15 @@ new class extends Component
             />
         </div>
         <div class="w-full md:w-48">
-            <flux:select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
-                <flux:select.option value="all">{{ __('All') }}</flux:select.option>
-                <flux:select.option value="subscribed">{{ __('Subscribed') }}</flux:select.option>
-                <flux:select.option value="not_subscribed">{{ __('Not Subscribed') }}</flux:select.option>
-                <flux:select.option value="lifetime">{{ __('Lifetime') }}</flux:select.option>
-            </flux:select>
+            <x-ts-select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
+                <x-ts-select-option value="all">{{ __('All') }}</x-ts-select-option>
+                <x-ts-select-option value="subscribed">{{ __('Subscribed') }}</x-ts-select-option>
+                <x-ts-select-option value="not_subscribed">{{ __('Not Subscribed') }}</x-ts-select-option>
+                <x-ts-select-option value="lifetime">{{ __('Lifetime') }}</x-ts-select-option>
+            </x-ts-select>
         </div>
         <div class="w-full md:w-48">
-            <flux:input
+            <x-ts-input
                 wire:model.live="referralFilter"
                 :label="__('Referral Code')"
                 :placeholder="__('Filter by referral code')"
@@ -174,9 +175,9 @@ new class extends Component
             />
         </div>
         <div>
-            <flux:button wire:click="exportCsv" icon="arrow-down-tray" variant="primary" class="btn-ink">
+            <x-ts-button wire:click="exportCsv" icon="arrow-down-tray" variant="primary" class="btn-ink">
                 {{ __('Export CSV') }}
-            </flux:button>
+            </x-ts-button>
         </div>
     </div>
 
@@ -194,65 +195,65 @@ new class extends Component
         "
         class="mt-6"
     >
-        <flux:table id="table" :paginate="$this->users" class="mt-6">
-            <flux:table.columns>
-                <flux:table.column>{{ __('User') }}</flux:table.column>
-                <flux:table.column class="max-sm:hidden">{{ __('Referral Code') }}</flux:table.column>
-                <flux:table.column
+        <x-data-table id="table" class="mt-6">
+            <x-data-table.columns>
+                <x-data-table.column>{{ __('User') }}</x-data-table.column>
+                <x-data-table.column class="max-sm:hidden">{{ __('Referral Code') }}</x-data-table.column>
+                <x-data-table.column
                     sortable
                     :sorted="$sortBy === 'created_at'"
                     :direction="$sortDirection"
                     wire:click="sort('created_at')"
                 >
                     {{ __('Created At') }}
-                </flux:table.column>
-                <flux:table.column
+                </x-data-table.column>
+                <x-data-table.column
                     sortable
                     :sorted="$sortBy === 'storage_used'"
                     :direction="$sortDirection"
                     wire:click="sort('storage_used')"
                 >
                     {{ __('Storage') }}
-                </flux:table.column>
-                <flux:table.column class="max-sm:hidden">{{ __('Subscribed Since') }}</flux:table.column>
-                <flux:table.column></flux:table.column>
-            </flux:table.columns>
-            <flux:table.rows>
+                </x-data-table.column>
+                <x-data-table.column class="max-sm:hidden">{{ __('Subscribed Since') }}</x-data-table.column>
+                <x-data-table.column></x-data-table.column>
+            </x-data-table.columns>
+            <x-data-table.rows>
                 @foreach ($this->users as $user)
-                    <flux:table.row :key="$user->id">
-                        <flux:table.cell>
+                    <x-data-table.row :key="$user->id">
+                        <x-data-table.cell>
                             <div class="flex items-center gap-2 sm:gap-4">
-                                <flux:avatar :src="$user->avatar_url" circle size="lg" class="max-sm:size-8" />
+                                <x-ts-avatar :src="$user->avatar_url" circle size="lg" class="max-sm:size-8" />
                                 <div class="flex flex-col">
-                                    <flux:heading>
+                                    <x-ts-heading>
                                         {{ $user->name }}
 
                                         @if ($user->personalTeam()?->lifetime_at)
-                                            <flux:badge color="lime" size="sm">
+                                            <x-ts-badge color="lime" size="sm">
                                                 {{ __('Lifetime') }}
-                                            </flux:badge>
+                                            </x-ts-badge>
                                         @elseif ($user->personalTeam()?->subscribed())
-                                            <flux:badge color="lime" size="sm">
+                                            <x-ts-badge color="lime" size="sm">
                                                 {{ __('Subscribed') }}
-                                            </flux:badge>
+                                            </x-ts-badge>
                                         @endif
-                                    </flux:heading>
-                                    <flux:text class="max-sm:hidden">{{ $user->email }}</flux:text>
+                                    </x-ts-heading>
+                                    <x-ts-text class="max-sm:hidden">{{ $user->email }}</x-ts-text>
                                 </div>
                             </div>
-                        </flux:table.cell>
+                        </x-data-table.cell>
 
-                        <flux:table.cell class="whitespace-nowrap max-sm:hidden">
+                        <x-data-table.cell class="whitespace-nowrap max-sm:hidden">
                             @if ($user->referral_code)
-                                <flux:badge size="sm">{{ $user->referral_code }}</flux:badge>
+                                <x-ts-badge size="sm">{{ $user->referral_code }}</x-ts-badge>
                             @endif
-                        </flux:table.cell>
+                        </x-data-table.cell>
 
-                        <flux:table.cell class="whitespace-nowrap">
+                        <x-data-table.cell class="whitespace-nowrap">
                             {{ $user->created_at?->format('M j, Y') }}
-                        </flux:table.cell>
+                        </x-data-table.cell>
 
-                        <flux:table.cell class="whitespace-nowrap">
+                        <x-data-table.cell class="whitespace-nowrap">
                             @php
                                 $team = $user->personalTeam();
                             @endphp
@@ -279,9 +280,9 @@ new class extends Component
                             @else
                                 &mdash;
                             @endif
-                        </flux:table.cell>
+                        </x-data-table.cell>
 
-                        <flux:table.cell class="whitespace-nowrap max-sm:hidden">
+                        <x-data-table.cell class="whitespace-nowrap max-sm:hidden">
                             @php
                                 $team = $user->personalTeam();
                             @endphp
@@ -293,68 +294,70 @@ new class extends Component
                             @else
                                 &mdash;
                             @endif
-                        </flux:table.cell>
+                        </x-data-table.cell>
 
-                        <flux:table.cell align="end">
+                        <x-data-table.cell align="end">
                             <form wire:submit="editUser({{ $user->id }})">
-                                <flux:button
+                                <x-ts-button
                                     type="submit"
                                     variant="ghost"
                                     size="sm"
                                     icon="ellipsis-horizontal"
                                     inset="top bottom"
-                                ></flux:button>
+                                ></x-ts-button>
                             </form>
-                        </flux:table.cell>
-                    </flux:table.row>
+                        </x-data-table.cell>
+                    </x-data-table.row>
                 @endforeach
-            </flux:table.rows>
-        </flux:table>
+            </x-data-table.rows>
+        </x-data-table>
+
+        <x-ts-pagination :paginator="$this->users" />
     </div>
 
-    <flux:modal name="edit-user" variant="flyout">
+    <x-ts-modal name="edit-user" variant="flyout">
         @if ($userForm->user)
             <form wire:submit="saveUser" class="space-y-6">
                 <div>
-                    <flux:heading size="lg">{{ __('Update user') }}</flux:heading>
-                    <flux:text class="mt-2">{{ __('Make changes to the user details.') }}</flux:text>
+                    <x-ts-heading size="lg">{{ __('Update user') }}</x-ts-heading>
+                    <x-ts-text class="mt-2">{{ __('Make changes to the user details.') }}</x-ts-text>
                 </div>
 
-                <flux:input :value="$userForm->user->name" :label="__('Name')" readonly />
+                <x-ts-input :value="$userForm->user->name" :label="__('Name')" readonly />
 
-                <flux:input :value="$userForm->user->email" :label="__('Email')" readonly />
+                <x-ts-input :value="$userForm->user->email" :label="__('Email')" readonly />
 
                 @if ($userForm->user->referral_code)
-                    <flux:input :value="$userForm->user->referral_code" :label="__('Referral Code')" readonly />
+                    <x-ts-input :value="$userForm->user->referral_code" :label="__('Referral Code')" readonly />
                 @endif
 
-                <flux:switch
+                <x-ts-switch
                     wire:model="userForm.lifetime"
                     :label="__('Lifetime access')"
                     :description="__('Grant this user lifetime access. Overrides subscription status.')"
                 />
 
-                <flux:input.group
+                <x-ts-input-group
                     :label="__('Storage Limit')"
                     :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')"
                 >
-                    <flux:input wire:model="userForm.custom_storage_limit" type="number" step="0.01" />
-                    <flux:input.group.suffix>GB</flux:input.group.suffix>
-                </flux:input.group>
+                    <x-ts-input wire:model="userForm.custom_storage_limit" type="number" step="0.01" />
+                    <x-ts-input-group-suffix>GB</x-ts-input-group-suffix>
+                </x-ts-input-group>
 
-                <flux:input.group
+                <x-ts-input-group
                     :label="__('Monthly contracts limit')"
                     :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')"
                 >
-                    <flux:input wire:model="userForm.monthly_contract_limit" type="number" step="1" />
-                    <flux:input.group.suffix>/{{ __('month') }}</flux:input.group.suffix>
-                </flux:input.group>
+                    <x-ts-input wire:model="userForm.monthly_contract_limit" type="number" step="1" />
+                    <x-ts-input-group-suffix>/{{ __('month') }}</x-ts-input-group-suffix>
+                </x-ts-input-group>
 
                 <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
+                    <x-ts-spacer />
+                    <x-ts-button type="submit" variant="primary">{{ __('Save changes') }}</x-ts-button>
                 </div>
             </form>
         @endif
-    </flux:modal>
+    </x-ts-modal>
 </div>

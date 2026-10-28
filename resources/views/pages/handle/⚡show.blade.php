@@ -101,14 +101,14 @@ class extends Component
             @endif
             @if($team->galleries()->public()->exists() && !$team->portfolio_public_disabled)
                 <div class="flex justify-center">
-                    <flux:button
+                    <x-ts-button
                         variant="primary"
                         :color="$team->brand_color ?? null"
                         href="{{ route('portfolio.index', ['handle' => $team->handle]) }}"
                         wire:navigate
                     >
                          {{ __('View Portfolio') }}
-                    </flux:button>
+                    </x-ts-button>
                 </div>
             @endif
         </div>
@@ -117,14 +117,14 @@ class extends Component
             <div class="mt-7 mb-14">
                 <div class="space-y-3">
                     @foreach($team->bioLinks as $link)
-                        <flux:button
+                        <x-ts-button
                             variant="primary"
                             :color="$team->brand_color ?? null"
                             href="{{ $link->url . (str_contains($link->url, '?') ? '&utm_source=picstome' : '?utm_source=picstome') }}"
                             target="_blank"
                             rel="noopener noreferrer nofollow"
                             class="w-full text-base!"
-                        ><span class="truncate">{{ $link->title }}</span></flux:button>
+                        ><span class="truncate">{{ $link->title }}</span></x-ts-button>
                     @endforeach
                 </div>
             </div>
@@ -140,23 +140,23 @@ class extends Component
     </div>
 
     @if($team->hasCompletedOnboarding() && $team->show_pay_button)
-        <flux:modal
+        <x-ts-modal
             name="generate-payment-link"
-            x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $flux.modal('generate-payment-link').show()) }"
+            x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $tsui.open.modal('generate-payment-link')) }"
             class="w-full sm:max-w-lg text-left"
         >
             <form wire:submit="checkout" class="space-y-6">
                 <div>
-                    <flux:heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</flux:heading>
-                    <flux:subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</flux:subheading>
+                    <x-ts-heading size="lg">{{ __('Send a Payment to :team', ['team' => $team->name]) }}</x-ts-heading>
+                    <x-ts-subheading>{{ __('Enter the amount and a note for your payment. You’ll be redirected to a secure checkout.') }}</x-ts-subheading>
                 </div>
-                <flux:input wire:model="amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper($team->stripe_currency ?? 'EUR')])" required />
-                <flux:input wire:model="description" :label="__('Note or Description')" type="text" required />
+                <x-ts-input wire:model="amount" type="number" :label="__('Amount (in :currency)', ['currency' => strtoupper($team->stripe_currency ?? 'EUR')])" required />
+                <x-ts-input wire:model="description" :label="__('Note or Description')" type="text" required />
                 <div class="flex">
-                    <flux:spacer />
-                    <flux:button type="submit" variant="primary">{{ __('Continue to Payment') }}</flux:button>
+                    <x-ts-spacer />
+                    <x-ts-button type="submit" variant="primary">{{ __('Continue to Payment') }}</x-ts-button>
                 </div>
             </form>
-        </flux:modal>
+        </x-ts-modal>
     @endif
 </div>

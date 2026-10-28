@@ -1,11 +1,13 @@
 @import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@import '../../vendor/tallstackui/tallstackui/css/v4.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @plugin "@tailwindcss/typography";
+@plugin '@tailwindcss/forms';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/tallstackui/tallstackui/**/*.php';
 @source '../../storage/framework/views/*.php';
 @source "../**/*.blade.php";
 @source "../**/*.js";
@@ -28,50 +30,46 @@
     --color-brand-paper: #fbfcf9;
     --color-brand-night: #1b2320;
     --color-brand-night-deep: #161e1b;
-}
 
-/*
- * The authenticated shell uses the Picstome palette. Guest and public pages are
- * intentionally excluded so each team keeps its own branding accent.
- */
-.app-shell {
-    --color-accent: var(--color-brand-green);
-    --color-accent-content: var(--color-brand-green);
-    --color-accent-foreground: white;
-}
+    /*
+     * TallStackUI color tokens mapped to the Picstome palette so migrated
+     * components keep the same brand language as the rest of the app.
+     */
+    --color-primary-50: #eef6f3;
+    --color-primary-100: #d7eae4;
+    --color-primary-200: #b1d5ca;
+    --color-primary-300: #84baac;
+    --color-primary-400: #579b8b;
+    --color-primary-500: #316d61;
+    --color-primary-600: #2a5d53;
+    --color-primary-700: #244d45;
+    --color-primary-800: #1e3e37;
+    --color-primary-900: #182f2a;
+    --color-primary-950: #10201c;
 
-.dark .app-shell {
-    --color-accent: var(--color-brand-sage);
-    --color-accent-content: var(--color-brand-sage);
-    --color-accent-foreground: var(--color-brand-ink-strong);
-}
+    --color-secondary-50: #fdf1ef;
+    --color-secondary-100: #fbded9;
+    --color-secondary-200: #f6bdb3;
+    --color-secondary-300: #f19486;
+    --color-secondary-400: #ee6958;
+    --color-secondary-500: #d95746;
+    --color-secondary-600: #b84638;
+    --color-secondary-700: #96382d;
+    --color-secondary-800: #742b22;
+    --color-secondary-900: #521e18;
+    --color-secondary-950: #30110d;
 
-.btn-ink {
-    --color-accent: var(--color-brand-ink);
-    --color-accent-content: var(--color-brand-ink);
-    --color-accent-foreground: var(--color-brand-cream);
-}
-
-.dark .btn-ink {
-    --color-accent: var(--color-brand-sage);
-    --color-accent-content: var(--color-brand-sage);
-    --color-accent-foreground: var(--color-brand-ink-strong);
-}
-
-/*
- * Destructive actions use the brand coral instead of the harsh red so they
- * read as part of the palette rather than as an emergency.
- */
-.btn-coral {
-    --color-accent: var(--color-brand-coral);
-    --color-accent-content: var(--color-brand-coral);
-    --color-accent-foreground: var(--color-brand-cream);
-}
-
-.dark .btn-coral {
-    --color-accent: var(--color-brand-coral);
-    --color-accent-content: var(--color-brand-coral);
-    --color-accent-foreground: var(--color-brand-cream);
+    --color-dark-50: #f6f8f7;
+    --color-dark-100: #e8eeeb;
+    --color-dark-200: #d0dcd7;
+    --color-dark-300: #aabdb6;
+    --color-dark-400: #7e9890;
+    --color-dark-500: #5a756d;
+    --color-dark-600: #42574f;
+    --color-dark-700: #2f403a;
+    --color-dark-800: #1b2320;
+    --color-dark-900: #161e1b;
+    --color-dark-950: #101614;
 }
 
 /*
@@ -98,81 +96,8 @@
     border-color: color-mix(in oklab, white 35%, transparent);
 }
 
-[data-flux-sidebar] [data-flux-navlist-item] {
-    color: var(--color-brand-ink);
-    font-weight: 500;
-}
-
-[data-flux-sidebar] [data-flux-navlist-item] svg {
-    color: var(--color-brand-coral);
-}
-
-[data-flux-sidebar] [data-flux-navlist-item]:hover {
-    color: var(--color-brand-ink);
-    background-color: color-mix(in oklab, var(--color-brand-sage-soft) 80%, transparent);
-}
-
-[data-flux-sidebar] [data-flux-navlist-item][data-current] {
-    color: var(--color-brand-cream);
-    background-color: var(--color-brand-green);
-    border-color: var(--color-brand-green);
-}
-
-[data-flux-sidebar] [data-flux-navlist-item][data-current] svg,
-[data-flux-sidebar] [data-flux-navlist-item][data-current] > div:first-child svg {
-    color: var(--color-brand-cream);
-}
-
-[data-flux-sidebar] [data-flux-navlist-group] > div:first-child > div,
-[data-flux-sidebar] [data-flux-navlist-group] > button {
-    color: var(--color-brand-green-deep);
-    font-weight: 600;
-}
-
-[data-flux-sidebar] [data-flux-navlist-group] > button:hover {
-    color: var(--color-brand-ink);
-    background-color: color-mix(in oklab, var(--color-brand-sage-soft) 80%, transparent);
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-item] {
-    color: color-mix(in oklab, white 90%, transparent);
-    font-weight: 500;
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-item] svg {
-    color: var(--color-brand-coral);
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-item]:hover {
-    color: white;
-    background-color: color-mix(in oklab, white 7%, transparent);
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] {
-    color: var(--color-brand-cream);
-    background-color: var(--color-brand-green);
-    border-color: var(--color-brand-green);
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] svg,
-.dark [data-flux-sidebar] [data-flux-navlist-item][data-current] > div:first-child svg {
-    color: var(--color-brand-cream);
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-group] > div:first-child > div,
-.dark [data-flux-sidebar] [data-flux-navlist-group] > button {
-    color: color-mix(in oklab, var(--color-brand-sage) 90%, transparent);
-    font-weight: 600;
-}
-
-.dark [data-flux-sidebar] [data-flux-navlist-group] > button:hover {
-    color: white;
-    background-color: color-mix(in oklab, white 7%, transparent);
-}
-
 /*
- * Sidebar navigation scrolls on its own so the logo, search and account
- * footer stay pinned while the menu is long.
+ * Keep the sidebar scrollbar in the original light-green brand palette.
  */
 [data-sidebar-scroll] {
     scrollbar-width: thin;

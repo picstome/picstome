@@ -1,11 +1,11 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\PaymentForm;
 use App\Livewire\Forms\PaymentLinkForm;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\InvoiceFromPaymentService;
-use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -13,6 +13,7 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public $sortBy = 'completed_at';
@@ -37,7 +38,7 @@ new class extends Component
 
         $this->selectedPayment = $payment;
 
-        Flux::modal('edit-payment')->show();
+        $this->openModal('edit-payment');
     }
 
     public function savePayment()
@@ -46,7 +47,7 @@ new class extends Component
 
         $this->paymentForm->update();
 
-        Flux::modal('edit-payment')->close();
+        $this->closeModal('edit-payment');
 
         $this->selectedPayment = null;
     }
@@ -57,7 +58,7 @@ new class extends Component
     {
         $this->pendingPaymentId = $id;
 
-        Flux::modal('delete-payment')->show();
+        $this->openModal('delete-payment');
     }
 
     public function deletePayment(Payment $payment)
@@ -66,7 +67,7 @@ new class extends Component
 
         $payment->delete();
 
-        Flux::modal('edit-payment')->close();
+        $this->closeModal('edit-payment');
     }
 
     #[Computed]
@@ -98,9 +99,9 @@ new class extends Component
     {
         $this->paymentLink = $this->linkForm->generatePaymentLink();
 
-        Flux::modal('generate-payment-link')->close();
+        $this->closeModal('generate-payment-link');
 
-        Flux::modal('payment-link')->show();
+        $this->openModal('payment-link');
 
         $this->linkForm->reset();
     }
@@ -132,128 +133,122 @@ new class extends Component
 
 <div>
     @if (! $this->team?->subscribed())
-        <flux:callout icon="credit-card" variant="secondary" class="mx-auto mt-8 max-w-prose">
-            <flux:callout.heading>{{ __('Subscribe to enable payments') }}</flux:callout.heading>
-            <flux:callout.text>
+        <x-ts-callout icon="credit-card" variant="secondary" class="mx-auto mt-8 max-w-prose">
+            <x-ts-callout-heading>{{ __('Subscribe to enable payments') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
                 {{ __('The payments feature is available for subscribed users only. Please subscribe to unlock payment links and payment management.') }}
-            </flux:callout.text>
+            </x-ts-callout-text>
             <x-slot name="actions">
-                <flux:button :href="route('subscribe')" variant="primary">
+                <x-ts-button :href="route('subscribe')" variant="primary">
                     {{ __('Subscribe') }}
-                </flux:button>
+                </x-ts-button>
             </x-slot>
-        </flux:callout>
+        </x-ts-callout>
     @else
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div class="max-sm:w-full sm:flex-1">
-                <x-heading level="1" size="xl">{{ __('Payments') }}</x-heading>
-                <x-subheading>{{ __('Generate payment links and manage payments.') }}</x-subheading>
+                <x-ts-heading level="1" size="xl">{{ __('Payments') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Generate payment links and manage payments.') }}</x-ts-subheading>
             </div>
             <div class="flex gap-2">
-                <flux:button :href="route('branding.payments')" variant="primary" class="btn-ink">
+                <x-ts-button :href="route('branding.payments')" variant="primary" class="btn-ink">
                     {{ __('Settings') }}
-                </flux:button>
+                </x-ts-button>
                 @if ($this->onboardingComplete)
-                    <flux:modal.trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
-                        <flux:button variant="primary">{{ __('Generate Payment Link') }}</flux:button>
-                    </flux:modal.trigger>
+                    <x-ts-modal-trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
+                        <x-ts-button variant="primary">{{ __('Generate Payment Link') }}</x-ts-button>
+                    </x-ts-modal-trigger>
                 @endif
             </div>
         </div>
 
         @if ($this->onboardingComplete)
             @if ($this->payments?->count())
-                <x-table id="table" class="mt-8">
-                    <x-table.columns>
-                        <x-table.column>{{ __('Description') }}</x-table.column>
-                        <x-table.column>{{ __('Amount') }}</x-table.column>
-                        <x-table.column>{{ __('Customer Email') }}</x-table.column>
-                        <x-table.column
+                <x-data-table id="table" class="mt-8">
+                    <x-data-table.columns>
+                        <x-data-table.column>{{ __('Description') }}</x-data-table.column>
+                        <x-data-table.column>{{ __('Amount') }}</x-data-table.column>
+                        <x-data-table.column>{{ __('Customer Email') }}</x-data-table.column>
+                        <x-data-table.column
                             sortable
                             :sorted="$sortBy === 'completed_at'"
                             :direction="$sortDirection"
                             wire:click="sort('completed_at')"
                         >
                             {{ __('Payment Date') }}
-                        </x-table.column>
-                        <x-table.column>{{ __('Photoshoot') }}</x-table.column>
-                    </x-table.columns>
-                    <x-table.rows>
+                        </x-data-table.column>
+                        <x-data-table.column>{{ __('Photoshoot') }}</x-data-table.column>
+                    </x-data-table.columns>
+                    <x-data-table.rows>
                         @foreach ($this->payments as $payment)
-                            <x-table.row>
-                                <x-table.cell variant="strong">{{ $payment->description }}</x-table.cell>
-                                <x-table.cell>{{ $payment->formattedAmount }}</x-table.cell>
-                                <x-table.cell>{{ $payment->customer_email }}</x-table.cell>
-                                <x-table.cell>
+                            <x-data-table.row>
+                                <x-data-table.cell variant="strong">{{ $payment->description }}</x-data-table.cell>
+                                <x-data-table.cell>{{ $payment->formattedAmount }}</x-data-table.cell>
+                                <x-data-table.cell>{{ $payment->customer_email }}</x-data-table.cell>
+                                <x-data-table.cell>
                                     {{ $payment->completed_at ? $payment->completed_at->format('F j, Y H:i') : '-' }}
-                                </x-table.cell>
-                                <x-table.cell>
+                                </x-data-table.cell>
+                                <x-data-table.cell>
                                     @if ($payment->photoshoot)
-                                        <flux:link href="/photoshoots/{{ $payment->photoshoot->id }}">
+                                        <x-ts-link href="/photoshoots/{{ $payment->photoshoot->id }}">
                                             {{ $payment->photoshoot->name }}
-                                        </flux:link>
+                                        </x-ts-link>
                                     @else
                                         -
                                     @endif
-                                </x-table.cell>
-                                <x-table.cell align="end">
-                                    <flux:dropdown position="bottom" align="end">
-                                        <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
-                                        <flux:menu>
-                                            <flux:menu.item
-                                                wire:click="editPayment({{ $payment->id }})"
-                                                icon="pencil-square"
-                                            >
-                                                {{ __('Edit') }}
-                                            </flux:menu.item>
-                                            @if ($payment->invoice)
-                                                <flux:menu.item
-                                                    :href="route('invoices.show', $payment->invoice)"
-                                                    icon="document-text"
-                                                    wire:navigate
-                                                >
-                                                    {{ __('View invoice') }}
-                                                </flux:menu.item>
-                                            @else
-                                                <flux:menu.item
-                                                    wire:click="createInvoice({{ $payment->id }})"
-                                                    icon="document-plus"
-                                                >
-                                                    {{ __('Create invoice') }}
-                                                </flux:menu.item>
-                                            @endif
+                                </x-data-table.cell>
+                                <x-data-table.cell align="end">
+                                    <x-dropdown position="bottom-end">
+                                        <x-slot:action>
+                                            <x-ts-button variant="ghost" size="sm" icon="ellipsis-horizontal" x-on:click="show = ! show" />
+                                        </x-slot:action>
 
-                                            <flux:menu.item
-                                                wire:click="requestDeletePayment({{ $payment->id }})"
-                                                icon="trash"
-                                                variant="danger"
-                                            >
-                                                {{ __('Delete') }}
-                                            </flux:menu.item>
-                                        </flux:menu>
-                                    </flux:dropdown>
-                                </x-table.cell>
-                            </x-table.row>
+                                        <x-dropdown.items :text="__('Edit')" icon="pencil-square" wire:click="editPayment({{ $payment->id }})" />
+
+                                        @if ($payment->invoice)
+                                            <x-dropdown.items
+                                                :text="__('View invoice')"
+                                                icon="document-text"
+                                                :href="route('invoices.show', $payment->invoice)"
+                                                navigate
+                                            />
+                                        @else
+                                            <x-dropdown.items
+                                                :text="__('Create invoice')"
+                                                icon="document-plus"
+                                                wire:click="createInvoice({{ $payment->id }})"
+                                            />
+                                        @endif
+
+                                        <x-dropdown.items
+                                            :text="__('Delete')"
+                                            icon="trash"
+                                            wire:click="requestDeletePayment({{ $payment->id }})"
+                                            class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                                        />
+                                    </x-dropdown>
+                                </x-data-table.cell>
+                            </x-data-table.row>
                         @endforeach
-                    </x-table.rows>
+                    </x-data-table.rows>
                     {{ $this->payments->links() }}
-                </x-table>
+                </x-data-table>
             @else
                 <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
-                    <flux:icon.credit-card class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
-                    <flux:heading size="lg" level="2">{{ __('No payments') }}</flux:heading>
-                    <flux:subheading class="mb-6 max-w-72 text-center">
+                    <x-icon name="credit-card" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
+                    <x-ts-heading size="lg" level="2">{{ __('No payments') }}</x-ts-heading>
+                    <x-ts-subheading class="mb-6 max-w-72 text-center">
                         {{ __('We couldn’t find any payments. Generate a payment link to request payment from a client.') }}
-                    </flux:subheading>
-                    <flux:modal.trigger name="generate-payment-link">
-                        <flux:button variant="primary">
+                    </x-ts-subheading>
+                    <x-ts-modal-trigger name="generate-payment-link">
+                        <x-ts-button variant="primary">
                             {{ __('Generate Link') }}
-                        </flux:button>
-                    </flux:modal.trigger>
+                        </x-ts-button>
+                    </x-ts-modal-trigger>
                 </div>
             @endif
 
-            <flux:modal name="generate-payment-link" class="w-full sm:max-w-lg">
+            <x-ts-modal name="generate-payment-link" class="w-full sm:max-w-lg">
                 <form
                     wire:submit="generatePaymentLink"
                     class="space-y-6"
@@ -268,122 +263,122 @@ new class extends Component
                     "
                 >
                     <div>
-                        <flux:heading size="lg">{{ __('Generate a New Payment Link') }}</flux:heading>
-                        <flux:subheading>
+                        <x-ts-heading size="lg">{{ __('Generate a New Payment Link') }}</x-ts-heading>
+                        <x-ts-subheading>
                             {{ __('Fill out the details below to generate a payment link you can send to your client.') }}
-                        </flux:subheading>
+                        </x-ts-subheading>
                     </div>
-                    <flux:field>
-                        <flux:label>{{ __('Amount') }}</flux:label>
-                        <flux:input.group>
-                            <flux:input wire:model="linkForm.amount" type="number" required />
-                            <flux:input.group.suffix>
+                    <x-ts-field>
+                        <x-ts-label>{{ __('Amount') }}</x-ts-label>
+                        <x-ts-input-group>
+                            <x-ts-input wire:model="linkForm.amount" type="number" required />
+                            <x-ts-input-group-suffix>
                                 {{ strtoupper($this->team?->stripe_currency ?? 'EUR') }}
-                            </flux:input.group.suffix>
-                        </flux:input.group>
-                        <flux:error name="linkForm.amount" />
-                    </flux:field>
-                    <flux:input wire:model="linkForm.description" :label="__('Description')" type="text" required />
+                            </x-ts-input-group-suffix>
+                        </x-ts-input-group>
 
-                    <flux:switch wire:model.live="linkForm.booking" :label="__('Booking')" />
+                    </x-ts-field>
+                    <x-ts-input wire:model="linkForm.description" :label="__('Description')" type="text" required />
+
+                    <x-ts-switch wire:model.live="linkForm.booking" :label="__('Booking')" />
 
                     @if ($linkForm->booking)
                         <div>
-                            <flux:date-picker wire:model="linkForm.booking_date" :label="__('Date')" />
+                            <x-date wire:model="linkForm.booking_date" :label="__('Date')" />
                             <div class="mt-4 grid grid-cols-2 gap-4">
-                                <flux:time-picker wire:model="linkForm.booking_start_time" :label="__('Start Time')" />
-                                <flux:time-picker wire:model="linkForm.booking_end_time" :label="__('End Time')" />
+                                <x-time wire:model="linkForm.booking_start_time" :label="__('Start Time')" />
+                                <x-time wire:model="linkForm.booking_end_time" :label="__('End Time')" />
                             </div>
                         </div>
                     @endif
 
                     <div class="flex">
-                        <flux:spacer />
-                        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                        <x-ts-spacer />
+                        <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                     </div>
                 </form>
-            </flux:modal>
+            </x-ts-modal>
 
-            <flux:modal name="payment-link" class="w-full sm:max-w-lg">
+            <x-ts-modal name="payment-link" class="w-full sm:max-w-lg">
                 <div class="space-y-6">
-                    <flux:heading size="lg">{{ __('Your payment link is ready!') }}</flux:heading>
-                    <flux:subheading>
+                    <x-ts-heading size="lg">{{ __('Your payment link is ready!') }}</x-ts-heading>
+                    <x-ts-subheading>
                         {{ __('Share this link with your client to request payment.') }}
-                    </flux:subheading>
+                    </x-ts-subheading>
 
-                    <flux:input icon="link" :value="$this->paymentLink" readonly copyable />
+                    <x-ts-input icon="link" :value="$this->paymentLink" readonly copyable />
                 </div>
-            </flux:modal>
+            </x-ts-modal>
 
-            <flux:modal name="edit-payment" variant="flyout">
+            <x-ts-modal name="edit-payment" variant="flyout">
                 @if ($selectedPayment)
                     <form wire:submit="savePayment" class="space-y-6">
                         <div>
-                            <flux:heading size="lg">{{ __('Update payment') }}</flux:heading>
-                            <flux:text class="mt-2">
+                            <x-ts-heading size="lg">{{ __('Update payment') }}</x-ts-heading>
+                            <x-ts-text class="mt-2">
                                 {{ __('Make changes to the payment details.') }}
-                            </flux:text>
+                            </x-ts-text>
                         </div>
-                        <flux:select wire:model="paymentForm.photoshoot_id" :label="__('Photoshoot')">
-                            <flux:select.option value="">{{ __('None') }}</flux:select.option>
+                        <x-ts-select wire:model="paymentForm.photoshoot_id" :label="__('Photoshoot')">
+                            <x-ts-select-option value="">{{ __('None') }}</x-ts-select-option>
                             @foreach ($this->photoshoots as $photoshoot)
-                                <flux:select.option value="{{ $photoshoot->id }}">
+                                <x-ts-select-option value="{{ $photoshoot->id }}">
                                     {{ $photoshoot->name }}
-                                </flux:select.option>
+                                </x-ts-select-option>
                             @endforeach
-                        </flux:select>
-                        <flux:input
+                        </x-ts-select>
+                        <x-ts-input
                             :value="$this->selectedPayment->description"
                             :label="__('Description')"
                             type="text"
                             variant="filled"
                             readonly
                         />
-                        <flux:input
+                        <x-ts-input
                             :value="$this->selectedPayment->formattedAmount"
                             :label="__('Amount')"
                             variant="filled"
                             readonly
                         />
-                        <flux:input
+                        <x-ts-input
                             :value="strtoupper($this->selectedPayment->currency)"
                             :label="__('Currency')"
                             variant="filled"
                             readonly
                         />
-                        <flux:input
+                        <x-ts-input
                             :value="$this->selectedPayment->completed_at?->format('Y-m-d H:i:s')"
                             :label="__('Payment Date')"
                             variant="filled"
                             readonly
                         />
-                        <flux:input
+                        <x-ts-input
                             :value="$this->selectedPayment->stripe_payment_intent_id"
                             :label="__('Payment Intent ID')"
                             variant="filled"
                             readonly
                         />
                         <div class="flex items-center gap-4">
-                            <flux:spacer />
-                            <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
+                            <x-ts-spacer />
+                            <x-ts-button type="submit" variant="primary">{{ __('Save changes') }}</x-ts-button>
                         </div>
                     </form>
                 @endif
-            </flux:modal>
+            </x-ts-modal>
         @else
-            <flux:callout icon="banknotes" variant="secondary" class="mt-8">
-                <flux:callout.heading>
+            <x-ts-callout icon="banknotes" variant="secondary" class="mt-8">
+                <x-ts-callout-heading>
                     {{ __('Complete Stripe onboarding to accept payments') }}
-                </flux:callout.heading>
-                <flux:callout.text>
+                </x-ts-callout-heading>
+                <x-ts-callout-text>
                     {{ __('Before you can accept payments, you must complete your Stripe Connect onboarding process.') }}
-                </flux:callout.text>
+                </x-ts-callout-text>
                 <x-slot name="actions">
-                    <flux:button :href="route('stripe.connect')" variant="primary">
+                    <x-ts-button :href="route('stripe.connect')" variant="primary">
                         {{ __('Begin Stripe Onboarding') }}
-                    </flux:button>
+                    </x-ts-button>
                 </x-slot>
-            </flux:callout>
+            </x-ts-callout>
         @endif
     @endif
 

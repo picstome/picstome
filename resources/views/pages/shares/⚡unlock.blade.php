@@ -36,13 +36,13 @@ new #[Layout('layouts.guest')] class extends Component
 <div class="mx-auto mt-4 w-full md:w-96 lg:mt-8">
     <form wire:submit="unlock" class="space-y-6">
         <div>
-            <flux:heading size="lg">{{ __('Protected gallery') }}</flux:heading>
-            <flux:subheading>{{ __('Enter the gallery password to unlock it.') }}</flux:subheading>
+            <x-ts-heading size="lg">{{ __('Protected gallery') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('Enter the gallery password to unlock it.') }}</x-ts-subheading>
         </div>
-        <flux:input wire:model="password" :label="__('Password')" type="text" />
+        <x-ts-input wire:model="password" :label="__('Password')" type="text" />
         <div class="flex">
-            <flux:spacer />
-         <flux:button type="submit" variant="primary">{{ __('Unlock') }}</flux:button>
+            <x-ts-spacer />
+         <x-ts-button type="submit" variant="primary">{{ __('Unlock') }}</x-ts-button>
         </div>
     </form>
 </div>

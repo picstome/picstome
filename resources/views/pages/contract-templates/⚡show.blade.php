@@ -1,12 +1,13 @@
 <?php
 
+use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractTemplateForm;
 use App\Models\ContractTemplate;
-use Flux\Flux;
 use Livewire\Component;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     public ContractTemplate $contractTemplate;
 
     public ContractTemplateForm $form;
@@ -26,7 +27,7 @@ new class extends Component
 
         $this->contractTemplate = $this->contractTemplate->fresh();
 
-        Flux::modal('edit')->close();
+        $this->closeModal('edit');
     }
 
     public function delete()
@@ -39,31 +40,31 @@ new class extends Component
 
 <div>
     <div class="max-lg:hidden">
-        <flux:button :href="route('contract-templates')" icon="chevron-left" variant="subtle" inset>
+        <x-ts-button :href="route('contract-templates')" icon="chevron-left" variant="subtle" inset>
             {{ __('Templates') }}
-        </flux:button>
+        </x-ts-button>
     </div>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full sm:flex-1">
             <div class="flex items-center gap-4">
-                <x-heading level="1" size="xl">{{ $contractTemplate->title }}</x-heading>
+                <x-ts-heading level="1" size="xl">{{ $contractTemplate->title }}</x-ts-heading>
             </div>
         </div>
         <div class="flex gap-4">
-            <flux:modal.trigger name="delete-contract-template">
-                <flux:button variant="subtle">
+            <x-ts-modal-trigger name="delete-contract-template">
+                <x-ts-button variant="subtle">
                     {{ __('Delete') }}
-                </flux:button>
-            </flux:modal.trigger>
+                </x-ts-button>
+            </x-ts-modal-trigger>
 
-            <flux:modal.trigger name="edit">
-                <flux:button>{{ __('Edit') }}</flux:button>
-            </flux:modal.trigger>
+            <x-ts-modal-trigger name="edit">
+                <x-ts-button>{{ __('Edit') }}</x-ts-button>
+            </x-ts-modal-trigger>
         </div>
     </div>
 
-    <flux:separator class="mt-6 mb-10" />
+    <x-ts-separator class="mt-6 mb-10" />
 
     <div
         class="prose prose-sm dark:prose-invert lg:mx-auto lg:flex lg:min-h-[1123px] lg:min-w-[794px] lg:flex-col lg:items-stretch lg:justify-start lg:overflow-auto lg:border lg:border-zinc-200 lg:p-6 lg:shadow-sm lg:dark:border-zinc-700"
@@ -71,19 +72,19 @@ new class extends Component
         {!! $contractTemplate->formatted_markdown_body !!}
     </div>
 
-    <flux:modal name="edit" class="w-full max-w-[794px]">
+    <x-ts-modal name="edit" class="w-full max-w-[794px]">
         <form wire:submit="save" class="-mb-6 space-y-6">
             <div>
-                <flux:heading size="lg">{{ __('Edit template') }}</flux:heading>
-                <flux:subheading>{{ __('Enter template details.') }}</flux:subheading>
+                <x-ts-heading size="lg">{{ __('Edit template') }}</x-ts-heading>
+                <x-ts-subheading>{{ __('Enter template details.') }}</x-ts-subheading>
             </div>
 
-            <flux:input wire:model="form.title" :label="__('Title')" type="text" />
+            <x-ts-input wire:model="form.title" :label="__('Title')" type="text" />
 
-            <flux:field
+            <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <flux:label>{{ __('Terms') }}</flux:label>
+                <x-ts-label>{{ __('Terms') }}</x-ts-label>
 
                 <trix-editor
                     input="trix"
@@ -94,19 +95,19 @@ new class extends Component
 
                 <input wire:model="form.body" id="trix" type="text" value="{{ $form->body }}" class="hidden" />
 
-                <flux:error name="form.body" />
-            </flux:field>
+                <x-ts-error name="form.body" />
+            </x-ts-field>
 
             <div class="sticky right-0 -bottom-6 left-0 bg-white dark:bg-zinc-800">
-                <flux:separator />
+                <x-ts-separator />
                 <div class="flex py-6">
-                    <flux:spacer />
+                    <x-ts-spacer />
 
-                    <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                 </div>
             </div>
         </form>
-    </flux:modal>
+    </x-ts-modal>
 
     <x-confirm-modal
         name="delete-contract-template"

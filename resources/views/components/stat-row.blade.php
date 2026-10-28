@@ -31,7 +31,7 @@
         </span>
 
         @if ($clickable)
-            <flux:icon.chart-bar class="text-brand-green/35 group-hover:text-brand-coral dark:text-brand-sage/35 dark:group-hover:text-brand-coral size-4 transition-colors" />
+            <x-icon name="chart-bar" class="text-brand-green/35 group-hover:text-brand-coral dark:text-brand-sage/35 dark:group-hover:text-brand-coral size-4 transition-colors" />
         @endif
     </span>
 </div>
