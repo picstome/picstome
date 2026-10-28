@@ -337,6 +337,43 @@ test('a plain comment keeps the annotation fields empty', function () {
     expect($comment->hasCoordinates())->toBeFalse();
 });
 
+test('the annotation overlay stays hidden until annotate mode is enabled', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
+    $page->wait(0.2);
+
+    expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
+        ->toBe('none')
+        ->and($page->script(<<<'JS'
+            getComputedStyle(
+                [...document.querySelectorAll('[data-annotate-button]')]
+                    .find((button) => getComputedStyle(button).display !== 'none')
+            ).backgroundColor
+        JS))->not->toBe('rgba(0, 0, 0, 0)');
+
+    $page->click('Annotate');
+    $page->wait(0.2);
+
+    expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
+        ->toBe('block')
+        ->and($page->script(<<<'JS'
+            getComputedStyle(
+                [...document.querySelectorAll('[data-annotate-button]')]
+                    .find((button) => getComputedStyle(button).display !== 'none')
+            ).backgroundColor
+        JS))->not->toBe('rgba(0, 0, 0, 0)');
+
+    $page->click('Exit annotation mode');
+    $page->wait(0.2);
+
+    expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
+        ->toBe('none');
+});
+
 test('annotations from an older version are flagged in the comment list', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create(['version_count' => 1]);

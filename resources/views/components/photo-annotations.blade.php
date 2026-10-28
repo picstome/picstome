@@ -98,9 +98,17 @@
                 this.$dispatch('annotations-visibility-changed', { visible: this.annotationsVisible })
             },
             startPointer(event) {
+                if (!this.annotating) {
+                    return
+                }
+
                 this.pointerStart = { x: event.clientX, y: event.clientY }
             },
             placePin(event) {
+                if (!this.annotating) {
+                    return
+                }
+
                 const start = this.pointerStart
                 this.pointerStart = null
 
@@ -134,7 +142,7 @@
             x-cloak
             style="display: none"
             class="pointer-events-auto absolute cursor-crosshair"
-            :style="`left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;`"
+            :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             x-on:pointerdown="startPointer($event)"
             x-on:click="placePin($event)"
         ></div>
@@ -143,7 +151,7 @@
             <div
                 x-show="annotationsVisible"
                 class="absolute"
-                :style="`left: ${box.left}px; top: ${box.top}px; width: ${box.width}px; height: ${box.height}px;`"
+                :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             >
                 @foreach ($pins as $pin)
                     @php
