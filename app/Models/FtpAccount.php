@@ -7,6 +7,7 @@ use Database\Factories\FtpAccountFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class FtpAccount extends Model
@@ -159,27 +160,84 @@ class FtpAccount extends Model
     }
 
     /**
-     * The gallery receiving this team's uploads: the active shoot, or a
-     * dated gallery created (or reused) for today when no shoot is active.
+     * The gallery the FTP ingest created for the team's current day, if any.
+     * The date is the stable identity, independent of the localized name.
+     */
+    public static function dailyGalleryFor(Team $team): ?Gallery
+    {
+        return $team->galleries()
+            ->whereDate('daily_shoot_date', today())
+            ->first();
+    }
+
+    /**
+     * An empty shoot gallery created earlier today: the auto-created daily
+     * gallery or a gallery named after today's shoot. Only empty galleries
+     * qualify, so a session that already contains photos is never reused.
+     */
+    public static function emptyDailyGalleryFor(Team $team): ?Gallery
+    {
+        if ($gallery = static::dailyGalleryFor($team)) {
+            if ($gallery->photos()->doesntExist()) {
+                return $gallery;
+            }
+        }
+
+        $name = static::shootNameFor($team);
+
+        return $team->galleries()
+            ->whereDate('created_at', today())
+            ->where('is_public', false)
+            ->whereDoesntHave('photos')
+            ->where(function ($query) use ($name) {
+                $query->where('name', $name)
+                    ->orWhere('name', 'like', $name.' (%');
+            })
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * The gallery receiving this team's uploads: the active shoot, or the
+     * single dated gallery created (or reused) for today when no shoot is
+     * active. Creation is serialized and keyed by team + date so parallel
+     * uploads and the webhook/scheduler never spawn duplicates.
      */
     public function resolveActiveGallery(): Gallery
     {
-        if ($gallery = $this->activeGallery) {
-            return $gallery;
-        }
+        return Cache::lock("ftp-account:{$this->id}:active-gallery", 60)
+            ->block(10, function (): Gallery {
+                $this->refresh();
 
-        $name = static::shootNameFor($this->team);
+                if ($gallery = $this->activeGallery) {
+                    return $gallery;
+                }
 
-        $gallery = $this->team->galleries()->where('name', $name)->first()
-            ?? $this->team->galleries()->create([
-                'name' => $name,
-                'is_public' => false,
-                'keep_original_size' => (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true),
-            ]);
+                $gallery = static::dailyGalleryFor($this->team);
 
-        $this->update(['active_gallery_id' => $gallery->id]);
+                if (! $gallery) {
+                    $gallery = static::emptyDailyGalleryFor($this->team);
 
-        return $gallery;
+                    if ($gallery) {
+                        $gallery->update(['daily_shoot_date' => today()->toDateString()]);
+                    }
+                }
+
+                if (! $gallery) {
+                    $gallery = $this->team->galleries()->firstOrCreate(
+                        ['daily_shoot_date' => today()],
+                        [
+                            'name' => static::shootNameFor($this->team),
+                            'is_public' => false,
+                            'keep_original_size' => (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true),
+                        ],
+                    );
+                }
+
+                $this->update(['active_gallery_id' => $gallery->id]);
+
+                return $gallery;
+            });
     }
 
     /**

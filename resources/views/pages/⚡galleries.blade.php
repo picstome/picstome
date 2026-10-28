@@ -1,13 +1,14 @@
 <?php
 
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\GalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
@@ -32,8 +33,8 @@ new class extends Component
     }
 
     /**
-     * Create today's shoot gallery, route live uploads to it, and jump
-     * straight to its credentials.
+     * Open today's live shoot: reuse an empty shoot gallery when one already
+     * exists, otherwise create a new numbered one, then route uploads to it.
      */
     public function startLiveShoot()
     {
@@ -43,33 +44,59 @@ new class extends Component
             return;
         }
 
-        $name = FtpAccount::shootNameFor($this->team);
+        $lock = Cache::lock("team:{$this->team->id}:start-live-shoot", 30);
 
-        if ($todayShoots = $this->team->galleries()->where('name', 'like', $name.'%')->count()) {
-            $name = $name.' ('.($todayShoots + 1).')';
-        }
-
-        $gallery = $this->team->galleries()->create([
-            'name' => $name,
-            'is_public' => false,
-            'keep_original_size' => (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true),
-        ]);
-
-        if (! $account = $this->team->ftpAccount()->first()) {
-            $account = FtpAccount::provisionForTeam($this->team);
-        }
-
-        if (! $account) {
-            $this->toast()->error(__('Could not reach the upload server. Please try again.'))->send();
-
-            $this->redirect(route('galleries.show', ['gallery' => $gallery]));
-
+        // A double click or a retried request must not create two sessions.
+        if (! $lock->get()) {
             return;
         }
 
-        $account->routeTo($gallery);
+        try {
+            $keepOriginalSize = (bool) ($this->team->owner->galleryDefaults()['keep_original_size'] ?? true);
+            $gallery = FtpAccount::emptyDailyGalleryFor($this->team);
 
-        $this->redirect(route('galleries.show', ['gallery' => $gallery, 'live' => 1]));
+            if ($gallery) {
+                $gallery->update([
+                    // The auto-created daily gallery becomes a real session;
+                    // later ingest must create a fresh daily gallery if needed.
+                    'name' => $gallery->daily_shoot_date
+                        ? FtpAccount::shootNameFor($this->team)
+                        : $gallery->name,
+                    'daily_shoot_date' => null,
+                    'keep_original_size' => $keepOriginalSize,
+                ]);
+            } else {
+                $name = FtpAccount::shootNameFor($this->team);
+
+                if ($todayShoots = $this->team->galleries()->where('name', 'like', $name.'%')->count()) {
+                    $name = $name.' ('.($todayShoots + 1).')';
+                }
+
+                $gallery = $this->team->galleries()->create([
+                    'name' => $name,
+                    'is_public' => false,
+                    'keep_original_size' => $keepOriginalSize,
+                ]);
+            }
+
+            if (! $account = $this->team->ftpAccount()->first()) {
+                $account = FtpAccount::provisionForTeam($this->team);
+            }
+
+            if (! $account) {
+                $this->toast()->error(__('Could not reach the upload server. Please try again.'))->send();
+
+                $this->redirect(route('galleries.show', ['gallery' => $gallery]));
+
+                return;
+            }
+
+            $account->routeTo($gallery);
+
+            $this->redirect(route('galleries.show', ['gallery' => $gallery, 'live' => 1]));
+        } finally {
+            $lock->release();
+        }
     }
 
     #[Computed]
@@ -96,7 +123,14 @@ new class extends Component
         </div>
         <div class="flex gap-4">
             @if ($this->team?->subscribed())
-                <x-ts-button icon="camera" wire:click="startLiveShoot" variant="primary" class="btn-ink">
+                <x-ts-button
+                    icon="camera"
+                    wire:click="startLiveShoot"
+                    wire:loading.attr="disabled"
+                    wire:target="startLiveShoot"
+                    variant="primary"
+                    class="btn-ink"
+                >
                     {{ __('Connect camera') }}
                 </x-ts-button>
             @endif

@@ -23,9 +23,22 @@ class SftpgoWebhookController
         $action = $request->input('action');
         $username = (string) $request->input('username', '');
         $path = (string) ($request->input('virtual_path') ?? $request->input('objectname', ''));
+        $status = $request->input('status');
+        $fileSize = $request->input('file_size');
 
-        if ($action !== 'upload' || $username === '' || $path === '') {
-            Log::info('SFTPGo webhook ignored.', ['action' => $action, 'username' => $username, 'path' => $path]);
+        // Only ingest successful, non-empty uploads. Both fields are optional
+        // so older webhook templates without them keep working.
+        $failed = $status !== null && (int) $status !== 1;
+        $empty = $fileSize !== null && (int) $fileSize <= 0;
+
+        if ($action !== 'upload' || $username === '' || $path === '' || $failed || $empty) {
+            Log::info('SFTPGo webhook ignored.', [
+                'action' => $action,
+                'username' => $username,
+                'path' => $path,
+                'status' => $status,
+                'file_size' => $fileSize,
+            ]);
 
             return response()->noContent();
         }

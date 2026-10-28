@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\FtpAccount;
+use App\Models\Photo;
 use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -60,6 +61,61 @@ it('resolves uploads to the active gallery and falls back to a dated shoot galle
     $account->routeTo(null);
 
     expect($account->fresh()->activeGallery)->toBeNull();
+});
+
+it('keeps one daily gallery regardless of the request or queue locale', function () {
+    $team = Team::factory()->create();
+    $account = FtpAccount::factory()->for($team)->create();
+
+    app()->setLocale('es');
+
+    $first = $account->resolveActiveGallery();
+
+    expect($first->name)->toBe('Sesión '.now()->format('Y-m-d'));
+    expect($first->daily_shoot_date->toDateString())->toBe(today()->toDateString());
+
+    $account->routeTo(null);
+
+    // The queue/CLI runs with the app locale, not the request locale.
+    app()->setLocale('en');
+
+    $second = $account->fresh()->resolveActiveGallery();
+
+    expect($second->id)->toBe($first->id);
+    expect($team->galleries()->count())->toBe(1);
+});
+
+it('adopts an empty shoot gallery created earlier the same day', function () {
+    $team = Team::factory()->create();
+    $existing = $team->galleries()->create([
+        'name' => FtpAccount::shootName(),
+        'is_public' => false,
+    ]);
+
+    $account = FtpAccount::factory()->for($team)->create();
+
+    $resolved = $account->resolveActiveGallery();
+
+    expect($resolved->id)->toBe($existing->id);
+    expect($resolved->daily_shoot_date->toDateString())->toBe(today()->toDateString());
+    expect($team->galleries()->count())->toBe(1);
+});
+
+it('does not reuse a completed shoot gallery as the daily gallery', function () {
+    $team = Team::factory()->create();
+    $existing = $team->galleries()->create([
+        'name' => FtpAccount::shootName(),
+        'is_public' => false,
+    ]);
+
+    Photo::factory()->for($existing)->create();
+
+    $account = FtpAccount::factory()->for($team)->create();
+
+    $resolved = $account->resolveActiveGallery();
+
+    expect($resolved->id)->not->toBe($existing->id);
+    expect($team->galleries()->count())->toBe(2);
 });
 
 it('encrypts passwords at rest', function () {

@@ -6,16 +6,23 @@ use App\Events\PhotoAdded;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class IngestFtpUpload implements ShouldQueue
+class IngestFtpUpload implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $tries = 3;
+
+    /**
+     * The webhook and the every-minute scan can see the same inbox file;
+     * keep it unique until the job finishes so it is not ingested twice.
+     */
+    public int $uniqueFor = 300;
 
     /**
      * Create a new job instance.
@@ -24,6 +31,14 @@ class IngestFtpUpload implements ShouldQueue
         public int $ftpAccountId,
         public string $path,
     ) {}
+
+    /**
+     * Get the unique ID for the job.
+     */
+    public function uniqueId(): string
+    {
+        return $this->ftpAccountId.':'.$this->path;
+    }
 
     /**
      * Execute the job.
@@ -42,10 +57,6 @@ class IngestFtpUpload implements ShouldQueue
             return;
         }
 
-        // Lazy: the receiving gallery is resolved (or created) only when a
-        // real file arrives, so empty shoot galleries are never spawned.
-        $gallery = $account->resolveActiveGallery();
-
         $name = Gallery::sanitizeFileName(basename($this->path));
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
@@ -59,11 +70,17 @@ class IngestFtpUpload implements ShouldQueue
 
         $size = (int) $disk->size($this->path);
 
-        if (! $gallery->team->canStoreFile($size)) {
-            Log::warning("FTP upload {$this->path} skipped: team {$gallery->team_id} does not have enough storage. File left in inbox.");
+        if (! $account->team->canStoreFile($size)) {
+            Log::warning("FTP upload {$this->path} skipped: team {$account->team_id} does not have enough storage. File left in inbox.");
 
             return;
         }
+
+        // Lazy: the receiving gallery is resolved (or created) only after
+        // the file is known to be a supported photo that fits the quota, so
+        // junk or blocked uploads never spawn empty shoot galleries.
+        $gallery = $account->resolveActiveGallery();
+        $createdGallery = $gallery->wasRecentlyCreated;
 
         $photo = $gallery->withPhotoIdentityLock(Gallery::identityKey($name), function () use ($gallery, $disk, $name, $size): ?Photo {
             $existingPhoto = $gallery->findLogicalPhotoBySourceName($name);
@@ -84,6 +101,10 @@ class IngestFtpUpload implements ShouldQueue
         });
 
         if (! $photo) {
+            if ($createdGallery && $gallery->photos()->doesntExist()) {
+                $gallery->delete();
+            }
+
             return;
         }
 

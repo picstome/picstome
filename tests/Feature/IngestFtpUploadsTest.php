@@ -96,7 +96,38 @@ describe('ingest command', function () {
         $shoot = $this->account->fresh()->activeGallery;
 
         expect($shoot->name)->toBe(FtpAccount::shootName());
+        expect($shoot->daily_shoot_date->toDateString())->toBe(today()->toDateString());
         expect($shoot->photos()->count())->toBe(1);
+    });
+
+    it('creates only one daily gallery for multiple uploads when nothing is routed', function () {
+        Queue::fake();
+
+        $this->gallery->delete();
+
+        $first = putUpload($this->account, 'DSC_0001.JPG');
+        $second = putUpload($this->account, 'DSC_0002.JPG');
+
+        (new IngestFtpUpload($this->account->id, $first))->handle();
+        (new IngestFtpUpload($this->account->id, $second))->handle();
+
+        expect($this->account->team->galleries()->count())->toBe(1);
+
+        tap($this->account->fresh()->activeGallery, function ($gallery) {
+            expect($gallery->photos()->count())->toBe(2);
+            expect($gallery->daily_shoot_date->toDateString())->toBe(today()->toDateString());
+        });
+    });
+
+    it('queues the same inbox file only once', function () {
+        Queue::fake();
+
+        $path = putUpload($this->account, 'DSC_0001.JPG');
+
+        IngestFtpUpload::dispatch($this->account->id, $path);
+        IngestFtpUpload::dispatch($this->account->id, $path);
+
+        Queue::assertPushed(IngestFtpUpload::class, 1);
     });
 
     it('names the auto-created shoot gallery in the team owner language', function () {
@@ -159,6 +190,17 @@ describe('ingest job', function () {
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 
+    it('does not create a gallery for unsupported files when nothing is routed', function () {
+        $this->gallery->delete();
+
+        $path = putUpload($this->account, 'virus.exe');
+
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
+        expect($this->account->team->galleries()->count())->toBe(0);
+        expect(Storage::disk('s3')->exists($path))->toBeFalse();
+    });
+
     it('records a duplicate upload as a new version without deleting the existing photo', function () {
         Queue::fake();
         Event::fake(PhotoAdded::class);
@@ -185,6 +227,18 @@ describe('ingest job', function () {
         (new IngestFtpUpload($this->account->id, $path))->handle();
 
         expect($this->gallery->photos()->count())->toBe(0);
+        expect(Storage::disk('s3')->exists($path))->toBeTrue();
+    });
+
+    it('does not create a gallery when storage is full and nothing is routed', function () {
+        $this->gallery->delete();
+        $this->account->team->update(['custom_storage_limit' => 1]);
+
+        $path = putUpload($this->account, 'DSC_0001.JPG');
+
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
+        expect($this->account->team->galleries()->count())->toBe(0);
         expect(Storage::disk('s3')->exists($path))->toBeTrue();
     });
 

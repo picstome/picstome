@@ -2,6 +2,7 @@
 
 use App\Models\FtpAccount;
 use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -183,21 +184,53 @@ test('live shoot galleries follow the last chosen original size preference', fun
     expect($this->team->galleries()->first()->keep_original_size)->toBeFalse();
 });
 
-test('live shoot gallery names increment within the same day', function () {
+test('live shoot reuses the empty gallery until it receives photos', function () {
     config(['picstome.ftp_uploads.sftpgo_url' => null]);
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
     Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
     Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
 
-    $names = $this->team->galleries()->pluck('name');
+    expect($this->team->galleries()->count())->toBe(1);
+    expect($this->team->galleries()->first()->name)->toBe('Shoot '.now()->format('Y-m-d'));
 
-    expect($names)->toContain('Shoot '.now()->format('Y-m-d'));
-    expect($names)->toContain('Shoot '.now()->format('Y-m-d').' (2)');
-
-    // One stable team account, routing to the latest shoot.
+    // One stable team account, still routing to the same shoot.
     expect(FtpAccount::count())->toBe(1);
+    expect($this->team->ftpAccount->activeGallery->name)->toBe('Shoot '.now()->format('Y-m-d'));
+});
+
+test('live shoot creates a numbered gallery after the current one has photos', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    $first = $this->team->galleries()->first();
+
+    Photo::factory()->for($first)->create();
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->count())->toBe(2);
+    expect($first->fresh()->name)->toBe('Shoot '.now()->format('Y-m-d'));
     expect($this->team->ftpAccount->activeGallery->name)->toBe('Shoot '.now()->format('Y-m-d').' (2)');
+});
+
+test('live shoot adopts the empty daily gallery created by FTP ingest', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+
+    $daily = $this->team->galleries()->create([
+        'name' => 'Shoot '.now()->format('Y-m-d'),
+        'is_public' => false,
+        'daily_shoot_date' => today()->toDateString(),
+    ]);
+
+    Livewire::actingAs($this->user)->test('pages::galleries')->call('startLiveShoot');
+
+    expect($this->team->galleries()->count())->toBe(1);
+    expect($this->team->ftpAccount->activeGallery->id)->toBe($daily->id);
+    expect($daily->fresh()->daily_shoot_date)->toBeNull();
 });
 
 test('starting a live shoot requires a subscription', function () {

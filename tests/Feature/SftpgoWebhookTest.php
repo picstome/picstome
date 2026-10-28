@@ -22,6 +22,8 @@ it('ingests immediately when a valid upload event arrives', function () {
         'action' => 'upload',
         'username' => '234816',
         'virtual_path' => '/1Z8A0660.JPG',
+        'status' => 1,
+        'file_size' => 1024,
     ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
 
     Queue::assertPushed(IngestFtpUpload::class, fn ($job) => $job->ftpAccountId === $this->account->id
@@ -62,6 +64,26 @@ it('ignores uploads for unknown usernames', function () {
         'action' => 'upload',
         'username' => 'nope',
         'virtual_path' => '/x.jpg',
+    ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
+
+    Queue::assertNotPushed(IngestFtpUpload::class);
+});
+
+it('ignores failed or empty upload events', function () {
+    Queue::fake();
+
+    $this->postJson('/webhooks/sftpgo', [
+        'action' => 'upload',
+        'username' => '234816',
+        'virtual_path' => '/failed.jpg',
+        'status' => 2,
+    ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
+
+    $this->postJson('/webhooks/sftpgo', [
+        'action' => 'upload',
+        'username' => '234816',
+        'virtual_path' => '/empty.jpg',
+        'file_size' => 0,
     ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
 
     Queue::assertNotPushed(IngestFtpUpload::class);
