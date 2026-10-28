@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
+use App\Traits\HasDownloadFilename;
 use Database\Factories\PhotoVersionFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Storage;
 class PhotoVersion extends Model
 {
     /** @use HasFactory<PhotoVersionFactory> */
-    use FormatsFileSize, HasFactory;
+    use FormatsFileSize, HasDownloadFilename, HasFactory;
 
     protected $guarded = [];
 
@@ -128,20 +129,20 @@ class PhotoVersion extends Model
         return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
     }
 
+    public function isVideo(): bool
+    {
+        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($ext, ['mp4', 'webm', 'ogg'], true);
+    }
+
     public function download()
     {
-        $filename = $this->name;
-
-        if ($this->raw_path) {
-            $pathInfo = pathinfo($this->name);
-            $filename = $pathInfo['filename'].'.jpg';
-        }
-
-        return Storage::disk($this->diskOrDefault())->download($this->path, $filename);
+        return Storage::disk($this->diskOrDefault())->download($this->path, $this->downloadFileName());
     }
 
     public function downloadRaw()
     {
-        return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->name);
+        return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->rawDownloadFileName());
     }
 }

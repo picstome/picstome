@@ -11,6 +11,7 @@ use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
+use App\Services\PhotoDownloadService;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -50,13 +51,9 @@ Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $
 
     abort_unless($gallery->is_share_downloadable, 401);
 
-    $type = request()->input('type', 'processed');
+    $type = request()->input('type') === 'raw' ? 'raw' : 'processed';
 
-    if ($type === 'raw') {
-        return $photo->downloadRaw();
-    }
-
-    return $photo->download();
+    return app(PhotoDownloadService::class)->download($photo, $type);
 })->name('shares.photos.download')->middleware([PasswordProtectGallery::class]);
 
 Route::get('/shares/{gallery:ulid}/photos/{photo}/pdf', function (Gallery $gallery, Photo $photo) {
@@ -140,11 +137,9 @@ Route::get('/galleries/{gallery}/photos/{photo}/versions/{version}/download', fu
     abort_unless($version->photo_id === $photo->id, 404);
     abort_unless($gallery->team->is(Auth::user()->currentTeam), 403);
 
-    if (request()->query('type') === 'raw') {
-        return $version->downloadRaw();
-    }
+    $type = request()->query('type') === 'raw' ? 'raw' : 'processed';
 
-    return $version->download();
+    return app(PhotoDownloadService::class)->download($version, $type);
 })->name('galleries.photos.versions.download')->middleware(['auth', 'verified']);
 
 Route::livewire('/photoshoots', 'pages::photoshoots')->name('photoshoots')->middleware(['auth', 'verified']);
@@ -223,13 +218,9 @@ Route::get('/settings', function () {
 })->name('settings')->middleware('auth');
 
 Route::get('/galleries/{gallery}/photos/{photo}/download', function (Gallery $gallery, Photo $photo) {
-    $type = request('type', 'processed');
+    $type = request()->input('type') === 'raw' ? 'raw' : 'processed';
 
-    if ($type === 'raw') {
-        return $photo->downloadRaw();
-    }
-
-    return $photo->download();
+    return app(PhotoDownloadService::class)->download($photo, $type);
 })->name('galleries.photos.download')->middleware(['auth', 'verified', 'can:view,photo']);
 
 Route::get('/galleries/{gallery}/photos/{photo}/pdf', function (Gallery $gallery, Photo $photo) {

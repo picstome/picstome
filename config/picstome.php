@@ -15,6 +15,14 @@ return [
 
     'photo_small_thumb_resize' => 500,
 
+    /**
+     * Presigned URL lifetime for individual photo downloads. Videos use a
+     * longer TTL because they are large and may need to be resumed.
+     */
+    'photo_download_url_ttl_minutes' => (int) env('PICSTOME_PHOTO_DOWNLOAD_URL_TTL_MINUTES', 10),
+
+    'video_download_url_ttl_minutes' => (int) env('PICSTOME_VIDEO_DOWNLOAD_URL_TTL_MINUTES', 360),
+
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
     'subscription_storage_limit' => 1073741824000, // 1TB in bytes

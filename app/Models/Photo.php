@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
+use App\Traits\HasDownloadFilename;
 use Carbon\Carbon;
 use Database\Factories\PhotoFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class Photo extends Model
 {
     /** @use HasFactory<PhotoFactory> */
-    use FormatsFileSize, HasFactory;
+    use FormatsFileSize, HasDownloadFilename, HasFactory;
 
     protected $guarded = [];
 
@@ -244,19 +245,12 @@ class Photo extends Model
 
     public function download()
     {
-        $filename = $this->name;
-
-        if ($this->raw_path) {
-            $pathInfo = pathinfo($this->name);
-            $filename = $pathInfo['filename'].'.jpg';
-        }
-
-        return Storage::disk($this->diskOrDefault())->download($this->path, $filename);
+        return Storage::disk($this->diskOrDefault())->download($this->path, $this->downloadFileName());
     }
 
     public function downloadRaw()
     {
-        return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->name);
+        return Storage::disk($this->diskOrDefault())->download($this->raw_path, $this->rawDownloadFileName());
     }
 
     /**
