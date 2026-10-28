@@ -226,7 +226,6 @@ test('starting a live shoot keeps the gallery when the upload server is unreacha
     expect(FtpAccount::count())->toBe(0);
 });
 
-
 test('shows a wider pagination window with first and last controls', function () {
     Gallery::factory()->for($this->team)->count(150)->create();
 

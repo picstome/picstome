@@ -111,7 +111,6 @@ it('allows a user to create a photoshoot with an existing customer', function ()
     expect($photoshoot->customer->is($customer))->toBeTrue();
 });
 
-
 it('shows a wider pagination window with first and last controls', function () {
     Photoshoot::factory()->for($this->team)->count(150)->create();
 
