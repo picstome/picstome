@@ -55,6 +55,57 @@ function something()
 }
 
 /**
+ * Register a local test disk that does not support temporary URLs.
+ *
+ * @return array{disk: string, root: string}
+ */
+function fakeLocalDiskWithoutTemporaryUrls(): array
+{
+    $disk = 'local-no-temp-'.uniqid();
+    $root = sys_get_temp_dir().'/picstome-test-'.uniqid();
+
+    Storage::set($disk, Storage::build([
+        'driver' => 'local',
+        'root' => $root,
+    ]));
+
+    return ['disk' => $disk, 'root' => $root];
+}
+
+/**
+ * Make a fake disk return predictable presigned URLs and capture the
+ * arguments used to generate them.
+ *
+ * @return object{urls: array<int, string>, options: array<int, array<string, mixed>>, expirations: array<int, DateTimeInterface>}
+ */
+function fakeTemporaryUrls(string $disk = 's3'): object
+{
+    $captured = new class
+    {
+        /** @var array<int, string> */
+        public array $urls = [];
+
+        /** @var array<int, array<string, mixed>> */
+        public array $options = [];
+
+        /** @var array<int, DateTimeInterface> */
+        public array $expirations = [];
+    };
+
+    Storage::disk($disk)->buildTemporaryUrlsUsing(function (string $path, DateTimeInterface $expiration, array $options) use ($captured) {
+        $url = 'https://s3.test/'.$path;
+
+        $captured->urls[] = $url;
+        $captured->options[] = $options;
+        $captured->expirations[] = $expiration;
+
+        return $url;
+    });
+
+    return $captured;
+}
+
+/**
  * Build a draft invoice with the snapshots an issued invoice needs.
  *
  * @param  array<string, mixed>  $attributes

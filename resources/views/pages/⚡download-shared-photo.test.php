@@ -4,7 +4,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\get;
@@ -16,20 +16,57 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
-test('can download a photo', function () {
-    Storage::fake('s3');
+test('falls back to a streamed download when the disk does not support temporary urls', function () {
+    $local = fakeLocalDiskWithoutTemporaryUrls();
+    Storage::disk($local['disk'])->put('photos/photo1.jpg', 'image');
 
     Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC'])->for($this->team))->create([
         'name' => 'photo1.jpg',
-        'disk' => 's3',
-        'path' => UploadedFile::fake()
-            ->image('photo1.jpg')
-            ->store('photo1.jpg', 's3'),
+        'disk' => $local['disk'],
+        'path' => 'photos/photo1.jpg',
     ]);
 
     $response = get('/shares/0123ABC/photos/1/download');
 
     $response->assertDownload('photo1.jpg');
+
+    File::deleteDirectory($local['root']);
+});
+
+test('redirects shared photo downloads to a presigned url', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('photos/photo1.jpg', 'image');
+    $signed = fakeTemporaryUrls();
+
+    Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC'])->for($this->team))->create([
+        'name' => 'photo1.jpg',
+        'disk' => 's3',
+        'path' => 'photos/photo1.jpg',
+    ]);
+
+    get('/shares/0123ABC/photos/1/download')
+        ->assertRedirect('https://s3.test/photos/photo1.jpg');
+
+    expect($signed->options[0]['ResponseContentDisposition'])->toContain('photo1.jpg');
+});
+
+test('redirects shared raw downloads to a presigned url', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('photos/photo1.jpg', 'image');
+    Storage::disk('s3')->put('photos/photo1.cr2', 'raw');
+    $signed = fakeTemporaryUrls();
+
+    Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC'])->for($this->team))->create([
+        'name' => 'photo1.cr2',
+        'disk' => 's3',
+        'path' => 'photos/photo1.jpg',
+        'raw_path' => 'photos/photo1.cr2',
+    ]);
+
+    get('/shares/0123ABC/photos/1/download?type=raw')
+        ->assertRedirect('https://s3.test/photos/photo1.cr2');
+
+    expect($signed->options[0]['ResponseContentDisposition'])->toContain('photo1.cr2');
 });
 
 test('unshared gallery photo can not be downloaded', function () {
@@ -58,40 +95,38 @@ test('unauthenticated visitors to a password-protected gallery are redirected to
 
 test('visitors with unlocked gallery can download the password-protected gallery', function () {
     Storage::fake('s3');
+    Storage::disk('s3')->put('photos/photo1.jpg', 'image');
+    fakeTemporaryUrls();
 
     Photo::factory()->for(Gallery::factory()->shared()->protected()->downloadable()->state(['ulid' => '0123ABC']))->create([
         'name' => 'photo1.jpg',
         'disk' => 's3',
-        'path' => UploadedFile::fake()
-            ->image('photo1.jpg')
-            ->store('photo1.jpg', 's3'),
+        'path' => 'photos/photo1.jpg',
     ]);
     session()->put('unlocked_gallery_ulids', ['0123ABC']);
 
     $response = get('/shares/0123ABC/photos/1/download');
 
-    $response->assertStatus(200);
+    $response->assertRedirect('https://s3.test/photos/photo1.jpg');
 });
 
-test('can download a shared photo with raw_path when available', function () {
-    Storage::fake('s3');
+test('falls back to streamed raw downloads when the disk does not support temporary urls', function () {
+    $local = fakeLocalDiskWithoutTemporaryUrls();
+    Storage::disk($local['disk'])->put('photos/photo1.jpg', 'image');
+    Storage::disk($local['disk'])->put('photos/photo1.cr2', 'raw');
 
     Photo::factory()->for(Gallery::factory()->shared()->downloadable()->state(['ulid' => '0123ABC']))->create([
         'name' => 'photo1.cr2',
-        'disk' => 's3',
-        'path' => UploadedFile::fake()
-            ->image('photo1.jpg')
-            ->store('photo1.jpg', 's3'),
-        'raw_path' => UploadedFile::fake()
-            ->create('photo1.cr2')
-            ->store('photo1.cr2', 's3'),
+        'disk' => $local['disk'],
+        'path' => 'photos/photo1.jpg',
+        'raw_path' => 'photos/photo1.cr2',
     ]);
 
-    $response = get('/shares/0123ABC/photos/1/download');
+    get('/shares/0123ABC/photos/1/download')
+        ->assertDownload('photo1.jpg');
 
-    $response->assertDownload('photo1.jpg');
+    get('/shares/0123ABC/photos/1/download?type=raw')
+        ->assertDownload('photo1.cr2');
 
-    $response = get('/shares/0123ABC/photos/1/download?type=raw');
-
-    $response->assertDownload('photo1.cr2');
+    File::deleteDirectory($local['root']);
 });
