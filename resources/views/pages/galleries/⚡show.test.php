@@ -1647,3 +1647,17 @@ describe('Live Camera Upload', function () {
         expect(FtpAccount::count())->toBe(0);
     });
 });
+
+test('the photographer gallery refreshes when the watcher detects a new photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->html())->toContain('wire:poll.5s');
+
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $component->call('refreshPhotos');
+
+    expect($component->allPhotos->contains($photo))->toBeTrue();
+});

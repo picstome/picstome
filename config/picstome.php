@@ -77,6 +77,11 @@ return [
      */
     'file_versions_enabled' => env('PICSTOME_FILE_VERSIONS_ENABLED', true),
 
+    /**
+     * How often an open gallery page checks for newly ingested photos.
+     */
+    'live_gallery_poll_seconds' => (int) env('PICSTOME_LIVE_GALLERY_POLL_SECONDS', 5),
+
     'disk' => 's3',
 
     // Number of days before expiration to send gallery reminder
@@ -125,6 +130,10 @@ return [
         // Files younger than this are skipped to avoid ingesting
         // transfers that are still in progress.
         'stability_seconds' => (int) env('FTP_UPLOADS_STABILITY_SECONDS', 60),
+
+        // The live scan runs from an open gallery page. S3 only lists
+        // completed objects, so it can use a much shorter window.
+        'live_scan_stability_seconds' => (int) env('PICSTOME_LIVE_SCAN_STABILITY_SECONDS', 2),
 
         // SFTPGo admin API. Leave empty to disable provisioning
         // (e.g. local development without a SFTPGo server).

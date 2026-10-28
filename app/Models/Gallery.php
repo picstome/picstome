@@ -44,6 +44,7 @@ class Gallery extends Model
             'is_share_watermarked' => 'boolean',
             'is_share_versions_visible' => 'boolean',
             'is_public' => 'boolean',
+            'daily_shoot_date' => 'date',
             'keep_original_size' => 'boolean',
             'share_selection_limit' => 'integer',
             'share_description' => 'string',

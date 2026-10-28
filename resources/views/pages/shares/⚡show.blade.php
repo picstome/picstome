@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,10 +23,23 @@ new #[Layout('layouts.guest')] class extends Component
     #[Url]
     public $activeTab = 'all';
 
+    /**
+     * Whether the photographer is currently routing camera uploads here.
+     * The client page only polls for new photos while this is true.
+     */
+    public bool $remoteMode = false;
+
     public function mount(Gallery $gallery, string $slug)
     {
         abort_unless($gallery->is_shared, 404);
         abort_if($gallery->slug !== $slug, 404);
+
+        $this->remoteMode = FtpAccount::query()
+            ->where('team_id', $gallery->team_id)
+            ->where('active', true)
+            ->where('active_gallery_id', $gallery->id)
+            ->exists();
+
         $this->getFavorites();
         $this->getCommentedPhotos();
     }
@@ -39,6 +53,24 @@ new #[Layout('layouts.guest')] class extends Component
     public function getCommentedPhotos()
     {
         $this->commentedPhotos = $this->gallery->photosInOrder($this->gallery->commentedPhotoIds());
+    }
+
+    /**
+     * New camera photos were ingested; reload the grid and cover.
+     */
+    #[On('gallery-photos-updated')]
+    public function refreshPhotos(): void
+    {
+        unset($this->allPhotos, $this->coverImage);
+    }
+
+    /**
+     * The photographer stopped the live session, so stop polling this page.
+     */
+    #[On('gallery-remote-mode-ended')]
+    public function stopRemoteMode(): void
+    {
+        $this->remoteMode = false;
     }
 
     #[Computed]
@@ -64,6 +96,16 @@ new #[Layout('layouts.guest')] class extends Component
 <x-slot name="color">{{ $gallery->team->brand_color }}</x-slot>
 
 <div x-data x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')" class="h-full">
+    @if ($remoteMode)
+        <livewire:gallery-live-watcher
+            :$gallery
+            :scan-inbox="false"
+            :stop-when-remote-mode-ends="true"
+            :poll-only-when-visible="true"
+            :key="'live-watcher-'.$gallery->id"
+        />
+    @endif
+
     @if ($this->allPhotos->isNotEmpty())
         <div class="relative">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
