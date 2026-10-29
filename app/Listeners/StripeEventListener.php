@@ -32,6 +32,7 @@ class StripeEventListener
             $team->update([
                 'custom_storage_limit' => $this->storageLimitFromPayload($event->payload),
                 'monthly_contract_limit' => null, // Unlimited contracts
+                'monthly_invoice_limit' => null, // Back to the plan default
             ]);
         }
     }
@@ -47,6 +48,7 @@ class StripeEventListener
             $team->update([
                 'custom_storage_limit' => $this->storageLimitFromPayload($event->payload),
                 'monthly_contract_limit' => null, // Unlimited contracts
+                'monthly_invoice_limit' => null, // Back to the plan default
             ]);
         }
     }
@@ -62,6 +64,7 @@ class StripeEventListener
             $team->update([
                 'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
                 'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
+                'monthly_invoice_limit' => config('picstome.personal_team_monthly_invoice_limit'),
             ]);
         }
     }

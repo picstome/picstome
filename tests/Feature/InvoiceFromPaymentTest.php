@@ -14,10 +14,9 @@ use Illuminate\Validation\ValidationException;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
-
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
+    $this->team->update(['monthly_invoice_limit' => 10]);
     $this->settings = InvoiceSetting::factory()->for($this->team)->create();
     $this->service = app(InvoiceFromPaymentService::class);
 });

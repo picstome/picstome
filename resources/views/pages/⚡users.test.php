@@ -54,6 +54,54 @@ describe('Users Page', function () {
         expect($team->custom_storage_limit)->toBe(12 * 1024 * 1024 * 1024);
     });
 
+    it('lets an admin update a user\'s monthly invoice limit', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->set('userForm.monthly_invoice_limit', 10)
+            ->call('saveUser')
+            ->assertHasNoErrors();
+
+        expect($user->personalTeam()->monthly_invoice_limit)->toBe(10);
+    });
+
+    it('marks invoices as unlimited when the monthly invoice limit is empty', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $team = $user->personalTeam();
+        $team->update(['monthly_invoice_limit' => 10]);
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->set('userForm.monthly_invoice_limit', null)
+            ->call('saveUser')
+            ->assertHasNoErrors();
+
+        expect($team->fresh()->monthly_invoice_limit)->toBeNull();
+    });
+
+    it('shows the storage, contracts and invoices limits labels', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->assertSee('Storage Limit')
+            ->assertSee('Contracts per month')
+            ->assertSee('Invoices per month');
+    });
+
     it('marks storage as unlimited when the custom storage limit is set to null', function () {
         $admin = User::factory()->withPersonalTeam()->create([
             'email' => 'admin@example.com',

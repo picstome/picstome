@@ -1,8 +1,8 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -337,21 +337,32 @@ new class extends Component
                     :description="__('Grant this user lifetime access. Overrides subscription status.')"
                 />
 
-                <x-ts-input-group
-                    :label="__('Storage Limit')"
-                    :description="__('Set a custom storage limit for this user. Leave empty for unlimited.')"
-                >
-                    <x-ts-input wire:model="userForm.custom_storage_limit" type="number" step="0.01" />
-                    <x-ts-input-group-suffix>GB</x-ts-input-group-suffix>
-                </x-ts-input-group>
+                <x-ts-field>
+                    <x-ts-label>{{ __('Storage Limit') }}</x-ts-label>
+                    <x-ts-input-group>
+                        <x-ts-input wire:model="userForm.custom_storage_limit" type="number" step="0.01" />
+                        <x-ts-input-group-suffix>GB</x-ts-input-group-suffix>
+                    </x-ts-input-group>
+                    <x-ts-description>{{ __('Set a custom storage limit for this user. Leave empty for unlimited.') }}</x-ts-description>
+                </x-ts-field>
 
-                <x-ts-input-group
-                    :label="__('Monthly contracts limit')"
-                    :description="__('Set how many contracts this user can create per month. Leave empty for unlimited.')"
-                >
-                    <x-ts-input wire:model="userForm.monthly_contract_limit" type="number" step="1" />
-                    <x-ts-input-group-suffix>/{{ __('month') }}</x-ts-input-group-suffix>
-                </x-ts-input-group>
+                <x-ts-field>
+                    <x-ts-label>{{ __('Contracts per month') }}</x-ts-label>
+                    <x-ts-input-group>
+                        <x-ts-input wire:model="userForm.monthly_contract_limit" type="number" step="1" />
+                        <x-ts-input-group-suffix>/{{ __('month') }}</x-ts-input-group-suffix>
+                    </x-ts-input-group>
+                    <x-ts-description>{{ __('Set how many contracts this user can create per month. Leave empty for unlimited.') }}</x-ts-description>
+                </x-ts-field>
+
+                <x-ts-field>
+                    <x-ts-label>{{ __('Invoices per month') }}</x-ts-label>
+                    <x-ts-input-group>
+                        <x-ts-input wire:model="userForm.monthly_invoice_limit" type="number" step="1" />
+                        <x-ts-input-group-suffix>/{{ __('month') }}</x-ts-input-group-suffix>
+                    </x-ts-input-group>
+                    <x-ts-description>{{ __('Set how many invoices this user can issue per month. Leave empty for unlimited.') }}</x-ts-description>
+                </x-ts-field>
 
                 <div class="flex">
                     <x-ts-spacer />

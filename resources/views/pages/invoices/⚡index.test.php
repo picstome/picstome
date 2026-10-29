@@ -54,7 +54,7 @@ it('requires authentication', function () {
 });
 
 it('shows the links to the pdf and the public page of an issued invoice', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
+    $this->team->update(['monthly_invoice_limit' => 10]);
 
     $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
 
@@ -65,7 +65,7 @@ it('shows the links to the pdf and the public page of an issued invoice', functi
 });
 
 it('duplicates an issued invoice from the list', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
+    $this->team->update(['monthly_invoice_limit' => 10]);
 
     $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
 

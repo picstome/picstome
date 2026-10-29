@@ -19,6 +19,7 @@ it('sets storage limit based on price ID when subscription is created', function
     $team = Team::factory()->create([
         'stripe_id' => 'cus_test123',
         'custom_storage_limit' => 12345,
+        'monthly_invoice_limit' => 10,
     ]);
 
     $payload = [
@@ -41,6 +42,7 @@ it('sets storage limit based on price ID when subscription is created', function
 
     expect($team->fresh()->custom_storage_limit)->toBe(268435456000);
     expect($team->fresh()->monthly_contract_limit)->toBeNull();
+    expect($team->fresh()->monthly_invoice_limit)->toBeNull();
 });
 
 it('falls back to 1TB when price ID is not in the map', function () {
@@ -312,6 +314,7 @@ it('resets storage limit to 1GB when subscription is deleted', function () {
     $team = Team::factory()->create([
         'stripe_id' => 'cus_test456',
         'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+        'monthly_invoice_limit' => 10,
     ]);
 
     expect($team->fresh()->custom_storage_limit)->toBe(
@@ -336,6 +339,9 @@ it('resets storage limit to 1GB when subscription is deleted', function () {
     );
     expect($team->fresh()->monthly_contract_limit)->toBe(
         config('picstome.personal_team_monthly_contract_limit')
+    );
+    expect($team->fresh()->monthly_invoice_limit)->toBe(
+        config('picstome.personal_team_monthly_invoice_limit')
     );
 });
 

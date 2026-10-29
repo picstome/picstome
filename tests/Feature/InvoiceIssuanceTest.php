@@ -113,8 +113,8 @@ it('requires a reason when the invoice has no VAT', function () {
         ->toThrow(ValidationException::class, 'Explain why the invoice has no VAT');
 });
 
-it('limits free teams to one invoice per month', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 1]);
+it('limits free teams to their monthly invoice limit', function () {
+    $this->team->update(['monthly_invoice_limit' => 1]);
 
     $this->issuance->issue(draftInvoice($this->team));
 
@@ -122,10 +122,36 @@ it('limits free teams to one invoice per month', function () {
         ->toThrow(ValidationException::class, 'monthly invoice limit');
 });
 
-it('does not limit subscribed teams', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 1]);
+it('uses the team monthly invoice limit', function () {
+    $this->team->update(['monthly_invoice_limit' => 2]);
 
-    $this->team->update(['lifetime_at' => now()]);
+    $this->issuance->issue(draftInvoice($this->team));
+    $second = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($second->status)->toBe(Invoice::STATUS_ISSUED);
+
+    expect(fn () => $this->issuance->issue(draftInvoice($this->team)))
+        ->toThrow(ValidationException::class, 'monthly invoice limit');
+});
+
+it('does not limit free teams without a monthly invoice limit', function () {
+    $this->team->update(['monthly_invoice_limit' => null]);
+
+    $this->issuance->issue(draftInvoice($this->team));
+    $second = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($second->status)->toBe(Invoice::STATUS_ISSUED);
+});
+
+it('blocks invoices when the team monthly invoice limit is zero', function () {
+    $this->team->update(['monthly_invoice_limit' => 0]);
+
+    expect(fn () => $this->issuance->issue(draftInvoice($this->team)))
+        ->toThrow(ValidationException::class, 'monthly invoice limit');
+});
+
+it('does not limit subscribed teams', function () {
+    $this->team->update(['monthly_invoice_limit' => 1, 'lifetime_at' => now()]);
 
     $this->issuance->issue(draftInvoice($this->team));
     $second = $this->issuance->issue(draftInvoice($this->team));
@@ -134,7 +160,7 @@ it('does not limit subscribed teams', function () {
 });
 
 it('does not count rectificative invoices against the limit', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 1]);
+    $this->team->update(['monthly_invoice_limit' => 1]);
 
     $original = $this->issuance->issue(draftInvoice($this->team));
 

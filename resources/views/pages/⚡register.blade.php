@@ -52,6 +52,7 @@ new #[Layout('layouts.guest')] class extends Component
             'personal_team' => true,
             'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
             'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
+            'monthly_invoice_limit' => config('picstome.personal_team_monthly_invoice_limit'),
         ]);
 
         Auth::login($user);
