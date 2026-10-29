@@ -6,6 +6,7 @@ use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\SelectionLimitReached;
+use App\Services\GalleryArchiveService;
 use App\Services\PhotoIdentityService;
 use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 use ZipStream\ZipStream;
 
 class Gallery extends Model
@@ -75,6 +77,26 @@ class Gallery extends Model
             }
         });
 
+        static::updated(function (Gallery $gallery) {
+            if (! $gallery->wasChanged(['name', 'keep_original_size'])) {
+                return;
+            }
+
+            try {
+                app(GalleryArchiveService::class)->invalidate($gallery, ['all', 'favorites']);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        });
+
+        static::deleting(function (Gallery $gallery) {
+            try {
+                app(GalleryArchiveService::class)->deleteForGallery($gallery);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        });
+
         static::deleted(function (Gallery $gallery) {
             Cache::forget("gallery:{$gallery->id}:first_image");
             Cache::forget("gallery:{$gallery->id}:photos_count");
@@ -92,6 +114,11 @@ class Gallery extends Model
     public function photos()
     {
         return $this->hasMany(Photo::class);
+    }
+
+    public function archives()
+    {
+        return $this->hasMany(GalleryArchive::class);
     }
 
     /**

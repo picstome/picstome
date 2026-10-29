@@ -23,6 +23,24 @@ return [
 
     'video_download_url_ttl_minutes' => (int) env('PICSTOME_VIDEO_DOWNLOAD_URL_TTL_MINUTES', 360),
 
+    /**
+     * Full-gallery ZIP archives. Archives are only built when a download is
+     * explicitly requested; they are stored in object storage and removed
+     * after the configured TTL.
+     */
+    'gallery_archives' => [
+        'enabled' => (bool) env('PICSTOME_GALLERY_ARCHIVES_ENABLED', true),
+        'disk' => env('PICSTOME_GALLERY_ARCHIVES_DISK'),
+        'ttl_days' => (int) env('PICSTOME_GALLERY_ARCHIVES_TTL_DAYS', 7),
+        'url_ttl_minutes' => (int) env('PICSTOME_GALLERY_ARCHIVES_URL_TTL_MINUTES', 60),
+        'queue' => env('PICSTOME_GALLERY_ARCHIVES_QUEUE', 'default'),
+        'timeout' => (int) env('PICSTOME_GALLERY_ARCHIVES_TIMEOUT', 3600),
+        'max_size_bytes' => (int) env('PICSTOME_GALLERY_ARCHIVES_MAX_SIZE_BYTES', 0),
+
+        // Bump when the ZIP content rules change so old archives regenerate.
+        'content_version' => 1,
+    ],
+
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
 
     'subscription_storage_limit' => 1073741824000, // 1TB in bytes

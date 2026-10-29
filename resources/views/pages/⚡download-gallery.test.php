@@ -1,10 +1,13 @@
 <?php
 
+use App\Jobs\BuildGalleryArchive;
 use App\Models\Gallery;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\GalleryArchiveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
@@ -13,50 +16,45 @@ use function Pest\Laravel\get;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Storage::fake('s3');
+    Queue::fake();
+
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
 });
 
-test('all gallery photos can be downloaded as a zip file', function () {
-    Storage::fake('public');
-    Storage::fake('s3');
-
-    $photos = collect([
-        UploadedFile::fake()->image('photo1.jpg'),
-        UploadedFile::fake()->image('photo2.jpg'),
-    ]);
-    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
-    $photos->each(function ($photo) use ($gallery) {
-        $gallery->addPhoto($photo);
-    });
-
-    $response = actingAs($this->user)->get('galleries/1/download');
-
-    $response->assertDownload('example-gallery.zip');
-});
-
-test('gallery zip includes pdfs under their pdf name', function () {
-    Storage::fake('s3');
-
+test('preparing an owner gallery download creates one archive and redirects to the download tab', function () {
     $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
     $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg'));
-    $gallery->addPhoto(UploadedFile::fake()->createWithContent('composite.pdf', '%PDF-1.4 fake pdf body'));
 
-    $response = actingAs($this->user)->get('galleries/1/download');
+    actingAs($this->user)
+        ->get(route('galleries.download', $gallery))
+        ->assertRedirect(route('galleries.show', ['gallery' => $gallery, 'activeTab' => 'download']));
 
-    $response->assertDownload('example-gallery.zip');
+    $this->assertDatabaseHas('gallery_archives', [
+        'gallery_id' => $gallery->id,
+        'variant' => 'all',
+        'status' => 'pending',
+    ]);
 
-    $zipPath = tempnam(sys_get_temp_dir(), 'gallery-zip');
-    file_put_contents($zipPath, $response->streamedContent());
+    Queue::assertPushed(BuildGalleryArchive::class, 1);
+});
 
-    $zip = new ZipArchive;
-    $zip->open($zipPath);
+test('a ready owner archive redirects to a presigned storage url', function () {
+    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
+    $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg'));
 
-    expect($zip->locateName('photo1.jpg'))->not->toBeFalse();
-    expect($zip->getFromName('composite.pdf'))->toBe('%PDF-1.4 fake pdf body');
+    $service = app(GalleryArchiveService::class);
+    $archive = $service->findOrCreate($gallery, 'all', $this->user);
+    $service->build($archive->refresh());
 
-    $zip->close();
-    unlink($zipPath);
+    fakeTemporaryUrls();
+
+    actingAs($this->user)
+        ->get(route('galleries.download', $gallery))
+        ->assertRedirect('https://s3.test/'.$archive->refresh()->path);
+
+    expect($archive->refresh()->downloads_count)->toBe(1);
 });
 
 test('guests cannot download any galleries', function () {
@@ -73,4 +71,15 @@ test('users cannot download the team gallery of others', function () {
     $response = actingAs($this->user)->get('/galleries/1/download');
 
     $response->assertStatus(403);
+});
+
+test('the legacy streamed zip is used when archives are disabled', function () {
+    config()->set('picstome.gallery_archives.enabled', false);
+
+    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
+    $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg'));
+
+    actingAs($this->user)
+        ->get(route('galleries.download', $gallery))
+        ->assertDownload('example-gallery.zip');
 });

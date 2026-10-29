@@ -30,6 +30,22 @@ class StorageUsageService
         return (int) $current + (int) $versions;
     }
 
+    public static function archivesForGallery(Gallery $gallery): int
+    {
+        return (int) DB::table('gallery_archives')
+            ->where('gallery_id', $gallery->id)
+            ->whereNotNull('path')
+            ->sum('size_bytes');
+    }
+
+    public static function archivesForTeam(Team $team): int
+    {
+        return (int) DB::table('gallery_archives')
+            ->where('team_id', $team->id)
+            ->whereNotNull('path')
+            ->sum('size_bytes');
+    }
+
     public static function forTeam(Team $team): int
     {
         $current = DB::table('photos')

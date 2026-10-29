@@ -80,13 +80,14 @@ describe('Gallery Viewing', function () {
             ->toContain('This gallery is public and visible in your portfolio section.');
     });
 
-    it('does not show a download tab on the owner gallery page', function () {
+    it('shows the download tab on the owner gallery page', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
 
-        $component->assertDontSee('Download gallery');
+        $component->assertSee('Download gallery')
+            ->assertSee('This ZIP includes processed images');
     });
 
     it('selects a cover photo from the photo actions menu', function () {

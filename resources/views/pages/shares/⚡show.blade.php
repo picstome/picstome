@@ -147,7 +147,7 @@ new #[Layout('layouts.guest')] class extends Component
                 :comments-count="$this->totalComments()"
                 :show-favorites="$gallery->is_share_selectable"
                 :show-comments="$gallery->are_comments_enabled"
-                :download-url="$gallery->is_share_downloadable ? route('shares.download', ['gallery' => $gallery]) : null"
+                :show-download="$gallery->is_share_downloadable"
             />
             <div x-show="$wire.activeTab === 'all'" class="pt-1">
                 <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
@@ -190,10 +190,15 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
             @if ($gallery->is_share_downloadable)
                 <div x-show="$wire.activeTab === 'download'" class="pt-1">
-                    <x-gallery-download-panel
+                    <livewire:gallery-download-panel
+                        :$gallery
                         :count="$this->allPhotos->count()"
                         :size="$this->formattedDownloadSize()"
-                        :href="route('shares.download', ['gallery' => $gallery])"
+                        :images-count="$this->allPhotos->filter(fn ($photo) => $photo->isImage())->count()"
+                        :videos-count="$this->allPhotos->filter(fn ($photo) => $photo->isVideo())->count()"
+                        :pdfs-count="$this->allPhotos->filter(fn ($photo) => $photo->isPdf())->count()"
+                        :shared="true"
+                        :key="'download-panel-'.$gallery->id"
                     />
                 </div>
             @endif

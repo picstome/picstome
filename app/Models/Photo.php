@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
+use App\Services\GalleryArchiveService;
 use App\Services\PhotoUrlService;
 use App\Traits\FormatsFileSize;
 use App\Traits\HasDownloadFilename;
@@ -17,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class Photo extends Model
 {
@@ -49,21 +51,66 @@ class Photo extends Model
             }
         });
 
-        static::created(function ($photo) {
+        static::created(function (Photo $photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
             Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+
+            static::invalidateGalleryArchives($photo, ['all']);
         });
 
-        static::deleted(function ($photo) {
+        static::updated(function (Photo $photo) {
+            $contentFields = ['name', 'source_name', 'path', 'raw_path', 'disk', 'size', 'stored_size', 'status', 'current_version_id'];
+            $variants = [];
+
+            if ($photo->wasChanged($contentFields)) {
+                $variants[] = 'all';
+            }
+
+            if ($photo->wasChanged('favorited_at')) {
+                $variants[] = 'favorites';
+            } elseif ($photo->wasChanged($contentFields) && ($photo->favorited_at || $photo->getOriginal('favorited_at'))) {
+                $variants[] = 'favorites';
+            }
+
+            if ($variants !== []) {
+                static::invalidateGalleryArchives($photo, array_values(array_unique($variants)));
+            }
+        });
+
+        static::deleted(function (Photo $photo) {
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
             Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+
+            $variants = ['all'];
+
+            if ($photo->favorited_at) {
+                $variants[] = 'favorites';
+            }
+
+            static::invalidateGalleryArchives($photo, $variants);
         });
+    }
+
+    /**
+     * @param  array<int, string>  $variants
+     */
+    protected static function invalidateGalleryArchives(Photo $photo, array $variants): void
+    {
+        if (! $photo->gallery) {
+            return;
+        }
+
+        try {
+            app(GalleryArchiveService::class)->invalidate($photo->gallery, $variants);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function gallery()
