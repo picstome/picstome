@@ -1569,13 +1569,13 @@ new class extends Component
             },
 
             askReplaceAll() {
-                this.$tsui.open.modal('replace-conflicts');
+                window.$tsui.open.modal('replace-conflicts');
             },
 
             askReplaceConflict(index) {
                 this.pendingConflictIndex = index;
 
-                this.$tsui.open.modal('replace-conflict');
+                window.$tsui.open.modal('replace-conflict');
             },
 
             confirmReplaceAll() {
