@@ -43,6 +43,8 @@ new class extends Component
 
     public ?int $archiveId = null;
 
+    public ?string $archiveStatus = null;
+
     public ?string $pendingAction = null;
 
     public function mount(
@@ -67,6 +69,7 @@ new class extends Component
         $this->ensureAccess();
 
         $this->archiveId = $this->latestArchive()?->id;
+        $this->archiveStatus = $this->archive?->status;
     }
 
     #[Computed]
@@ -130,6 +133,7 @@ new class extends Component
             );
 
             $this->archiveId = $archive->id;
+            $this->archiveStatus = $archive->status;
             $this->resetArchiveComputed();
             $this->resetErrorBag('archive');
         } catch (Throwable $exception) {
@@ -173,11 +177,29 @@ new class extends Component
 
     public function refreshArchive(): void
     {
+        $previousStatus = $this->archiveStatus;
         $archive = $this->latestArchive();
 
-        if ($archive) {
-            $this->archiveId = $archive->id;
-            $this->resetArchiveComputed();
+        if (! $archive) {
+            return;
+        }
+
+        $this->archiveId = $archive->id;
+        $this->archiveStatus = $archive->status;
+        $this->resetArchiveComputed();
+
+        if (! in_array($previousStatus, ['pending', 'building'], true)) {
+            return;
+        }
+
+        if ($archive->isReady()) {
+            $this->toast()->success(__('The ZIP is ready. You can download it now.'))->send();
+
+            return;
+        }
+
+        if ($archive->isFailed()) {
+            $this->toast()->error(__('The ZIP could not be prepared. Please try again.'))->send();
         }
     }
 
@@ -198,6 +220,7 @@ new class extends Component
         }
 
         $this->archiveId = null;
+        $this->archiveStatus = null;
         $this->resetArchiveComputed();
         $this->toast()->success(__('ZIP deleted.'))->send();
     }
@@ -217,6 +240,7 @@ new class extends Component
         try {
             $archive = app(GalleryArchiveService::class)->regenerate($archive, Auth::user());
             $this->archiveId = $archive->id;
+            $this->archiveStatus = $archive->status;
             $this->resetArchiveComputed();
             $this->resetErrorBag('archive');
         } catch (Throwable $exception) {

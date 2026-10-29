@@ -2,6 +2,7 @@
 
 use App\Notifications\BookingCreated;
 use App\Notifications\ContractExecuted;
+use App\Notifications\GalleryArchiveReady;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\GuestPhotoCommented;
 use App\Notifications\SelectionLimitReached;
@@ -157,6 +158,39 @@ return [
             ['key' => 'Gallery Expiration Reminder', 'label' => 'Subject', 'type' => 'text'],
             ['key' => 'Your gallery ":name" will expire on :date.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'View Gallery', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'gallery_archive_ready' => [
+        'notification' => GalleryArchiveReady::class,
+        'label' => [
+            'en' => 'Gallery ZIP ready',
+            'es' => 'ZIP de galería listo',
+        ],
+        'description' => [
+            'en' => 'Notifies the studio when a gallery ZIP has been generated.',
+            'es' => 'Avisa al estudio cuando se ha generado el ZIP de una galería.',
+        ],
+        'trigger' => [
+            'en' => 'A gallery ZIP build completes successfully.',
+            'es' => 'Un ZIP de galería se genera correctamente.',
+        ],
+        'when' => [
+            'en' => 'After the archive upload, queued',
+            'es' => 'Tras subir el archivo, en cola',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'Your gallery ZIP is ready: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello :name,', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'The ZIP archive for the gallery ":name" is ready to download.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'You can notify your client that the photos are ready to download.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'The ZIP will be available for :days days.', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Open Download tab', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
         ],
     ],
 

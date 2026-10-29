@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\GalleryArchive;
+use App\Notifications\GalleryArchiveReady;
 use App\Services\GalleryArchiveService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -50,6 +51,13 @@ class BuildGalleryArchive implements ShouldQueue
         }
 
         $service->build($archive);
+
+        $archive->refresh();
+        $owner = $archive->team?->owner;
+
+        if ($archive->isReady() && $owner) {
+            $owner->notify(new GalleryArchiveReady($archive));
+        }
     }
 
     public function failed(Throwable $exception): void

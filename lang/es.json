@@ -1174,5 +1174,11 @@
     "Packing and uploading the ZIP…": "Empaquetando y subiendo el ZIP…",
     "Packing": "Empaquetando",
     "Packing…": "Empaquetando…",
-    "You can come back in a few minutes or close the browser and return later; the download will be ready.": "Puedes volver en unos minutos o cerrar el navegador y volver más tarde; la descarga estará preparada."
+    "You can come back in a few minutes or close the browser and return later; the download will be ready.": "Puedes volver en unos minutos o cerrar el navegador y volver más tarde; la descarga estará preparada.",
+    "Your gallery ZIP is ready: :name": "Tu ZIP de la galería está listo: :name",
+    "The ZIP archive for the gallery \":name\" is ready to download.": "El archivo ZIP de la galería \":name\" está listo para descargar.",
+    "You can notify your client that the photos are ready to download.": "Puedes avisar a tu cliente de que las fotos ya están listas para descargar.",
+    "The ZIP will be available for :days days.": "El ZIP estará disponible durante :days días.",
+    "Open Download tab": "Abrir pestaña de descarga",
+    "The ZIP is ready. You can download it now.": "El ZIP está listo. Ya puedes descargarlo."
 }
