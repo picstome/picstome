@@ -14,3 +14,4 @@ Schedule::command('subscriptions:cleanup')->daily();
 Schedule::command('cleanup:livewire-tmp')->daily();
 Schedule::command('ingest:ftp-uploads')->everyMinute();
 Schedule::command('gallery-archives:prune --force')->daily();
+Schedule::command('temp:cleanup --force')->daily();

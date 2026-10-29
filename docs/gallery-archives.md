@@ -90,6 +90,40 @@ multipart upload performed by the storage adapter. If galleries frequently
 exceed the worker disk, replace this with direct multipart streaming in a later
 iteration without changing the public download flow.
 
+## Temporary files and cleanup
+
+ZIPs are assembled in `PICSTOME_GALLERY_ARCHIVES_TEMP_PATH` (default
+`storage/app/gallery-archives-temp`) instead of the system temp directory. The
+file is removed in a `finally` block after the upload, but a killed worker can
+still leave a large file behind.
+
+The scheduled `temp:cleanup --force` command removes stale files:
+
+- `php*` in the PHP upload temp directory (`/tmp` by default), older than 24h,
+  only names without an extension; this skips logs, scripts and configuration files;
+- `gallery-archive-*` in the configured temp directory and in the legacy
+  system temp directory, older than the archive timeout plus a buffer (6h);
+- files in `storage/app/photo-processing-temp`, older than 6h.
+
+Run `php artisan temp:cleanup --dry-run` before a manual cleanup. The scheduled
+run uses `--force`. The PHP upload files are created by PHP-FPM and may be owned
+by `www-data`; if the deploy user cannot delete them, run the cleanup as the web
+server user or add a root cron rule:
+
+```bash
+find /tmp -maxdepth 1 -type f -name 'php*' ! -name '*.*' -mmin +1440 -delete
+```
+
+```cron
+# /etc/cron.d/picstome-temp-cleanup
+15 4 * * * root find /tmp -maxdepth 1 -type f -name 'php*' ! -name '*.*' -mmin +1440 -delete
+```
+
+Large uploads that exceed the FPM `request_terminate_timeout` leave these PHP
+temp files behind. Raise that timeout (and the web server/proxy timeouts) above
+the largest expected upload; `set_time_limit(300)` in the Livewire component
+does not override FPM's request timeout.
+
 ## Feature flag and rollback
 
 `PICSTOME_GALLERY_ARCHIVES_ENABLED=false` makes the download controllers use the
