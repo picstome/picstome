@@ -1167,5 +1167,9 @@
     "Regenerate ZIP": "Regenerar ZIP",
     "We recommend using a computer to download the gallery, as it may take up a lot of space. You can also download photos individually.": "Recomendamos usar tu ordenador para descargar la galería, ya que puede ocupar mucho espacio. También puedes descargar las fotos individualmente.",
     "Available until :date": "Disponible hasta el :date",
-    "We will prepare a ZIP with the photos, videos and PDFs of the gallery. It may take a few minutes. You can keep browsing and come back later; the ZIP will be available for :days days.": "Vamos a preparar un ZIP con las fotos, vídeos y PDFs de la galería. Puede tardar unos minutos. Puedes seguir navegando y volver más tarde; el ZIP estará disponible durante :days días."
+    "We will prepare a ZIP with the photos, videos and PDFs of the gallery. It may take a few minutes. You can keep browsing and come back later; the ZIP will be available for :days days.": "Vamos a preparar un ZIP con las fotos, vídeos y PDFs de la galería. Puede tardar unos minutos. Puedes seguir navegando y volver más tarde; el ZIP estará disponible durante :days días.",
+    "Packing and uploading the ZIP…": "Empaquetando y subiendo el ZIP…",
+    "Packing": "Empaquetando",
+    "Packing…": "Empaquetando…",
+    "You can come back in a few minutes or close the browser and return later; the download will be ready.": "Puedes volver en unos minutos o cerrar el navegador y volver más tarde; la descarga estará preparada."
 }

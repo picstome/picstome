@@ -109,7 +109,30 @@ it('asks for confirmation before generating an archive', function () {
     Queue::assertPushed(BuildGalleryArchive::class);
 });
 
+it('shows packing progress when all photos have been processed', function () {
+    $gallery = panelGallery($this->user);
+    $archive = app(GalleryArchiveService::class)->findOrCreate($gallery, 'all');
+    $archive->update([
+        'status' => 'building',
+        'photos_total' => 1,
+        'photos_processed' => 1,
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('gallery-download-panel', [
+            'gallery' => $gallery,
+            'count' => 1,
+            'size' => '1 MB',
+            'imagesCount' => 1,
+        ])
+        ->assertSee('Packing and uploading the ZIP…')
+        ->assertSee('Packing')
+        ->assertSee('You can come back in a few minutes or close the browser and return later; the download will be ready.')
+        ->assertDontSee('1 / 1');
+});
+
 it('shows the owner the archive details and can delete the zip', function () {
+
     $gallery = panelGallery($this->user);
     $archive = panelArchive($gallery);
 
