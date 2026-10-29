@@ -338,7 +338,9 @@ new class extends Component
             $videos = $ready ? $archive->videos_count : $videosCount;
             $pdfs = $ready ? $archive->pdfs_count : $pdfsCount;
             $progressTotal = $archive?->photos_total ?: $count;
-            $progress = $progressTotal > 0 ? min(100, (int) round(($processed + $skipped) / $progressTotal * 100)) : 0;
+            $completedItems = $processed + $skipped;
+            $packing = $building && $progressTotal > 0 && $completedItems >= $progressTotal;
+            $progress = $progressTotal > 0 ? min(100, (int) round($completedItems / $progressTotal * 100)) : 0;
         @endphp
 
         @if ($shared)
@@ -355,7 +357,7 @@ new class extends Component
                     @if ($ready)
                         <x-ts-badge color="green" inset>{{ __('Ready') }}</x-ts-badge>
                     @elseif ($building || $pending)
-                        <x-ts-badge color="amber" inset>{{ $pending ? __('Queued') : __('Preparing') }}</x-ts-badge>
+                        <x-ts-badge color="amber" inset>{{ $pending ? __('Queued') : ($packing ? __('Packing') : __('Preparing')) }}</x-ts-badge>
                     @elseif ($failed)
                         <x-ts-badge color="red" inset>{{ __('Failed') }}</x-ts-badge>
                     @elseif ($expired)
@@ -415,7 +417,7 @@ new class extends Component
                         @if ($ready)
                             <x-ts-badge color="green" inset>{{ __('Ready') }}</x-ts-badge>
                         @elseif ($building || $pending)
-                            <x-ts-badge color="amber" inset>{{ $pending ? __('Queued') : __('Preparing') }}</x-ts-badge>
+                            <x-ts-badge color="amber" inset>{{ $pending ? __('Queued') : ($packing ? __('Packing') : __('Preparing')) }}</x-ts-badge>
                         @elseif ($failed)
                             <x-ts-badge color="red" inset>{{ __('Failed') }}</x-ts-badge>
                         @elseif ($expired)
@@ -451,13 +453,29 @@ new class extends Component
 
         @if ($building || $pending)
             <div class="space-y-2">
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-zinc-500">{{ $pending ? __('Waiting to start…') : __('Preparing the ZIP…') }}</span>
-                    <span class="font-medium">{{ $processed + $skipped }} / {{ $progressTotal }}</span>
-                </div>
-                <div class="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
-                    <div class="h-full rounded-full bg-brand-green transition-all dark:bg-brand-sage" style="width: {{ $progress }}%"></div>
-                </div>
+                @if ($pending)
+                    <div class="flex items-center gap-2 text-sm text-zinc-500">
+                        <x-icon name="arrow-path" class="size-4 animate-spin" />
+                        <span>{{ __('Waiting to start…') }}</span>
+                    </div>
+                @elseif ($packing)
+                    <div class="flex items-center gap-2 text-sm text-zinc-500">
+                        <x-icon name="arrow-path" class="size-4 animate-spin" />
+                        <span>{{ __('Packing and uploading the ZIP…') }}</span>
+                    </div>
+                @else
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-zinc-500">{{ __('Preparing the ZIP…') }}</span>
+                        <span class="font-medium">{{ $completedItems }} / {{ $progressTotal }}</span>
+                    </div>
+                    <div class="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/10">
+                        <div class="h-full rounded-full bg-brand-green transition-all dark:bg-brand-sage" style="width: {{ $progress }}%"></div>
+                    </div>
+                @endif
+
+                <p class="text-xs text-zinc-500">
+                    {{ __('You can come back in a few minutes or close the browser and return later; the download will be ready.') }}
+                </p>
             </div>
         @endif
 
@@ -482,7 +500,7 @@ new class extends Component
                 </x-ts-button>
             @elseif ($building || $pending)
                 <x-ts-button disabled loading variant="primary" icon="arrow-path">
-                    {{ __('Preparing…') }}
+                    {{ $packing ? __('Packing…') : __('Preparing…') }}
                 </x-ts-button>
             @else
                 <x-ts-button wire:click="openPrepareModal('prepare')" variant="primary" icon="arrow-down-tray">
