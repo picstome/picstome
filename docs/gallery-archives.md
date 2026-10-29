@@ -77,8 +77,9 @@ The archive job is long-running compared with photo processing:
 - The queue `retry_after` must be greater than that timeout. The example
   `.env.example` uses `DB_QUEUE_RETRY_AFTER=3900`. Restart queue workers after
   changing it.
-- The worker needs enough temporary disk for the largest archive plus the
-  largest processed file. The job checks a configured maximum size
+- The worker needs enough temporary disk for the largest archive plus up to
+  `PICSTOME_GALLERY_ARCHIVES_DOWNLOAD_CONCURRENCY` files being downloaded. The
+  job checks a configured maximum size
   (`PICSTOME_GALLERY_ARCHIVES_MAX_SIZE_BYTES`, `0` means no limit) but does not
   stream directly to S3 yet.
 - The job uses `WithoutOverlapping` with a lock lifetime based on the timeout.
@@ -89,6 +90,33 @@ The ZIP is generated in a temporary local file and uploaded with the S3
 multipart upload performed by the storage adapter. If galleries frequently
 exceed the worker disk, replace this with direct multipart streaming in a later
 iteration without changing the public download flow.
+
+### Parallel S3 downloads
+
+The archive job builds an ordered manifest from the `photos` table in memory;
+no temporary database table is needed. For S3 photos it downloads files with
+`curl_multi` and writes them to the ZIP in the original order. New downloads
+start as the ordered writer advances, so at most
+`PICSTOME_GALLERY_ARCHIVES_DOWNLOAD_CONCURRENCY` files are ahead of the writer.
+The default is `5`; `10` is a reasonable next value to test. Set it to `1` to
+disable parallel downloads. Values are clamped between 1 and 20.
+
+Parallel downloads are used only when every file uses the AWS S3 Flysystem
+adapter and the cURL extension is available. Local disks, test fakes and mixed
+disks keep the sequential path. Downloads are stored as
+`gallery-archive-download-*` temp files and deleted as they are written; a
+killed worker leaves them for `temp:cleanup`.
+
+The job logs `Gallery archive parallel download completed` with the archive ID,
+concurrency, file count, skipped count and duration. Use that log to compare
+`5` and `10` before changing the default.
+
+Before creating the temporary ZIP, the service estimates its final size with a
+5% safety margin and adds the disk needed by the parallel download window (the
+largest `DOWNLOAD_CONCURRENCY` files). It keeps 10% of the filesystem free. If
+the result does not fit, it does not create the ZIP; it marks the archive as
+failed and emails the studio owner so they can contact the administrator.
+
 
 ## Temporary files and cleanup
 

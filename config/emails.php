@@ -2,6 +2,7 @@
 
 use App\Notifications\BookingCreated;
 use App\Notifications\ContractExecuted;
+use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\GuestPhotoCommented;
@@ -190,6 +191,38 @@ return [
             ['key' => 'You can notify your client that the photos are ready to download.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'The ZIP will be available for :days days.', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'Open Download tab', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
+        ],
+    ],
+
+    'gallery_archive_failed' => [
+        'notification' => GalleryArchiveFailed::class,
+        'label' => [
+            'en' => 'Gallery ZIP failed',
+            'es' => 'Error al generar el ZIP de galería',
+        ],
+        'description' => [
+            'en' => 'Notifies the studio when a gallery ZIP could not be generated.',
+            'es' => 'Avisa al estudio cuando no se pudo generar el ZIP de una galería.',
+        ],
+        'trigger' => [
+            'en' => 'A gallery ZIP build fails, for example because there is not enough free disk space.',
+            'es' => 'Falla la generación de un ZIP de galería, por ejemplo por falta de espacio libre.',
+        ],
+        'when' => [
+            'en' => 'After the failure, queued',
+            'es' => 'Tras el fallo, en cola',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'The gallery could not be generated: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello :name,', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'The gallery could not be generated. Please contact the administrator.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Gallery: :name', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'View Gallery', 'label' => 'Button', 'type' => 'text'],
             ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
         ],
     ],
