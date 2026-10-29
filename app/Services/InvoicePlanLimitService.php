@@ -34,19 +34,20 @@ class InvoicePlanLimitService
 
     /**
      * Whether the team can issue another invoice.
+     *
+     * A null limit means unlimited, mirroring the monthly contract limit.
+     * Paid and lifetime teams are never limited.
      */
     public function canIssue(Team $team): bool
     {
-        if ($team->subscribed()) {
+        if ($team->subscribed() || is_null($team->monthly_invoice_limit)) {
             return true;
         }
 
-        $limit = (int) config('picstome.personal_team_monthly_invoice_limit');
-
-        if ($limit <= 0) {
+        if ($team->monthly_invoice_limit <= 0) {
             return false;
         }
 
-        return $this->issuedThisMonth($team) < $limit;
+        return $this->issuedThisMonth($team) < $team->monthly_invoice_limit;
     }
 }

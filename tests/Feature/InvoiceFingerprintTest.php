@@ -10,10 +10,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 100]);
-
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
+    $this->team->update(['monthly_invoice_limit' => 100]);
     $this->settings = InvoiceSetting::factory()->for($this->team)->create();
     $this->issuance = app(InvoiceIssuanceService::class);
     $this->fingerprints = app(InvoiceFingerprintService::class);

@@ -12,10 +12,9 @@ use Illuminate\Validation\ValidationException;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 10]);
-
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
+    $this->team->update(['monthly_invoice_limit' => 10]);
     $this->settings = InvoiceSetting::factory()->for($this->team)->create();
     $this->issuance = app(InvoiceIssuanceService::class);
     $this->duplication = app(InvoiceDuplicationService::class);
@@ -118,7 +117,7 @@ it('records where the draft comes from in the audit trail', function () {
 });
 
 it('does not consume the monthly limit', function () {
-    config(['picstome.personal_team_monthly_invoice_limit' => 1]);
+    $this->team->update(['monthly_invoice_limit' => 1]);
 
     $original = $this->issuance->issue(draftInvoice($this->team));
 
