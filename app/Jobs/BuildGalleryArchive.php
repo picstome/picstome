@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\GalleryArchive;
+use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
 use App\Services\GalleryArchiveService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -55,8 +56,18 @@ class BuildGalleryArchive implements ShouldQueue
         $archive->refresh();
         $owner = $archive->team?->owner;
 
-        if ($archive->isReady() && $owner) {
+        if (! $owner) {
+            return;
+        }
+
+        if ($archive->isReady()) {
             $owner->notify(new GalleryArchiveReady($archive));
+
+            return;
+        }
+
+        if ($archive->isFailed()) {
+            $owner->notify(new GalleryArchiveFailed($archive));
         }
     }
 
@@ -76,6 +87,13 @@ class BuildGalleryArchive implements ShouldQueue
                 'failure_reason' => Str::limit($exception->getMessage(), 500),
                 'completed_at' => now(),
             ]);
+
+        $archive->refresh();
+        $owner = $archive->team?->owner;
+
+        if ($owner && $archive->isFailed()) {
+            $owner->notify(new GalleryArchiveFailed($archive));
+        }
 
         if ($archive->path) {
             DeleteGalleryArchive::dispatch($archive->id, $archive->path, $archive->disk ?: config('picstome.disk', 's3'));

@@ -36,6 +36,7 @@ return [
         'queue' => env('PICSTOME_GALLERY_ARCHIVES_QUEUE', 'default'),
         'timeout' => (int) env('PICSTOME_GALLERY_ARCHIVES_TIMEOUT', 3600),
         'max_size_bytes' => (int) env('PICSTOME_GALLERY_ARCHIVES_MAX_SIZE_BYTES', 0),
+        'download_concurrency' => max(1, min(20, (int) env('PICSTOME_GALLERY_ARCHIVES_DOWNLOAD_CONCURRENCY', 5))),
 
         // Bump when the ZIP content rules change so old archives regenerate.
         'content_version' => 1,

@@ -1040,5 +1040,9 @@
     "The ZIP is ready. You can download it now.": "The ZIP is ready. You can download it now.",
     "The ZIP could not be prepared. Please try again.": "The ZIP could not be prepared. Please try again.",
     "Hello :name,": "Hello :name,",
-    "Best regards, Picstome Team": "Best regards, Picstome Team"
+    "Best regards, Picstome Team": "Best regards, Picstome Team",
+    "The gallery could not be generated: :name": "The gallery could not be generated: :name",
+    "The gallery could not be generated. Please contact the administrator.": "The gallery could not be generated. Please contact the administrator.",
+    "Gallery: :name": "Gallery: :name",
+    "View Gallery": "View Gallery"
 }

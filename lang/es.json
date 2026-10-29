@@ -1180,5 +1180,7 @@
     "You can notify your client that the photos are ready to download.": "Puedes avisar a tu cliente de que las fotos ya están listas para descargar.",
     "The ZIP will be available for :days days.": "El ZIP estará disponible durante :days días.",
     "Open Download tab": "Abrir pestaña de descarga",
-    "The ZIP is ready. You can download it now.": "El ZIP está listo. Ya puedes descargarlo."
+    "The ZIP is ready. You can download it now.": "El ZIP está listo. Ya puedes descargarlo.",
+    "The gallery could not be generated: :name": "No se pudo generar la galería: :name",
+    "The gallery could not be generated. Please contact the administrator.": "No se pudo generar la galería. Contacta con el administrador."
 }

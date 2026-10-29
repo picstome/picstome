@@ -3,6 +3,7 @@
 use App\Jobs\BuildGalleryArchive;
 use App\Models\Gallery;
 use App\Models\User;
+use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
 use App\Services\GalleryArchiveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,4 +70,37 @@ it('mentions that the photographer can notify the client', function () {
         ->and($mail->introLines)
         ->toContain('The ZIP archive for the gallery "Summer session" is ready to download.')
         ->toContain('You can notify your client that the photos are ready to download.');
+});
+
+it('notifies the owner when the archive cannot be generated', function () {
+    config()->set('picstome.gallery_archives.max_size_bytes', 1);
+
+    $gallery = notificationGallery($this->user, ['name' => 'Summer session']);
+    $archive = app(GalleryArchiveService::class)->findOrCreate($gallery, 'all');
+
+    (new BuildGalleryArchive($archive->id))->handle(app(GalleryArchiveService::class));
+
+    Notification::assertSentTo(
+        $this->user,
+        GalleryArchiveFailed::class,
+        fn (GalleryArchiveFailed $notification): bool => $notification->archive->is($archive),
+    );
+
+    expect($archive->fresh()->status)->toBe('failed');
+});
+
+it('tells the photographer to contact the administrator when generation fails', function () {
+    $gallery = notificationGallery($this->user, ['name' => 'Summer session']);
+    $archive = app(GalleryArchiveService::class)->findOrCreate($gallery, 'all');
+    $archive->update([
+        'status' => 'failed',
+        'failure_reason' => 'Not enough free disk space to build the gallery ZIP.',
+    ]);
+
+    $mail = (new GalleryArchiveFailed($archive->refresh()))->toMail($this->user);
+
+    expect($mail->subject)
+        ->toContain('Summer session')
+        ->and($mail->introLines)
+        ->toContain('The gallery could not be generated. Please contact the administrator.');
 });
