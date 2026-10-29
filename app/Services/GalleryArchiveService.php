@@ -235,7 +235,15 @@ class GalleryArchiveService
             return;
         }
 
-        $freeSpace = @disk_free_space(sys_get_temp_dir());
+        $tempDirectory = $this->temporaryDirectory();
+
+        if ($tempDirectory === null) {
+            $this->markFailed($archive, 'Could not create the temporary archive directory.');
+
+            return;
+        }
+
+        $freeSpace = @disk_free_space($tempDirectory);
 
         if ($freeSpace !== false && $estimate['bytes'] > 0 && $estimate['bytes'] > $freeSpace * 0.9) {
             $this->markFailed($archive, 'Not enough temporary disk space to build the archive.');
@@ -243,7 +251,7 @@ class GalleryArchiveService
             return;
         }
 
-        $tempPath = tempnam(sys_get_temp_dir(), 'gallery-archive-');
+        $tempPath = tempnam($tempDirectory, 'gallery-archive-');
 
         if ($tempPath === false) {
             $this->markFailed($archive, 'Could not create a temporary archive file.');
@@ -327,6 +335,25 @@ class GalleryArchiveService
         } finally {
             @unlink($tempPath);
         }
+    }
+
+    protected function temporaryDirectory(): ?string
+    {
+        $directory = (string) config('picstome.gallery_archives.temp_path', '');
+
+        if ($directory === '') {
+            $directory = sys_get_temp_dir();
+        }
+
+        if (! is_dir($directory) && ! @mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            Log::warning('Gallery archive temporary directory could not be created.', [
+                'path' => $directory,
+            ]);
+
+            return null;
+        }
+
+        return $directory;
     }
 
     public function temporaryUrl(GalleryArchive $archive): string

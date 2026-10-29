@@ -39,6 +39,25 @@ return [
 
         // Bump when the ZIP content rules change so old archives regenerate.
         'content_version' => 1,
+
+        // Local directory where the ZIP is assembled before uploading to S3.
+        // Keeping it outside /tmp makes abandoned files easier to find.
+        'temp_path' => env('PICSTOME_GALLERY_ARCHIVES_TEMP_PATH', storage_path('app/gallery-archives-temp')),
+    ],
+
+    /*
+     * Stale temporary file cleanup. PHP upload temp files can remain after an
+     * interrupted request; archive and photo temp files can remain after a
+     * killed worker. Recent files are never touched because they may be active.
+     */
+    'temp_cleanup' => [
+        'enabled' => (bool) env('PICSTOME_TEMP_CLEANUP_ENABLED', true),
+        'upload_path' => env('PICSTOME_TEMP_CLEANUP_UPLOAD_PATH', sys_get_temp_dir()),
+        'upload_max_age_hours' => (int) env('PICSTOME_TEMP_CLEANUP_UPLOAD_MAX_AGE_HOURS', 24),
+        'archive_max_age_hours' => (int) env('PICSTOME_TEMP_CLEANUP_ARCHIVE_MAX_AGE_HOURS', 6),
+        'photo_path' => env('PICSTOME_TEMP_CLEANUP_PHOTO_PATH', storage_path('app/photo-processing-temp')),
+        'photo_max_age_hours' => (int) env('PICSTOME_TEMP_CLEANUP_PHOTO_MAX_AGE_HOURS', 6),
+        'legacy_archive_path' => sys_get_temp_dir(),
     ],
 
     'personal_team_storage_limit' => 1073741824, // 1GB in bytes
