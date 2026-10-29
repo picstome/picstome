@@ -1031,5 +1031,14 @@
     "You have used :percent% of your storage. When it fills up, you won't be able to upload more photos or videos.": "You have used :percent% of your storage. When it fills up, you won't be able to upload more photos or videos.",
     "This catalog shows the email templates and their triggers. It is not a delivery log; Acumbamail keeps the delivery history.": "This catalog shows the email templates and their triggers. It is not a delivery log; Acumbamail keeps the delivery history.",
     "+ :count more texts": "+ :count more texts",
-    "Includes the dashboard banner": "Includes the dashboard banner"
+    "Includes the dashboard banner": "Includes the dashboard banner",
+    "Your gallery ZIP is ready: :name": "Your gallery ZIP is ready: :name",
+    "The ZIP archive for the gallery \":name\" is ready to download.": "The ZIP archive for the gallery \":name\" is ready to download.",
+    "You can notify your client that the photos are ready to download.": "You can notify your client that the photos are ready to download.",
+    "The ZIP will be available for :days days.": "The ZIP will be available for :days days.",
+    "Open Download tab": "Open Download tab",
+    "The ZIP is ready. You can download it now.": "The ZIP is ready. You can download it now.",
+    "The ZIP could not be prepared. Please try again.": "The ZIP could not be prepared. Please try again.",
+    "Hello :name,": "Hello :name,",
+    "Best regards, Picstome Team": "Best regards, Picstome Team"
 }

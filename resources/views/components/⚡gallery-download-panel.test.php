@@ -230,3 +230,31 @@ it('hides owner actions from the shared panel', function () {
         ->assertDontSee('Regenerate')
         ->assertSee('Prepare download');
 });
+
+it('shows a toast to the requester when the archive becomes ready', function () {
+    $gallery = panelGallery($this->user);
+    $archive = app(GalleryArchiveService::class)->findOrCreate($gallery, 'all');
+    $archive->update([
+        'status' => 'building',
+        'started_at' => now(),
+    ]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('gallery-download-panel', [
+            'gallery' => $gallery,
+            'count' => 1,
+            'size' => '1 MB',
+            'imagesCount' => 1,
+        ]);
+
+    $archive->update([
+        'status' => 'ready',
+        'path' => 'teams/'.$gallery->team_id.'/galleries/'.$gallery->ulid.'/archives/'.$archive->ulid.'.zip',
+        'size_bytes' => 1024,
+        'completed_at' => now(),
+        'expires_at' => now()->addDay(),
+    ]);
+
+    $component->call('refreshArchive')
+        ->assertDispatched('ts-ui:toast');
+});
