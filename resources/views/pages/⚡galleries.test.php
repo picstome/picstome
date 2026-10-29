@@ -278,14 +278,11 @@ test('scrolls to the top after changing gallery pages', function () {
     $this->actingAs($this->user);
 
     $page = visit('/galleries');
-    $page->script('window.scrollTo(0, document.body.scrollHeight)');
     $page->script("document.querySelector('[data-gallery-card]').__staleCard = true");
-    $page->wait(0.2);
-
-    expect($page->script('window.scrollY'))->toBeGreaterThan(0);
+    expect(scrollPageToBottom($page))->toBeGreaterThan(0);
 
     $page->click('[data-pagination-page="2"]');
-    $page->wait(1);
+    waitForPageScrollTop($page);
 
     expect($page->script('window.scrollY'))->toBeLessThan(2)
         ->and($page->script("document.querySelector('[data-gallery-card]')?.__staleCard ?? null"))->toBeNull();

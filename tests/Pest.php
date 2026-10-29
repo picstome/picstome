@@ -6,6 +6,8 @@ use App\Models\InvoiceSetting;
 use App\Models\Team;
 use App\Services\InvoiceService;
 use Illuminate\Support\Facades\Storage;
+use Pest\Browser\Api\PendingAwaitablePage;
+use Pest\Browser\Api\Webpage;
 use Tests\TestCase;
 
 /*
@@ -163,4 +165,54 @@ function draftInvoice(Team $team, array $attributes = []): Invoice
             'customer' => $snapshots->customerSnapshot($customer),
         ],
     ], $attributes));
+}
+
+/**
+ * Scroll the browser page to the bottom and wait for the browser to apply it.
+ *
+ * The browser tests run headless in CI. A fixed wait after scrollTo() is not
+ * reliable, so use the scrolling element and resolve after two animation frames.
+ */
+function scrollPageToBottom(Webpage|PendingAwaitablePage $page): int
+{
+    return (int) $page->script(<<<'JS'
+        new Promise((resolve) => {
+            const root = document.scrollingElement || document.documentElement;
+
+            root.style.scrollBehavior = 'auto';
+            window.scrollTo({ top: root.scrollHeight, behavior: 'instant' });
+
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve(window.scrollY)));
+        });
+    JS);
+}
+
+/**
+ * Wait for the application's smooth scroll-to-top to finish.
+ */
+function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs = 3000): void
+{
+    $page->script(<<<JS
+        new Promise((resolve, reject) => {
+            const startedAt = performance.now();
+
+            const check = () => {
+                if (window.scrollY < 2) {
+                    resolve(true);
+
+                    return;
+                }
+
+                if (performance.now() - startedAt > {$timeoutMs}) {
+                    reject(new Error('The page did not scroll to the top within {$timeoutMs} ms.'));
+
+                    return;
+                }
+
+                setTimeout(check, 50);
+            };
+
+            check();
+        });
+    JS);
 }
