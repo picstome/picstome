@@ -146,7 +146,9 @@ test('shared gallery shows the download tab with the photo count and total size'
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $component->assertSee('Download')
-        ->assertSee('This gallery has 2 photos and weighs approximately 2 MB.');
+        ->assertSee('2 images')
+        ->assertSee('0 videos')
+        ->assertSee('2 MB');
 });
 
 test('shared gallery hides the download tab when downloads are disabled', function () {
@@ -156,7 +158,7 @@ test('shared gallery hides the download tab when downloads are disabled', functi
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     $component->assertDontSee('Download gallery')
-        ->assertDontSee('This gallery has');
+        ->assertDontSee('This ZIP includes processed images');
 });
 
 test('shared gallery shows the favorite count and selection limit', function () {
@@ -223,9 +225,8 @@ test('shared gallery labels and download warning are translated to Spanish', fun
     $component->assertSee('Favoritos (1/10)')
         ->assertSee('Comentarios (1)')
         ->assertSee('Descargar galería')
-        ->assertSee('Esta galería tiene 2 fotos y pesa aproximadamente 2 KB.')
-        ->assertSee('Probablemente no se descargue en un móvil.')
-        ->assertSee('Recuerda que también puedes descargar las fotos de forma individual.');
+        ->assertSee('Recomendamos usar tu ordenador para descargar la galería, ya que puede ocupar mucho espacio.')
+        ->assertSee('También puedes descargar las fotos individualmente.');
 });
 
 test('shared gallery displays description when present', function () {

@@ -62,8 +62,16 @@ new class extends Component
         }
     }
 
+    /**
+     * Store one queued Livewire upload in S3.
+     *
+     * Large RAW/video uploads can exceed PHP's default max_execution_time
+     * while the local temporary file is copied to S3.
+     */
     public function save($index, $action = 'version')
     {
+        set_time_limit(300);
+
         if (! isset($this->photos[$index])) {
             return;
         }
@@ -489,7 +497,8 @@ new class extends Component
                 <x-dropdown.items
                     :text="__('Download')"
                     icon="cloud-arrow-down"
-                    :href="route('galleries.download', ['gallery' => $gallery])"
+                    wire:click="$set('activeTab', 'download')"
+                    x-on:click="show = false"
                 />
 
                 @if ($favorites->isNotEmpty())
@@ -564,6 +573,7 @@ new class extends Component
                 :favorites-count="$this->favorites->count()"
                 :selection-limit="$gallery->share_selection_limit"
                 :comments-count="$this->totalComments()"
+                :show-download="true"
             >
                 <x-slot name="afterFavorites">
                     @if ($favorites->isNotEmpty())
@@ -626,6 +636,18 @@ new class extends Component
                         </x-ts-modal-trigger>
                     </div>
                 @endif
+            </div>
+
+            <div x-show="$wire.activeTab === 'download'" class="pt-1">
+                <livewire:gallery-download-panel
+                    :$gallery
+                    :count="$this->allPhotos->count()"
+                    :size="$this->formattedDownloadSize()"
+                    :images-count="$this->allPhotos->filter(fn ($photo) => $photo->isImage())->count()"
+                    :videos-count="$this->allPhotos->filter(fn ($photo) => $photo->isVideo())->count()"
+                    :pdfs-count="$this->allPhotos->filter(fn ($photo) => $photo->isPdf())->count()"
+                    :key="'download-panel-'.$gallery->id"
+                />
             </div>
         </div>
     @else

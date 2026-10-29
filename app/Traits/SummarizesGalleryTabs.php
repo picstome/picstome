@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Services\GalleryArchiveService;
+
 /**
  * Summary values shared by the gallery tabs in the owner and shared views.
  *
@@ -11,13 +13,12 @@ namespace App\Traits;
 trait SummarizesGalleryTabs
 {
     /**
-     * Approximate ZIP size. `stored_size` includes both the processed JPG and
-     * the retained RAW file when the gallery keeps originals, matching the
-     * files streamed by the gallery download.
+     * Approximate ZIP size for the downloadable files. RAW files are excluded
+     * and the processed JPEG is used when a RAW was retained.
      */
     public function totalDownloadSize(): int
     {
-        return (int) $this->allPhotos->sum('stored_size');
+        return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->allPhotos);
     }
 
     public function formattedDownloadSize(): string

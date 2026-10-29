@@ -131,6 +131,11 @@ class Team extends Model
         return $this->hasMany(Gallery::class);
     }
 
+    public function galleryArchives()
+    {
+        return $this->hasMany(GalleryArchive::class);
+    }
+
     public function ftpAccount()
     {
         return $this->hasOne(FtpAccount::class);

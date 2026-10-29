@@ -13,3 +13,4 @@ Schedule::command('galleries:send-expiration-reminders')->dailyAt('09:00');
 Schedule::command('subscriptions:cleanup')->daily();
 Schedule::command('cleanup:livewire-tmp')->daily();
 Schedule::command('ingest:ftp-uploads')->everyMinute();
+Schedule::command('gallery-archives:prune --force')->daily();

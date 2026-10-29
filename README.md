@@ -16,6 +16,8 @@ For local development, you can use the following requirements:
 > ```
 >
 > This prevents PHP-FPM from killing long-running download requests. Make sure to reload PHP-FPM after changing this setting.
+>
+> Large uploads copied to S3 from the application can also exceed PHP's default execution limit. The gallery upload action raises the PHP limit to 5 minutes, but the PHP-FPM pool's `request_terminate_timeout` must allow that longer request too.
 
 If you meet these requirements, you can start by cloning the repository and installing the dependencies.
 

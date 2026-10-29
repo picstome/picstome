@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\ContractPdfController;
+use App\Http\Controllers\GalleryDownloadController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PublicInvoicePdfController;
+use App\Http\Controllers\SharedGalleryDownloadController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\NoIndex;
@@ -34,13 +36,13 @@ Route::livewire('/@{handle}/portfolio/{gallery:ulid}/photos/{photo}', 'pages::po
 
 Route::livewire('/shares/{gallery:ulid}/unlock', 'pages::shares.unlock')->name('shares.unlock');
 
-Route::get('/shares/{gallery:ulid}/download', function (Gallery $gallery) {
-    abort_unless($gallery->is_shared, 404);
+Route::get('/shares/{gallery:ulid}/download', SharedGalleryDownloadController::class)
+    ->name('shares.download')
+    ->middleware(['throttle:30,1', PasswordProtectGallery::class]);
 
-    abort_unless($gallery->is_share_downloadable, 401);
-
-    return $gallery->download((bool) request()->input('favorites'));
-})->name('shares.download')->middleware([PasswordProtectGallery::class]);
+Route::get('/shares/{gallery:ulid}/download/{archive:ulid}', [SharedGalleryDownloadController::class, 'archive'])
+    ->name('shares.archives.download')
+    ->middleware(['throttle:30,1', PasswordProtectGallery::class]);
 
 Route::livewire('/shares/{gallery:ulid}/photos/{photo}', 'pages::shares.photos.show')->name('shares.photos.show')->middleware([PasswordProtectGallery::class]);
 
@@ -126,9 +128,13 @@ Route::get('/i/{token}/pdf', PublicInvoicePdfController::class)
 
 Route::livewire('/galleries', 'pages::galleries')->name('galleries')->middleware(['auth', 'verified']);
 Route::livewire('/galleries/{gallery}', 'pages::galleries.show')->name('galleries.show')->middleware(['auth', 'verified']);
-Route::get('/galleries/{gallery}/download', function (Gallery $gallery) {
-    return $gallery->download();
-})->name('galleries.download')->middleware(['auth', 'verified', 'can:view,gallery']);
+Route::get('/galleries/{gallery}/download', GalleryDownloadController::class)
+    ->name('galleries.download')
+    ->middleware(['auth', 'verified', 'can:view,gallery']);
+
+Route::get('/galleries/{gallery}/download/{archive:ulid}', [GalleryDownloadController::class, 'archive'])
+    ->name('galleries.archives.download')
+    ->middleware(['auth', 'verified', 'can:view,gallery']);
 Route::livewire('/galleries/{gallery}/photos/{photo}', 'pages::galleries.photos.show')->name('galleries.photos.show')->middleware(['auth', 'verified']);
 
 Route::get('/galleries/{gallery}/photos/{photo}/versions/{version}/download', function (Gallery $gallery, Photo $photo, PhotoVersion $version) {

@@ -13,6 +13,7 @@
     'showFavorites' => true,
     'showComments' => true,
     'downloadUrl' => null,
+    'showDownload' => false,
 ])
 
 @php
@@ -76,7 +77,7 @@
         </button>
     @endif
 
-    @if ($downloadUrl)
+    @if ($showDownload || $downloadUrl)
         <button
             type="button"
             @click="$wire.activeTab = 'download'"
