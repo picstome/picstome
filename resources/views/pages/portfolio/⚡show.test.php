@@ -42,7 +42,6 @@ it('does not overflow on mobile and fills the square grid cells', function () {
         ->toBeTrue();
 });
 
-
 it('limits the portfolio grid and loads more photos on demand', function () {
     $gallery = Gallery::factory()->public()->for($this->team)->create();
     Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);

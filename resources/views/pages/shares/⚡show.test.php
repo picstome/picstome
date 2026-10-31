@@ -412,7 +412,6 @@ test('shared gallery shows a photo that arrives after the page loads', function 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
 });
 
-
 test('shared gallery renders a bounded page and loads more photos on demand', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create();
     Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);

@@ -1664,7 +1664,6 @@ test('the photographer gallery refreshes when the watcher detects a new photo', 
     expect($component->allPhotos->contains($photo))->toBeTrue();
 });
 
-
 test('owner gallery renders a bounded page and loads more photos on demand', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
     Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
