@@ -12,6 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust the local reverse proxy only outside production.
+        if (in_array(env('APP_ENV', 'production'), ['local', 'testing'], true)) {
+            $middleware->trustProxies(at: '127.0.0.1');
+        }
+
         $middleware->appendToGroup('web', SetLocale::class);
 
         $middleware->validateCsrfTokens(except: [
