@@ -101,8 +101,12 @@ class Gallery extends Model
             Cache::forget("gallery:{$gallery->id}:first_image");
             Cache::forget("gallery:{$gallery->id}:photos_count");
             Cache::forget("gallery:{$gallery->id}:photos:ids");
+            Cache::forget("gallery:{$gallery->id}:photos:ready:ids");
             Cache::forget("gallery:{$gallery->id}:favorites:ids");
             Cache::forget("gallery:{$gallery->id}:commented:ids");
+            Cache::forget("gallery:{$gallery->id}:media_counts");
+            Cache::forget("gallery:{$gallery->id}:download_size");
+            Cache::forget("gallery:{$gallery->id}:comments_count");
         });
     }
 
@@ -129,7 +133,7 @@ class Gallery extends Model
     {
         return $this->hasOne(Photo::class)->ofMany(
             ['id' => 'min'],
-            fn (Builder $query) => $query->images(),
+            fn (Builder $query) => $query->images()->ready(),
         );
     }
 
@@ -169,6 +173,20 @@ class Gallery extends Model
     }
 
     /**
+     * Cached, naturally sorted ids of photos that finished processing and may
+     * be shown to visitors. Pending, processing and CDN-warming photos are
+     * intentionally excluded.
+     *
+     * @return Collection<int, int>
+     */
+    public function readyPhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:photos:ready:ids", now()->addHours(1), function () {
+            return $this->photos()->ready()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
      * Cached, naturally sorted by name ids of the gallery's favorited photos.
      *
      * @return Collection<int, int>
@@ -176,7 +194,7 @@ class Gallery extends Model
     public function favoritePhotoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:favorites:ids", now()->addHours(1), function () {
-            return $this->favorites()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->favorites()->ready()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
@@ -188,7 +206,7 @@ class Gallery extends Model
     public function commentedPhotoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:commented:ids", now()->addHours(1), function () {
-            return $this->photos()->whereHas('comments')->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->photos()->ready()->whereHas('comments')->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
@@ -403,7 +421,9 @@ class Gallery extends Model
         }
 
         $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
-        $newPath = $this->storeUploadedPhoto($photo, $sourceName);
+        $newPath = $this->canReuseCurrentPath($existing->path, $sourceName)
+            ? $this->replaceStoredPhoto($photo, $existing->path)
+            : $this->storeUploadedPhoto($photo, $sourceName);
         $oldPath = $existing->path;
         $oldRawPath = $existing->raw_path;
         $oldDisk = $existing->diskOrDefault();
@@ -467,6 +487,37 @@ class Gallery extends Model
             $existing->version_count = $previousCount + 1;
             $existing->save();
         });
+    }
+
+    /**
+     * A replacement keeps the same public path when the file extension does
+     * not change, so pages already rendered by the browser keep resolving.
+     */
+    protected function canReuseCurrentPath(string $currentPath, string $sourceName): bool
+    {
+        return strtolower(pathinfo($currentPath, PATHINFO_EXTENSION))
+            === strtolower(pathinfo($sourceName, PATHINFO_EXTENSION));
+    }
+
+    protected function replaceStoredPhoto(UploadedFile $photo, string $path): string
+    {
+        if (FileUploadConfiguration::isUsingS3()) {
+            Storage::disk('s3')->move($photo->getRealPath(), $path);
+
+            return $path;
+        }
+
+        $stored = Storage::disk('s3')->putFileAs(
+            path: dirname($path),
+            file: $photo,
+            name: basename($path),
+        );
+
+        if (! $stored) {
+            throw new \RuntimeException('Could not replace the current photo.');
+        }
+
+        return $stored;
     }
 
     protected function storeUploadedPhoto(UploadedFile $photo, string $sourceName): string
@@ -749,6 +800,43 @@ class Gallery extends Model
     {
         return Cache::remember("gallery:{$this->id}:photos_count", now()->addHours(24), function () {
             return $this->photos()->count();
+        });
+    }
+
+    /**
+     * Media totals used by grid tabs and the download panel.
+     *
+     * @return array{all: int, images: int, videos: int, pdfs: int}
+     */
+    public function mediaCounts(): array
+    {
+        return Cache::remember("gallery:{$this->id}:media_counts", now()->addHours(1), function (): array {
+            return [
+                'all' => $this->photos()->ready()->count(),
+                'images' => $this->photos()->ready()->images()->count(),
+                'videos' => $this->photos()->ready()->where(function (Builder $query) {
+                    foreach (['mp4', 'webm', 'ogg'] as $extension) {
+                        $query->orWhere('path', 'like', '%.'.$extension);
+                    }
+                })->count(),
+                'pdfs' => $this->photos()->ready()->where('path', 'like', '%.pdf')->count(),
+            ];
+        });
+    }
+
+    public function downloadSize(): int
+    {
+        return Cache::remember("gallery:{$this->id}:download_size", now()->addHours(1), function (): int {
+            return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->photos()->ready()->cursor());
+        });
+    }
+
+    public function commentsCount(): int
+    {
+        return Cache::remember("gallery:{$this->id}:comments_count", now()->addHours(1), function (): int {
+            return PhotoComment::query()
+                ->whereHas('photo', fn (Builder $query) => $query->where('gallery_id', $this->id))
+                ->count();
         });
     }
 

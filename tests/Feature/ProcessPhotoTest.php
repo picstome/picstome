@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPhoto;
 use App\Models\Gallery;
 use App\Models\Photo;
@@ -7,6 +8,7 @@ use App\Models\PhotoVersion;
 use Facades\App\Services\RawPhotoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -69,7 +71,7 @@ it('resizes photos when the gallery stops keeping the original size', function (
     expect($height)->toBe(128);
 });
 
-it('deletes the original photo from public disk after processing', function () {
+it('keeps the stable public image and its generated thumbnail after processing', function () {
     config(['picstome.photo_resize' => 128]);
     config(['picstome.photo_thumb_resize' => 64]);
     Storage::fake('s3');
@@ -82,7 +84,9 @@ it('deletes the original photo from public disk after processing', function () {
     (new ProcessPhoto($photo))->handle();
 
     $photo->refresh();
-    expect(Storage::disk('s3')->allFiles())->toHaveCount(1);
+    expect(Storage::disk('s3')->allFiles())->toHaveCount(2);
+    expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+    expect(Storage::disk('s3')->exists($photo->thumb_path))->toBeTrue();
 });
 
 it('keeps oversized photo if keep_original_size is enabled and it has raw_path', function () {
@@ -403,4 +407,65 @@ it('does not delete retained version files while processing the current version'
 
     expect(Storage::disk('s3')->exists($oldPath))->toBeTrue();
     expect($photo->fresh()->versions()->where('path', $oldPath)->exists())->toBeTrue();
+});
+
+it('keeps the public photo path stable while publishing the processed image', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photo = $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg', 300, 200));
+    $originalPath = $photo->path;
+    $thumbnailUrlBefore = $photo->small_thumbnail_url;
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+
+    expect($photo->path)->toBe($originalPath)
+        ->and($photo->status)->toBe('processed')
+        ->and(Storage::disk('s3')->exists($originalPath))->toBeTrue()
+        ->and($thumbnailUrlBefore)->not->toBeEmpty();
+});
+
+it('generates a webp thumbnail and includes it in the stored size', function () {
+    config(['picstome.photo_small_thumb_resize' => 200]);
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photo = $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg', 800, 600));
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+
+    expect($photo->thumb_path)->not->toBeNull()
+        ->and($photo->thumb_path)->toEndWith('.thumb.webp')
+        ->and(Storage::disk('s3')->exists($photo->thumb_path))->toBeTrue();
+
+    [$width, $height] = getimagesizefromstring(Storage::disk('s3')->get($photo->thumb_path));
+
+    expect(max($width, $height))->toBeLessThanOrEqual(200)
+        ->and($photo->stored_size)->toBe(
+            Storage::disk('s3')->size($photo->path) + Storage::disk('s3')->size($photo->thumb_path)
+        );
+});
+
+it('queues thumbnail deletion when a photo is deleted', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+    Queue::fake();
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photo = $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg', 300, 200));
+
+    (new ProcessPhoto($photo))->handle();
+
+    $photo->refresh();
+    $thumbnailPath = $photo->thumb_path;
+
+    $photo->deleteFromDisk()->delete();
+
+    Queue::assertPushed(DeleteFromDisk::class, fn ($job) => $job->path === $thumbnailPath);
 });

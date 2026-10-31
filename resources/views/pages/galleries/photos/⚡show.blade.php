@@ -230,46 +230,225 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
 <div
     x-data="{
-        swipe: '',
         zoom: false,
-        pinchZooming: false,
+        scale: 1,
+        translateX: 0,
+        translateY: 0,
         navigating: false,
+        gestureActive: false,
+        gestureBlocked: false,
+        gestureHadMultipleTouches: false,
+        swipeStartX: null,
+        swipeStartY: null,
+        swipeStartedAt: 0,
+        pinchStartDistance: 0,
+        pinchStartScale: 1,
+        panStartX: 0,
+        panStartY: 0,
+        panStartTranslateX: 0,
+        panStartTranslateY: 0,
+        initPhotoViewer() {
+            const source = this.$el.dataset.fullImageUrl
+            if (source) {
+                const image = new Image()
+                image.src = source
+            }
+        },
         isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
                 navigator.userAgent,
             )
         },
+        onTouchStart(event) {
+            if (event.target.closest('button, a, input, textarea, select, [data-no-gesture]')) {
+                this.gestureBlocked = true
+
+                return
+            }
+
+            this.gestureBlocked = false
+            this.gestureActive = true
+
+            if (event.touches.length >= 2) {
+                this.gestureHadMultipleTouches = true
+                this.swipeStartX = null
+                this.swipeStartY = null
+
+                const first = event.touches[0]
+                const second = event.touches[1]
+                this.pinchStartDistance = Math.hypot(
+                    first.clientX - second.clientX,
+                    first.clientY - second.clientY,
+                ) || 1
+                this.pinchStartScale = this.scale
+                this.zoom = true
+
+                return
+            }
+
+            if (event.touches.length === 1) {
+                const touch = event.touches[0]
+
+                if (this.scale > 1.01) {
+                    this.zoom = true
+                    this.panStartX = touch.clientX
+                    this.panStartY = touch.clientY
+                    this.panStartTranslateX = this.translateX
+                    this.panStartTranslateY = this.translateY
+                } else {
+                    this.swipeStartX = touch.clientX
+                    this.swipeStartY = touch.clientY
+                    this.swipeStartedAt = Date.now()
+                }
+            }
+        },
+        onTouchMove(event) {
+            if (this.gestureBlocked || ! this.gestureActive) {
+                return
+            }
+
+            if (event.touches.length >= 2 && this.pinchStartDistance > 0) {
+                const first = event.touches[0]
+                const second = event.touches[1]
+                const distance = Math.hypot(
+                    first.clientX - second.clientX,
+                    first.clientY - second.clientY,
+                )
+                this.scale = Math.min(
+                    4,
+                    Math.max(1, this.pinchStartScale * (distance / this.pinchStartDistance)),
+                )
+                this.zoom = this.scale > 1.01
+
+                if (this.scale <= 1.01) {
+                    this.translateX = 0
+                    this.translateY = 0
+                }
+
+                return
+            }
+
+            if (event.touches.length === 1 && this.scale > 1.01) {
+                const touch = event.touches[0]
+                this.translateX = this.panStartTranslateX + (touch.clientX - this.panStartX)
+                this.translateY = this.panStartTranslateY + (touch.clientY - this.panStartY)
+            }
+        },
+        onTouchEnd(event) {
+            if (this.gestureBlocked) {
+                this.resetGesture()
+
+                return
+            }
+
+            if (event.touches.length > 0) {
+                if (this.scale > 1.01 && event.touches[0]) {
+                    this.panStartX = event.touches[0].clientX
+                    this.panStartY = event.touches[0].clientY
+                    this.panStartTranslateX = this.translateX
+                    this.panStartTranslateY = this.translateY
+                }
+
+                this.swipeStartX = null
+                this.swipeStartY = null
+
+                return
+            }
+
+            const wasMulti = this.gestureHadMultipleTouches
+            const touch = event.changedTouches[0]
+            const startX = this.scale > 1.01 ? this.panStartX : this.swipeStartX
+            const startY = this.scale > 1.01 ? this.panStartY : this.swipeStartY
+            const dx = touch && startX !== null ? touch.clientX - startX : 0
+            const dy = touch && startY !== null ? touch.clientY - startY : 0
+            const duration = Date.now() - this.swipeStartedAt
+
+            if (this.scale > 1.01 && Math.abs(dx) < 10 && Math.abs(dy) < 10 && ! wasMulti) {
+                this.resetZoom()
+            }
+
+            this.resetGesture()
+
+            if (wasMulti || this.scale > 1.01 || this.zoom) {
+                return
+            }
+
+            if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || duration > 800) {
+                return
+            }
+
+            this.navigatePhoto(dx < 0 ? 'next' : 'previous')
+        },
+        resetGesture() {
+            this.gestureActive = false
+            this.gestureBlocked = false
+            this.gestureHadMultipleTouches = false
+            this.swipeStartX = null
+            this.swipeStartY = null
+            this.swipeStartedAt = 0
+            this.pinchStartDistance = 0
+        },
+        resetZoom() {
+            this.zoom = false
+            this.scale = 1
+            this.translateX = 0
+            this.translateY = 0
+        },
+        toggleZoom() {
+            if (this.scale > 1.01) {
+                this.resetZoom()
+
+                return
+            }
+
+            this.zoom = true
+            this.scale = 2
+        },
+        navigatePhoto(direction) {
+            if (this.navigating) {
+                return
+            }
+
+            const ref = direction === 'next' ? this.$refs.next : this.$refs.previous
+
+            if (! ref) {
+                return
+            }
+
+            this.navigating = true
+            Livewire.navigate(ref.href)
+            setTimeout(() => { this.navigating = false }, 500)
+        },
     }"
-    x-init="
-        (() => {
-            const hammer = new Hammer($el, { touchAction: 'auto' })
-            hammer.get('pinch').set({ enable: true })
-            hammer.on('pinch panleft panright', function (ev) {
-                $dispatch(ev.type, ev)
-            })
-        })()
-    "
+    x-init="initPhotoViewer()"
+    data-full-image-url="{{ $photo->url }}"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @keyup.window.f="$wire.favorite()"
-    @panleft="if (!navigating && $refs.next) { navigating = true; Livewire.navigate($refs.next.href); setTimeout(() => { navigating = false }, 500) }"
-    @panright="if (!navigating && $refs.previous) { navigating = true; Livewire.navigate($refs.previous.href); setTimeout(() => { navigating = false }, 500) }"
-    @pinchstart="pinchZooming = true;"
     x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
     class="flex h-screen flex-col"
 >
-    <div id="photo" class="relative h-full flex-1" :class="zoom ? 'overflow-scroll' : 'overflow-hidden flex'">
+    <div
+        id="photo"
+        class="relative flex h-full flex-1 overflow-hidden"
+        style="touch-action: none;"
+        @touchstart="onTouchStart($event)"
+        @touchmove.prevent="onTouchMove($event)"
+        @touchend="onTouchEnd($event)"
+        @touchcancel="onTouchEnd($event)"
+    >
         @if ($photo->isImage())
             <img
                 src="{{ $photo->thumbnail_url }}"
                 srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                 sizes="(max-width: 640px) 100vw, 80vw"
+                style="background-image: url('{{ $photo->small_thumbnail_url }}'); background-size: cover; background-repeat: no-repeat; background-position: center;"
                 x-data="{ loaded: false, errored: false }"
-                x-init="if ($el.complete) loaded = true"
-                x-show="!zoom && !pinchZooming"
-                x-on:load="loaded = true"
+                x-init="if ($el.complete) { loaded = true; $el.style.backgroundImage = 'none' }"
+                x-show="!zoom"
+                x-on:load="loaded = true; $el.style.backgroundImage = 'none'"
                 x-on:error="errored = true"
-                @click="if (!isMobile()) zoom = true"
+                @click="if (!isMobile()) toggleZoom()"
                 :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
                 class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
                 alt="{{ $photo->name }}"
@@ -277,32 +456,20 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
             <img
                 src="{{ $photo->url }}"
+                style="background-image: url('{{ $photo->small_thumbnail_url }}'); background-size: cover; background-repeat: no-repeat; background-position: center;"
                 x-data="{ loaded: false, errored: false }"
-                x-init="if ($el.complete) loaded = true"
-                x-show="!zoom && pinchZooming"
-                x-on:load="loaded = true"
-                x-on:error="errored = true"
-                @click="if (!isMobile()) zoom = true"
-                class="mx-auto max-w-full object-contain hover:cursor-zoom-in"
-                :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                loading="lazy"
-                alt="{{ $photo->name }}"
-                x-cloak
-            />
-
-            <img
-                src="{{ $photo->url }}"
-                x-data="{ loaded: false, errored: false }"
-                x-init="if ($el.complete) loaded = true"
+                x-init="if ($el.complete) { loaded = true; $el.style.backgroundImage = 'none' }"
                 x-show="zoom"
-                x-on:load="loaded = true"
+                x-ref="fullImage"
+                x-bind:style="{ transform: 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')' }"
+                x-on:load="loaded = true; $el.style.backgroundImage = 'none'"
                 x-on:error="errored = true"
-                @click="zoom = false"
-                class="mx-auto max-w-none object-contain hover:cursor-zoom-out"
+                @click="if (!isMobile()) resetZoom()"
+                class="mx-auto max-h-full max-w-full object-contain hover:cursor-zoom-out"
                 :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60 h-full w-full'"
-                loading="lazy"
                 alt="{{ $photo->name }}"
                 x-cloak
+                data-full-image
             />
 
             <x-photo-annotations
@@ -574,7 +741,6 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
 
 @assets
-    <script type="text/javascript" src="https://unpkg.com/hammerjs@2.0.8/hammer.min.js"></script>
 @endassets
 
 @push('head')

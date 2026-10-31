@@ -37,7 +37,7 @@
 >
     <button
         type="button"
-        @click="$wire.activeTab = 'all'"
+        @click="$wire.activeTab = 'all'; $dispatch('gallery-tab-changed')"
         x-bind:data-current="$wire.activeTab === 'all'"
         class="{{ $tabClass }}"
         aria-label="{{ __('All photos') }}"
@@ -50,7 +50,7 @@
     @if ($showFavorites)
         <button
             type="button"
-            @click="$wire.activeTab = 'favorited'"
+            @click="$wire.activeTab = 'favorited'; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'favorited'"
             class="{{ $tabClass }}"
             aria-label="{{ $favoritesLabel }}"
@@ -66,7 +66,7 @@
     @if ($showComments)
         <button
             type="button"
-            @click="$wire.activeTab = 'commented'"
+            @click="$wire.activeTab = 'commented'; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'commented'"
             class="{{ $tabClass }}"
             aria-label="{{ $commentsLabel }}"
@@ -80,7 +80,7 @@
     @if ($showDownload || $downloadUrl)
         <button
             type="button"
-            @click="$wire.activeTab = 'download'"
+            @click="$wire.activeTab = 'download'; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'download'"
             class="{{ $tabClass }}"
             style="background-color: var(--color-primary-500); color: white;"

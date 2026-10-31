@@ -25,6 +25,21 @@ class Photo extends Model
     /** @use HasFactory<PhotoFactory> */
     use FormatsFileSize, HasDownloadFilename, HasFactory;
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_PROCESSING = 'processing';
+
+    public const STATUS_WARMING = 'warming';
+
+    public const STATUS_PROCESSED = 'processed';
+
+    public const STATUS_SKIPPED = 'skipped';
+
+    public const STATUS_FAILED = 'failed';
+
+    /** Statuses that may be rendered to gallery visitors. */
+    public const READY_STATUSES = [self::STATUS_PROCESSED, self::STATUS_SKIPPED];
+
     protected $guarded = [];
 
     protected function casts()
@@ -55,8 +70,11 @@ class Photo extends Model
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
             Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:media_counts");
+            Cache::forget("gallery:{$photo->gallery_id}:download_size");
 
             static::invalidateGalleryArchives($photo, ['all']);
         });
@@ -67,6 +85,16 @@ class Photo extends Model
 
             if ($photo->wasChanged($contentFields)) {
                 $variants[] = 'all';
+
+                Cache::forget("gallery:{$photo->gallery_id}:media_counts");
+                Cache::forget("gallery:{$photo->gallery_id}:download_size");
+            }
+
+            if ($photo->wasChanged('status')) {
+                Cache::forget("gallery:{$photo->gallery_id}:first_image");
+                Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
             }
 
             if ($photo->wasChanged('favorited_at')) {
@@ -84,8 +112,12 @@ class Photo extends Model
             Cache::forget("gallery:{$photo->gallery_id}:first_image");
             Cache::forget("gallery:{$photo->gallery_id}:photos_count");
             Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:media_counts");
+            Cache::forget("gallery:{$photo->gallery_id}:download_size");
+            Cache::forget("gallery:{$photo->gallery_id}:comments_count");
 
             $variants = ['all'];
 
@@ -164,6 +196,20 @@ class Photo extends Model
             'status' => $this->status,
             'uploaded_at' => $this->uploaded_at ?? $this->created_at ?? now(),
         ]);
+    }
+
+    /**
+     * Limit the query to photos that finished processing and may be shown.
+     */
+    #[Scope]
+    protected function ready(Builder $query): void
+    {
+        $query->whereIn('status', self::READY_STATUSES);
+    }
+
+    public function isReady(): bool
+    {
+        return in_array($this->status, self::READY_STATUSES, true);
     }
 
     /**

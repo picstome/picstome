@@ -152,3 +152,14 @@ it('rejects a locked shared gallery', function () {
     Livewire::test('gallery-live-watcher', ['gallery' => $gallery])
         ->assertStatus(404);
 });
+
+it('dispatches a photo event when a pending photo becomes ready', function () {
+    $gallery = Gallery::factory()->shared()->create();
+    $photo = Photo::factory()->for($gallery)->create(['status' => 'pending']);
+
+    $component = Livewire::test('gallery-live-watcher', ['gallery' => $gallery]);
+
+    $photo->update(['status' => 'processed']);
+
+    $component->call('check')->assertDispatched('gallery-photos-updated');
+});

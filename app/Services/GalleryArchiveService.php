@@ -151,7 +151,7 @@ class GalleryArchiveService
     public function estimate(Gallery $gallery, string $variant = 'all'): array
     {
         $photos = $this->photosQuery($gallery, $this->normalizeVariant($variant))
-            ->select(['id', 'path', 'raw_path', 'size', 'stored_size'])
+            ->select(['id', 'path', 'raw_path', 'thumb_path', 'disk', 'size', 'stored_size'])
             ->get();
 
         return [
@@ -183,13 +183,35 @@ class GalleryArchiveService
             return 0;
         }
 
-        if ($photo->isImage() && $photo->raw_path) {
-            $processedSize = max(0, (int) $photo->stored_size - (int) $photo->size);
+        // Thumbnails count towards storage usage but are not part of the ZIP.
+        if ($photo->isImage()) {
+            $thumbnailBytes = $this->thumbnailBytes($photo);
 
-            return $processedSize > 0 ? $processedSize : (int) $photo->size;
+            if ($photo->raw_path) {
+                $processedSize = max(0, (int) $photo->stored_size - (int) $photo->size - $thumbnailBytes);
+
+                return $processedSize > 0 ? $processedSize : (int) $photo->size;
+            }
+
+            return (int) ($photo->size ?: max(0, (int) $photo->stored_size - $thumbnailBytes));
         }
 
         return (int) ($photo->stored_size ?: $photo->size);
+    }
+
+    protected function thumbnailBytes(Photo $photo): int
+    {
+        if (! $photo->thumb_path) {
+            return 0;
+        }
+
+        try {
+            return Storage::disk($photo->diskOrDefault())->exists($photo->thumb_path)
+                ? (int) Storage::disk($photo->diskOrDefault())->size($photo->thumb_path)
+                : 0;
+        } catch (Throwable) {
+            return 0;
+        }
     }
 
     /**
@@ -203,7 +225,7 @@ class GalleryArchiveService
         }
 
         return (int) $this->photosQuery($gallery, $variant)
-            ->get(['id', 'path', 'raw_path', 'size', 'stored_size'])
+            ->get(['id', 'path', 'raw_path', 'thumb_path', 'disk', 'size', 'stored_size'])
             ->map(fn (Photo $photo): int => $this->estimatedSizeForPhoto($photo))
             ->filter(fn (int $bytes): bool => $bytes > 0)
             ->sortDesc()
@@ -1000,7 +1022,7 @@ class GalleryArchiveService
 
     protected function photosQuery(Gallery $gallery, string $variant): HasMany
     {
-        return $variant === 'favorites' ? $gallery->favorites() : $gallery->photos();
+        return ($variant === 'favorites' ? $gallery->favorites() : $gallery->photos())->ready();
     }
 
     protected function normalizeVariant(string $variant): string
