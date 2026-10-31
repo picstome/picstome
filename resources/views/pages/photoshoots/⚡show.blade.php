@@ -314,7 +314,7 @@ new class extends Component
                     >
                         <a class="flex w-full" href="/galleries/{{ $gallery->id }}">
                             <img
-                                src="{{ $gallery->photos()->first()?->thumbnail_url }}"
+                                src="{{ $gallery->firstImagePhoto?->small_thumbnail_url }}"
                                 alt=""
                                 class="mx-auto object-contain"
                             />
@@ -324,8 +324,8 @@ new class extends Component
                         >
                             <x-ts-heading>{{ $gallery->name }}</x-ts-heading>
                             <x-ts-text>
-                                {{ $gallery->photos()->count() }}
-                                {{ $gallery->photos()->count() === 1 ? __('photo') : __('photos') }} •
+                                {{ $gallery->photosCount() }}
+                                {{ $gallery->photosCount() === 1 ? __('photo') : __('photos') }} •
                                 {{ $gallery->getFormattedStorageSize() }} •
                                 {{ $gallery->created_at->format('M j, Y') }}
                             </x-ts-text>

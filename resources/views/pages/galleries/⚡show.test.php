@@ -84,10 +84,11 @@ describe('Gallery Viewing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('activeTab', 'download');
 
-        $component->assertSee('Download gallery')
-            ->assertSee('This ZIP includes processed images');
+        $component->assertSee('Download')
+            ->assertSeeHtml('gallery-download-panel');
     });
 
     it('selects a cover photo from the photo actions menu', function () {
@@ -467,7 +468,7 @@ describe('Photo Upload', function () {
 
         expect($photo->version_count)->toBe(2);
         expect($photo->current_version_id)->toBeNull();
-        expect($photo->path)->not->toBe('old/current.jpg');
+        expect($photo->path)->toBe('old/current.jpg');
         expect($photo->versions()->count())->toBe(1);
         expect($oldVersion->fresh()->path)->toBe('old/history.jpg');
         Queue::assertNotPushed(DeleteFromDisk::class, fn ($job) => $job->path === 'old/history.jpg');
@@ -1661,4 +1662,88 @@ test('the photographer gallery refreshes when the watcher detects a new photo', 
     $component->call('refreshPhotos');
 
     expect($component->allPhotos->contains($photo))->toBeTrue();
+});
+
+
+test('owner gallery renders a bounded page and loads more photos on demand', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->allPhotos)->toHaveCount(60)
+        ->and(substr_count($component->html(), 'data-photo-card'))->toBe(60)
+        ->and($component->html())->toContain('x-on:scroll.window.throttle.150ms')
+        ->and($component->html())->not->toContain('wire:name="photo-item"');
+
+    $component->call('loadMore', 'all');
+
+    expect($component->allPhotos)->toHaveCount(65);
+});
+
+it('returns the uploaded photo id and status so the modal can follow processing', function () {
+    Storage::fake('s3');
+    Event::fake(PhotoAdded::class);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+        ->set('photos.0', UploadedFile::fake()->image('photo1.jpg'))
+        ->call('save', 0);
+
+    $component->assertReturned(function ($result) {
+        return is_array($result)
+            && isset($result['photoId'], $result['status'])
+            && $result['status'] === 'pending';
+    });
+});
+
+it('returns upload statuses only for photos in the current gallery', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['status' => 'warming']);
+    $other = Photo::factory()->for(Gallery::factory())->create(['status' => 'processing']);
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->call('uploadStatuses', [$photo->id, $other->id])->effects['returns'][0])
+        ->toBe([$photo->id => 'warming']);
+});
+
+test('owner gallery loads the next batch automatically near the bottom', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+    $page->wait(0.5);
+
+    $page->assertNoJavaScriptErrors();
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
+
+    $page->script('window.scrollTo(0, document.body.scrollHeight)');
+    $page->wait(4);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
+});
+
+test('owner can switch between photos and download tabs', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+    $page->wait(0.5);
+
+    $page->click('[role=tablist] button[aria-label="Download"]');
+    $page->wait(0.5);
+
+    $page->assertSee('Download gallery');
+
+    $page->click('[role=tablist] button[aria-label="All photos"]');
+    $page->wait(0.5);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
 });

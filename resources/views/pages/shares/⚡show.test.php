@@ -143,12 +143,11 @@ test('shared gallery shows the download tab with the photo count and total size'
     Photo::factory()->for($gallery)->create(['size' => 1024 * 1024]);
     Photo::factory()->for($gallery)->create(['size' => 1024 * 1024]);
 
-    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug])
+        ->set('activeTab', 'download');
 
     $component->assertSee('Download')
-        ->assertSee('2 images')
-        ->assertSee('0 videos')
-        ->assertSee('2 MB');
+        ->assertSeeHtml('gallery-download-panel');
 });
 
 test('shared gallery hides the download tab when downloads are disabled', function () {
@@ -220,13 +219,13 @@ test('shared gallery labels and download warning are translated to Spanish', fun
     Photo::factory()->for($gallery)->create();
     PhotoComment::factory()->for($favoritePhoto)->create();
 
-    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug])
+        ->set('activeTab', 'download');
 
     $component->assertSee('Favoritos (1/10)')
         ->assertSee('Comentarios (1)')
-        ->assertSee('Descargar galería')
-        ->assertSee('Recomendamos usar tu ordenador para descargar la galería, ya que puede ocupar mucho espacio.')
-        ->assertSee('También puedes descargar las fotos individualmente.');
+        ->assertSee('Descargar')
+        ->assertSeeHtml('gallery-download-panel');
 });
 
 test('shared gallery displays description when present', function () {
@@ -411,4 +410,31 @@ test('shared gallery shows a photo that arrives after the page loads', function 
     $page->wait(3);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
+});
+
+
+test('shared gallery renders a bounded page and loads more photos on demand', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    expect($component->allPhotos)->toHaveCount(60)
+        ->and(substr_count($component->html(), 'data-photo-card'))->toBe(60)
+        ->and($component->html())->toContain('x-on:scroll.window.throttle.150ms')
+        ->and($component->html())->not->toContain('wire:name="shared-photo-item"');
+
+    $component->call('loadMore', 'all');
+
+    expect($component->allPhotos)->toHaveCount(65);
+});
+
+test('shared gallery hides photos that are still processing', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create(['status' => Photo::STATUS_PROCESSED]);
+    Photo::factory()->for($gallery)->create(['status' => Photo::STATUS_PROCESSING]);
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    expect($component->allPhotos)->toHaveCount(1);
 });

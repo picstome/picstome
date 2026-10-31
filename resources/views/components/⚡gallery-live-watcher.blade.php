@@ -34,6 +34,8 @@ new class extends Component
 
     public ?int $lastPhotoId = null;
 
+    public ?int $lastReadyPhotoId = null;
+
     public function mount(
         Gallery $gallery,
         bool $scanInbox = false,
@@ -43,6 +45,7 @@ new class extends Component
         $this->authorizeGallery($gallery);
         $this->pollSeconds = max(1, (int) config('picstome.live_gallery_poll_seconds', 5));
         $this->lastPhotoId = $this->latestPhotoId();
+        $this->lastReadyPhotoId = $this->latestReadyPhotoId();
     }
 
     public function check(): void
@@ -61,9 +64,11 @@ new class extends Component
         }
 
         $latest = $this->latestPhotoId();
+        $latestReady = $this->latestReadyPhotoId();
 
-        if ($latest !== $this->lastPhotoId) {
+        if ($latest !== $this->lastPhotoId || $latestReady !== $this->lastReadyPhotoId) {
             $this->lastPhotoId = $latest;
+            $this->lastReadyPhotoId = $latestReady;
 
             $this->dispatch('gallery-photos-updated');
         }
@@ -100,6 +105,11 @@ new class extends Component
     protected function latestPhotoId(): ?int
     {
         return $this->gallery->photos()->max('id');
+    }
+
+    protected function latestReadyPhotoId(): ?int
+    {
+        return $this->gallery->photos()->ready()->max('id');
     }
 
     protected function authorizeGallery(Gallery $gallery): void

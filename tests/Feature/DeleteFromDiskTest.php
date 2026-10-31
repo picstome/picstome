@@ -69,3 +69,26 @@ it('does not immediately delete a version file still referenced by the current p
 
     Storage::disk('s3')->assertExists('galleries/shared.jpg');
 });
+
+it('deletes an unreferenced thumbnail from the disk', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('galleries/photo.jpg.thumb.webp', 'thumb');
+
+    (new DeleteFromDisk('galleries/photo.jpg.thumb.webp', 's3'))->handle();
+
+    Storage::disk('s3')->assertMissing('galleries/photo.jpg.thumb.webp');
+});
+
+it('does not delete a thumbnail referenced by a photo', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('galleries/photo.jpg.thumb.webp', 'thumb');
+
+    Photo::factory()->for(Gallery::factory())->create([
+        'thumb_path' => 'galleries/photo.jpg.thumb.webp',
+        'disk' => 's3',
+    ]);
+
+    (new DeleteFromDisk('galleries/photo.jpg.thumb.webp', 's3'))->handle();
+
+    Storage::disk('s3')->assertExists('galleries/photo.jpg.thumb.webp');
+});

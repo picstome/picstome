@@ -41,3 +41,19 @@ it('does not overflow on mobile and fills the square grid cells', function () {
     expect($page->script("(() => { const cell = document.querySelector('.aspect-square'); const image = cell.querySelector('img'); return Math.abs(cell.clientWidth - image.clientWidth) < 2 && Math.abs(cell.clientHeight - image.clientHeight) < 2; })()"))
         ->toBeTrue();
 });
+
+
+it('limits the portfolio grid and loads more photos on demand', function () {
+    $gallery = Gallery::factory()->public()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
+
+    $component = Livewire::test('pages::portfolio.show', ['gallery' => $gallery]);
+
+    expect($component->photos)->toHaveCount(60)
+        ->and($component->photoCount)->toBe(65)
+        ->and($component->html())->toContain('x-on:scroll.window.throttle.150ms');
+
+    $component->call('loadMore');
+
+    expect($component->photos)->toHaveCount(65);
+});

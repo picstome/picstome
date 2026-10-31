@@ -70,7 +70,6 @@ new class extends Component
     @mouseleave="if (!moreActionsOpen && !downloadOptionsOpen) showActions = false"
     x-on:click.outside="moreActionsOpen = false; downloadOptionsOpen = false"
     data-photo-card
-    @if ($photo->status === 'pending') wire:poll.visible.5s @endif
 >
     <a
         id="{{ $htmlId }}"

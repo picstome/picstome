@@ -154,6 +154,17 @@ return [
     'photo_cdn_domain' => env('PICSTOME_PHOTO_CDN_DOMAIN', 'wsrv.nl'),
 
     /**
+     * Warm the CDN after processing so a photo is only exposed once its grid
+     * variants respond successfully. Warming is best effort: after all retries
+     * the photo is published anyway instead of staying hidden forever.
+     */
+    'cdn_warming' => [
+        'enabled' => (bool) env('PICSTOME_CDN_WARMING_ENABLED', true),
+        'timeout' => (int) env('PICSTOME_CDN_WARMING_TIMEOUT', 15),
+        'tries' => (int) env('PICSTOME_CDN_WARMING_TRIES', 3),
+    ],
+
+    /**
      * Timeout in seconds for ExifTool operations when extracting JPG from RAW files.
      */
     'exiftool_timeout' => env('PICSTOME_EXIFTOOL_TIMEOUT', 30),

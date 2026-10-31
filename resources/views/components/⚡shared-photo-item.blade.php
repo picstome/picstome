@@ -30,7 +30,6 @@ new class extends Component
 <div
     class="group relative flex aspect-square overflow-hidden bg-zinc-100 dark:bg-white/10"
     data-photo-card
-    @if ($photo->isImage() && ! $photo->small_thumbnail_url) wire:poll.visible.5s @endif
 >
     <a
         id="{{ $htmlId }}"
