@@ -34,8 +34,69 @@ it('can save a brand watermark', function () {
     expect(Team::first()->brand_watermark_url)->not->toBeNull();
 });
 
+it('keeps the save button disabled state in sync with uploads', function () {
+    actingAs($this->user)->get('/branding/watermark')
+        ->assertSee('x-bind:disabled="uploads > 0', false)
+        ->assertDontSee('wire:loading.attr="disabled"', false);
+});
+
+it('keeps the existing watermark path available to the save button', function () {
+    Storage::fake('s3');
+
+    $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
+
+    Livewire::actingAs($this->user)->test('pages::branding.watermark')
+        ->assertSet('brandWatermarkPath', $this->team->fresh()->brand_watermark_path)
+        ->call('deleteWatermark')
+        ->assertSet('brandWatermarkPath', null);
+});
+
+it('does not save settings when there is no watermark', function () {
+    Livewire::actingAs($this->user)->test('pages::branding.watermark')
+        ->set('form.watermarkPosition', 'bottom')
+        ->set('form.watermarkTransparency', 30)
+        ->call('save')
+        ->assertNotDispatched('ts-ui:toast');
+
+    expect($this->team->fresh()->brand_watermark_position)->toBe('top');
+    expect($this->team->fresh()->brand_watermark_transparency)->toBeNull();
+});
+
+it('can delete the brand watermark', function () {
+    Storage::fake('s3');
+
+    $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
+    $path = $this->team->fresh()->brand_watermark_path;
+
+    Livewire::actingAs($this->user)->test('pages::branding.watermark')
+        ->call('deleteWatermark')
+        ->assertDispatched('ts-ui:toast');
+
+    expect($this->team->fresh()->brand_watermark_path)->toBeNull();
+    Storage::disk('s3')->assertMissing($path);
+});
+
+it('can save settings when a watermark already exists', function () {
+    Storage::fake('s3');
+
+    $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
+
+    Livewire::actingAs($this->user)->test('pages::branding.watermark')
+        ->set('form.watermarkPosition', 'bottom')
+        ->set('form.watermarkTransparency', 25)
+        ->call('save')
+        ->assertDispatched('ts-ui:toast');
+
+    expect($this->team->fresh()->brand_watermark_position)->toBe('bottom');
+    expect($this->team->fresh()->brand_watermark_transparency)->toBe(25);
+});
+
 it('can change watermark position', function () {
-    expect($this->team->brand_watermark_position)->not()->toBe('bottom');
+    Storage::fake('s3');
+
+    $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
+
+    expect($this->team->fresh()->brand_watermark_position)->not()->toBe('bottom');
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
         ->set('form.watermarkPosition', 'bottom')
@@ -45,7 +106,11 @@ it('can change watermark position', function () {
 });
 
 it('can change watermark transparency', function () {
-    expect($this->team->brand_watermark_transparency)->toBeNull();
+    Storage::fake('s3');
+
+    $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
+
+    expect($this->team->fresh()->brand_watermark_transparency)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
         ->set('form.watermarkTransparency', 50)

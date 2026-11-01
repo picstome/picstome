@@ -500,23 +500,51 @@ class Team extends Model
     }
 
     /**
+     * Delete the brand logo and its stored file.
+     */
+    public function deleteBrandLogo(): void
+    {
+        $this->deleteBrandAsset('brand_logo_path');
+    }
+
+    /**
+     * Delete the brand logo icon and its stored file.
+     */
+    public function deleteBrandLogoIcon(): void
+    {
+        $this->deleteBrandAsset('brand_logo_icon_path');
+    }
+
+    /**
+     * Delete the brand watermark and its stored file.
+     */
+    public function deleteBrandWatermark(): void
+    {
+        $this->deleteBrandAsset('brand_watermark_path');
+    }
+
+    /**
      * Delete all brand assets for this team.
      */
     public function deleteBrandAssets(): void
     {
-        $disk = Storage::disk(config('picstome.disk'));
+        $this->deleteBrandLogo();
+        $this->deleteBrandLogoIcon();
+        $this->deleteBrandWatermark();
+    }
 
-        if ($this->brand_logo_path) {
-            $disk->delete($this->brand_logo_path);
+    /**
+     * Remove a single brand asset file and clear its column.
+     */
+    protected function deleteBrandAsset(string $column): void
+    {
+        if (! $this->{$column}) {
+            return;
         }
 
-        if ($this->brand_logo_icon_path) {
-            $disk->delete($this->brand_logo_icon_path);
-        }
+        Storage::disk(config('picstome.disk'))->delete($this->{$column});
 
-        if ($this->brand_watermark_path) {
-            $disk->delete($this->brand_watermark_path);
-        }
+        $this->update([$column => null]);
     }
 
     /**
