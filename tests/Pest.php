@@ -168,23 +168,67 @@ function draftInvoice(Team $team, array $attributes = []): Invoice
 }
 
 /**
- * Scroll the browser page to the bottom and wait for the browser to apply it.
+ * Scroll the browser page to the bottom and wait until the position is applied.
  *
- * The browser tests run headless in CI. A fixed wait after scrollTo() is not
- * reliable, so use the scrolling element and resolve after two animation frames.
+ * Browser tests run headless and in parallel in CI, so a single scrollTo() plus
+ * two animation frames can race with layout changes. Retry until the viewport
+ * actually moves or the timeout is reached.
+ *
+ * @return int The final vertical scroll position.
  */
-function scrollPageToBottom(Webpage|PendingAwaitablePage $page): int
+function scrollPageToBottom(Webpage|PendingAwaitablePage $page, int $timeoutMs = 5000): int
 {
-    return (int) $page->script(<<<'JS'
+    /** @var array{scrollY: int, scrollHeight: int, innerHeight: int} $result */
+    $result = $page->script(<<<JS
         new Promise((resolve) => {
+            const startedAt = performance.now();
             const root = document.scrollingElement || document.documentElement;
 
             root.style.scrollBehavior = 'auto';
-            window.scrollTo({ top: root.scrollHeight, behavior: 'instant' });
 
-            requestAnimationFrame(() => requestAnimationFrame(() => resolve(window.scrollY)));
+            const finish = () => resolve({
+                scrollY: Math.round(window.scrollY),
+                scrollHeight: Math.round(Math.max(root.scrollHeight, document.body.scrollHeight)),
+                innerHeight: Math.round(window.innerHeight),
+            });
+
+            const attempt = () => {
+                const maxScroll = Math.max(
+                    0,
+                    root.scrollHeight - window.innerHeight,
+                    document.body.scrollHeight - window.innerHeight,
+                );
+
+                if (maxScroll > 0) {
+                    root.scrollTop = maxScroll;
+                    window.scrollTo(0, maxScroll);
+                }
+
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if (window.scrollY > 0 || performance.now() - startedAt > {$timeoutMs}) {
+                        finish();
+
+                        return;
+                    }
+
+                    setTimeout(attempt, 50);
+                }));
+            };
+
+            attempt();
         });
     JS);
+
+    if ($result['scrollY'] <= 0) {
+        throw new RuntimeException(sprintf(
+            'The page did not scroll: scrollY=%d, scrollHeight=%d, viewport=%d.',
+            $result['scrollY'],
+            $result['scrollHeight'],
+            $result['innerHeight'],
+        ));
+    }
+
+    return $result['scrollY'];
 }
 
 /**
