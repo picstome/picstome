@@ -109,7 +109,8 @@ new class extends Component
     public function galleries()
     {
         return $this->team->galleries()
-            ->with(['coverPhoto'])
+            ->with(['coverPhoto', 'firstImagePhoto'])
+            ->withCount('photos')
             ->latest()
             ->paginate(24);
     }
@@ -166,12 +167,12 @@ new class extends Component
                                     width="400"
                                     height="267"
                                 />
-                            @elseif ($gallery->firstImage())
+                            @elseif ($gallery->firstImagePhoto)
                                 <img
                                     x-data="{ loaded: false, errored: false }"
                                     x-init="if ($el.complete) loaded = true"
                                     data-gallery-image
-                                    src="{{ $gallery->firstImage()->small_thumbnail_url }}"
+                                    src="{{ $gallery->firstImagePhoto->small_thumbnail_url }}"
                                     alt="{{ $gallery->name }}"
                                     x-on:load="loaded = true"
                                     x-on:error="errored = true"
@@ -180,6 +181,7 @@ new class extends Component
                                     loading="lazy"
                                     width="400"
                                     height="267"
+                                    decoding="async"
                                 />
                             @else
                                 <div
@@ -196,7 +198,7 @@ new class extends Component
 
                                 <div class="flex items-center justify-between">
                                     <x-ts-text variant="subtle" size="sm">
-                                        {{ $gallery->photosCount() }} {{ __('photos') }}
+                                        {{ $gallery->photos_count }} {{ __('photos') }}
                                     </x-ts-text>
 
                                     @if ($gallery->created_at)

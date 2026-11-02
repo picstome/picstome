@@ -49,6 +49,22 @@ current when it was dispatched.
 - If a newer version is added while the job is running, the final result is
   written to the historical version row.
 - Raw processing stores the extracted JPG plus the optional original RAW path.
+- Regular images are published by overwriting the same S3 object. The public
+  path is stable, so an already-rendered gallery never requests a file that was
+  deleted while its processed replacement was being uploaded.
+- `replaceCurrentVersion` reuses the current path when the extension does not
+  change. Cross-format replacements keep the existing upload flow.
+- A small WebP grid thumbnail is generated at `<path>.thumb.webp` and stored in
+  `thumb_path`.
+- The photo stays in `processing` while the job runs and in `warming` while
+  `App\Jobs\WarmPhotoCdn` fetches the grid variants through the CDN. Only
+  `processed` and `skipped` photos are exposed on guests, shared galleries and
+  portfolio pages. Warming can be disabled with
+  `PICSTOME_CDN_WARMING_ENABLED=false`.
+- The upload dialog polls `uploadStatuses` for the ids returned by `save` and
+  shows each file moving through queued, processing, warming and ready. Closing
+  the dialog cancels the polling timer; the grid thumbnail still reflects the
+  same status if the dialog was closed early.
 
 ## Restore and delete
 
@@ -109,11 +125,25 @@ Passwords and description text are never stored there.
 ## Storage accounting
 
 - `photos.stored_size` and `photo_versions.stored_size` hold the bytes actually
-  stored for each record.
+  stored for each record, including the generated thumbnail.
 - Current files + historical versions are summed by
   `App\Services\StorageUsageService`.
 - `current_version_id` rows are excluded from version totals to avoid counting
   the current file twice.
+- Deleting a photo or version also deletes its `thumb_path` through
+  `DeleteFromDisk`.
+
+Backfill thumbnails for existing media after deploying:
+
+```bash
+php artisan photos:generate-thumbnails --dry-run
+php artisan photos:generate-thumbnails
+php artisan storage:recalculate --dry-run
+php artisan storage:recalculate
+```
+
+The thumbnail command is idempotent; pass `--force` to regenerate existing
+thumbnails.
 
 After deploying this feature, reconcile pre-existing sizes once:
 

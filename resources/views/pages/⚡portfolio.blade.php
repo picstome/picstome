@@ -52,6 +52,8 @@ new class extends Component
     {
         return $this->team?->galleries()
             ->public()
+            ->with(['coverPhoto', 'firstImagePhoto'])
+            ->withCount('photos')
             ->get();
     }
 
@@ -60,6 +62,8 @@ new class extends Component
     {
         return $this->team?->galleries()
             ->private()
+            ->with(['coverPhoto', 'firstImagePhoto'])
+            ->withCount('photos')
             ->orderBy('created_at', 'desc')
             ->paginate(5);
     }
@@ -141,13 +145,13 @@ new class extends Component
                                     <x-icon name="bars-2" variant="mini" />
                                 </x-ts-button>
                                 <img
-                                    src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->photos()->first()?->small_thumbnail_url }}"
+                                    src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->firstImagePhoto?->small_thumbnail_url }}"
                                     alt=""
                                     class="size-16 rounded-lg object-cover"
                                 />
                                 <div>
                                     <x-ts-heading>{{ $gallery->name }}</x-ts-heading>
-                                    <x-ts-text>{{ $gallery->photos()->count() }} {{ __('photos') }}</x-ts-text>
+                                    <x-ts-text>{{ $gallery->photos_count }} {{ __('photos') }}</x-ts-text>
                                 </div>
                             </div>
                             <x-ts-button
@@ -201,13 +205,13 @@ new class extends Component
                             <div class="flex items-center justify-between py-6">
                                 <div class="flex items-center gap-4">
                                     <img
-                                        src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->photos()->first()?->small_thumbnail_url }}"
+                                        src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->firstImagePhoto?->small_thumbnail_url }}"
                                         alt=""
                                         class="size-16 rounded-lg object-cover"
                                     />
                                     <div>
                                         <x-ts-heading size="sm">{{ $gallery->name }}</x-ts-heading>
-                                        <x-ts-text>{{ $gallery->photos()->count() }} {{ __('photos') }}</x-ts-text>
+                                        <x-ts-text>{{ $gallery->photos_count }} {{ __('photos') }}</x-ts-text>
                                     </div>
                                 </div>
                                 <x-ts-button

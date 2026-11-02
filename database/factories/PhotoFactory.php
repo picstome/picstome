@@ -25,6 +25,7 @@ class PhotoFactory extends Factory
             'path' => 'galleries/gallery-id/photo1.jpg',
             'size' => 1024,
             'version_count' => 1,
+            'status' => 'processed',
             'uploaded_at' => now(),
         ];
     }

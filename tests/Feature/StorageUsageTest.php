@@ -53,3 +53,27 @@ it('totals storage across every gallery without double counting current versions
 
     expect(StorageUsageService::total())->toBe(350);
 });
+
+it('includes generated thumbnails in gallery storage usage', function () {
+    $gallery = Gallery::factory()->create();
+
+    $photo = Photo::factory()->for($gallery)->create([
+        'size' => 100,
+        'stored_size' => 140,
+        'thumb_path' => 'galleries/photo.jpg.thumb.webp',
+    ]);
+
+    expect($gallery->fresh()->getTotalStorageSize())->toBe(140);
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'size' => 40,
+        'stored_size' => 60,
+        'thumb_path' => 'galleries/version.jpg.thumb.webp',
+    ]);
+
+    expect($gallery->fresh()->getTotalStorageSize())->toBe(200);
+
+    $photo->update(['current_version_id' => $version->id]);
+
+    expect($gallery->fresh()->getTotalStorageSize())->toBe(140);
+});

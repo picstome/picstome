@@ -58,12 +58,12 @@ class PhotoVersion extends Model
 
     protected function largeThumbnailUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->smallThumbnail() : null);
+        return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->largeThumbnail() : null);
     }
 
     protected function smallThumbnailUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->largeThumbnail() : null);
+        return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->smallThumbnail() : null);
     }
 
     /**

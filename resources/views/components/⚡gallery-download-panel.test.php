@@ -26,6 +26,7 @@ function panelGallery(User $user, array $attributes = []): Gallery
 {
     $gallery = Gallery::factory()->for($user->currentTeam)->create($attributes);
     $gallery->addPhoto(UploadedFile::fake()->image('photo1.jpg'));
+    $gallery->photos()->update(['status' => 'processed']);
 
     return $gallery;
 }

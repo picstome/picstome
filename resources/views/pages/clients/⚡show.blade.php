@@ -41,7 +41,8 @@ class extends Component
                 $query->whereNull('share_password')
                     ->orWhereIn('galleries.ulid', app(GalleryUnlockService::class)->unlockedUlids());
             })
-            ->with('coverPhoto')
+            ->with(['coverPhoto', 'firstImagePhoto'])
+            ->withCount('photos')
             ->latest('galleries.created_at')
             ->get();
     }
@@ -111,11 +112,13 @@ class extends Component
                                     alt="{{ $gallery->name }}"
                                     class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
                                 />
-                            @elseif($gallery->firstImage())
+                            @elseif($gallery->firstImagePhoto)
                                 <img
-                                    src="{{ $gallery->firstImage()->small_thumbnail_url }}"
+                                    src="{{ $gallery->firstImagePhoto->small_thumbnail_url }}"
                                     alt="{{ $gallery->name }}"
                                     class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-lg"
+                                    loading="lazy"
+                                    decoding="async"
                                 />
                             @else
                                 <div class="w-full h-48 bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center rounded-t-lg">
@@ -130,7 +133,7 @@ class extends Component
 
                                 <div class="flex items-center justify-between">
                                     <x-ts-text variant="subtle" size="sm">
-                                        {{ $gallery->photosCount() }} {{ __('photos') }}
+                                        {{ $gallery->photos_count }} {{ __('photos') }}
                                     </x-ts-text>
 
                                     @if($gallery->created_at)

@@ -34,5 +34,6 @@
         <server name="TELESCOPE_ENABLED" value="false"/>
         <server name="LIVEWIRE_TEMP_UPLOAD_DISK" value="null"/>
         <server name="TRANSLATION_OVERRIDES_PATH" value="storage/framework/testing/translations"/>
+        <server name="PICSTOME_CDN_WARMING_ENABLED" value="false"/>
     </php>
 </phpunit>

@@ -2,13 +2,10 @@
 
 namespace App\Traits;
 
-use App\Services\GalleryArchiveService;
-
 /**
  * Summary values shared by the gallery tabs in the owner and shared views.
  *
- * Components using this trait must expose `$gallery`, `$allPhotos` and
- * `$commentedPhotos`.
+ * Components using this trait must expose `$gallery`.
  */
 trait SummarizesGalleryTabs
 {
@@ -18,7 +15,7 @@ trait SummarizesGalleryTabs
      */
     public function totalDownloadSize(): int
     {
-        return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->allPhotos);
+        return $this->gallery->downloadSize();
     }
 
     public function formattedDownloadSize(): string
@@ -27,11 +24,11 @@ trait SummarizesGalleryTabs
     }
 
     /**
-     * Total comments across the gallery. The commented photos collection is
-     * already loaded with comment counts for the comments tab.
+     * Total comments across the gallery, cached independently from the
+     * commented-photo collection so rendering the tab badge stays cheap.
      */
     public function totalComments(): int
     {
-        return (int) $this->commentedPhotos->sum('comments_count');
+        return $this->gallery->commentsCount();
     }
 }

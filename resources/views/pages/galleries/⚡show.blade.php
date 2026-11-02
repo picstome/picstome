@@ -32,9 +32,12 @@ new class extends Component
 
     public ShareGalleryForm $shareForm;
 
-    public Collection $favorites;
+    /** Number of cards rendered per tab. Increased by the "load more" action. */
+    public int $allPhotoLimit = 60;
 
-    public Collection $commentedPhotos;
+    public int $favoritePhotoLimit = 60;
+
+    public int $commentedPhotoLimit = 60;
 
     public array $existingPhotoNames = [];
 
@@ -52,8 +55,7 @@ new class extends Component
         $this->authorize('view', $gallery);
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
-        $this->getFavorites();
-        $this->getCommentedPhotos();
+        $this->gallery->loadMissing(['coverPhoto', 'team']);
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
@@ -73,7 +75,7 @@ new class extends Component
         set_time_limit(300);
 
         if (! isset($this->photos[$index])) {
-            return;
+            return null;
         }
 
         $action = match ($action) {
@@ -85,7 +87,7 @@ new class extends Component
         };
 
         if ($action === 'skip') {
-            return;
+            return null;
         }
 
         $uploadedPhoto = $this->photos[$index];
@@ -125,23 +127,52 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
         $identityKey = Gallery::identityKey($uploadedPhoto->getClientOriginalName());
 
-        $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): void {
+        $photo = $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): Photo {
             $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
 
             if ($existingPhoto !== null && $action === 'replace') {
-                $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
-
-                return;
+                return $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
             }
 
             if ($existingPhoto !== null) {
-                $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
-
-                return;
+                return $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
             }
 
-            $this->addPhotoToGallery($uploadedPhoto);
+            return $this->addPhotoToGallery($uploadedPhoto);
         });
+
+        return [
+            'photoId' => $photo->id,
+            'status' => $photo->status,
+        ];
+    }
+
+    /**
+     * Lightweight status lookup used by the upload dialog while the queue is
+     * processing and warming the uploaded photos. Returning only ids and
+     * statuses keeps polling cheap and avoids hydrating models.
+     *
+     * @param  array<int, int|string>  $photoIds
+     * @return array<int, string>
+     */
+    public function uploadStatuses(array $photoIds): array
+    {
+        $ids = collect($photoIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->take(200)
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            return [];
+        }
+
+        return $this->gallery->photos()
+            ->whereKey($ids)
+            ->pluck('status', 'id')
+            ->all();
     }
 
     /**
@@ -196,25 +227,31 @@ new class extends Component
         }
     }
 
-    protected function addPhotoToGallery(UploadedFile $uploadedPhoto): void
+    protected function addPhotoToGallery(UploadedFile $uploadedPhoto): Photo
     {
         $photo = $this->gallery->addPhoto($uploadedPhoto);
 
         PhotoAdded::dispatch($photo);
+
+        return $photo;
     }
 
-    protected function addVersionToGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
+    protected function addVersionToGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): Photo
     {
         $photo = $this->gallery->addVersion($uploadedPhoto, $existingPhoto);
 
         PhotoAdded::dispatch($photo);
+
+        return $photo;
     }
 
-    protected function replaceCurrentPhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): void
+    protected function replaceCurrentPhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): Photo
     {
         $photo = $this->gallery->replaceCurrentVersion($uploadedPhoto, $existingPhoto);
 
         PhotoAdded::dispatch($photo);
+
+        return $photo;
     }
 
     public function share()
@@ -269,7 +306,51 @@ new class extends Component
 
         $photo->deleteFromDisk()->delete();
 
-        $this->getFavorites();
+        $this->forgetPhotoCollections();
+    }
+
+    public function toggleFavorite(Photo $photo): void
+    {
+        abort_unless($photo->gallery_id === $this->gallery->id, 404);
+
+        $photo->toggleFavorite();
+
+        $this->forgetPhotoCollections();
+
+        $this->dispatch('photo-favorited');
+    }
+
+    public function setAsCover(Photo $photo): void
+    {
+        abort_unless($photo->gallery_id === $this->gallery->id, 404);
+
+        $this->authorize('updateCover', $this->gallery);
+
+        abort_unless($photo->isImage(), 422);
+
+        $this->gallery->setCoverPhoto($photo);
+        $this->gallery->unsetRelation('coverPhoto');
+        $this->gallery->load('coverPhoto');
+
+        $this->forgetPhotoCollections();
+
+        $this->dispatch('gallery-cover-changed');
+    }
+
+    public function removeAsCover(Photo $photo): void
+    {
+        abort_unless($photo->gallery_id === $this->gallery->id, 404);
+
+        $this->authorize('updateCover', $this->gallery);
+
+        if ($this->gallery->coverPhoto?->is($photo)) {
+            $this->gallery->removeCoverPhoto();
+            $this->gallery->load('coverPhoto');
+
+            $this->forgetPhotoCollections();
+
+            $this->dispatch('gallery-cover-changed');
+        }
     }
 
     public function update()
@@ -292,14 +373,28 @@ new class extends Component
     }
 
     #[On('photo-favorited')]
-    public function getFavorites()
+    public function getFavorites(): void
     {
-        $this->favorites = $this->gallery->photosInOrder($this->gallery->favoritePhotoIds());
+        $this->forgetPhotoCollections();
     }
 
-    public function getCommentedPhotos()
+    public function getCommentedPhotos(): void
     {
-        $this->commentedPhotos = $this->gallery->photosInOrder($this->gallery->commentedPhotoIds());
+        $this->forgetPhotoCollections();
+    }
+
+    protected function forgetPhotoCollections(): void
+    {
+        unset(
+            $this->photoIds,
+            $this->allPhotos,
+            $this->favoriteIds,
+            $this->favorites,
+            $this->favoriteNames,
+            $this->commentedIds,
+            $this->commentedPhotos,
+            $this->mediaCounts,
+        );
     }
 
     public function markFavorites()
@@ -329,7 +424,7 @@ new class extends Component
 
         Cache::forget("gallery:{$this->gallery->id}:favorites:ids");
 
-        $this->getFavorites();
+        $this->forgetPhotoCollections();
         $this->favoriteFileNames = '';
 
         $this->closeModal('mark-favorites');
@@ -338,18 +433,91 @@ new class extends Component
     }
 
     #[Computed]
+    public function photoIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->photoIds();
+    }
+
+    #[Computed]
     public function allPhotos()
     {
-        return $this->gallery->photosInOrder($this->gallery->photoIds());
+        return $this->gallery->photosInOrder($this->photoIds->take($this->allPhotoLimit));
+    }
+
+    #[Computed]
+    public function totalPhotos(): int
+    {
+        return $this->photoIds->count();
+    }
+
+    #[Computed]
+    public function favoriteIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->favoritePhotoIds();
+    }
+
+    #[Computed]
+    public function favorites()
+    {
+        return $this->gallery->photosInOrder($this->favoriteIds->take($this->favoritePhotoLimit));
+    }
+
+    #[Computed]
+    public function totalFavorites(): int
+    {
+        return $this->favoriteIds->count();
+    }
+
+    #[Computed]
+    public function favoriteNames(): \Illuminate\Support\Collection
+    {
+        $names = $this->gallery->photos()
+            ->whereKey($this->favoriteIds)
+            ->pluck('name', 'id');
+
+        return $this->favoriteIds
+            ->map(fn ($id) => $names[$id] ?? null)
+            ->filter()
+            ->values();
+    }
+
+    #[Computed]
+    public function commentedIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->commentedPhotoIds();
+    }
+
+    #[Computed]
+    public function commentedPhotos()
+    {
+        return $this->gallery->photosInOrder($this->commentedIds->take($this->commentedPhotoLimit));
+    }
+
+    #[Computed]
+    public function mediaCounts(): array
+    {
+        return $this->gallery->mediaCounts();
+    }
+
+    public function loadMore(string $tab = 'all'): void
+    {
+        match ($tab) {
+            'favorited' => $this->favoritePhotoLimit += 60,
+            'commented' => $this->commentedPhotoLimit += 60,
+            default => $this->allPhotoLimit += 60,
+        };
+
+        $this->forgetPhotoCollections();
     }
 
     /**
-     * Re-render the grid after the live watcher detects a new camera upload.
+     * Re-render the grid after the live watcher detects a change.
      */
     #[On('gallery-photos-updated')]
     public function refreshPhotos(): void
     {
-        unset($this->allPhotos);
+        $this->forgetPhotoCollections();
+        $this->gallery->load(['coverPhoto', 'team']);
     }
 
     #[Computed]
@@ -474,10 +642,10 @@ new class extends Component
                         &bull; {{ __('Expires on') }} {{ $gallery->expiration_date->isoFormat('l') }}
                 @endif
             </x-ts-subheading>
-            @if ($this->allPhotos?->isNotEmpty())
+            @if ($this->totalPhotos > 0)
                 <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
-                    {{ $this->allPhotos->count() }}
-                    {{ $this->allPhotos->count() === 1 ? __('photo') : __('photos') }} •
+                    {{ $this->totalPhotos }}
+                    {{ $this->totalPhotos === 1 ? __('photo') : __('photos') }} •
                     {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                 </div>
             @endif
@@ -501,7 +669,7 @@ new class extends Component
                     x-on:click="show = false"
                 />
 
-                @if ($favorites->isNotEmpty())
+                @if ($this->totalFavorites > 0)
                     <x-dropdown.items
                         :text="__('Favorite list')"
                         icon="heart"
@@ -567,16 +735,16 @@ new class extends Component
         </div>
     </div>
 
-    @if ($this->allPhotos?->isNotEmpty())
+    @if ($this->totalPhotos > 0)
         <div class="mt-8 max-sm:-mx-5">
             <x-gallery-tabs
-                :favorites-count="$this->favorites->count()"
+                :favorites-count="$this->totalFavorites"
                 :selection-limit="$gallery->share_selection_limit"
                 :comments-count="$this->totalComments()"
                 :show-download="true"
             >
                 <x-slot name="afterFavorites">
-                    @if ($favorites->isNotEmpty())
+                    @if ($this->totalFavorites > 0)
                         <x-ts-modal-trigger name="favorite-list">
                             <x-ts-badge size="sm" as="button">{{ __('Export') }}</x-ts-badge>
                         </x-ts-modal-trigger>
@@ -585,70 +753,66 @@ new class extends Component
             </x-gallery-tabs>
 
             <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($this->allPhotos as $photo)
-                        <livewire:photo-item
-                            :$photo
-                            :key="'photo-'.$photo->id"
-                            :html-id="'photo-'.$photo->id"
-                            :lazy="$loop->index > 50"
-                        />
-                    @endforeach
-                </div>
-            </div>
-
-            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($commentedPhotos as $photo)
-                        <livewire:photo-item
-                            :$photo
-                            :asCommented="true"
-                            :key="'commented-'.$photo->id"
-                            :html-id="'commented-'.$photo->id"
-                            :lazy="$loop->index > 50"
-                        />
-                    @endforeach
-                </div>
-            </div>
-
-            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                @if ($favorites->isNotEmpty())
                     <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($favorites as $photo)
-                            <livewire:photo-item
-                                :$photo
-                                :asFavorite="true"
-                                :key="'favorite-'.$photo->id"
-                                :html-id="'favorite-'.$photo->id"
-                                :lazy="$loop->index > 50"
-                            />
+                        @foreach ($this->allPhotos as $photo)
+                            <x-photo-tile :$photo :$gallery context="owner" :html-id="'photo-'.$photo->id" :index="$loop->index" />
                         @endforeach
                     </div>
-                @else
-                    <div class="flex flex-col items-center justify-center py-14">
-                        <x-ts-text class="mb-4 max-w-72 text-center">
-                            {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
-                        </x-ts-text>
-                        <x-ts-modal-trigger name="mark-favorites">
-                            <x-ts-button variant="primary" icon="star">
-                                {{ __('Add bulk favorites') }}
-                            </x-ts-button>
-                        </x-ts-modal-trigger>
-                    </div>
-                @endif
-            </div>
 
+                    <x-auto-load-more
+                        method="loadMore"
+                        :args="['all']"
+                        :has-more="$this->totalPhotos > $this->allPhotos->count()"
+                    />
+                </div>
+            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($this->commentedPhotos as $photo)
+                            <x-photo-tile :$photo :$gallery context="owner" :as-commented="true" :html-id="'commented-'.$photo->id" :index="$loop->index" />
+                        @endforeach
+                    </div>
+
+                    <x-auto-load-more
+                        method="loadMore"
+                        :args="['commented']"
+                        :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
+                    />
+                </div>
+            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
+                    @if ($this->totalFavorites > 0)
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                            @foreach ($this->favorites as $photo)
+                                <x-photo-tile :$photo :$gallery context="owner" :as-favorite="true" :html-id="'favorite-'.$photo->id" :index="$loop->index" />
+                            @endforeach
+                        </div>
+
+                        <x-auto-load-more
+                            method="loadMore"
+                            :args="['favorited']"
+                            :has-more="$this->totalFavorites > $this->favorites->count()"
+                        />
+                    @else
+                        <div class="flex flex-col items-center justify-center py-14">
+                            <x-ts-text class="mb-4 max-w-72 text-center">
+                                {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
+                            </x-ts-text>
+                            <x-ts-modal-trigger name="mark-favorites">
+                                <x-ts-button variant="primary" icon="star">{{ __('Add bulk favorites') }}</x-ts-button>
+                            </x-ts-modal-trigger>
+                        </div>
+                    @endif
+                </div>
             <div x-show="$wire.activeTab === 'download'" class="pt-1">
-                <livewire:gallery-download-panel
-                    :$gallery
-                    :count="$this->allPhotos->count()"
-                    :size="$this->formattedDownloadSize()"
-                    :images-count="$this->allPhotos->filter(fn ($photo) => $photo->isImage())->count()"
-                    :videos-count="$this->allPhotos->filter(fn ($photo) => $photo->isVideo())->count()"
-                    :pdfs-count="$this->allPhotos->filter(fn ($photo) => $photo->isPdf())->count()"
-                    :key="'download-panel-'.$gallery->id"
-                />
-            </div>
+                    <livewire:gallery-download-panel
+                        :$gallery
+                        :count="$this->totalPhotos"
+                        :size="$this->formattedDownloadSize()"
+                        :images-count="$this->mediaCounts['images']"
+                        :videos-count="$this->mediaCounts['videos']"
+                        :pdfs-count="$this->mediaCounts['pdfs']"
+                        :key="'download-panel-'.$gallery->id"
+                    />
+                </div>
         </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
@@ -702,7 +866,7 @@ new class extends Component
                 x-on:dragover.window="handleWindowDragOver($event)"
                 x-on:dragleave.window="handleWindowDragLeave($event)"
                 x-on:drop.window="handleWindowDrop($event)"
-                x-on:modal-close.document="if ($event.detail.name === 'add-photos') resetDrag()"
+                x-on:modal-close.document="if ($event.detail.name === 'add-photos') { resetDrag(); stopStatusPolling(); }"
                 x-on:confirm-replace-all.window="confirmReplaceAll()"
                 x-on:confirm-replace-conflict.window="confirmReplaceConflict()"
                 :class="{'ring-2 ring-(--color-accent) ring-offset-4 rounded-lg': dragActive}"
@@ -758,26 +922,10 @@ new class extends Component
                 </x-ts-callout>
 
                 <div
-                    x-show="
-                        files.filter(
-                            (file) =>
-                                file.status === 'pending' ||
-                                file.status === 'queued' ||
-                                file.status === 'uploading',
-                        ).length > 0
-                    "
+                    x-show="files.filter((file) => ! isFileResolved(file)).length > 0"
                     class="mt-4 text-sm font-medium text-zinc-800 dark:text-white"
                 >
-                    <span
-                        x-text="
-                            files.filter(
-                                (file) =>
-                                    file.status === 'pending' ||
-                                    file.status === 'queued' ||
-                                    file.status === 'uploading',
-                            ).length
-                        "
-                    ></span>
+                    <span x-text="files.filter((file) => ! isFileResolved(file)).length"></span>
                     {{ __('remaining files.') }}
                 </div>
 
@@ -814,7 +962,7 @@ new class extends Component
                 <div class="space-y-2">
                     <template x-for="(fileObj, index) in files" :key="index">
                         <div
-                            x-show="fileObj.status !== 'completed'"
+                            x-show="isRowVisible(fileObj)"
                             class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:pointer-events-none after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
                         >
                             <div class="flex w-full flex-wrap items-center gap-4">
@@ -829,14 +977,14 @@ new class extends Component
                                     <span x-text="fileObj.progress + '%'"></span>
                                 </div>
                                 <x-ts-badge
-                                    x-show="! ['failed', 'conflict', 'skipped'].includes(fileObj.status)"
-                                    x-text="fileObj.status"
+                                    x-show="! ['failed', 'conflict', 'skipped'].includes(displayStatus(fileObj))"
+                                    x-text="statusLabel(fileObj)"
                                     size="sm"
                                     color="zinc"
                                 ></x-ts-badge>
                                 <x-ts-badge
-                                    x-show="fileObj.status === 'failed'"
-                                    x-text="fileObj.status"
+                                    x-show="displayStatus(fileObj) === 'failed'"
+                                    x-text="statusLabel(fileObj)"
                                     size="sm"
                                     color="red"
                                 ></x-ts-badge>
@@ -1203,12 +1351,13 @@ new class extends Component
         </form>
     </x-ts-modal>
 
-    <x-ts-modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
+    @if ($this->totalFavorites > 0)
+        <x-ts-modal name="favorite-list" class="w-full sm:max-w-lg" x-data="copyToClipboard">
         <div class="space-y-6">
             <div>
                 <x-ts-heading size="lg">{{ __('Export favorite list') }}</x-ts-heading>
                 <x-ts-subheading>
-                    {{ __(':count medias in your favorite list.', ['count' => $favorites->count()]) }}
+                    {{ __(':count medias in your favorite list.', ['count' => $this->totalFavorites]) }}
                 </x-ts-subheading>
             </div>
 
@@ -1220,7 +1369,7 @@ new class extends Component
 
                     <div class="mt-6 flex items-center gap-2">
                         @php
-                            $rateFiles = $favorites->pluck('name')->map(function ($name) {
+                            $rateFiles = $this->favoriteNames->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->implode(',');
                         @endphp
@@ -1231,7 +1380,7 @@ new class extends Component
                     </div>
 
                     <x-ts-text class="mt-2 text-sm">
-                        {{ __(':count favorited photos will be rated.', ['count' => $favorites->count()]) }}
+                        {{ __(':count favorited photos will be rated.', ['count' => $this->totalFavorites]) }}
                     </x-ts-text>
 
                     <x-ts-text class="mt-1">
@@ -1245,7 +1394,7 @@ new class extends Component
                 <x-tab.items tab="lightroom" :title="__('Lightroom')">
                     <x-ts-textarea id="lightroom-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(', ', $favorites->pluck('name')->map(function ($name) {
+                            implode(', ', $this->favoriteNames->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
@@ -1266,7 +1415,7 @@ new class extends Component
                 <x-tab.items tab="captureone" :title="__('Capture One')">
                     <x-ts-textarea id="captureone-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(' ', $favorites->pluck('name')->map(function ($name) {
+                            implode(' ', $this->favoriteNames->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
@@ -1287,7 +1436,7 @@ new class extends Component
                 <x-tab.items tab="finder" :title="__('Finder/Explorer')">
                     <x-ts-textarea id="finder-textarea" readonly rows="4" class="font-mono text-sm">
                         {{
-                            implode(' OR ', $favorites->pluck('name')->map(function ($name) {
+                            implode(' OR ', $this->favoriteNames->map(function ($name) {
                                 return pathinfo($name, PATHINFO_FILENAME);
                             })->toArray())
                         }}
@@ -1307,7 +1456,7 @@ new class extends Component
 
                 <x-tab.items tab="list" :title="__('List')">
                     <x-ts-textarea id="list-textarea" readonly rows="auto" class="max-h-96 min-h-26 text-sm">
-                        {{ implode(PHP_EOL, $favorites->pluck('name')->toArray()) }}
+                        {{ implode(PHP_EOL, $this->favoriteNames->toArray()) }}
                     </x-ts-textarea>
 
                     <x-ts-text class="mt-2">
@@ -1322,7 +1471,8 @@ new class extends Component
                 </x-tab.items>
             </x-tab>
         </div>
-    </x-ts-modal>
+        </x-ts-modal>
+    @endif
 
     <x-ts-modal name="mark-favorites" class="w-full sm:max-w-lg">
         <form wire:submit="markFavorites" class="space-y-6">
@@ -1424,6 +1574,20 @@ new class extends Component
             activeUploads: 0,
             maxUploadsPerMinute: 200,
             uploadTimestamps: [],
+            photoPollTimer: null,
+            photoStatusRequestInFlight: false,
+            photoStatusPollMs: 2000,
+            statusLabels: @js([
+                'checking' => __('Checking...'),
+                'pending' => __('Queued'),
+                'queued' => __('Queued'),
+                'uploading' => __('Uploading...'),
+                'processing' => __('Processing...'),
+                'warming' => __('Warming CDN...'),
+                'processed' => __('Ready'),
+                'skipped' => __('Skipped'),
+                'failed' => __('Failed'),
+            ]),
 
             init() {
                 setInterval(() => {
@@ -1523,17 +1687,104 @@ new class extends Component
                 });
             },
 
+            isPhotoStatusTerminal(status) {
+                return ['processed', 'skipped', 'failed'].includes(status);
+            },
+
+            isFileResolved(fileObj) {
+                if (fileObj.status === 'failed' || fileObj.status === 'conflict' || fileObj.status === 'checking') {
+                    return false;
+                }
+
+                if (fileObj.status === 'completed' && fileObj.photoId) {
+                    return this.isPhotoStatusTerminal(fileObj.photoStatus);
+                }
+
+                return fileObj.status === 'completed' || fileObj.status === 'skipped';
+            },
+
+            isRowVisible(fileObj) {
+                return true;
+            },
+
+            displayStatus(fileObj) {
+                return fileObj.photoStatus || fileObj.status;
+            },
+
+            statusLabel(fileObj) {
+                return this.statusLabels[this.displayStatus(fileObj)] || this.displayStatus(fileObj);
+            },
+
             checkAllUploadsComplete() {
-                return (
-                    this.files.every((file) => file.status === 'completed' || file.status === 'skipped') &&
-                    this.activeUploads === 0
-                );
+                return this.files.length > 0
+                    && this.files.every((file) => this.isFileResolved(file))
+                    && this.activeUploads === 0;
             },
 
             closeIfAllResolved() {
                 if (this.checkAllUploadsComplete()) {
+                    this.stopStatusPolling();
                     $tsui.close.modal('add-photos');
                 }
+            },
+
+            startStatusPolling() {
+                this.refreshPhotoStatuses();
+
+                if (this.photoPollTimer) {
+                    return;
+                }
+
+                this.photoPollTimer = setInterval(() => this.refreshPhotoStatuses(), this.photoStatusPollMs);
+            },
+
+            stopStatusPolling() {
+                if (this.photoPollTimer) {
+                    clearInterval(this.photoPollTimer);
+                    this.photoPollTimer = null;
+                }
+            },
+
+            refreshPhotoStatuses() {
+                if (! this.isAddPhotosModalOpen()) {
+                    this.stopStatusPolling();
+
+                    return;
+                }
+
+                const tracked = this.files.filter(
+                    (fileObj) => fileObj.photoId && ! this.isPhotoStatusTerminal(fileObj.photoStatus),
+                );
+
+                if (tracked.length === 0) {
+                    this.stopStatusPolling();
+                    this.closeIfAllResolved();
+
+                    return;
+                }
+
+                if (this.photoStatusRequestInFlight) {
+                    return;
+                }
+
+                this.photoStatusRequestInFlight = true;
+
+                $wire.uploadStatuses(tracked.map((fileObj) => fileObj.photoId))
+                    .then((statuses) => {
+                        this.files.forEach((fileObj) => {
+                            if (fileObj.photoId && statuses[fileObj.photoId]) {
+                                fileObj.photoStatus = statuses[fileObj.photoId];
+                            }
+                        });
+
+                        if (this.files.every((fileObj) => ! fileObj.photoId || this.isPhotoStatusTerminal(fileObj.photoStatus))) {
+                            this.stopStatusPolling();
+                            this.closeIfAllResolved();
+                        }
+                    })
+                    .finally(() => {
+                        this.photoStatusRequestInFlight = false;
+                    });
             },
 
             async markConflicts() {
@@ -1645,9 +1896,16 @@ new class extends Component
                                 this.processUploadQueue();
                             } else {
                                 fileObj.status = 'completed';
+                                fileObj.photoId = result?.photoId ?? null;
+                                fileObj.photoStatus = result?.status ?? 'pending';
                                 fileObj.progress = 100;
                                 this.activeUploads--;
                                 this.processUploadQueue();
+
+                                if (fileObj.photoId && ! this.isPhotoStatusTerminal(fileObj.photoStatus)) {
+                                    this.startStatusPolling();
+                                }
+
                                 this.closeIfAllResolved();
                             }
                         });
@@ -1698,6 +1956,8 @@ new class extends Component
                 fileObj.status = 'pending';
                 fileObj.progress = 0;
                 fileObj.error = null;
+                fileObj.photoId = null;
+                fileObj.photoStatus = null;
                 this.processUploadQueue();
             },
         }));

@@ -28,11 +28,13 @@ class PhotoComment extends Model
         static::created(function ($comment) {
             $comment->load('photo');
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$comment->photo->gallery_id}:comments_count");
         });
 
         static::deleted(function ($comment) {
             $comment->load('photo');
             Cache::forget("gallery:{$comment->photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$comment->photo->gallery_id}:comments_count");
         });
     }
 

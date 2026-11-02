@@ -2,6 +2,7 @@
 
 use App\Models\FtpAccount;
 use App\Models\Gallery;
+use App\Models\Photo;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
@@ -16,9 +17,11 @@ new #[Layout('layouts.guest')] class extends Component
 
     public Gallery $gallery;
 
-    public Collection $favorites;
+    public int $allPhotoLimit = 60;
 
-    public Collection $commentedPhotos;
+    public int $favoritePhotoLimit = 60;
+
+    public int $commentedPhotoLimit = 60;
 
     #[Url]
     public $activeTab = 'all';
@@ -34,25 +37,56 @@ new #[Layout('layouts.guest')] class extends Component
         abort_unless($gallery->is_shared, 404);
         abort_if($gallery->slug !== $slug, 404);
 
+        $this->gallery->loadMissing(['coverPhoto', 'team']);
+
         $this->remoteMode = FtpAccount::query()
             ->where('team_id', $gallery->team_id)
             ->where('active', true)
             ->where('active_gallery_id', $gallery->id)
             ->exists();
-
-        $this->getFavorites();
-        $this->getCommentedPhotos();
     }
 
     #[On('photo-favorited')]
-    public function getFavorites()
+    public function getFavorites(): void
     {
-        $this->favorites = $this->gallery->photosInOrder($this->gallery->favoritePhotoIds());
+        $this->forgetPhotoCollections();
     }
 
-    public function getCommentedPhotos()
+    public function getCommentedPhotos(): void
     {
-        $this->commentedPhotos = $this->gallery->photosInOrder($this->gallery->commentedPhotoIds());
+        $this->forgetPhotoCollections();
+    }
+
+    public function toggleFavorite(Photo $photo): void
+    {
+        abort_unless($photo->gallery_id === $this->gallery->id, 404);
+
+        abort_unless($this->gallery->is_share_selectable, 403);
+
+        if ($photo->toggleFavoriteAndCheckSelectionLimit()) {
+            $this->dispatch('selection-limit-reached');
+
+            $this->gallery->notifyOwnerWhenSelectionLimitReached();
+        }
+
+        $this->forgetPhotoCollections();
+
+        $this->dispatch('photo-favorited');
+    }
+
+    protected function forgetPhotoCollections(): void
+    {
+        unset(
+            $this->photoIds,
+            $this->allPhotos,
+            $this->favoriteIds,
+            $this->favorites,
+            $this->favoriteNames,
+            $this->commentedIds,
+            $this->commentedPhotos,
+            $this->mediaCounts,
+            $this->coverImage,
+        );
     }
 
     /**
@@ -61,7 +95,9 @@ new #[Layout('layouts.guest')] class extends Component
     #[On('gallery-photos-updated')]
     public function refreshPhotos(): void
     {
-        unset($this->allPhotos, $this->coverImage);
+        $this->gallery->load(['coverPhoto', 'team']);
+
+        $this->forgetPhotoCollections();
     }
 
     /**
@@ -84,9 +120,81 @@ new #[Layout('layouts.guest')] class extends Component
     }
 
     #[Computed]
+    public function photoIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->readyPhotoIds();
+    }
+
+    #[Computed]
     public function allPhotos()
     {
-        return $this->gallery->photosInOrder($this->gallery->photoIds());
+        return $this->gallery->photosInOrder($this->photoIds->take($this->allPhotoLimit));
+    }
+
+    #[Computed]
+    public function totalPhotos(): int
+    {
+        return $this->photoIds->count();
+    }
+
+    #[Computed]
+    public function favoriteIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->favoritePhotoIds();
+    }
+
+    #[Computed]
+    public function favorites()
+    {
+        return $this->gallery->photosInOrder($this->favoriteIds->take($this->favoritePhotoLimit));
+    }
+
+    #[Computed]
+    public function totalFavorites(): int
+    {
+        return $this->favoriteIds->count();
+    }
+
+    #[Computed]
+    public function favoriteNames(): \Illuminate\Support\Collection
+    {
+        $names = $this->gallery->photos()
+            ->whereKey($this->favoriteIds)
+            ->pluck('name', 'id');
+
+        return $this->favoriteIds
+            ->map(fn ($id) => $names[$id] ?? null)
+            ->filter()
+            ->values();
+    }
+
+    #[Computed]
+    public function commentedIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->commentedPhotoIds();
+    }
+
+    #[Computed]
+    public function commentedPhotos()
+    {
+        return $this->gallery->photosInOrder($this->commentedIds->take($this->commentedPhotoLimit));
+    }
+
+    #[Computed]
+    public function mediaCounts(): array
+    {
+        return $this->gallery->mediaCounts();
+    }
+
+    public function loadMore(string $tab = 'all'): void
+    {
+        match ($tab) {
+            'favorited' => $this->favoritePhotoLimit += 60,
+            'commented' => $this->commentedPhotoLimit += 60,
+            default => $this->allPhotoLimit += 60,
+        };
+
+        $this->forgetPhotoCollections();
     }
 };
 ?>
@@ -106,7 +214,7 @@ new #[Layout('layouts.guest')] class extends Component
         />
     @endif
 
-    @if ($this->allPhotos->isNotEmpty())
+    @if ($this->totalPhotos > 0)
         <div class="relative">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
@@ -139,64 +247,73 @@ new #[Layout('layouts.guest')] class extends Component
             @endif
         </div>
     </div>
-    @if ($this->allPhotos->isNotEmpty())
+    @if ($this->totalPhotos > 0)
         <div class="mt-8">
             <x-gallery-tabs
-                :favorites-count="$this->favorites->count()"
+                :favorites-count="$this->totalFavorites"
                 :selection-limit="$gallery->share_selection_limit"
                 :comments-count="$this->totalComments()"
                 :show-favorites="$gallery->is_share_selectable"
                 :show-comments="$gallery->are_comments_enabled"
                 :show-download="$gallery->is_share_downloadable"
             />
+
             <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($this->allPhotos as $photo)
-                        <livewire:shared-photo-item :$photo :key="'photo-'.$photo->id" :html-id="'photo-'.$photo->id" />
-                    @endforeach
-                </div>
-            </div>
-            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                    @foreach ($this->commentedPhotos as $photo)
-                        <livewire:shared-photo-item
-                            :$photo
-                            :asCommented="true"
-                            :key="'commented-'.$photo->id"
-                            :html-id="'commented-'.$photo->id"
-                        />
-                    @endforeach
-                </div>
-            </div>
-            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
-                @if ($favorites->isNotEmpty())
                     <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($this->favorites as $photo)
-                            <livewire:shared-photo-item
-                                :$photo
-                                :asFavorite="true"
-                                :key="'favorite-'.$photo->id"
-                                :html-id="'favorite-'.$photo->id"
-                            />
+                        @foreach ($this->allPhotos as $photo)
+                            <x-photo-tile :$photo :$gallery context="shared" :html-id="'photo-'.$photo->id" :index="$loop->index" />
                         @endforeach
                     </div>
-                @else
-                    <div class="flex flex-col items-center justify-center py-14">
-                        <x-ts-text class="max-w-72 text-center">
-                            {{ __('No favorites yet. Click on the heart icon to select your favorites.') }}
-                        </x-ts-text>
+
+                    <x-auto-load-more
+                        method="loadMore"
+                        :args="['all']"
+                        :has-more="$this->totalPhotos > $this->allPhotos->count()"
+                    />
+                </div>
+            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
+                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                        @foreach ($this->commentedPhotos as $photo)
+                            <x-photo-tile :$photo :$gallery context="shared" :as-commented="true" :html-id="'commented-'.$photo->id" :index="$loop->index" />
+                        @endforeach
                     </div>
-                @endif
-            </div>
+
+                    <x-auto-load-more
+                        method="loadMore"
+                        :args="['commented']"
+                        :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
+                    />
+                </div>
+            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
+                    @if ($this->totalFavorites > 0)
+                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
+                            @foreach ($this->favorites as $photo)
+                                <x-photo-tile :$photo :$gallery context="shared" :as-favorite="true" :html-id="'favorite-'.$photo->id" :index="$loop->index" />
+                            @endforeach
+                        </div>
+
+                        <x-auto-load-more
+                            method="loadMore"
+                            :args="['favorited']"
+                            :has-more="$this->totalFavorites > $this->favorites->count()"
+                        />
+                    @else
+                        <div class="flex flex-col items-center justify-center py-14">
+                            <x-ts-text class="max-w-72 text-center">
+                                {{ __('No favorites yet. Click on the heart icon to select your favorites.') }}
+                            </x-ts-text>
+                        </div>
+                    @endif
+                </div>
             @if ($gallery->is_share_downloadable)
-                <div x-show="$wire.activeTab === 'download'" class="pt-1">
+            <div x-show="$wire.activeTab === 'download'" class="pt-1">
                     <livewire:gallery-download-panel
                         :$gallery
-                        :count="$this->allPhotos->count()"
+                        :count="$this->totalPhotos"
                         :size="$this->formattedDownloadSize()"
-                        :images-count="$this->allPhotos->filter(fn ($photo) => $photo->isImage())->count()"
-                        :videos-count="$this->allPhotos->filter(fn ($photo) => $photo->isVideo())->count()"
-                        :pdfs-count="$this->allPhotos->filter(fn ($photo) => $photo->isPdf())->count()"
+                        :images-count="$this->mediaCounts['images']"
+                        :videos-count="$this->mediaCounts['videos']"
+                        :pdfs-count="$this->mediaCounts['pdfs']"
                         :shared="true"
                         :key="'download-panel-'.$gallery->id"
                     />

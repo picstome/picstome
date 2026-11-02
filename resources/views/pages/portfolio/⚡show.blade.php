@@ -15,7 +15,11 @@ class extends Component
 
     public Gallery $gallery;
 
-    public ?Collection $photos;
+    public Collection $photos;
+
+    public int $photoLimit = 60;
+
+    public int $photoCount = 0;
 
     public function mount(Gallery $gallery)
     {
@@ -23,7 +27,25 @@ class extends Component
 
         $this->team = $gallery->team;
         $this->gallery = $gallery;
-        $this->photos = $this->gallery->photos()->with('gallery')->get()->filter(fn ($photo) => $photo->isImage())->values();
+        $this->photoCount = $this->gallery->photos()->images()->ready()->count();
+        $this->photos = $this->photoPage();
+    }
+
+    protected function photoPage(): Collection
+    {
+        return $this->gallery->photos()
+            ->with('gallery')
+            ->images()
+            ->ready()
+            ->take($this->photoLimit)
+            ->get()
+            ->values();
+    }
+
+    public function loadMore(): void
+    {
+        $this->photoLimit += 60;
+        $this->photos = $this->photoPage();
     }
 
     public function rendering(View $view): void
@@ -93,28 +115,14 @@ class extends Component
                         class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
                     >
                         @foreach ($photos as $photo)
-                            <div class="group relative aspect-square flex overflow-hidden bg-zinc-100 dark:bg-white/10">
-                                <a
-                                    id="photo-{{ $photo->id }}"
-                                    wire:navigate
-                                    href="{{ route('portfolio.photos.show', ['handle' => $team->handle, 'gallery' => $gallery, 'photo' => $photo]) }}"
-                                    class="mx-auto flex w-full"
-                                >
-                                    <img
-                                        x-data="{ loaded: false, errored: false }"
-                                        x-init="if ($el.complete) loaded = true"
-                                        src="{{ $photo->small_thumbnail_url }}"
-                                        alt=""
-                                        @contextmenu.prevent
-                                        x-on:load="loaded = true"
-                                        x-on:error="errored = true"
-                                        class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
-                                        :class="loaded || errored ? '' : 'animate-pulse'"
-                                        loading="lazy" />
-                                </a>
-                            </div>
+                            <x-photo-tile :$photo :$gallery context="portfolio" :html-id="'photo-'.$photo->id" :index="$loop->index" />
                         @endforeach
                     </div>
+
+                    <x-auto-load-more
+                        method="loadMore"
+                        :has-more="$photoCount > $photos->count()"
+                    />
                 </div>
             </div>
         @else

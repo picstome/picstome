@@ -465,3 +465,176 @@ test('videos cannot be set as gallery cover from the photo page', function () {
 
     expect($gallery->fresh()->cover_photo_id)->toBeNull();
 });
+
+test('full-size images use the thumbnail as a placeholder while loading', function () {
+    Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+
+    actingAs($this->user)
+        ->get('/galleries/1/photos/1')
+        ->assertSuccessful()
+        ->assertSee('background-image: url', false)
+        ->assertSee('background-size: cover', false)
+        ->assertSee('background-repeat: no-repeat', false);
+});
+
+test('pinch uses the full image and disables swipe until zoom is left', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['status' => 'processed']);
+    $second = Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+    $this->actingAs($this->user);
+
+    $swipeLeft = <<<'JS'
+        (() => {
+            const el = document.querySelector('#photo')
+            const touch = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 200 })
+            const start = touch(300)
+            el.dispatchEvent(new TouchEvent('touchstart', {
+                touches: [start],
+                targetTouches: [start],
+                changedTouches: [start],
+                bubbles: true,
+                cancelable: true,
+            }))
+            const end = touch(80)
+            el.dispatchEvent(new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [end],
+                bubbles: true,
+                cancelable: true,
+            }))
+        })()
+    JS;
+
+    $pinch = <<<'JS'
+        (() => {
+            const el = document.querySelector('#photo')
+            const touch = (id, x) => new Touch({ identifier: id, target: el, clientX: x, clientY: 200 })
+            const a = touch(1, 100)
+            const b = touch(2, 300)
+            el.dispatchEvent(new TouchEvent('touchstart', {
+                touches: [a, b],
+                targetTouches: [a, b],
+                changedTouches: [a, b],
+                bubbles: true,
+                cancelable: true,
+            }))
+            const a2 = touch(1, 50)
+            const b2 = touch(2, 350)
+            el.dispatchEvent(new TouchEvent('touchmove', {
+                touches: [a2, b2],
+                targetTouches: [a2, b2],
+                changedTouches: [a2, b2],
+                bubbles: true,
+                cancelable: true,
+            }))
+            el.dispatchEvent(new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [a2, b2],
+                bubbles: true,
+                cancelable: true,
+            }))
+        })()
+    JS;
+
+    $pinchOut = <<<'JS'
+        (() => {
+            const el = document.querySelector('#photo')
+            const touch = (id, x) => new Touch({ identifier: id, target: el, clientX: x, clientY: 200 })
+            const a = touch(1, 100)
+            const b = touch(2, 300)
+            el.dispatchEvent(new TouchEvent('touchstart', {
+                touches: [a, b],
+                targetTouches: [a, b],
+                changedTouches: [a, b],
+                bubbles: true,
+                cancelable: true,
+            }))
+            const a2 = touch(1, 150)
+            const b2 = touch(2, 250)
+            el.dispatchEvent(new TouchEvent('touchmove', {
+                touches: [a2, b2],
+                targetTouches: [a2, b2],
+                changedTouches: [a2, b2],
+                bubbles: true,
+                cancelable: true,
+            }))
+            el.dispatchEvent(new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [a2, b2],
+                bubbles: true,
+                cancelable: true,
+            }))
+        })()
+    JS;
+
+    $page = visit('/galleries/'.$gallery->id.'/photos/'.$first->id);
+    $page->wait(0.5);
+    $page->script($swipeLeft);
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
+
+    $page = visit('/galleries/'.$gallery->id.'/photos/'.$first->id);
+    $page->wait(0.5);
+    $page->script($pinch);
+    $page->wait(0.3);
+
+    expect($page->script("document.querySelector('[data-full-image]').style.display"))->not->toBe('none')
+        ->and($page->script("document.querySelector('[data-full-image]').getAttribute('src')"))->toContain($photoUrl = $first->url);
+
+    $page->script(<<<'JS'
+        (() => {
+            const el = document.querySelector('#photo')
+            const touch = (x) => new Touch({ identifier: 1, target: el, clientX: x, clientY: 200 })
+            const start = touch(300)
+            el.dispatchEvent(new TouchEvent('touchstart', {
+                touches: [start],
+                targetTouches: [start],
+                changedTouches: [start],
+                bubbles: true,
+                cancelable: true,
+            }))
+            const moved = touch(250)
+            el.dispatchEvent(new TouchEvent('touchmove', {
+                touches: [moved],
+                targetTouches: [moved],
+                changedTouches: [moved],
+                bubbles: true,
+                cancelable: true,
+            }))
+            el.dispatchEvent(new TouchEvent('touchend', {
+                touches: [],
+                targetTouches: [],
+                changedTouches: [moved],
+                bubbles: true,
+                cancelable: true,
+            }))
+        })()
+    JS);
+    $page->wait(0.3);
+
+    expect($page->script("document.querySelector('[data-full-image]').style.display"))->not->toBe('none');
+
+    $page->script($swipeLeft);
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toBe('/galleries/'.$gallery->id.'/photos/'.$first->id);
+
+    $page->script($pinchOut);
+    $page->wait(0.3);
+    $page->script($swipeLeft);
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
+
+    $page = visit('/galleries/'.$gallery->id.'/photos/'.$first->id);
+    $page->wait(0.5);
+    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowRight', bubbles: true }))");
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
+});

@@ -30,6 +30,8 @@ beforeEach(function () {
 
 function makeGalleryArchive(Gallery $gallery, string $variant = 'all'): GalleryArchive
 {
+    $gallery->photos()->update(['status' => 'processed']);
+
     $service = app(GalleryArchiveService::class);
     $archive = $service->findOrCreate($gallery, $variant);
     $service->build($archive->refresh());

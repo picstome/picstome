@@ -17,6 +17,8 @@ class PhotoUrlService
         protected string $disk,
         protected ?int $id = null,
         protected bool $keepOriginalSize = false,
+        protected ?string $thumbPath = null,
+        protected int $version = 0,
     ) {}
 
     public static function make(object $photoLike, ?Gallery $gallery = null): self
@@ -40,6 +42,8 @@ class PhotoUrlService
             $disk,
             $photoLike->id ?? null,
             $keep,
+            $photoLike->thumb_path ?? null,
+            (int) ($photoLike->stored_size ?? 0),
         );
     }
 
@@ -61,6 +65,12 @@ class PhotoUrlService
     {
         if (! $this->isImage()) {
             return '';
+        }
+
+        // Grid thumbnails are generated during processing so the first visit
+        // does not wait for the CDN to resize the full-size original.
+        if ($this->thumbPath) {
+            return $this->versioned($this->storageUrl($this->thumbPath));
         }
 
         $size = config('picstome.photo_small_thumb_resize', 500);
@@ -131,7 +141,7 @@ class PhotoUrlService
             return '';
         }
 
-        return Storage::disk($this->disk)->url($this->path);
+        return $this->storageUrl($this->path);
     }
 
     public function url(): string
@@ -160,9 +170,42 @@ class PhotoUrlService
         return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
     }
 
+    /**
+     * Append the content version so a CDN re-fetches an object after the
+     * processed bytes were overwritten in place.
+     */
+    protected function versioned(string $url): string
+    {
+        if ($this->version <= 0) {
+            return $url;
+        }
+
+        return $url.(str_contains($url, '?') ? '&' : '?').'v='.$this->version;
+    }
+
+    /**
+     * Resolve a disk URL using the configured public/CDN base before falling
+     * back to the filesystem adapter (which is what fake disks expose).
+     */
+    protected function storageUrl(string $path): string
+    {
+        $diskConfig = config("filesystems.disks.{$this->disk}", []);
+        $baseUrl = $diskConfig['url'] ?? null;
+
+        if (! $baseUrl && isset($diskConfig['origin'], $diskConfig['bucket'])) {
+            $baseUrl = rtrim($diskConfig['origin'], '/').'/'.$diskConfig['bucket'];
+        }
+
+        if ($baseUrl) {
+            return rtrim($baseUrl, '/').'/'.ltrim($path, '/');
+        }
+
+        return Storage::disk($this->disk)->url($path);
+    }
+
     protected function cdn(array $params): string
     {
-        $originalUrl = Storage::disk($this->disk)->url($this->path);
+        $originalUrl = $this->storageUrl($this->path);
         $cdn = config('picstome.photo_cdn_domain', 'wsrv.nl');
 
         if ($cdn === 'bunny' || $cdn === 'bunny.net') {
@@ -182,7 +225,15 @@ class PhotoUrlService
                 }
             }
 
+            if ($this->version > 0) {
+                $bunnyParams['v'] = $this->version;
+            }
+
             return $originalUrl.'?'.http_build_query($bunnyParams);
+        }
+
+        if ($this->version > 0) {
+            $params['v'] = $this->version;
         }
 
         if ($cdn === 'i0.wp.com') {
