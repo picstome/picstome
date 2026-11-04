@@ -213,4 +213,17 @@ return [
         // disable the webhook endpoint.
         'webhook_token' => env('SFTPGO_WEBHOOK_TOKEN'),
     ],
+
+    /**
+     * Admin queue manager thresholds. The worker heartbeat is written by
+     * queue:work daemons; scheduled tasks are recorded by the scheduler
+     * subscriber in the shared cache/database.
+     */
+    'queue_manager' => [
+        'poll_seconds' => (int) env('PICSTOME_QUEUE_MANAGER_POLL_SECONDS', 5),
+        'page_size' => (int) env('PICSTOME_QUEUE_MANAGER_PAGE_SIZE', 25),
+        'stuck_after_seconds' => (int) env('PICSTOME_QUEUE_MANAGER_STUCK_AFTER_SECONDS', 900),
+        'heartbeat_stale_after_seconds' => (int) env('PICSTOME_QUEUE_MANAGER_HEARTBEAT_STALE_AFTER_SECONDS', 180),
+        'scheduled_task_stale_after_seconds' => (int) env('PICSTOME_QUEUE_MANAGER_SCHEDULED_STALE_AFTER_SECONDS', 3600),
+    ],
 ];
