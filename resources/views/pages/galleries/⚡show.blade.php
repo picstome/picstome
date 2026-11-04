@@ -734,7 +734,7 @@ new class extends Component
                 </x-ts-button-group>
             @else
                 <x-ts-modal-trigger name="share">
-                    <x-ts-button variant="primary" class="btn-ink">{{ __('Share') }}</x-ts-button>
+                    <x-ts-button variant="primary" class="btn-ink" data-test="open-share-modal">{{ __('Share') }}</x-ts-button>
                 </x-ts-modal-trigger>
             @endif
 
@@ -1133,14 +1133,17 @@ new class extends Component
                 wire:model="shareForm.commentsEnabled"
                 :label="__('Enable photo comments')"
                 :disabled="!$this->team->subscribed()"
+                data-test="share-comments-toggle"
                 x-on:change="if (! $event.target.checked) $wire.set('shareForm.annotationsEnabled', false)"
             />
 
             <x-ts-switch
                 wire:model="shareForm.annotationsEnabled"
                 :label="__('Enable photo annotations')"
-                :description="__('Visitors can pin a comment to a spot on the photo. Requires photo comments.')"
-                x-bind:disabled="{{ $this->team->subscribed() ? '! $wire.shareForm.commentsEnabled' : 'true' }}"
+                :description="__('Visitors can pin a comment to a spot on the photo. Enabling this also enables photo comments.')"
+                :disabled="!$this->team->subscribed()"
+                data-test="share-annotations-toggle"
+                x-on:change="if ($event.target.checked) $wire.set('shareForm.commentsEnabled', true)"
             />
 
             <div x-show="$wire.shareForm.descriptionEnabled">

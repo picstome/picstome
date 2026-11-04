@@ -735,13 +735,30 @@ describe('Gallery Sharing', function () {
         expect($gallery->fresh()->are_annotations_enabled)->toBeFalse();
     });
 
-    it('does not enable photo annotations when photo comments are disabled', function () {
+    it('enables photo comments when photo annotations are enabled', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->set('shareForm.commentsEnabled', false)
             ->set('shareForm.annotationsEnabled', true)
+            ->assertSet('shareForm.commentsEnabled', true)
+            ->call('share');
+
+        $gallery->refresh();
+
+        expect($gallery->are_comments_enabled)->toBeTrue();
+        expect($gallery->are_annotations_enabled)->toBeTrue();
+    });
+
+    it('disables photo annotations when photo comments are disabled', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('shareForm.annotationsEnabled', true)
+            ->set('shareForm.commentsEnabled', false)
+            ->assertSet('shareForm.annotationsEnabled', false)
             ->call('share');
 
         $gallery->refresh();
@@ -1893,4 +1910,20 @@ test('owner can switch between photos and download tabs', function () {
     $page->wait(0.5);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
+});
+
+it('enables comments when annotations are enabled in the share modal', function () {
+    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $this->actingAs($this->user);
+
+    visit('/galleries/'.$gallery->id)
+        ->click('@open-share-modal')
+        ->click('@share-comments-toggle')
+        ->assertNotChecked('@share-comments-toggle')
+        ->click('@share-annotations-toggle')
+        ->assertChecked('@share-comments-toggle')
+        ->assertChecked('@share-annotations-toggle')
+        ->assertNoJavascriptErrors();
 });

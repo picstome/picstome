@@ -146,6 +146,19 @@ new class extends Component
         );
     }
 
+    public function confirmFlushFailed(): void
+    {
+        $this->prepareConfirmation(
+            action: 'flush-failed',
+            target: '',
+            title: __('Delete all failed jobs?'),
+            message: __('This permanently deletes all :count failed jobs. This cannot be undone.', [
+                'count' => number_format($this->stats['failed']),
+            ]),
+            label: __('Delete all'),
+        );
+    }
+
     public function confirmReleaseJob(int $id): void
     {
         $this->prepareConfirmation(
@@ -190,6 +203,7 @@ new class extends Component
         $result = match ($action) {
             'retry' => $service->retryFailed($target),
             'retry-all' => $service->retryAllFailed($target !== '' ? $target : null) > 0,
+            'flush-failed' => $service->flushFailed() > 0,
             'forget' => $service->forgetFailed($target),
             'release' => $service->releaseJob((int) $target),
             'delete' => $service->deleteJob((int) $target),
@@ -499,6 +513,7 @@ new class extends Component
         return match ($action) {
             'retry' => __('Job pushed back onto the queue.'),
             'retry-all' => __('Failed jobs pushed back onto the queue.'),
+            'flush-failed' => __('All failed jobs deleted.'),
             'forget' => __('Failed job forgotten.'),
             'release' => __('Job released back onto the queue.'),
             'delete' => __('Job deleted.'),
@@ -743,6 +758,18 @@ new class extends Component
                     @if ($this->failedJobs->isNotEmpty())
                         <x-ts-button size="sm" variant="outline" wire:click="confirmRetryAllFailed" icon="arrow-path">
                             {{ __('Retry all failed') }}
+                        </x-ts-button>
+                    @endif
+
+                    @if ($this->stats['failed'] > 0)
+                        <x-ts-button
+                            size="sm"
+                            variant="danger"
+                            wire:click="confirmFlushFailed"
+                            icon="trash"
+                            data-test="delete-all-failed"
+                        >
+                            {{ __('Delete all failed') }}
                         </x-ts-button>
                     @endif
 

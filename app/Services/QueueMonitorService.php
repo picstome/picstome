@@ -295,6 +295,26 @@ class QueueMonitorService
         }
     }
 
+    public function flushFailed(): int
+    {
+        try {
+            $count = $this->failed()->count();
+
+            if ($count === 0) {
+                return 0;
+            }
+
+            Artisan::call('queue:flush');
+            $this->logAction('flush-failed', ['count' => $count]);
+
+            return $count;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return 0;
+        }
+    }
+
     public function forgetFailed(string $uuid): bool
     {
         try {
