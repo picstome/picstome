@@ -18,9 +18,9 @@
     $hasWatermark = $isShared
         && $gallery->is_share_watermarked
         && $gallery->team?->brand_watermark_url;
-    $imageSizes = $isPortfolio
-        ? '(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw'
-        : '(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw';
+    $imageSizes = $isOwner
+        ? '(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw'
+        : '(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw';
     $placeholder = asset('app-logo-icon.png');
     $statusLabel = match ($photo->status) {
         'pending' => __('Queued'),
@@ -52,7 +52,7 @@
 @endphp
 
 <div
-    class="group relative flex aspect-square overflow-hidden bg-zinc-100 dark:bg-white/10"
+    class="group relative mb-1 break-inside-avoid overflow-hidden bg-zinc-100 dark:bg-white/10"
     x-data="{
         showActions: false,
         moreActionsOpen: false,
@@ -67,7 +67,7 @@
     wire:key="{{ $htmlId ?? 'photo-'.$photo->id }}"
 >
     @if (! $isReady)
-        <div class="relative h-full w-full bg-zinc-200 dark:bg-white/10">
+        <div class="relative aspect-[3/4] w-full bg-zinc-200 dark:bg-white/10">
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
 
             @if ($isOwner)
@@ -81,13 +81,15 @@
             id="{{ $htmlId }}"
             href="{{ $link }}"
             wire:navigate
-            class="mx-auto flex w-full"
+            class="block w-full"
         >
             @if ($photo->isImage())
                 @if ($photo->small_thumbnail_url)
+                    {{-- Reserve a portrait placeholder until the image reports its
+                         natural ratio; keep it when the thumbnail cannot load. --}}
                     <img
                         x-data="{ loaded: false, errored: false, fallback: '{{ $placeholder }}' }"
-                        x-init="if ($el.complete) loaded = true"
+                        x-init="if ($el.complete) { if ($el.naturalWidth > 0) { loaded = true } else { errored = true; $el.src = fallback } }"
                         src="{{ $photo->small_thumbnail_url }}"
                         srcset="{{ $photo->small_thumbnail_url }} 500w, {{ $photo->thumbnail_url }} 1000w"
                         sizes="{{ $imageSizes }}"
@@ -95,29 +97,32 @@
                         @if ($isShared) @contextmenu.prevent @endif
                         x-on:load="loaded = true"
                         x-on:error="errored = true; if ($el.src !== fallback) $el.src = fallback"
-                        class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10"
-                        :class="loaded || errored ? '' : 'animate-pulse'"
+                        class="block h-auto w-full bg-zinc-300 object-contain dark:bg-white/10"
+                        :class="{
+                            'animate-pulse': ! loaded && ! errored,
+                            'aspect-[3/4]': ! loaded || errored,
+                        }"
                         loading="{{ $index < 8 ? 'eager' : 'lazy' }}"
                         @if ($index === 0) fetchpriority="high" @endif
                         decoding="async"
                     />
                 @else
-                    <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+                    <div class="aspect-[3/4] w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
                 @endif
             @elseif ($photo->isVideo())
-                <video class="h-full w-full bg-zinc-300 object-cover dark:bg-white/10" muted playsinline preload="metadata">
+                <video class="block h-auto w-full bg-zinc-300 dark:bg-white/10" muted playsinline preload="metadata">
                     <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                     Your browser does not support the video tag.
                 </video>
             @elseif ($photo->isPdf())
-                <div class="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10">
+                <div class="flex aspect-[3/4] w-full flex-col items-center justify-center gap-2 bg-zinc-100 px-2 dark:bg-white/10">
                     <x-icon name="document-text" class="size-10 text-zinc-400" />
                     <x-ts-text class="w-full truncate text-center text-xs text-zinc-500 dark:text-white/70">
                         {{ $photo->name }}
                     </x-ts-text>
                 </div>
             @else
-                <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
+                <div class="aspect-[3/4] w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
 
             @if ($hasWatermark)

@@ -755,12 +755,8 @@ new class extends Component
                 </x-slot>
             </x-gallery-tabs>
 
-            <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($this->allPhotos as $photo)
-                            <x-photo-tile :$photo :$gallery context="owner" :html-id="'photo-'.$photo->id" :index="$loop->index" />
-                        @endforeach
-                    </div>
+            <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
+                    <x-photo-masonry :photos="$this->allPhotos" :$gallery context="owner" html-id-prefix="photo" />
 
                     <x-auto-load-more
                         method="loadMore"
@@ -768,12 +764,8 @@ new class extends Component
                         :has-more="$this->totalPhotos > $this->allPhotos->count()"
                     />
                 </div>
-            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($this->commentedPhotos as $photo)
-                            <x-photo-tile :$photo :$gallery context="owner" :as-commented="true" :html-id="'commented-'.$photo->id" :index="$loop->index" />
-                        @endforeach
-                    </div>
+            <div x-show="$wire.activeTab === 'commented'" class="pt-1" data-gallery-panel>
+                    <x-photo-masonry :photos="$this->commentedPhotos" :$gallery context="owner" html-id-prefix="commented" :as-commented="true" />
 
                     <x-auto-load-more
                         method="loadMore"
@@ -781,13 +773,9 @@ new class extends Component
                         :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
                     />
                 </div>
-            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
+            <div x-show="$wire.activeTab === 'favorited'" class="pt-1" data-gallery-panel>
                     @if ($this->totalFavorites > 0)
-                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                            @foreach ($this->favorites as $photo)
-                                <x-photo-tile :$photo :$gallery context="owner" :as-favorite="true" :html-id="'favorite-'.$photo->id" :index="$loop->index" />
-                            @endforeach
-                        </div>
+                        <x-photo-masonry :photos="$this->favorites" :$gallery context="owner" html-id-prefix="favorite" :as-favorite="true" />
 
                         <x-auto-load-more
                             method="loadMore"
@@ -805,7 +793,7 @@ new class extends Component
                         </div>
                     @endif
                 </div>
-            <div x-show="$wire.activeTab === 'download'" class="pt-1">
+            <div x-show="$wire.activeTab === 'download'" class="pt-1" data-gallery-panel>
                     <livewire:gallery-download-panel
                         :$gallery
                         :count="$this->totalPhotos"

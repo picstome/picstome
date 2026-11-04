@@ -58,15 +58,17 @@ class extends Component
 
 <x-slot name="color">{{ $team->brand_color }}</x-slot>
 
+<x-slot name="fullScreen">{{ true }}</x-slot>
+
 <x-slot name="head">
     @if(app()->environment('production'))
         @include('partials.google-analytics')
     @endif
 </x-slot>
 
-<div class="min-h-screen bg-white dark:bg-zinc-900">
+<div class="min-h-screen bg-white py-6 dark:bg-zinc-900">
     <div class="h-full">
-        <div class="space-y-4 text-center">
+        <div class="mx-auto w-full max-w-7xl space-y-4 px-4 text-center lg:px-8">
             <a href="{{ route('handle.show', ['handle' => $team->handle]) }}" class="block space-y-4" wire:navigate>
                 @if($team->brand_logo_url)
                     <img src="{{ $team->brand_logo_url }}" class="mx-auto max-h-[90px] w-auto md:max-h-[160px]" alt="{{ $team->name }}" />
@@ -86,7 +88,7 @@ class extends Component
             </div>
         @endif
 
-        <div class="mt-6 lg:mt-8">
+        <div class="mx-auto mt-6 w-full max-w-7xl px-4 lg:mt-8 lg:px-8">
             <div class="min-w-0">
                 <x-ts-breadcrumbs class="mb-2">
                     <x-ts-breadcrumbs-item href="{{ route('portfolio.index', ['handle' => $team->handle]) }}">
@@ -111,13 +113,7 @@ class extends Component
         @if ($photos->isNotEmpty())
             <div class="mt-8">
                 <div class="pt-1">
-                    <div
-                        class="grid grid-flow-dense grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1"
-                    >
-                        @foreach ($photos as $photo)
-                            <x-photo-tile :$photo :$gallery context="portfolio" :html-id="'photo-'.$photo->id" :index="$loop->index" />
-                        @endforeach
-                    </div>
+                    <x-photo-masonry :photos="$photos" :$gallery context="portfolio" html-id-prefix="photo" />
 
                     <x-auto-load-more
                         method="loadMore"
@@ -126,7 +122,7 @@ class extends Component
                 </div>
             </div>
         @else
-            <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+            <div class="mx-auto mt-14 flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-4 pb-32 lg:px-8">
                 <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
                 <x-ts-heading size="lg" level="2">{{ __('No photos') }}</x-ts-heading>
                 <x-ts-subheading class="mb-6 max-w-72 text-center">
@@ -135,10 +131,12 @@ class extends Component
             </div>
         @endif
 
-        @include('partials.social-links')
+        <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
+            @include('partials.social-links')
+        </div>
 
         @unlesssubscribed($gallery->team)
-            <div class="mt-10">
+            <div class="mx-auto mt-10 w-full max-w-7xl px-4 lg:px-8">
                 @include('partials.powered-by')
             </div>
         @endsubscribed

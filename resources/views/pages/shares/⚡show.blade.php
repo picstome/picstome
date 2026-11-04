@@ -207,7 +207,9 @@ new #[Layout('layouts.guest')] class extends Component
 
 <x-slot name="color">{{ $gallery->team->brand_color }}</x-slot>
 
-<div x-data x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')" class="h-full">
+<x-slot name="fullScreen">{{ true }}</x-slot>
+
+<div x-data x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')" class="h-full py-6">
     @if ($remoteMode)
         <livewire:gallery-live-watcher
             :$gallery
@@ -219,7 +221,7 @@ new #[Layout('layouts.guest')] class extends Component
     @endif
 
     @if ($this->totalPhotos > 0)
-        <div class="relative">
+        <div class="relative mx-auto w-full max-w-7xl px-4 lg:px-8">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
             </a>
@@ -230,13 +232,13 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
         @endif
     @else
-        <div>
+        <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
             <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
                 <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
             </a>
         </div>
     @endif
-    <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
+    <div class="mx-auto mt-4 flex w-full max-w-7xl flex-wrap items-end justify-between gap-4 px-4 lg:mt-8 lg:px-8">
         <div class="max-sm:w-full sm:flex-1">
             <div class="flex items-center gap-4">
                 <x-ts-heading level="1" size="xl">{{ $gallery->name }}</x-ts-heading>
@@ -253,21 +255,19 @@ new #[Layout('layouts.guest')] class extends Component
     </div>
     @if ($this->totalPhotos > 0)
         <div class="mt-8">
-            <x-gallery-tabs
-                :favorites-count="$this->totalFavorites"
-                :selection-limit="$gallery->share_selection_limit"
-                :comments-count="$this->totalComments()"
-                :show-favorites="$gallery->is_share_selectable"
-                :show-comments="$gallery->are_comments_enabled"
-                :show-download="$gallery->is_share_downloadable"
-            />
+            <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
+                <x-gallery-tabs
+                    :favorites-count="$this->totalFavorites"
+                    :selection-limit="$gallery->share_selection_limit"
+                    :comments-count="$this->totalComments()"
+                    :show-favorites="$gallery->is_share_selectable"
+                    :show-comments="$gallery->are_comments_enabled"
+                    :show-download="$gallery->is_share_downloadable"
+                />
+            </div>
 
-            <div x-show="$wire.activeTab === 'all'" class="pt-1">
-                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($this->allPhotos as $photo)
-                            <x-photo-tile :$photo :$gallery context="shared" :html-id="'photo-'.$photo->id" :index="$loop->index" />
-                        @endforeach
-                    </div>
+            <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
+                    <x-photo-masonry :photos="$this->allPhotos" :$gallery context="shared" html-id-prefix="photo" />
 
                     <x-auto-load-more
                         method="loadMore"
@@ -275,12 +275,8 @@ new #[Layout('layouts.guest')] class extends Component
                         :has-more="$this->totalPhotos > $this->allPhotos->count()"
                     />
                 </div>
-            <div x-show="$wire.activeTab === 'commented'" class="pt-1">
-                    <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                        @foreach ($this->commentedPhotos as $photo)
-                            <x-photo-tile :$photo :$gallery context="shared" :as-commented="true" :html-id="'commented-'.$photo->id" :index="$loop->index" />
-                        @endforeach
-                    </div>
+            <div x-show="$wire.activeTab === 'commented'" class="pt-1" data-gallery-panel>
+                    <x-photo-masonry :photos="$this->commentedPhotos" :$gallery context="shared" html-id-prefix="commented" :as-commented="true" />
 
                     <x-auto-load-more
                         method="loadMore"
@@ -288,13 +284,9 @@ new #[Layout('layouts.guest')] class extends Component
                         :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
                     />
                 </div>
-            <div x-show="$wire.activeTab === 'favorited'" class="pt-1">
+            <div x-show="$wire.activeTab === 'favorited'" class="pt-1" data-gallery-panel>
                     @if ($this->totalFavorites > 0)
-                        <div class="grid grid-flow-dense grid-cols-3 gap-1 md:grid-cols-4 lg:grid-cols-6">
-                            @foreach ($this->favorites as $photo)
-                                <x-photo-tile :$photo :$gallery context="shared" :as-favorite="true" :html-id="'favorite-'.$photo->id" :index="$loop->index" />
-                            @endforeach
-                        </div>
+                        <x-photo-masonry :photos="$this->favorites" :$gallery context="shared" html-id-prefix="favorite" :as-favorite="true" />
 
                         <x-auto-load-more
                             method="loadMore"
@@ -310,22 +302,24 @@ new #[Layout('layouts.guest')] class extends Component
                     @endif
                 </div>
             @if ($gallery->is_share_downloadable)
-            <div x-show="$wire.activeTab === 'download'" class="pt-1">
-                    <livewire:gallery-download-panel
-                        :$gallery
-                        :count="$this->totalPhotos"
-                        :size="$this->formattedDownloadSize()"
-                        :images-count="$this->mediaCounts['images']"
-                        :videos-count="$this->mediaCounts['videos']"
-                        :pdfs-count="$this->mediaCounts['pdfs']"
-                        :shared="true"
-                        :key="'download-panel-'.$gallery->id"
-                    />
+            <div x-show="$wire.activeTab === 'download'" class="pt-1" data-gallery-panel>
+                    <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
+                        <livewire:gallery-download-panel
+                            :$gallery
+                            :count="$this->totalPhotos"
+                            :size="$this->formattedDownloadSize()"
+                            :images-count="$this->mediaCounts['images']"
+                            :videos-count="$this->mediaCounts['videos']"
+                            :pdfs-count="$this->mediaCounts['pdfs']"
+                            :shared="true"
+                            :key="'download-panel-'.$gallery->id"
+                        />
+                    </div>
                 </div>
             @endif
         </div>
     @else
-        <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
+        <div class="mx-auto mt-14 flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-4 pb-32 lg:px-8">
             <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />
             <x-ts-heading size="lg" level="2">{{ __('No photos') }}</x-ts-heading>
             <x-ts-subheading class="mb-6 max-w-72 text-center">
@@ -334,7 +328,7 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
     @endif
     @unlesssubscribed($gallery->team)
-        <div class="mt-10">
+        <div class="mx-auto mt-10 w-full max-w-7xl px-4 lg:px-8">
             @include('partials.powered-by')
         </div>
     @endsubscribed
