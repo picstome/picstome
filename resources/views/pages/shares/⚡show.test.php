@@ -428,6 +428,56 @@ test('shared gallery renders a bounded page and loads more photos on demand', fu
     expect($component->allPhotos)->toHaveCount(65);
 });
 
+test('shared gallery reveals the photo referenced by the viewer back link', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->sequence(fn ($sequence) => [
+        'name' => 'photo-'.($sequence->index + 1).'.jpg',
+    ])->create(['status' => 'processed']);
+
+    $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
+
+    $component = Livewire::withQueryParams(['photo' => $target->id])
+        ->test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    expect($component->allPhotos)->toHaveCount(65)
+        ->and($component->allPhotos->contains($target))->toBeTrue()
+        ->and($component->get('allPhotoLimit'))->toBe(120);
+});
+
+test('going back from a shared photo beyond the first page scrolls to it', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->sequence(fn ($sequence) => [
+        'name' => 'photo-'.($sequence->index + 1).'.jpg',
+    ])->create(['status' => 'processed']);
+
+    $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
+
+    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug);
+    $page->wait(0.5);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
+
+    scrollPageToBottom($page);
+    $page->wait(4);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
+
+    $page->click('#photo-'.$target->id);
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toBe('/shares/'.$gallery->ulid.'/photos/'.$target->id);
+
+    $page->click('[data-photo-back]');
+    $page->wait(1.5);
+
+    $page->assertNoJavaScriptErrors();
+
+    expect($page->script('window.location.hash'))->toBe('#photo-'.$target->id)
+        ->and($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65)
+        ->and($page->script("(() => { const el = document.querySelector('#photo-{$target->id}'); if (! el) return false; const rect = el.getBoundingClientRect(); return rect.top >= 0 && rect.top < window.innerHeight; })()"))->toBeTrue()
+        ->and($page->script('window.scrollY'))->toBeGreaterThan(0);
+});
+
 test('shared gallery hides photos that are still processing', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create();
     Photo::factory()->for($gallery)->create(['status' => Photo::STATUS_PROCESSED]);

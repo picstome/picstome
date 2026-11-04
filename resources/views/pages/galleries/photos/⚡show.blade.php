@@ -1,10 +1,9 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -13,6 +12,7 @@ use Livewire\Component;
 new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 {
     use InteractsWithTallStackModals;
+
     public Photo $photo;
 
     public ?Photo $next;
@@ -174,12 +174,15 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     #[Computed]
     public function galleryUrl()
     {
-        return Str::of(route('galleries.show', ['gallery' => $this->photo->gallery]))
-            ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
-            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
-            ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
-            ->append($this->photo->id);
+        $query = array_filter([
+            'activeTab' => $this->navigateFavorites ? 'favorited' : ($this->navigateCommented ? 'commented' : null),
+            'photo' => $this->photo->id,
+        ]);
+
+        $anchor = $this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-');
+
+        return route('galleries.show', ['gallery' => $this->photo->gallery] + $query)
+            .'#'.$anchor.$this->photo->id;
     }
 
     #[Computed]
@@ -576,6 +579,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                     icon:variant="micro"
                     variant="primary"
                     class="btn-ink"
+                    data-photo-back
                 >
                     {{ __('Back') }}
                 </x-ts-button>

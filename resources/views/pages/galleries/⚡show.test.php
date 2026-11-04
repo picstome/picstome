@@ -1680,6 +1680,76 @@ test('owner gallery renders a bounded page and loads more photos on demand', fun
     expect($component->allPhotos)->toHaveCount(65);
 });
 
+test('owner gallery reveals the photo referenced by the viewer back link', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->sequence(fn ($sequence) => [
+        'name' => 'photo-'.($sequence->index + 1).'.jpg',
+    ])->create(['status' => 'processed']);
+
+    $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['photo' => $target->id])
+        ->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->allPhotos)->toHaveCount(65)
+        ->and($component->allPhotos->contains($target))->toBeTrue()
+        ->and($component->get('allPhotoLimit'))->toBe(120);
+});
+
+test('owner gallery reveals a favorited photo referenced by the viewer back link', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->favorited()->sequence(fn ($sequence) => [
+        'name' => 'photo-'.($sequence->index + 1).'.jpg',
+    ])->create(['status' => 'processed']);
+
+    $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['activeTab' => 'favorited', 'photo' => $target->id])
+        ->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->favorites)->toHaveCount(65)
+        ->and($component->favorites->contains($target))->toBeTrue()
+        ->and($component->get('favoritePhotoLimit'))->toBe(120);
+});
+
+test('going back from a photo beyond the first page scrolls to it', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->sequence(fn ($sequence) => [
+        'name' => 'photo-'.($sequence->index + 1).'.jpg',
+    ])->create(['status' => 'processed']);
+
+    $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+    $page->wait(0.5);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
+
+    scrollPageToBottom($page);
+    $page->wait(4);
+
+    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
+
+    $page->click('#photo-'.$target->id);
+    $page->wait(1);
+
+    expect($page->script('window.location.pathname'))->toBe('/galleries/'.$gallery->id.'/photos/'.$target->id);
+
+    $page->click('[data-photo-back]');
+    $page->wait(1.5);
+
+    $page->assertNoJavaScriptErrors();
+
+    expect($page->script('window.location.hash'))->toBe('#photo-'.$target->id)
+        ->and($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65)
+        ->and($page->script("(() => { const el = document.querySelector('#photo-{$target->id}'); if (! el) return false; const rect = el.getBoundingClientRect(); return rect.top >= 0 && rect.top < window.innerHeight; })()"))->toBeTrue()
+        ->and($page->script('window.scrollY'))->toBeGreaterThan(0);
+});
+
 it('returns the uploaded photo id and status so the modal can follow processing', function () {
     Storage::fake('s3');
     Event::fake(PhotoAdded::class);

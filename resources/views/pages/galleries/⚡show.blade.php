@@ -7,6 +7,7 @@ use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Traits\InteractsWithTallStackModals;
+use App\Traits\RevealsGalleryPhoto;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -24,6 +25,7 @@ new class extends Component
 {
     use Interactions;
     use InteractsWithTallStackModals;
+    use RevealsGalleryPhoto;
     use SummarizesGalleryTabs, WithFileUploads;
 
     public Gallery $gallery;
@@ -58,6 +60,7 @@ new class extends Component
         $this->gallery->loadMissing(['coverPhoto', 'team']);
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
+        $this->revealRequestedPhoto();
 
         if (request()->boolean('live')) {
             $this->openModal('live-upload');
