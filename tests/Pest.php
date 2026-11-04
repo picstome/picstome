@@ -232,6 +232,48 @@ function scrollPageToBottom(Webpage|PendingAwaitablePage $page, int $timeoutMs =
 }
 
 /**
+ * Wait until the gallery grid has at least the expected number of photo cards.
+ *
+ * Infinite-scroll requests are asynchronous and can race with a fixed wait,
+ * especially when the browser suite runs in parallel.
+ */
+function waitForPhotoCardCount(Webpage|PendingAwaitablePage $page, int $expected, int $timeoutMs = 15000): int
+{
+    /** @var int $count */
+    $count = $page->script(<<<JS
+        new Promise((resolve) => {
+            const expected = {$expected};
+            const startedAt = performance.now();
+
+            const check = () => {
+                const count = document.querySelectorAll('[data-photo-card]').length;
+
+                if (count >= expected || performance.now() - startedAt > {$timeoutMs}) {
+                    resolve(count);
+
+                    return;
+                }
+
+                setTimeout(check, 100);
+            };
+
+            check();
+        });
+    JS);
+
+    if ($count < $expected) {
+        throw new RuntimeException(sprintf(
+            'Expected at least %d photo cards, found %d after %d ms.',
+            $expected,
+            $count,
+            $timeoutMs,
+        ));
+    }
+
+    return $count;
+}
+
+/**
  * Wait for the application's smooth scroll-to-top to finish.
  */
 function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs = 3000): void

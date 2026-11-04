@@ -454,6 +454,12 @@ new class extends Component
     }
 
     #[Computed]
+    public function syncEnabled(): bool
+    {
+        return (bool) Auth::user()?->canSeeSyncFeature();
+    }
+
+    #[Computed]
     public function favoriteIds(): \Illuminate\Support\Collection
     {
         return $this->gallery->favoritePhotoIds();
@@ -744,6 +750,7 @@ new class extends Component
                 :favorites-count="$this->totalFavorites"
                 :selection-limit="$gallery->share_selection_limit"
                 :comments-count="$this->totalComments()"
+                :show-sync="$this->syncEnabled"
                 :show-download="true"
             >
                 <x-slot name="afterFavorites">
@@ -793,6 +800,11 @@ new class extends Component
                         </div>
                     @endif
                 </div>
+            @if ($this->syncEnabled)
+                <div x-show="$wire.activeTab === 'sync'" class="pt-1">
+                    <x-gallery-sync-panel :$gallery />
+                </div>
+            @endif
             <div x-show="$wire.activeTab === 'download'" class="pt-1" data-gallery-panel>
                     <livewire:gallery-download-panel
                         :$gallery
@@ -812,11 +824,19 @@ new class extends Component
             <x-ts-subheading class="mb-6 max-w-72 text-center">
                 {{ __('We couldn\'t find any photos. Add one to get started.') }}
             </x-ts-subheading>
-            <x-ts-modal-trigger name="add-photos">
-                <x-ts-button variant="primary">
-                    {{ __('Add media') }}
-                </x-ts-button>
-            </x-ts-modal-trigger>
+            <div class="flex flex-wrap justify-center gap-3">
+                <x-ts-modal-trigger name="add-photos">
+                    <x-ts-button variant="primary">
+                        {{ __('Add media') }}
+                    </x-ts-button>
+                </x-ts-modal-trigger>
+
+                @if ($this->syncEnabled)
+                    <x-ts-button :href="$gallery->syncDeepLink()" variant="outline" icon="arrow-path">
+                        {{ __('Sync this gallery') }}
+                    </x-ts-button>
+                @endif
+            </div>
         </div>
     @endif
 
@@ -1355,7 +1375,11 @@ new class extends Component
             <x-tab selected="rater" scroll-on-mobile class="w-full" paddingless shadowless>
 <x-tab.items tab="rater" :title="__('App')">
                     <x-ts-text>
-                        {{ __('Rate your favorited images with the Picstome Rater desktop app.') }}
+                        @if ($this->syncEnabled)
+                            {{ __('Rate your favorited images with the Picstome Sync desktop app.') }}
+                        @else
+                            {{ __('Rate your favorited images with the Picstome Rater desktop app.') }}
+                        @endif
                     </x-ts-text>
 
                     <div class="mt-6 flex items-center gap-2">
@@ -1376,9 +1400,15 @@ new class extends Component
 
                     <x-ts-text class="mt-1">
                         {{ __("Don't have the app?") }}
-                        <x-ts-link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">
-                            {{ __('Download Picstome Rater') }}
-                        </x-ts-link>
+                        @if ($this->syncEnabled)
+                            <x-ts-link href="https://github.com/picstome/picstome-sync/releases/latest" target="_blank">
+                                {{ __('Download Picstome Sync') }}
+                            </x-ts-link>
+                        @else
+                            <x-ts-link href="https://github.com/picstome/picstome-rater/releases/latest" target="_blank">
+                                {{ __('Download Picstome Rater') }}
+                            </x-ts-link>
+                        @endif
                     </x-ts-text>
                 </x-tab.items>
 

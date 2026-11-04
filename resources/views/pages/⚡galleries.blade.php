@@ -3,6 +3,7 @@
 use App\Livewire\Forms\GalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
@@ -13,6 +14,7 @@ use TallStackUi\Traits\Interactions;
 new class extends Component
 {
     use Interactions;
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public GalleryForm $form;
@@ -21,6 +23,10 @@ new class extends Component
     {
         $this->form->expirationDate = now()->addMonth()->format('Y-m-d');
         $this->form->keepOriginalSize = (bool) (Auth::user()?->galleryDefaults()['keep_original_size'] ?? true);
+
+        if (request()->boolean('create')) {
+            $this->openModal('create-gallery');
+        }
     }
 
     public function save()

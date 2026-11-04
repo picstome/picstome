@@ -109,6 +109,18 @@ return [
     'admin_emails' => env('PICSTOME_ADMIN_EMAILS') ? explode(',', env('PICSTOME_ADMIN_EMAILS')) : [],
 
     /**
+     * Picstome Sync integration feature flag. While enabled it is still limited
+     * to admins; flip the env to hide it everywhere once testing ends.
+     */
+    'sync_feature_enabled' => (bool) env('PICSTOME_SYNC_FEATURE_ENABLED', true),
+
+    /**
+     * While true, the sync integration is only visible to admins. Set to false
+     * to roll it out to every user without another code change.
+     */
+    'sync_feature_admin_only' => (bool) env('PICSTOME_SYNC_FEATURE_ADMIN_ONLY', true),
+
+    /**
      * File extensions accepted by the gallery upload dialog. Single source of
      * truth for the dialog's accept attribute, the uploader's client-side
      * pre-filter, and the server-side extension gate.

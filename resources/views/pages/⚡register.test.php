@@ -16,22 +16,49 @@ it('allows guests to view the registration page', function () {
 
 it('aligns the terms checkbox with its label', function () {
     $page = visit('/register');
-    $page->wait(0.2);
 
     expect($page->script(<<<'JS'
-        (() => {
-            const input = document.querySelector('input[type=checkbox]')
-            const label = input?.closest('label')
+        new Promise((resolve) => {
+            const startedAt = performance.now()
 
-            if (!input || !label) {
-                return false
+            const isAligned = () => {
+                const input = document.querySelector('input[type=checkbox]')
+                const label = input?.closest('label')
+
+                if (!input || !label) {
+                    return false
+                }
+
+                const inputRect = input.getBoundingClientRect()
+                const labelRect = label.getBoundingClientRect()
+
+                return Math.abs((inputRect.top + inputRect.height / 2) - (labelRect.top + labelRect.height / 2)) < 2
             }
 
-            const inputRect = input.getBoundingClientRect()
-            const labelRect = label.getBoundingClientRect()
+            const check = () => {
+                if (isAligned()) {
+                    resolve(true)
 
-            return Math.abs((inputRect.top + inputRect.height / 2) - (labelRect.top + labelRect.height / 2)) < 2
-        })()
+                    return
+                }
+
+                if (performance.now() - startedAt > 5000) {
+                    resolve(false)
+
+                    return
+                }
+
+                setTimeout(check, 50)
+            }
+
+            const start = () => requestAnimationFrame(() => requestAnimationFrame(check))
+
+            if (document.fonts?.ready) {
+                document.fonts.ready.then(start)
+            } else {
+                start()
+            }
+        })
     JS))->toBeTrue();
 });
 

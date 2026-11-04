@@ -300,6 +300,7 @@ class ProcessPhoto implements ShouldQueue
         }
 
         $processedSize = (int) filesize($this->temporaryPhotoPath);
+        $processedHash = hash_file('sha256', $this->temporaryPhotoPath);
 
         // Keep the public path stable for regular images. Overwriting the same
         // object removes the window where an already-rendered page points to a
@@ -326,6 +327,7 @@ class ProcessPhoto implements ShouldQueue
             'thumb_path' => $newThumbPath,
             'size' => $fileSize,
             'stored_size' => $storedSize,
+            'stored_hash' => $processedHash,
             'raw_path' => $this->processingRawPath,
             'disk' => 's3',
             'status' => $this->statusAfterProcessing(),

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContractPdfController;
+use App\Http\Controllers\ExternalAuthorizationController;
 use App\Http\Controllers\GalleryDownloadController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\PublicInvoicePdfController;
@@ -155,6 +156,8 @@ Route::livewire('/signatures/{signature:ulid}/sign', 'pages::signatures.sign')->
 
 Route::livewire('/settings/appearance', 'pages::settings.appearance')->name('settings.appearance')->middleware('auth');
 
+Route::livewire('/settings/apps', 'pages::settings.apps')->name('settings.apps')->middleware('auth');
+
 Route::livewire('/settings/password', 'pages::settings.password')->name('settings.password')->middleware('auth');
 
 Route::livewire('/settings/profile', 'pages::settings.profile')->name('settings.profile')->middleware('auth');
@@ -195,6 +198,19 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
 Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard')->middleware(['auth', 'verified']);
 Route::livewire('/forgot-password', 'pages::forgot-password')->name('password.request')->middleware('guest');
 Route::livewire('/login', 'pages::login')->name('login')->middleware('guest');
+
+Route::get('/authorize', [ExternalAuthorizationController::class, 'show'])
+    ->name('external.authorize')
+    ->middleware('auth');
+
+Route::post('/authorize', [ExternalAuthorizationController::class, 'store'])
+    ->name('external.authorize.store')
+    ->middleware('auth');
+
+Route::get('/authorize/cancel', [ExternalAuthorizationController::class, 'cancel'])
+    ->name('external.authorize.cancel')
+    ->middleware('auth');
+
 Route::livewire('/payments', 'pages::payments')->name('payments')->middleware(['auth', 'verified']);
 Route::livewire('/portfolio', 'pages::portfolio')->name('portfolio')->middleware(['auth', 'verified']);
 Route::livewire('/public-profile', 'pages::public-profile')->name('public-profile')->middleware('auth');

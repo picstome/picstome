@@ -115,7 +115,11 @@ new class extends Component
     }
 }; ?>
 
-<div class="flex w-full max-h-[76vh] flex-col overflow-hidden rounded-xl bg-white shadow-lg dark:bg-dark-800">
+<div
+    x-data
+    x-on:modal:search-open.window="$nextTick(() => setTimeout(() => $el.querySelector('input')?.focus(), 50))"
+    class="flex w-full max-h-[76vh] flex-col overflow-hidden rounded-xl bg-white shadow-lg dark:bg-dark-800"
+>
     <div class="border-b border-zinc-100 p-3 dark:border-white/10">
         <x-input
             wire:model.live="search"

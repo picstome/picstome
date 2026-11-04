@@ -32,7 +32,7 @@ class PhotoDownloadService
             : $model->download();
     }
 
-    public function temporaryUrl(Photo|PhotoVersion $model, string $type = 'processed'): ?string
+    public function temporaryUrl(Photo|PhotoVersion $model, string $type = 'processed', ?int $ttlMinutes = null): ?string
     {
         $path = $this->path($model, $type);
 
@@ -48,7 +48,7 @@ class PhotoDownloadService
 
         $filename = $this->filename($model, $type);
 
-        return $disk->temporaryUrl($path, now()->addMinutes($this->ttlMinutes($model)), [
+        return $disk->temporaryUrl($path, now()->addMinutes($ttlMinutes ?? $this->ttlMinutes($model)), [
             'ResponseContentType' => 'application/octet-stream',
             'ResponseContentDisposition' => $this->contentDisposition($filename),
         ]);

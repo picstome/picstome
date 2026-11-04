@@ -15,3 +15,7 @@ Schedule::command('cleanup:livewire-tmp')->daily();
 Schedule::command('ingest:ftp-uploads')->everyMinute();
 Schedule::command('gallery-archives:prune --force')->daily();
 Schedule::command('temp:cleanup --force')->daily();
+
+// Keep expired app tokens around briefly so the connected apps screen can
+// still explain why an application stopped working.
+Schedule::command('sanctum:prune-expired --hours=48')->daily();
