@@ -449,6 +449,9 @@ it('generates a webp thumbnail and includes it in the stored size', function () 
     expect(max($width, $height))->toBeLessThanOrEqual(200)
         ->and($photo->stored_size)->toBe(
             Storage::disk('s3')->size($photo->path) + Storage::disk('s3')->size($photo->thumb_path)
+        )
+        ->and($photo->stored_hash)->toBe(
+            hash('sha256', Storage::disk('s3')->get($photo->path))
         );
 });
 

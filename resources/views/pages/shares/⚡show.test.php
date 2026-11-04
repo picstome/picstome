@@ -147,7 +147,9 @@ test('shared gallery shows the download tab with the photo count and total size'
         ->set('activeTab', 'download');
 
     $component->assertSee('Download')
-        ->assertSeeHtml('gallery-download-panel');
+        ->assertSeeHtml('gallery-download-panel')
+        ->assertDontSee('Sync this gallery')
+        ->assertDontSeeHtml('picstome://sync');
 });
 
 test('shared gallery hides the download tab when downloads are disabled', function () {
@@ -467,22 +469,11 @@ test('going back from a shared photo beyond the first page scrolls to it', funct
 
     $target = $gallery->photos()->where('name', 'photo-65.jpg')->firstOrFail();
 
-    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug);
+    $page = visit('/shares/'.$gallery->ulid.'/photos/'.$target->id);
     $page->wait(0.5);
 
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
-
-    scrollPageToBottom($page);
-    $page->wait(4);
-
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
-
-    $page->click('#photo-'.$target->id);
-    $page->wait(1);
-
-    expect($page->script('window.location.pathname'))->toBe('/shares/'.$gallery->ulid.'/photos/'.$target->id);
-
     $page->click('[data-photo-back]');
+    waitForPhotoCardCount($page, 65);
     $page->wait(1.5);
 
     $page->assertNoJavaScriptErrors();

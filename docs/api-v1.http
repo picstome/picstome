@@ -1,0 +1,85 @@
+# Picstome external API v1
+#
+# VSCode REST Client (humao.rest-client) collection.
+# 1. Start the app: php artisan serve
+# 2. Seed the demo gallery: php artisan db:seed --class=ExternalDemoSeeder
+# 3. Run "Start authorization" in a browser, log in as desktop@test.com / password
+# 4. Copy the `code` query parameter from the picstome:// redirect into @code below.
+#
+# The same contract is documented in GitHub issue #288 (backend source of truth).
+
+@baseUrl = http://localhost:8000
+@clientName = picstome-sync
+@nonce = 0123456789012345678901234567890123456789012
+@gallery = paste-gallery-ulid-here
+@code = paste-one-time-code-here
+@token = paste-plain-text-token-here
+@photoId = 1
+
+### Start authorization (open in a browser, not with REST Client)
+# Redirects to picstome://auth?code=...&state=... after login + consent.
+GET {{baseUrl}}/authorize?nonce={{nonce}}&client_name={{clientName}}
+
+### Exchange the one-time code for a Sanctum token
+POST {{baseUrl}}/api/v1/tokens/exchange
+Content-Type: application/json
+Accept: application/json
+
+{
+    "code": "{{code}}",
+    "client_name": "{{clientName}}"
+}
+
+### Connected account
+GET {{baseUrl}}/api/v1/me
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Galleries of the current team (paginated, optional name search)
+# Response: { data: [...], links: {...}, meta: { current_page, per_page, total, last_page } }
+GET {{baseUrl}}/api/v1/galleries?search=&per_page=25&page=1
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Manifest (core sync; `since` is accepted but ignored in v1)
+GET {{baseUrl}}/api/v1/manifest?gallery={{gallery}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Upload a photo (multipart)
+# `hash` is optional and ignored; the server recomputes sha256.
+POST {{baseUrl}}/api/v1/photos
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: multipart/form-data; boundary=----PicstomeBoundary
+
+------PicstomeBoundary
+Content-Disposition: form-data; name="gallery_id"
+
+{{gallery}}
+------PicstomeBoundary
+Content-Disposition: form-data; name="filename"
+
+uploaded-from-rest-client.jpg
+------PicstomeBoundary
+Content-Disposition: form-data; name="file"; filename="uploaded-from-rest-client.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/photo.jpg
+------PicstomeBoundary--
+
+### Delete photos (only after explicit confirmation in the client)
+DELETE {{baseUrl}}/api/v1/photos
+Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: application/json
+
+{
+    "gallery_id": "{{gallery}}",
+    "photo_ids": [{{photoId}}]
+}
+
+### Revoke the current token
+POST {{baseUrl}}/api/v1/tokens/revoke
+Authorization: Bearer {{token}}
+Accept: application/json

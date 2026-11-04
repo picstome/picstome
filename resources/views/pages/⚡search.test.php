@@ -189,3 +189,17 @@ it('scopes search results to the current user\'s team only', function () {
         return $galleries->count() === 1 && $galleries->first()->team_id === $team1->id;
     });
 });
+
+it('focuses the search input when the modal opens', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    actingAs($user);
+
+    $page = visit('/dashboard');
+    $page->wait(0.3);
+
+    $page->script("window.dispatchEvent(new CustomEvent('modal:search-open'))");
+    $page->wait(0.3);
+
+    expect($page->script("document.activeElement?.tagName === 'INPUT' && document.activeElement?.getAttribute('placeholder') === 'Search...'"))->toBeTrue();
+});

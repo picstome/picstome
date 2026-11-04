@@ -205,13 +205,23 @@
                                     {{ __('Photo Stats') }}
                                 </x-app-nav-link>
 
-                                <x-app-nav-link
-                                    href="https://github.com/picstome/picstome-rater/releases/latest"
-                                    icon="star"
-                                    target="_blank"
-                                >
-                                    {{ __('Rater') }}
-                                </x-app-nav-link>
+                                @if (auth()->user()?->canSeeSyncFeature())
+                                    <x-app-nav-link
+                                        href="https://github.com/picstome/picstome-sync/releases/latest"
+                                        icon="arrow-path"
+                                        target="_blank"
+                                    >
+                                        {{ __('Picstome Sync') }}
+                                    </x-app-nav-link>
+                                @else
+                                    <x-app-nav-link
+                                        href="https://github.com/picstome/picstome-rater/releases/latest"
+                                        icon="star"
+                                        target="_blank"
+                                    >
+                                        {{ __('Rater') }}
+                                    </x-app-nav-link>
+                                @endif
 
                                 <div class="relative flex items-center">
                                     <x-app-nav-link

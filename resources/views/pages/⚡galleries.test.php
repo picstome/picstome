@@ -34,6 +34,13 @@ test('users can view their team galleries galleries', function () {
     expect($component->galleries->contains($galleryC))->toBeTrue();
 });
 
+test('opens the create gallery modal from a query parameter', function () {
+    Livewire::actingAs($this->user)
+        ->withQueryParams(['create' => 1])
+        ->test('pages::galleries')
+        ->assertDispatched('modal:create-gallery-open');
+});
+
 test('can create a team gallery', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->set('form.name', 'Just a Photo Gallery')

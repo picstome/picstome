@@ -19,6 +19,7 @@ it('shows the reorganized main navigation', function () {
         ->assertSee('Black Screen')
         ->assertSee('Photo Stats')
         ->assertSee('Rater')
+        ->assertSee('https://github.com/picstome/picstome-rater/releases/latest', false)
         ->assertSee(route('public-profile'), false)
         ->assertSee(route('portfolio'), false)
         ->assertSee(route('customers'), false)
@@ -31,6 +32,35 @@ it('shows the reorganized main navigation', function () {
         ->assertDontSee('https://picstome.com/blackscreen/', false)
         ->assertDontSee(route('stripe.connect'), false)
         ->assertDontSee('Install the app');
+});
+
+it('shows the Picstome Sync link to admins only', function () {
+    config(['picstome.admin_emails' => ['admin@example.com']]);
+
+    $admin = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
+
+    actingAs($admin)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Picstome Sync')
+        ->assertSee('https://github.com/picstome/picstome-sync/releases/latest', false)
+        ->assertDontSee('https://github.com/picstome/picstome-rater/releases/latest', false);
+});
+
+it('shows the old Rater link when the sync feature is disabled', function () {
+    config([
+        'picstome.admin_emails' => ['admin@example.com'],
+        'picstome.sync_feature_enabled' => false,
+    ]);
+
+    $admin = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
+
+    actingAs($admin)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Rater')
+        ->assertSee('https://github.com/picstome/picstome-rater/releases/latest', false)
+        ->assertDontSee('Picstome Sync');
 });
 
 it('does not show the external invoice generator anymore', function () {

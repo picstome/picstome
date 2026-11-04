@@ -12,6 +12,7 @@
     'commentsCount' => 0,
     'showFavorites' => true,
     'showComments' => true,
+    'showSync' => false,
     'downloadUrl' => null,
     'showDownload' => false,
 ])
@@ -74,6 +75,20 @@
         >
             <x-icon name="envelope" class="size-5" />
             <span class="max-sm:sr-only">{{ $commentsLabel }}</span>
+        </button>
+    @endif
+
+    @if ($showSync)
+        <button
+            type="button"
+            @click="$wire.activeTab = 'sync'; $dispatch('gallery-tab-changed')"
+            x-bind:data-current="$wire.activeTab === 'sync'"
+            class="{{ $tabClass }}"
+            aria-label="{{ __('Sync') }}"
+            title="{{ __('Sync') }}"
+        >
+            <x-icon name="arrow-path" class="size-5" />
+            <span class="max-sm:sr-only">{{ __('Sync') }}</span>
         </button>
     @endif
 

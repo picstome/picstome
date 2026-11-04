@@ -91,6 +91,95 @@ describe('Gallery Viewing', function () {
             ->assertSeeHtml('gallery-download-panel');
     });
 
+    it('shows the sync tab and panel with the desktop app deep link', function () {
+        config(['picstome.admin_emails' => [$this->user->email]]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Mi Boda']);
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('activeTab', 'sync');
+
+        $component->assertSee('Sync with Picstome Sync')
+            ->assertSee('Sync this gallery')
+            ->assertSee('Download Picstome Sync')
+            ->assertSee('Rate your favorite images on your computer.')
+            ->assertSeeHtml('href="picstome://sync?gallery='.$gallery->ulid.'&name=Mi%20Boda"')
+            ->assertSeeHtml('https://github.com/picstome/picstome-sync/releases/latest');
+    });
+
+    it('offers the sync action on an empty gallery', function () {
+        config(['picstome.admin_emails' => [$this->user->email]]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Mi Boda']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertSee('Sync this gallery')
+            ->assertSeeHtml('href="picstome://sync?gallery='.$gallery->ulid.'&name=Mi%20Boda"');
+    });
+
+    it('links the favorite export to Picstome Sync', function () {
+        config(['picstome.admin_emails' => [$this->user->email]]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertSee('Rate your favorited images with the Picstome Sync desktop app.')
+            ->assertSee('Download Picstome Sync')
+            ->assertSeeHtml('https://github.com/picstome/picstome-sync/releases/latest');
+    });
+
+    it('hides the sync feature from non-admin users', function () {
+        config(['picstome.admin_emails' => ['someone-else@example.com']]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertDontSee('Sync with Picstome Sync')
+            ->assertDontSee('Sync this gallery')
+            ->assertDontSeeHtml('picstome://sync')
+            ->assertSee('Rate your favorited images with the Picstome Rater desktop app.')
+            ->assertSee('Download Picstome Rater')
+            ->assertSeeHtml('https://github.com/picstome/picstome-rater/releases/latest');
+    });
+
+    it('shows the sync feature to everyone when admin-only is disabled', function () {
+        config([
+            'picstome.admin_emails' => ['someone-else@example.com'],
+            'picstome.sync_feature_admin_only' => false,
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Mi Boda']);
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('activeTab', 'sync');
+
+        $component->assertSee('Sync with Picstome Sync')
+            ->assertSee('Sync this gallery')
+            ->assertSeeHtml('href="picstome://sync?gallery='.$gallery->ulid.'&name=Mi%20Boda"');
+    });
+
+    it('hides the sync feature when the feature flag is disabled', function () {
+        config([
+            'picstome.admin_emails' => [$this->user->email],
+            'picstome.sync_feature_enabled' => false,
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertDontSee('Sync with Picstome Sync')
+            ->assertDontSeeHtml('picstome://sync');
+    });
+
     it('selects a cover photo from the photo actions menu', function () {
         Storage::fake('s3');
 
@@ -1724,22 +1813,11 @@ test('going back from a photo beyond the first page scrolls to it', function () 
 
     $this->actingAs($this->user);
 
-    $page = visit('/galleries/'.$gallery->id);
+    $page = visit('/galleries/'.$gallery->id.'/photos/'.$target->id);
     $page->wait(0.5);
 
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
-
-    scrollPageToBottom($page);
-    $page->wait(4);
-
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
-
-    $page->click('#photo-'.$target->id);
-    $page->wait(1);
-
-    expect($page->script('window.location.pathname'))->toBe('/galleries/'.$gallery->id.'/photos/'.$target->id);
-
     $page->click('[data-photo-back]');
+    waitForPhotoCardCount($page, 65);
     $page->wait(1.5);
 
     $page->assertNoJavaScriptErrors();

@@ -214,6 +214,20 @@ it('uses the current gallery counts when the archive is expired', function () {
     expect($archive->refresh()->status)->toBe('expired');
 });
 
+it('does not include the sync action in the download panel', function () {
+    $gallery = panelGallery($this->user, ['name' => 'Mi Boda']);
+
+    Livewire::actingAs($this->user)
+        ->test('gallery-download-panel', [
+            'gallery' => $gallery,
+            'count' => 1,
+            'size' => '1 MB',
+            'imagesCount' => 1,
+        ])
+        ->assertDontSee('Sync this gallery')
+        ->assertDontSeeHtml('picstome://sync');
+});
+
 it('hides owner actions from the shared panel', function () {
     $gallery = panelGallery($this->user, [
         'is_shared' => true,

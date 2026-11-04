@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasAvatar, HasFactory, Notifiable;
+    use HasApiTokens, HasAvatar, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -134,6 +135,20 @@ class User extends Authenticatable implements MustVerifyEmail
 
             return in_array($this->email, $adminEmails, true);
         });
+    }
+
+    /**
+     * Whether the user can see the Picstome Sync integration while it is in
+     * testing. The feature flag lets us hide it everywhere later.
+     */
+    public function canSeeSyncFeature(): bool
+    {
+        if (! config('picstome.sync_feature_enabled', true)) {
+            return false;
+        }
+
+        return ! config('picstome.sync_feature_admin_only', true)
+            || (bool) $this->is_admin;
     }
 
     /**

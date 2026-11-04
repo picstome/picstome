@@ -47,6 +47,8 @@ class Photo extends Model
         return [
             'size' => 'integer',
             'stored_size' => 'integer',
+            'width' => 'integer',
+            'height' => 'integer',
             'version_count' => 'integer',
             'uploaded_at' => 'datetime',
             'favorited_at' => 'datetime',
@@ -193,6 +195,7 @@ class Photo extends Model
             'disk' => $this->diskOrDefault(),
             'size' => $this->size,
             'stored_size' => $this->stored_size ?: $this->size,
+            'stored_hash' => $this->stored_hash,
             'status' => $this->status,
             'uploaded_at' => $this->uploaded_at ?? $this->created_at ?? now(),
         ]);

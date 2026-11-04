@@ -10,6 +10,9 @@
             <x-app-nav-link quiet :href="route('settings.appearance')" :current="request()->routeIs('settings.appearance')">
                 {{ __('Appearance') }}
             </x-app-nav-link>
+            <x-app-nav-link quiet :href="route('settings.apps')" :current="request()->routeIs('settings.apps')">
+                {{ __('Connected apps') }}
+            </x-app-nav-link>
         </nav>
     </div>
 

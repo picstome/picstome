@@ -394,6 +394,7 @@ class Gallery extends Model
             'identity_key' => $existing->identity_key ?: static::identityKey($sourceName),
             'size' => $photoSize,
             'stored_size' => $photoSize,
+            'stored_hash' => null,
             'path' => $this->storeUploadedPhoto($photo, $sourceName),
             'thumb_path' => null,
             'raw_path' => null,
@@ -438,6 +439,7 @@ class Gallery extends Model
                 'identity_key' => $existing->identity_key ?: static::identityKey($sourceName),
                 'size' => $photoSize,
                 'stored_size' => $photoSize,
+                'stored_hash' => null,
                 'path' => $newPath,
                 'thumb_path' => null,
                 'raw_path' => null,
@@ -452,6 +454,7 @@ class Gallery extends Model
                     'source_name' => $sourceName,
                     'size' => $photoSize,
                     'stored_size' => $photoSize,
+                    'stored_hash' => null,
                     'path' => $newPath,
                     'raw_path' => null,
                     'disk' => 's3',
@@ -579,6 +582,18 @@ class Gallery extends Model
     public static function identityKey(string $filename): string
     {
         return PhotoIdentityService::key($filename);
+    }
+
+    /**
+     * Deep link the gallery UI uses to ask the Picstome Sync desktop app to
+     * open this gallery.
+     */
+    public function syncDeepLink(): string
+    {
+        return 'picstome://sync?'.http_build_query([
+            'gallery' => (string) $this->ulid,
+            'name' => $this->name,
+        ], '', '&', PHP_QUERY_RFC3986);
     }
 
     /**

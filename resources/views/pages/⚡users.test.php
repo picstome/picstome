@@ -239,4 +239,44 @@ describe('Users Page', function () {
             ->call('editUser', $teamlessUser->id)
             ->assertHasNoErrors();
     });
+
+    it('lists and revokes a user app token from the edit modal', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $token = $user->createToken('picstome-sync-abc123', ['sync'], now()->addDays(365));
+
+        $component = Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->assertSee('Connected apps')
+            ->assertSee('picstome-sync-abc123')
+            ->assertSee('Active');
+
+        $component->call('revokeUserToken', $token->accessToken->id)
+            ->assertSee('This user has no app tokens.');
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $token->accessToken->id,
+        ]);
+    });
+
+    it('does not revoke tokens from another user while editing a user', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $otherUser = User::factory()->withPersonalTeam()->create();
+        $otherToken = $otherUser->createToken('picstome-sync-other', ['sync'], now()->addDays(365));
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->call('revokeUserToken', $otherToken->accessToken->id);
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $otherToken->accessToken->id,
+        ]);
+    });
 });
