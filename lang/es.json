@@ -1358,5 +1358,11 @@
     "Auto-refresh (:seconds s)": "Actualización automática (:seconds s)",
     "Auto-refresh updates the data every :seconds seconds. Refresh now reloads immediately.": "La actualización automática refresca los datos cada :seconds segundos. Actualizar ahora recarga inmediatamente.",
     "Daily at :time": "Diario a las :time",
-    "Active queue": "Activa"
+    "Active queue": "Activa",
+    "Visitors can pin a comment to a spot on the photo. Enabling this also enables photo comments.": "Los visitantes pueden fijar un comentario en un punto de la foto. Activar esto también activa los comentarios.",
+    "Delete all failed": "Eliminar todos los fallidos",
+    "Delete all failed jobs?": "¿Eliminar todos los trabajos fallidos?",
+    "This permanently deletes all :count failed jobs. This cannot be undone.": "Esto elimina permanentemente los :count trabajos fallidos. No se puede deshacer.",
+    "Delete all": "Eliminar todos",
+    "All failed jobs deleted.": "Todos los trabajos fallidos eliminados."
 }

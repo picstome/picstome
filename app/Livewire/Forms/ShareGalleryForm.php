@@ -54,6 +54,27 @@ class ShareGalleryForm extends Form
     public $annotationsEnabled = false;
 
     /**
+     * Annotations are pinned comments: enabling them also enables comments.
+     */
+    public function updatedAnnotationsEnabled($value): void
+    {
+        if ((bool) $value) {
+            $this->commentsEnabled = true;
+        }
+    }
+
+    /**
+     * Comments are required for annotations, so disabling comments disables
+     * annotations as well.
+     */
+    public function updatedCommentsEnabled($value): void
+    {
+        if (! (bool) $value) {
+            $this->annotationsEnabled = false;
+        }
+    }
+
+    /**
      * Seed the form from the gallery when it is already shared, otherwise from
      * the authenticated user's remembered defaults.
      */
@@ -101,6 +122,10 @@ class ShareGalleryForm extends Form
     public function update()
     {
         $this->validate();
+
+        if ($this->annotationsEnabled) {
+            $this->commentsEnabled = true;
+        }
 
         $annotationsEnabled = $this->annotationsEnabled && $this->commentsEnabled;
 

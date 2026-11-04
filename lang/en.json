@@ -1225,5 +1225,11 @@
     "Auto-refresh (:seconds s)": "Auto-refresh (:seconds s)",
     "Auto-refresh updates the data every :seconds seconds. Refresh now reloads immediately.": "Auto-refresh updates the data every :seconds seconds. Refresh now reloads immediately.",
     "Daily at :time": "Daily at :time",
-    "Active queue": "Active"
+    "Active queue": "Active",
+    "Visitors can pin a comment to a spot on the photo. Enabling this also enables photo comments.": "Visitors can pin a comment to a spot on the photo. Enabling this also enables photo comments.",
+    "Delete all failed": "Delete all failed",
+    "Delete all failed jobs?": "Delete all failed jobs?",
+    "This permanently deletes all :count failed jobs. This cannot be undone.": "This permanently deletes all :count failed jobs. This cannot be undone.",
+    "Delete all": "Delete all",
+    "All failed jobs deleted.": "All failed jobs deleted."
 }

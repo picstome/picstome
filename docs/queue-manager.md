@@ -45,6 +45,8 @@ it; otherwise the job can run twice.
 
 - **Retry failed job**: `queue:retry` for a single UUID.
 - **Retry all failed**: all failed jobs, or only the selected queue.
+- **Delete all failed**: `queue:flush`; permanently removes every failed job
+  record after an explicit confirmation that shows the count.
 - **Forget failed job**: `queue:forget`.
 - **Release stuck job**: clears `reserved_at` and sets `available_at` to now.
 - **Delete queued job**: removes the row from `jobs`.

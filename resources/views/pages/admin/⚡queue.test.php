@@ -209,6 +209,20 @@ it('forgets a failed job', function () {
     expect(DB::table('failed_jobs')->where('uuid', $uuid)->exists())->toBeFalse();
 });
 
+it('deletes all failed jobs', function () {
+    queueManagerFailedJob();
+    queueManagerFailedJob();
+
+    Livewire::actingAs($this->admin)
+        ->test('pages::admin.queue')
+        ->call('confirmFlushFailed')
+        ->assertSee('This permanently deletes all 2 failed jobs')
+        ->call('executeConfirmed')
+        ->assertHasNoErrors();
+
+    expect(DB::table('failed_jobs')->count())->toBe(0);
+});
+
 it('releases a stuck reserved job', function () {
     $id = queueManagerJob([
         'reserved_at' => now()->subSeconds(120)->timestamp,
@@ -436,6 +450,20 @@ it('opens the failed job retry confirmation in the browser', function () {
         ->click('@failed-job-retry')
         ->assertSee('Retry failed job?')
         ->assertSee('The job will be pushed back onto the queue')
+        ->assertNoJavascriptErrors();
+});
+
+it('opens the delete-all-failed confirmation in the browser', function () {
+    queueManagerFailedJob();
+    queueManagerFailedJob();
+
+    $this->actingAs($this->admin);
+
+    visit('/admin/queue')
+        ->click('@queue-tab-failed')
+        ->click('@delete-all-failed')
+        ->assertSee('Delete all failed jobs?')
+        ->assertSee('This permanently deletes all 2 failed jobs')
         ->assertNoJavascriptErrors();
 });
 
