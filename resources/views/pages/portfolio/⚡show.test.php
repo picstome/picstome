@@ -24,7 +24,7 @@ it('excludes non-image photos from the portfolio grid', function () {
     expect($component->photos->contains($pdf))->toBeFalse();
 });
 
-it('does not overflow on mobile and fills the square grid cells', function () {
+it('does not overflow on mobile and keeps photos in a masonry wall', function () {
     $gallery = Gallery::factory()->public()->for($this->team)->create();
     Photo::factory()->count(3)->for($gallery)->create(['status' => 'processed']);
 
@@ -38,8 +38,24 @@ it('does not overflow on mobile and fills the square grid cells', function () {
             ->toBeTrue();
     }
 
-    expect($page->script("(() => { const cell = document.querySelector('.aspect-square'); const image = cell.querySelector('img'); return Math.abs(cell.clientWidth - image.clientWidth) < 2 && Math.abs(cell.clientHeight - image.clientHeight) < 2; })()"))
-        ->toBeTrue();
+    expect($page->script(<<<'JS'
+        (() => {
+            const wall = document.querySelector('[data-photo-masonry]');
+            const tile = wall?.querySelector('[data-photo-card]');
+            const image = tile?.querySelector('img');
+
+            return Boolean(
+                wall
+                && tile
+                && image
+                && Math.abs(wall.getBoundingClientRect().width - document.documentElement.clientWidth) < 2
+                && getComputedStyle(wall).columnCount !== 'auto'
+                && tile.classList.contains('break-inside-avoid')
+                && ! tile.classList.contains('aspect-square')
+                && getComputedStyle(image).objectFit !== 'cover'
+            );
+        })()
+    JS))->toBeTrue();
 });
 
 it('limits the portfolio grid and loads more photos on demand', function () {

@@ -67,7 +67,7 @@ test('shared gallery opens the requested tab from the url', function () {
     expect($page->script("document.querySelector('[role=tablist] [data-current=true]').textContent.trim()"))
         ->toContain('Comments');
 
-    expect($page->script("Array.from(document.querySelectorAll('[role=tablist] ~ div')).map(e => getComputedStyle(e).display).join('|')"))
+    expect($page->script("Array.from(document.querySelectorAll('[data-gallery-panel]')).map(e => getComputedStyle(e).display).join('|')"))
         ->toBe('none|block|none');
 });
 
@@ -362,6 +362,21 @@ test('shared gallery does not overflow on mobile', function () {
         expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
             ->toBeTrue();
     }
+
+    expect($page->script(<<<'JS'
+        (() => {
+            const wall = document.querySelector('[data-photo-masonry]');
+
+            if (! wall) {
+                return false;
+            }
+
+            const rect = wall.getBoundingClientRect();
+
+            return Math.abs(rect.width - document.documentElement.clientWidth) < 2
+                && getComputedStyle(wall).columnCount === '1';
+        })()
+    JS))->toBeTrue();
 });
 
 test('shared gallery only watches for new photos in remote mode', function () {
