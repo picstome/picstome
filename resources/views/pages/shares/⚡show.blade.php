@@ -3,6 +3,7 @@
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Traits\RevealsGalleryPhoto;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
@@ -13,6 +14,7 @@ use Livewire\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
+    use RevealsGalleryPhoto;
     use SummarizesGalleryTabs;
 
     public Gallery $gallery;
@@ -44,6 +46,8 @@ new #[Layout('layouts.guest')] class extends Component
             ->where('active', true)
             ->where('active_gallery_id', $gallery->id)
             ->exists();
+
+        $this->revealRequestedPhoto();
     }
 
     #[On('photo-favorited')]

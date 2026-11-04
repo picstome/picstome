@@ -1,12 +1,11 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
 use App\Notifications\GuestPhotoCommented;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
@@ -15,6 +14,7 @@ use Livewire\Component;
 new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 {
     use InteractsWithTallStackModals;
+
     public Photo $photo;
 
     public Gallery $gallery;
@@ -67,12 +67,15 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     #[Computed]
     public function galleryUrl()
     {
-        return Str::of(route('shares.show', ['gallery' => $this->photo->gallery, 'slug' => $this->photo->gallery->slug]))
-            ->when($this->navigateFavorites, fn ($str) => $str->append('?activeTab=favorited'))
-            ->when($this->navigateCommented, fn ($str) => $str->append('?activeTab=commented'))
-            ->append('#')
-            ->append($this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-'))
-            ->append($this->photo->id);
+        $query = array_filter([
+            'activeTab' => $this->navigateFavorites ? 'favorited' : ($this->navigateCommented ? 'commented' : null),
+            'photo' => $this->photo->id,
+        ]);
+
+        $anchor = $this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-');
+
+        return route('shares.show', ['gallery' => $this->photo->gallery, 'slug' => $this->photo->gallery->slug] + $query)
+            .'#'.$anchor.$this->photo->id;
     }
 
     /**
@@ -707,6 +710,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     icon:variant="micro"
                     variant="primary"
                     class="btn-ink"
+                    data-photo-back
                 >
                     {{ __('Back') }}
                 </x-ts-button>

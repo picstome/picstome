@@ -30,6 +30,34 @@ test('users can view a team photo in the gallery', function () {
     $response->assertStatus(200);
 });
 
+test('the back link points to the photo position in the gallery', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo]);
+
+    expect($component->instance()->galleryUrl)->toBe(
+        route('galleries.show', ['gallery' => $gallery, 'photo' => $photo->id]).'#photo-'.$photo->id
+    );
+});
+
+test('the back link keeps the active favorite tab and target anchor', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->favorited()->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['navigateFavorites' => true])
+        ->test('pages::galleries.photos.show', ['photo' => $photo]);
+
+    expect($component->instance()->galleryUrl)->toBe(
+        route('galleries.show', [
+            'gallery' => $gallery,
+            'activeTab' => 'favorited',
+            'photo' => $photo->id,
+        ]).'#favorite-'.$photo->id
+    );
+});
+
 test('users can open a pdf photo from an inline open button', function () {
     $photo = Photo::factory()->pdf()->for(Gallery::factory()->for($this->team))->create();
 

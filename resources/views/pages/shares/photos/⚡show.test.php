@@ -26,6 +26,21 @@ test('photo can be viewed when the gallery is shared', function () {
         ->assertStatus(200);
 });
 
+test('the back link points to the shared photo position in the gallery', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo]);
+
+    expect($component->instance()->galleryUrl)->toBe(
+        route('shares.show', [
+            'gallery' => $gallery,
+            'slug' => $gallery->slug,
+            'photo' => $photo->id,
+        ]).'#photo-'.$photo->id
+    );
+});
+
 test('pdf photo in a shared gallery shows an open button pointing at the inline route', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory()->pdf())->create(['ulid' => '0123ABC']);
 
