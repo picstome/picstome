@@ -1,21 +1,12 @@
 <?php
 
+use App\Console\ScheduledTasks;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('galleries:delete-expired')->daily();
-Schedule::command('galleries:send-expiration-reminders')->dailyAt('09:00');
-Schedule::command('subscriptions:cleanup')->daily();
-Schedule::command('cleanup:livewire-tmp')->daily();
-Schedule::command('ingest:ftp-uploads')->everyMinute();
-Schedule::command('gallery-archives:prune --force')->daily();
-Schedule::command('temp:cleanup --force')->daily();
-
-// Keep expired app tokens around briefly so the connected apps screen can
-// still explain why an application stopped working.
-Schedule::command('sanctum:prune-expired --hours=48')->daily();
+ScheduledTasks::register(app(Schedule::class));

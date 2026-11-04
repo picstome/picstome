@@ -285,6 +285,14 @@
                             >
                                 {{ __('Emails') }}
                             </x-app-nav-link>
+
+                            <x-app-nav-link
+                                :href="route('admin.queue')"
+                                icon="queue-list"
+                                :current="request()->routeIs('admin.queue')"
+                            >
+                                {{ __('Queue') }}
+                            </x-app-nav-link>
                         @endif
                     </nav>
 

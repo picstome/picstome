@@ -220,6 +220,8 @@ Route::livewire('/users', 'pages::users')->name('users')->middleware(['auth', 'v
 Route::livewire('/admin/stats', 'pages::admin.stats')->name('admin.stats')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/admin/translations', 'pages::admin.translations')->name('admin.translations')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/admin/emails', 'pages::admin.emails')->name('admin.emails')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
+
+Route::livewire('/admin/queue', 'pages::admin.queue')->name('admin.queue')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/verify-email', 'pages::verify-email')->name('verification.notice')->middleware('auth');
 
 Route::get('/billing-portal', function (Request $request) {
