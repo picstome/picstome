@@ -205,6 +205,8 @@ new #[Layout('layouts.guest')] class extends Component
 
 <x-slot name="font">{{ $gallery->team->brand_font }}</x-slot>
 
+<x-slot name="watermarkFont">{{ $gallery->team->isTextWatermark() ? $gallery->team->brand_watermark_font : '' }}</x-slot>
+
 <x-slot name="color">{{ $gallery->team->brand_color }}</x-slot>
 
 <x-slot name="fullScreen">{{ true }}</x-slot>

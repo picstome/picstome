@@ -17,7 +17,7 @@
     $isReady = $photo->isReady();
     $hasWatermark = $isShared
         && $gallery->is_share_watermarked
-        && $gallery->team?->brand_watermark_url;
+        && $gallery->team?->hasBrandWatermark();
     $imageSizes = $isOwner
         ? '(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw'
         : '(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw';
@@ -125,37 +125,8 @@
                 <div class="aspect-[3/4] w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
 
-            @if ($hasWatermark)
-                @if ($gallery->team->brand_watermark_position === 'repeated')
-                    <div
-                        class="pointer-events-none absolute inset-0"
-                        style="
-                            background-image: url('{{ $gallery->team->brand_watermark_url }}');
-                            background-repeat: repeat;
-                            background-size: 75%;
-                            opacity: {{ $gallery->team->brand_watermark_transparency ? (100 - $gallery->team->brand_watermark_transparency) / 100 : 1 }};
-                        "
-                    ></div>
-                @else
-                    <div
-                        @class([
-                            'absolute flex justify-center',
-                            'inset-x-0 bottom-0' => $gallery->team->brand_watermark_position === 'bottom',
-                            'inset-x-0 top-0' => $gallery->team->brand_watermark_position === 'top',
-                            'inset-0 flex items-center' => $gallery->team->brand_watermark_position === 'middle',
-                        ])
-                    >
-                        <img
-                            class="max-w-full"
-                            src="{{ $gallery->team->brand_watermark_url }}"
-                            alt=""
-                            style="
-                                opacity: {{ $gallery->team->brand_watermark_transparency ? (100 - $gallery->team->brand_watermark_transparency) / 100 : 1 }};
-                            "
-                            loading="lazy"
-                        />
-                    </div>
-                @endif
+            @if ($hasWatermark && $gallery->team)
+                <x-watermark :team="$gallery->team" />
             @endif
         </a>
 

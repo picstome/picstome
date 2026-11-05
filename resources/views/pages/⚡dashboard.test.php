@@ -34,3 +34,16 @@ it('shows setup progress based on completed steps', function () {
         ->assertSee('Complete Your Account Setup')
         ->assertSee('1/5');
 });
+
+it('counts a text watermark as a configured setup step', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    $team->update([
+        'brand_watermark_type' => 'text',
+        'brand_watermark_text' => 'Acme Studio',
+    ]);
+
+    Livewire::actingAs($user)->test('pages::dashboard')
+        ->assertSee('1/5');
+});

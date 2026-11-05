@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Team;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -13,10 +14,16 @@ class StylingForm extends Form
     #[Validate(['nullable', 'in:red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,zinc'])]
     public $color;
 
-    #[Validate(['nullable', 'in:Roboto Flex,Raleway,Montserrat,Work Sans,Source Sans 3,Nunito Sans,Source Serif 4,Roboto Serif,Playfair Display'])]
     public $font;
 
-    public function setTeam(Team $team)
+    public function rules(): array
+    {
+        return [
+            'font' => ['nullable', Rule::in(array_keys(config('picstome.brand_fonts')))],
+        ];
+    }
+
+    public function setTeam(Team $team): void
     {
         $this->team = $team;
 
@@ -24,7 +31,7 @@ class StylingForm extends Form
         $this->font = $team->brand_font;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 
