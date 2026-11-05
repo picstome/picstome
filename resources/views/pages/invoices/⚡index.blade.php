@@ -1,27 +1,31 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\InvoiceSettingsForm;
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Services\InvoiceDuplicationService;
 use App\Traits\FormatsMoney;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
-    use Interactions;
     use FormatsMoney;
+    use Interactions;
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public InvoiceSettingsForm $form;
 
     public int $setupStep = 1;
+
+    public ?int $duplicateInvoiceId = null;
+
+    public ?string $duplicateInvoiceNumber = null;
 
     public function mount(): void
     {
@@ -42,7 +46,7 @@ new class extends Component
     {
         return Auth::user()->currentTeam
             ->invoices()
-            ->with('customer')
+            ->with(['customer', 'payments'])
             ->latest('id')
             ->paginate(25);
     }
@@ -110,13 +114,32 @@ new class extends Component
     }
 
     /**
-     * Copy an issued invoice into a new draft.
+     * Open the confirmation before copying an issued invoice from the list.
      */
-    public function duplicate(int $invoiceId)
+    public function confirmDuplicate(int $invoiceId): void
     {
         $this->authorize('create', Invoice::class);
 
         $invoice = Auth::user()->currentTeam->invoices()->findOrFail($invoiceId);
+
+        $this->duplicateInvoiceId = $invoice->id;
+        $this->duplicateInvoiceNumber = $invoice->full_number;
+
+        $this->openModal('duplicate-invoice');
+    }
+
+    /**
+     * Copy the selected invoice into a new draft and open it.
+     */
+    public function duplicate()
+    {
+        $this->authorize('create', Invoice::class);
+
+        if (! $this->duplicateInvoiceId) {
+            return;
+        }
+
+        $invoice = Auth::user()->currentTeam->invoices()->findOrFail($this->duplicateInvoiceId);
 
         $draft = app(InvoiceDuplicationService::class)->duplicate($invoice, Auth::user());
 
@@ -201,8 +224,7 @@ new class extends Component
                     <x-data-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-data-table.column>
                     <x-data-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-data-table.column>
                     <x-data-table.column class="group/right-align">{{ __('Total') }}</x-data-table.column>
-                    <x-data-table.column class="group/right-align hidden xl:table-cell">{{ __('Status') }}</x-data-table.column>
-                    <x-data-table.column class="group/right-align">{{ __('Actions') }}</x-data-table.column>
+                    <x-data-table.column class="group/right-align"></x-data-table.column>
                 </x-data-table.columns>
 
                 <x-data-table.rows>
@@ -218,14 +240,17 @@ new class extends Component
                                     class="absolute inset-0 focus:outline-hidden"
                                 ></a>
                                 <div class="flex flex-col">
-                                    <span @class(['font-mono' => filled($invoice->full_number)])>
-                                        {{ $invoice->full_number ?? __('Draft') }}
-                                    </span>
-                                    <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 xl:hidden">
-                                        <span class="sm:hidden">{{ $invoice->customer?->name }}</span>
-                                        @if ($invoice->issue_date)
-                                            <span class="xl:hidden">· {{ $invoice->issue_date->format('Y-m-d') }}</span>
+                                    <div class="flex items-center gap-2 whitespace-nowrap">
+                                        <span @class(['font-mono' => filled($invoice->full_number)])>
+                                            {{ $invoice->full_number ?? __('Draft') }}
+                                        </span>
+
+                                        @if ($invoice->isRectificative())
+                                            <x-ts-badge size="sm" color="violet" inset>
+                                                {{ __('Rectificative') }}
+                                            </x-ts-badge>
                                         @endif
+
                                         <x-ts-badge
                                             size="sm"
                                             :color="match ($invoice->status) {
@@ -237,11 +262,42 @@ new class extends Component
                                         >
                                             {{ $invoice->status_label }}
                                         </x-ts-badge>
+
+                                        @if (! $invoice->isDraft() && ! $invoice->isRectificative())
+                                            <x-ts-badge
+                                                size="sm"
+                                                :color="$invoice->isPaid() ? 'lime' : 'yellow'"
+                                                inset
+                                            >
+                                                {{ $invoice->isPaid() ? __('Paid invoice') : __('Payment pending') }}
+                                            </x-ts-badge>
+                                        @endif
+                                    </div>
+
+                                    <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-normal text-zinc-500 xl:hidden">
+                                        <span class="sm:hidden">
+                                            @if ($invoice->customer)
+                                                <a href="{{ route('customers.show', $invoice->customer) }}" wire:navigate class="relative z-10 hover:underline">
+                                                    {{ $invoice->customer->name }}
+                                                </a>
+                                            @else
+                                                —
+                                            @endif
+                                        </span>
+                                        @if ($invoice->issue_date)
+                                            <span class="xl:hidden">· {{ $invoice->issue_date->format('Y-m-d') }}</span>
+                                        @endif
                                     </span>
                                 </div>
                             </x-data-table.cell>
                             <x-data-table.cell variant="muted" class="hidden w-full sm:table-cell">
-                                {{ $invoice->customer?->name ?? '—' }}
+                                @if ($invoice->customer)
+                                    <a href="{{ route('customers.show', $invoice->customer) }}" wire:navigate class="hover:underline">
+                                        {{ $invoice->customer->name }}
+                                    </a>
+                                @else
+                                    —
+                                @endif
                             </x-data-table.cell>
                             <x-data-table.cell variant="muted" class="hidden xl:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}
@@ -250,58 +306,27 @@ new class extends Component
                                 {{ $this->money($invoice->total) }}
                                 <span class="font-normal text-zinc-500">{{ $invoice->currency }}</span>
                             </x-data-table.cell>
-                            <x-data-table.cell class="hidden text-end xl:table-cell">
-                                <x-ts-badge
-                                    :color="match ($invoice->status) {
-                                        'issued' => 'green',
-                                        'rectified' => 'orange',
-                                        default => 'zinc',
-                                    }"
-                                    inset
-                                >
-                                    {{ $invoice->status_label }}
-                                </x-ts-badge>
-                            </x-data-table.cell>
                             <x-data-table.cell class="whitespace-nowrap text-end">
-                                <div class="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
-                                    @if ($invoice->pdf_path)
-                                        <x-ts-button
-                                            size="sm"
-                                            variant="ghost"
-                                            class="!px-2"
-                                            icon="document-arrow-down"
-                                            :href="route('invoices.pdf', $invoice)"
-                                            :aria-label="__('Download PDF')"
-                                        >
-                                            <span class="hidden xl:inline">{{ __('PDF') }}</span>
-                                        </x-ts-button>
-                                    @endif
-
-                                    @if (filled($invoice->public_token))
-                                        <x-ts-button
-                                            size="sm"
-                                            variant="ghost"
-                                            class="!px-2"
-                                            icon="arrow-top-right-on-square"
-                                            :href="route('invoices.public.show', $invoice->public_token)"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            :aria-label="__('View invoice')"
-                                        >
-                                            <span class="hidden xl:inline">{{ __('View invoice') }}</span>
-                                        </x-ts-button>
-                                    @endif
+                                <div class="flex items-center justify-end gap-1">
+                                    <x-ts-button
+                                        size="sm"
+                                        variant="ghost"
+                                        icon="eye"
+                                        square
+                                        :href="route('invoices.show', $invoice)"
+                                        wire:navigate
+                                        :aria-label="__('View')"
+                                    />
 
                                     @if ($invoice->isIssued())
                                         <x-ts-button
                                             size="sm"
                                             variant="ghost"
                                             icon="document-duplicate"
-                                            wire:click="duplicate({{ $invoice->id }})"
+                                            square
+                                            wire:click="confirmDuplicate({{ $invoice->id }})"
                                             :aria-label="__('Duplicate')"
-                                        >
-                                            <span class="hidden sm:inline">{{ __('Duplicate') }}</span>
-                                        </x-ts-button>
+                                        />
                                     @endif
                                 </div>
                             </x-data-table.cell>
@@ -331,6 +356,35 @@ new class extends Component
             </div>
         </div>
     @endif
+
+    <x-ts-modal name="duplicate-invoice" class="w-full sm:max-w-md">
+        <div class="space-y-6">
+            <div class="flex items-start gap-3">
+                <span class="bg-brand-green/10 text-brand-green dark:bg-brand-sage/15 dark:text-brand-sage flex size-9 shrink-0 items-center justify-center rounded-full">
+                    <x-icon name="document-duplicate" class="size-5" />
+                </span>
+
+                <div>
+                    <x-ts-heading size="lg">{{ __('Duplicate invoice?') }}</x-ts-heading>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                        {{ __('A new draft will be created from :number. You can review it before issuing.', ['number' => $this->duplicateInvoiceNumber ?? __('Draft')]) }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <x-ts-spacer />
+
+                <x-ts-modal-close>
+                    <x-ts-button variant="outline" class="btn-outline-brand">{{ __('Cancel') }}</x-ts-button>
+                </x-ts-modal-close>
+
+                <x-ts-button variant="primary" icon="document-duplicate" wire:click="duplicate">
+                    {{ __('Duplicate') }}
+                </x-ts-button>
+            </div>
+        </div>
+    </x-ts-modal>
 
     <x-ts-modal name="invoice-setup" class="w-full sm:max-w-2xl">
         <form wire:submit="finishSetup" class="space-y-6">

@@ -65,6 +65,24 @@ it('allows revoking the public link of an issued invoice', function () {
         ->and($invoice->fresh()->public_token_revoked_at)->not->toBeNull();
 });
 
+it('does not allow changing the full number of an issued invoice', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    expect(function () use ($invoice) {
+        $invoice->full_number = 'INV-9999';
+        $invoice->save();
+    })->toThrow(LogicException::class);
+});
+
+it('allows marking an issued invoice as paid', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    $invoice->update(['paid_at' => now()]);
+
+    expect($invoice->fresh()->paid_at)->not->toBeNull()
+        ->and($invoice->fresh()->isMarkedPaid())->toBeTrue();
+});
+
 it('keeps the audit trail append only', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

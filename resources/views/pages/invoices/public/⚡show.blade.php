@@ -67,27 +67,49 @@ new #[Layout('layouts.guest')] class extends Component
 }; ?>
 
 <div>
-    <div class="flex flex-wrap items-center gap-3">
-        <x-ts-heading level="1" size="xl">
-            {{ $this->invoice->full_number }}
-        </x-ts-heading>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+            @if (filled($this->invoice->team->brand_logo_url))
+                <img
+                    src="{{ $this->invoice->team->brand_logo_url }}"
+                    alt="{{ $this->invoice->team->name }}"
+                    class="mb-4 max-h-16 w-auto object-contain"
+                />
+            @endif
 
-        <x-ts-badge
-            :color="match ($this->invoice->status) {
-                'issued' => 'green',
-                'rectified' => 'orange',
-                default => 'zinc',
-            }"
-            inset
-        >
-            {{ $this->invoice->status_label }}
-        </x-ts-badge>
+            <div class="flex flex-wrap items-center gap-3">
+                <x-ts-heading level="1" size="xl">
+                    {{ $this->invoice->full_number }}
+                </x-ts-heading>
+
+                <x-ts-badge
+                    :color="match ($this->invoice->status) {
+                        'issued' => 'green',
+                        'rectified' => 'orange',
+                        default => 'zinc',
+                    }"
+                    inset
+                >
+                    {{ $this->invoice->status_label }}
+                </x-ts-badge>
+            </div>
+
+            <x-ts-subheading>
+                {{ $this->invoice->isRectificative() ? __('Corrective invoice') : ($this->invoice->isSimplified() ? __('Simplified invoice') : __('Invoice')) }}
+                · {{ $this->invoice->issue_date?->format('Y-m-d') }}
+            </x-ts-subheading>
+        </div>
+
+        @if ($this->invoice->pdf_path)
+            <x-ts-button
+                variant="primary"
+                icon="document-arrow-down"
+                :href="route('invoices.public.pdf', $this->invoice->public_token)"
+            >
+                {{ __('Download PDF') }}
+            </x-ts-button>
+        @endif
     </div>
-
-    <x-ts-subheading>
-        {{ $this->invoice->isRectificative() ? __('Corrective invoice') : ($this->invoice->isSimplified() ? __('Simplified invoice') : __('Invoice')) }}
-        · {{ $this->invoice->issue_date?->format('Y-m-d') }}
-    </x-ts-subheading>
 
     @if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice)
         <x-ts-callout icon="information-circle" variant="outline" class="mt-6">
@@ -147,21 +169,6 @@ new #[Layout('layouts.guest')] class extends Component
                 </dl>
             </div>
 
-            <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                <x-ts-heading level="3" size="sm">{{ __('Traceability') }}</x-ts-heading>
-                <dl class="mt-3 space-y-1 text-xs text-zinc-500">
-                    <div class="break-all font-mono">{{ $this->invoice->fingerprint }}</div>
-                    <div class="mt-2">
-                        {{ __('Position in the chain') }}: {{ $this->chain['position'] }} / {{ $this->chain['total'] }}
-                    </div>
-                    <div>
-                        {{ __('Chain') }}:
-                        <span class="{{ $this->chain['valid'] ? 'text-green-600' : 'text-red-600' }}">
-                            {{ $this->chain['valid'] ? __('Verified') : __('Broken') }}
-                        </span>
-                    </div>
-                </dl>
-            </div>
         </div>
 
         <div class="space-y-6">
@@ -225,11 +232,6 @@ new #[Layout('layouts.guest')] class extends Component
                 </dl>
             </div>
 
-            @if ($this->invoice->pdf_path)
-                <x-ts-button variant="primary" icon="document-arrow-down" :href="route('invoices.public.pdf', $this->invoice->public_token)">
-                    {{ __('Download PDF') }}
-                </x-ts-button>
-            @endif
         </div>
     </div>
 
@@ -247,6 +249,22 @@ new #[Layout('layouts.guest')] class extends Component
             @endif
         </div>
     @endif
+
+    <div class="mt-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+        <x-ts-heading level="3" size="sm">{{ __('Traceability') }}</x-ts-heading>
+        <dl class="mt-3 grid gap-2 text-xs text-zinc-500 sm:grid-cols-2">
+            <div class="break-all font-mono sm:col-span-2">{{ $this->invoice->fingerprint }}</div>
+            <div>
+                {{ __('Position in the chain') }}: {{ $this->chain['position'] }} / {{ $this->chain['total'] }}
+            </div>
+            <div>
+                {{ __('Chain') }}:
+                <span class="{{ $this->chain['valid'] ? 'text-green-600' : 'text-red-600' }}">
+                    {{ $this->chain['valid'] ? __('Verified') : __('Broken') }}
+                </span>
+            </div>
+        </dl>
+    </div>
 
     <p class="mt-8 text-xs text-zinc-500">
         {{ __('This invoice was issued with Picstome. The verification above relies on the fingerprint chain stored by the issuer.') }}

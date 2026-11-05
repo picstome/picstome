@@ -74,6 +74,16 @@ class InvoicePolicy
     }
 
     /**
+     * Determine whether the user can change the internal paid status.
+     */
+    public function markAsPaid(User $user, Invoice $invoice): bool
+    {
+        return $invoice->team->is($user->currentTeam)
+            && ! $invoice->isRectificative()
+            && in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_RECTIFIED], true);
+    }
+
+    /**
      * Determine whether the user can rectify the invoice.
      */
     public function rectify(User $user, Invoice $invoice): bool

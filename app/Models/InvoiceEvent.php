@@ -34,6 +34,10 @@ class InvoiceEvent extends Model
 
     public const LINK_REGENERATED = 'link_regenerated';
 
+    public const MARKED_PAID = 'marked_paid';
+
+    public const MARKED_UNPAID = 'marked_unpaid';
+
     public const UPDATED_AT = null;
 
     protected $guarded = [];

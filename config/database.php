@@ -41,6 +41,10 @@ return [
             'busy_timeout' => 10000,
             'journal_mode' => 'WAL',
             'synchronous' => 'NORMAL',
+            // SQLite is a single-writer database. Starting write transactions
+            // in IMMEDIATE mode avoids the read-to-write upgrade that fails
+            // with "database is locked" when another request commits in between.
+            'transaction_mode' => 'IMMEDIATE',
         ],
 
         'mysql' => [

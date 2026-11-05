@@ -25,6 +25,12 @@ class InvoiceForm extends Form
 
     public string $due_date = '';
 
+    /**
+     * Full number printed to the client. It is only used when the invoice is
+     * issued: drafts never store a number.
+     */
+    public string $full_number = '';
+
     public string $vat_percent = '21';
 
     public string $irpf_percent = '15';
@@ -59,6 +65,14 @@ class InvoiceForm extends Form
             'invoice_type' => ['required', Rule::in([Invoice::TYPE_FULL, Invoice::TYPE_SIMPLIFIED])],
             'issue_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date'],
+            'full_number' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('invoices', 'full_number')
+                    ->where(fn ($query) => $query->where('team_id', $teamId))
+                    ->ignore($this->invoice?->id),
+            ],
             'vat_percent' => ['required', 'numeric', 'in:0,4,10,21'],
             'irpf_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'apply_irpf' => ['boolean'],
@@ -86,6 +100,7 @@ class InvoiceForm extends Form
     {
         return [
             'vat_exemption_reason.required' => __('The invoice must explain why it has no VAT.'),
+            'full_number.unique' => __('This invoice number is already used by another invoice.'),
         ];
     }
 
@@ -129,6 +144,11 @@ class InvoiceForm extends Form
         $this->invoice_type = $invoice->invoice_type;
         $this->issue_date = $invoice->issue_date?->format('Y-m-d') ?? now()->toDateString();
         $this->due_date = $invoice->due_date?->format('Y-m-d') ?? '';
+
+        if (! $invoice->isDraft()) {
+            $this->full_number = (string) ($invoice->full_number ?? '');
+        }
+
         $this->vat_percent = (string) (float) $invoice->vat_percent;
         $this->irpf_percent = (string) (float) $invoice->irpf_percent;
         $this->apply_irpf = (bool) ($invoice->invoice_data['apply_irpf'] ?? false);
@@ -160,10 +180,21 @@ class InvoiceForm extends Form
 
     /**
      * Create or update the draft invoice.
+     *
+     * The full number is only validated when the invoice is issued, since a
+     * draft never stores or consumes it.
      */
-    public function persist(Team $team): Invoice
+    public function persist(Team $team, bool $validateFullNumber = true): Invoice
     {
-        $this->validate();
+        $this->full_number = trim($this->full_number);
+
+        $rules = $this->rules();
+
+        if (! $validateFullNumber) {
+            unset($rules['full_number']);
+        }
+
+        $this->validate($rules);
 
         $settings = $team->invoiceSetting;
         $snapshots = app(InvoiceService::class);

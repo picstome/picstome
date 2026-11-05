@@ -39,28 +39,6 @@
             @if ($logo)
                 <img src="{{ $logo }}" style="max-height: 60px; max-width: 220px;" />
             @endif
-
-            <div style="margin-top: 8px;">
-                <strong>{{ $issuer['legal_name'] ?? '' }}</strong><br>
-                @if (filled($issuer['tax_id'] ?? null))
-                    <span class="muted">{{ __('Tax ID') }}: {{ $issuer['tax_id'] }}</span><br>
-                @endif
-                @if (filled($issuer['address'] ?? null))
-                    {{ $issuer['address'] }}<br>
-                @endif
-                @if (filled($issuer['city'] ?? null))
-                    {{ $issuer['city'] }}@if (filled($issuer['postal_code'] ?? null)), {{ $issuer['postal_code'] }}@endif<br>
-                @endif
-                @if (filled($issuer['country'] ?? null))
-                    {{ $issuer['country'] }}<br>
-                @endif
-                @if (filled($issuer['email'] ?? null))
-                    {{ $issuer['email'] }}<br>
-                @endif
-                @if (filled($issuer['phone'] ?? null))
-                    {{ $issuer['phone'] }}<br>
-                @endif
-            </div>
         </td>
 
         <td style="width: 45%; vertical-align: top;" class="right">
@@ -99,7 +77,32 @@
 
 <table style="margin-top: 22px;">
     <tr>
-        <td style="width: 55%; vertical-align: top;">
+        <td style="width: 50%; vertical-align: top; padding-right: 12px;">
+            <div class="muted" style="text-transform: uppercase; font-size: 9px;">{{ __('Issuer') }}</div>
+            <div style="margin-top: 4px;">
+                <strong>{{ $issuer['legal_name'] ?? '' }}</strong><br>
+                @if (filled($issuer['tax_id'] ?? null))
+                    <span class="muted">{{ __('Tax ID') }}: {{ $issuer['tax_id'] }}</span><br>
+                @endif
+                @if (filled($issuer['address'] ?? null))
+                    {{ $issuer['address'] }}<br>
+                @endif
+                @if (filled($issuer['city'] ?? null))
+                    {{ $issuer['city'] }}@if (filled($issuer['postal_code'] ?? null)), {{ $issuer['postal_code'] }}@endif<br>
+                @endif
+                @if (filled($issuer['country'] ?? null))
+                    {{ $issuer['country'] }}<br>
+                @endif
+                @if (filled($issuer['email'] ?? null))
+                    {{ $issuer['email'] }}<br>
+                @endif
+                @if (filled($issuer['phone'] ?? null))
+                    {{ $issuer['phone'] }}<br>
+                @endif
+            </div>
+        </td>
+
+        <td style="width: 50%; vertical-align: top; padding-left: 12px;">
             <div class="muted" style="text-transform: uppercase; font-size: 9px;">{{ __('Billed to') }}</div>
             <div style="margin-top: 4px;">
                 <strong>{{ $customer['legal_name'] ?? ($customer['name'] ?? '') }}</strong>
@@ -120,13 +123,6 @@
                     @endif
                 @endif
             </div>
-        </td>
-
-        <td style="width: 45%; vertical-align: top;" class="right">
-            @if ($qr)
-                <img src="{{ $qr }}" style="width: 90px; height: 90px;" />
-                <div style="font-size: 9px; margin-top: 3px;">{{ __('Picstome verification') }}</div>
-            @endif
         </td>
     </tr>
 </table>
@@ -225,10 +221,7 @@
 
 @if ($publicUrl)
     <div style="margin-top: 18px; font-size: 9px;" class="muted">
-        <div>{{ __('Verify this invoice at') }}: {{ $publicUrl }}</div>
-        @if (filled($invoice->fingerprint))
-            <div style="margin-top: 2px;">{{ __('Fingerprint') }}: {{ $invoice->fingerprint }}</div>
-        @endif
+        {{ __('View invoice') }}: {{ $publicUrl }}
     </div>
 @endif
 
