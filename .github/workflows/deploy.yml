@@ -16,4 +16,4 @@ jobs:
         env:
           DEPLOY_WEBHOOK: ${{ secrets.DEPLOY_WEBHOOK }}
         run: |
-          curl -n "$DEPLOY_WEBHOOK"
+          curl -fsS --retry 3 --retry-delay 2 "$DEPLOY_WEBHOOK"
