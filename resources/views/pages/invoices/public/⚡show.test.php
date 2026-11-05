@@ -36,9 +36,11 @@ it('shows the team logo and the download action', function () {
 
     $this->team->update(['brand_logo_path' => 'teams/logo.png']);
 
+    $logoUrl = $this->team->fresh()->brand_logo_url;
+
     $this->get('/i/'.$invoice->public_token)
         ->assertOk()
-        ->assertSee('teams/logo.png', false)
+        ->assertSee(e($logoUrl), false)
         ->assertSee(route('invoices.public.pdf', $invoice->public_token), false);
 });
 
