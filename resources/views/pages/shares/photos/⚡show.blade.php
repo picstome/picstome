@@ -222,6 +222,19 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     }
 }; ?>
 
+@php
+    $watermarkTeam = $photo->gallery->team;
+    $watermarkSize = config('picstome.watermark_sizes.'.($watermarkTeam->brand_watermark_size ?: 'md'), config('picstome.watermark_sizes.md'));
+    $watermarkFontPx = (int) ($watermarkSize['px'] ?? 26);
+    $watermarkFontFamily = $watermarkTeam->brand_watermark_font
+        ? "'{$watermarkTeam->brand_watermark_font}', sans-serif"
+        : 'ui-sans-serif, system-ui, sans-serif';
+    $watermarkLightboxFontSize = 'clamp('.(int) round($watermarkFontPx * 0.75).'px, '.round($watermarkFontPx / 12, 4).'vw, '.(int) round($watermarkFontPx * 2.5).'px)';
+    $watermarkRepeatedFontPx = (int) round($watermarkFontPx * 1.75);
+@endphp
+
+<x-slot name="watermarkFont">{{ $watermarkTeam->isTextWatermark() ? $watermarkTeam->brand_watermark_font : '' }}</x-slot>
+
 <div
     x-data="{
         previousThumbnailUrl: '{{ $previous?->thumbnail_url }}',
@@ -413,8 +426,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             Livewire.navigate(ref.href)
             setTimeout(() => { this.navigating = false }, 500)
         },
-        watermarkTransparency:
-            {{ $photo->gallery->team->brand_watermark_transparency ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100 : 1 }},
+        watermarkTransparency: {{ $photo->gallery->team->brand_watermark_opacity }},
+        watermarkType: @js($photo->gallery->team->brand_watermark_type),
+        watermarkFontFamily: @js($watermarkFontFamily),
+        watermarkFontSize: @js($watermarkLightboxFontSize),
         isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
                 navigator.userAgent,
@@ -478,16 +493,22 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 }
                 // Watermark position logic
                 const pos = '{{ $photo->gallery->team->brand_watermark_position }}'
+                const textStyle = this.watermarkType === 'text'
+                    ? ` text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 0, 0, 0.9); font-family: ${this.watermarkFontFamily}; font-size: ${this.watermarkFontSize};`
+                    : ''
                 let style = ''
                 if (pos === 'top') {
-                    style = `left: 50%; top: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
+                    style = `left: 50%; top: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;${textStyle}`
                 } else if (pos === 'bottom') {
-                    style = `left: 50%; bottom: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
+                    style = `left: 50%; bottom: 0; transform: translateX(-50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;${textStyle}`
                 } else if (pos === 'middle') {
-                    style = `left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;`
+                    style = `left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: ${this.watermarkTransparency}; max-width: ${renderedWidth}px; max-height: ${renderedHeight}px; width: auto; height: auto;${textStyle}`
                 } else if (pos === 'repeated') {
-                    // Tile watermark as background
+                    // Tile the watermark over the rendered image bounds.
                     const url = '{{ $photo->gallery->team->brand_watermark_url }}'
+                    const background = this.watermarkType === 'text'
+                        ? ''
+                        : `background-image: url('${url}'); background-repeat: repeat;`
                     this.repeatedWatermarkStyle = `
                                 left: ${(containerWidth - renderedWidth) / 2}px;
                                 top: ${(containerHeight - renderedHeight) / 2}px;
@@ -495,8 +516,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                                 height: ${renderedHeight}px;
                                 max-width: ${renderedWidth}px;
                                 max-height: ${renderedHeight}px;
-                                background-image: url('${url}');
-                                background-repeat: repeat;
+                                ${background}
                                 opacity: ${this.watermarkTransparency};
                                 pointer-events: none;
                                 position: absolute;
@@ -643,13 +663,41 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             @else
                 <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
             @endif
-            @if (! $photo->isPdf() && $photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url)
+            @if (! $photo->isPdf() && $photo->gallery->is_share_watermarked && $photo->gallery->team->hasBrandWatermark())
                 @if ($photo->gallery->team->brand_watermark_position === 'repeated')
-                    <div
+                    @if ($photo->gallery->team->isTextWatermark())
+                        @php
+                            $watermarkPatternId = 'watermark-'.str()->uuid();
+                            $watermarkPatternHeight = max(70, (int) round($watermarkRepeatedFontPx * 3.5));
+                            $watermarkPatternWidth = min(900, max(240, (int) round(mb_strlen($photo->gallery->team->brand_watermark_text ?? '') * $watermarkRepeatedFontPx * 0.65)));
+                            $watermarkPatternTextY = (int) round($watermarkPatternHeight * 0.6);
+                        @endphp
+                        <svg
+                            x-show="showWatermark"
+                            :style="repeatedWatermarkStyle"
+                            class="pointer-events-none absolute"
+                            aria-hidden="true"
+                        >
+                            <defs>
+                                <pattern id="{{ $watermarkPatternId }}" width="{{ $watermarkPatternWidth }}" height="{{ $watermarkPatternHeight }}" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)">
+                                    <text x="10" y="{{ $watermarkPatternTextY }}" fill="white" font-size="{{ $watermarkRepeatedFontPx }}" font-family="{{ $watermarkFontFamily }}" font-weight="600" style="paint-order: stroke; stroke: rgba(0, 0, 0, 0.45); stroke-width: 2px;">{{ $photo->gallery->team->brand_watermark_text }}</text>
+                                </pattern>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#{{ $watermarkPatternId }})" />
+                        </svg>
+                    @else
+                        <div
+                            x-show="showWatermark"
+                            :style="repeatedWatermarkStyle"
+                            class="pointer-events-none absolute"
+                        ></div>
+                    @endif
+                @elseif ($photo->gallery->team->isTextWatermark())
+                    <span
                         x-show="showWatermark"
-                        :style="repeatedWatermarkStyle"
-                        class="pointer-events-none absolute"
-                    ></div>
+                        :style="watermarkStyle"
+                        class="pointer-events-none absolute text-center font-semibold text-white select-none"
+                    >{{ $photo->gallery->team->brand_watermark_text }}</span>
                 @else
                     <img
                         x-show="showWatermark"

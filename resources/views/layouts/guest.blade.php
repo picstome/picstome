@@ -28,6 +28,13 @@
             <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
         @endif
 
+        @if (! empty((string) ($watermarkFont ?? '')) && ($watermarkFont ?? null) !== ($font ?? null))
+            <link
+                rel="stylesheet"
+                href="https://fonts.googleapis.com/css2?family={{ str()->of($watermarkFont)->replace(' ', '+') }}:ital,wght@0,400..900;1,400..900&display=swap"
+            />
+        @endif
+
         <tallstackui:script />
         @vite('resources/css/app.css')
 

@@ -207,13 +207,17 @@ class Team extends Model
         });
     }
 
-    public function updateBrandWatermark(UploadedFile $image)
+    /**
+     * Store a new watermark image and keep the team on the image type.
+     */
+    public function updateBrandWatermark(UploadedFile $image): void
     {
         tap($this->brand_watermark_path, function ($previous) use ($image) {
             $this->update([
                 'brand_watermark_path' => $image->store(
                     $this->storage_path, ['disk' => config('picstome.disk')]
                 ),
+                'brand_watermark_type' => 'image',
             ]);
 
             if ($previous) {
@@ -222,7 +226,68 @@ class Team extends Model
         });
     }
 
+    /**
+     * Determine whether the team has an active watermark.
+     *
+     * The explicit type decides which asset is active, so switching between
+     * image and text never falls back to the other asset by accident.
+     */
+    public function hasBrandWatermark(): bool
+    {
+        return $this->isTextWatermark()
+            ? filled($this->brand_watermark_text)
+            : filled($this->brand_watermark_path);
+    }
+
+    /**
+     * Determine whether the active watermark is text.
+     */
+    public function isTextWatermark(): bool
+    {
+        return $this->brand_watermark_type === 'text';
+    }
+
+    protected function brandWatermarkType(): Attribute
+    {
+        return Attribute::get(fn (?string $value): string => $value ?: 'image');
+    }
+
+    protected function brandWatermarkSize(): Attribute
+    {
+        return Attribute::get(fn (?string $value): string => $value ?: 'md');
+    }
+
+    /**
+     * Opacity used by the shared gallery overlays.
+     *
+     * The column stores transparency, where 0 is fully opaque and 100 is
+     * invisible, so it is inverted for CSS.
+     */
+    protected function brandWatermarkOpacity(): Attribute
+    {
+        return Attribute::get(function (): float {
+            $transparency = $this->brand_watermark_transparency;
+
+            if ($transparency === null) {
+                return 1.0;
+            }
+
+            return max(0.0, min(1.0, (100 - (int) $transparency) / 100));
+        });
+    }
+
     protected function brandWatermarkUrl(): Attribute
+    {
+        return Attribute::get(
+            fn () => $this->isTextWatermark() ? null : $this->brand_watermark_image_url
+        );
+    }
+
+    /**
+     * Image URL independent of the active watermark type, used by the settings
+     * preview when a team switches from text back to an existing image.
+     */
+    protected function brandWatermarkImageUrl(): Attribute
     {
         return Attribute::get(function () {
             if (! $this->brand_watermark_path) {
@@ -516,11 +581,21 @@ class Team extends Model
     }
 
     /**
-     * Delete the brand watermark and its stored file.
+     * Delete the active watermark, both stored assets and reset the type.
      */
     public function deleteBrandWatermark(): void
     {
-        $this->deleteBrandAsset('brand_watermark_path');
+        if ($this->brand_watermark_path) {
+            Storage::disk(config('picstome.disk'))->delete($this->brand_watermark_path);
+        }
+
+        $this->update([
+            'brand_watermark_path' => null,
+            'brand_watermark_text' => null,
+            'brand_watermark_font' => null,
+            'brand_watermark_size' => null,
+            'brand_watermark_type' => 'image',
+        ]);
     }
 
     /**

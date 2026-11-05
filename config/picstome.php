@@ -130,6 +130,37 @@ return [
     'upload_extensions' => ['jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr', 'pdf'],
 
     /**
+     * Fonts offered for public pages and text watermarks.
+     *
+     * @var array<string, string>
+     */
+    'brand_fonts' => [
+        'Roboto Flex' => 'Roboto',
+        'Raleway' => 'Raleway',
+        'Montserrat' => 'Montserrat',
+        'Work Sans' => 'Work Sans',
+        'Source Sans 3' => 'Source Sans',
+        'Nunito Sans' => 'Nunito Sans',
+        'Source Serif 4' => 'Source Serif',
+        'Roboto Serif' => 'Roboto Serif',
+        'Playfair Display' => 'Playfair Display',
+    ],
+
+    /**
+     * Text watermark size presets. The px value is the base size used on
+     * gallery thumbnails; larger surfaces scale it proportionally.
+     *
+     * @var array<string, array{label: string, short: string, px: int}>
+     */
+    'watermark_sizes' => [
+        'xs' => ['label' => 'Extra Small', 'short' => 'XS', 'px' => 14],
+        'sm' => ['label' => 'Small', 'short' => 'S', 'px' => 18],
+        'md' => ['label' => 'Medium', 'short' => 'M', 'px' => 26],
+        'lg' => ['label' => 'Big', 'short' => 'L', 'px' => 38],
+        'xl' => ['label' => 'Super Big', 'short' => 'XL', 'px' => 52],
+    ],
+
+    /**
      * Enable file versioning. Disabling it hides version UI and blocks new
      * versions without deleting existing history.
      */

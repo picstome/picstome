@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Team;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -31,7 +32,6 @@ class BrandingForm extends Form
     #[Validate(['nullable', 'integer', 'min:0', 'max:100'])]
     public $watermarkTransparency;
 
-    #[Validate(['nullable', 'in:Roboto Flex,Raleway,Montserrat,Work Sans,Source Sans 3,Nunito Sans,Source Serif 4,Roboto Serif,Playfair Display'])]
     public $font;
 
     public $handle;
@@ -48,6 +48,7 @@ class BrandingForm extends Form
                 'regex:/^[a-z0-9]+$/',
                 'unique:teams,handle,'.($this->team->id ?? 'null'),
             ],
+            'font' => ['nullable', Rule::in(array_keys(config('picstome.brand_fonts')))],
         ];
     }
 

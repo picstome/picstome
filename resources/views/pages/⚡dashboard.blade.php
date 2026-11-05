@@ -286,7 +286,7 @@ new class extends Component
 
     public function isWatermarkConfigured()
     {
-        return ! empty($this->team->brand_watermark_path);
+        return $this->team->hasBrandWatermark();
     }
 
     public function isBrandingConfigured()

@@ -1,8 +1,8 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Models\Photo;
 use App\Services\PhotoUrlService;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -17,6 +17,7 @@ use Livewire\Component;
 new class extends Component
 {
     use InteractsWithTallStackModals;
+
     public Photo $photo;
 
     public bool $manageable = false;
@@ -241,12 +242,9 @@ new class extends Component
                 @version-deleted.window="$nextTick(() => { versions = JSON.parse($el.dataset.versions || '[]'); left = 'current'; right = versions[1]?.id || left; scale = 1; x = 0; y = 0; })"
             >
                 @php
-                    $showWatermark = ! $manageable && $photo->gallery->is_share_watermarked && $photo->gallery->team->brand_watermark_url;
-                    $watermarkUrl = $photo->gallery->team->brand_watermark_url;
-                    $watermarkPosition = $photo->gallery->team->brand_watermark_position;
-                    $watermarkOpacity = $photo->gallery->team->brand_watermark_transparency
-                        ? (100 - $photo->gallery->team->brand_watermark_transparency) / 100
-                        : 1;
+                    $showWatermark = ! $manageable
+                        && $photo->gallery->is_share_watermarked
+                        && $photo->gallery->team->hasBrandWatermark();
                 @endphp
 
                 <x-ts-heading size="lg">{{ __('Compare versions') }}</x-ts-heading>
@@ -295,35 +293,13 @@ new class extends Component
                     <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
                         <img :src="activeImage(left)" :alt="leftLabel()" x-ref="leftImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
                         @if ($showWatermark)
-                            @if ($watermarkPosition === 'repeated')
-                                <div class="pointer-events-none absolute inset-0 z-10" style="background-image: url('{{ $watermarkUrl }}'); background-repeat: repeat; background-size: 120px; opacity: {{ $watermarkOpacity }};"></div>
-                            @else
-                                <div @class([
-                                    'pointer-events-none absolute inset-0 z-10 flex overflow-hidden',
-                                    'items-start justify-center pt-6' => $watermarkPosition === 'top',
-                                    'items-end justify-center pb-6' => $watermarkPosition === 'bottom',
-                                    'items-center justify-center' => ! in_array($watermarkPosition, ['top', 'bottom']),
-                                ])>
-                                    <img src="{{ $watermarkUrl }}" alt="" class="max-h-1/2 max-w-1/2 object-contain" style="opacity: {{ $watermarkOpacity }};" />
-                                </div>
-                            @endif
+                            <x-watermark :team="$photo->gallery->team" variant="versions" />
                         @endif
                     </div>
                     <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
                         <img :src="activeImage(right)" :alt="rightLabel()" x-ref="rightImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
                         @if ($showWatermark)
-                            @if ($watermarkPosition === 'repeated')
-                                <div class="pointer-events-none absolute inset-0 z-10" style="background-image: url('{{ $watermarkUrl }}'); background-repeat: repeat; background-size: 120px; opacity: {{ $watermarkOpacity }};"></div>
-                            @else
-                                <div @class([
-                                    'pointer-events-none absolute inset-0 z-10 flex overflow-hidden',
-                                    'items-start justify-center pt-6' => $watermarkPosition === 'top',
-                                    'items-end justify-center pb-6' => $watermarkPosition === 'bottom',
-                                    'items-center justify-center' => ! in_array($watermarkPosition, ['top', 'bottom']),
-                                ])>
-                                    <img src="{{ $watermarkUrl }}" alt="" class="max-h-1/2 max-w-1/2 object-contain" style="opacity: {{ $watermarkOpacity }};" />
-                                </div>
-                            @endif
+                            <x-watermark :team="$photo->gallery->team" variant="versions" />
                         @endif
                     </div>
                 </div>

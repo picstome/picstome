@@ -30,18 +30,37 @@ class TeamFactory extends Factory
             'personal_team' => true,
             'brand_color' => 'blue',
             'brand_watermark_position' => 'top',
+            'brand_watermark_type' => 'image',
+            'brand_watermark_size' => 'md',
         ];
     }
 
     /**
-     * Indicate that the team should have watermark branding.
+     * Indicate that the team should have an image watermark.
      *
      * @return $this
      */
     public function withWatermark(): static
     {
         return $this->state(fn (array $attributes) => [
+            'brand_watermark_type' => 'image',
             'brand_watermark_path' => 'teams/watermark.png',
+            'brand_watermark_transparency' => 50,
+        ]);
+    }
+
+    /**
+     * Indicate that the team should have a text watermark.
+     *
+     * @return $this
+     */
+    public function withTextWatermark(string $text = 'Picstome', ?string $font = null, string $size = 'md'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'brand_watermark_type' => 'text',
+            'brand_watermark_text' => $text,
+            'brand_watermark_font' => $font,
+            'brand_watermark_size' => $size,
             'brand_watermark_transparency' => 50,
         ]);
     }

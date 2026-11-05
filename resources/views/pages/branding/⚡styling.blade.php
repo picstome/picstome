@@ -1,11 +1,11 @@
 <?php
 
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\StylingForm;
 use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
@@ -122,16 +122,10 @@ new class extends Component
                     </div>
 
                     <x-ts-select wire:model.live="form.font" :label="__('Font')">
-                        <option value="">System sans-serif</option>
-                        <option value="Roboto Flex">Roboto</option>
-                        <option value="Raleway">Raleway</option>
-                        <option value="Montserrat">Montserrat</option>
-                        <option value="Work Sans">Work Sans</option>
-                        <option value="Source Sans 3">Source Sans</option>
-                        <option value="Nunito Sans">Nunito Sans</option>
-                        <option value="Source Serif 4">Source Serif</option>
-                        <option value="Roboto Serif">Roboto Serif</option>
-                        <option value="Playfair Display">Playfair Display</option>
+                        <option value="">{{ __('System sans-serif') }}</option>
+                        @foreach (config('picstome.brand_fonts') as $value => $label)
+                            <option value="{{ $value }}">{{ __($label) }}</option>
+                        @endforeach
                     </x-ts-select>
 
                     <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
