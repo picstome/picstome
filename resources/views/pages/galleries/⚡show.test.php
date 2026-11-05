@@ -1484,6 +1484,30 @@ describe('Cover Photo', function () {
         $component->assertStatus(403);
         expect($gallery->fresh()->cover_photo_id)->toBeNull();
     });
+
+    it('stores the cover focal point clamped to the image bounds', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+        $gallery->setCoverPhoto($photo);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('setCoverFocalPoint', 0.25, 1.5);
+
+        expect($gallery->fresh()->cover_focal_x)->toBe(0.25)
+            ->and($gallery->fresh()->cover_focal_y)->toBe(1.0);
+    });
+
+    it('opens the cover focus overlay after selecting a cover', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('setAsCover', $photo);
+
+        expect($component->get('adjustingCover'))->toBeTrue()
+            ->and($component->html())->toContain('Adjust cover focus')
+            ->and($component->html())->toContain(str_replace('&', '&amp;', $photo->large_thumbnail_url));
+    });
 });
 
 describe('Live Session Original Size', function () {

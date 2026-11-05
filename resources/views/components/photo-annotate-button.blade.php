@@ -6,7 +6,7 @@
     <x-ts-button
         icon="map-pin"
         size="sm"
-        variant="primary"
+        variant="secondary"
         class="max-sm:hidden"
         data-annotate-button
         x-data="{ active: false }"
@@ -21,7 +21,7 @@
     <x-ts-button
         icon="map-pin"
         size="sm"
-        variant="primary"
+        variant="secondary"
         class="sm:hidden"
         square
         data-annotate-button

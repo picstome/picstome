@@ -39,7 +39,7 @@ new #[Layout('layouts.guest')] class extends Component
         abort_unless($gallery->is_shared, 404);
         abort_if($gallery->slug !== $slug, 404);
 
-        $this->gallery->loadMissing(['coverPhoto', 'team']);
+        $this->gallery->loadMissing(['coverPhoto.gallery', 'team']);
 
         $this->remoteMode = FtpAccount::query()
             ->where('team_id', $gallery->team_id)
@@ -99,7 +99,7 @@ new #[Layout('layouts.guest')] class extends Component
     #[On('gallery-photos-updated')]
     public function refreshPhotos(): void
     {
-        $this->gallery->load(['coverPhoto', 'team']);
+        $this->gallery->load(['coverPhoto.gallery', 'team']);
 
         $this->forgetPhotoCollections();
     }
@@ -211,7 +211,16 @@ new #[Layout('layouts.guest')] class extends Component
 
 <x-slot name="fullScreen">{{ true }}</x-slot>
 
-<div x-data x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')" class="h-full py-6">
+@php
+    $heroHasCover = $this->totalPhotos > 0 && $gallery->coverPhoto;
+@endphp
+
+<div
+    x-data
+    x-on:selection-limit-reached.window="$tsui.open.modal('selection-limit')"
+    data-gallery-has-cover="{{ $heroHasCover ? 'true' : 'false' }}"
+    class="h-full pb-6"
+>
     @if ($remoteMode)
         <livewire:gallery-live-watcher
             :$gallery
@@ -221,32 +230,26 @@ new #[Layout('layouts.guest')] class extends Component
             :key="'live-watcher-'.$gallery->id"
         />
     @endif
-
-    @if ($this->totalPhotos > 0)
-        <div class="relative mx-auto w-full max-w-7xl px-4 lg:px-8">
-            <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-            </a>
-        </div>
-        @if ($gallery->coverPhoto)
-            <div class="relative mt-4 h-[328px] overflow-hidden md:h-[480px] lg:mt-8">
-                <img src="{{ $this->coverImage?->cover_image_url }}" class="h-full w-full object-cover" />
+    <section class="relative">
+        @if ($heroHasCover)
+            <div class="relative h-[328px] overflow-hidden md:h-[480px]">
+                <img
+                    src="{{ $this->coverImage?->cover_image_url }}"
+                    class="h-full w-full object-cover"
+                    style="object-position: {{ round(($gallery->cover_focal_x ?? 0.5) * 100) }}% {{ round(($gallery->cover_focal_y ?? 0.5) * 100) }}%;"
+                    alt=""
+                />
             </div>
         @endif
-    @else
-        <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
-            <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}">
-                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-[90px] md:max-h-[160px]" />
-            </a>
-        </div>
-    @endif
-    <div class="mx-auto mt-4 flex w-full max-w-7xl flex-wrap items-end justify-between gap-4 px-4 lg:mt-8 lg:px-8">
-        <div class="max-sm:w-full sm:flex-1">
-            <div class="flex items-center gap-4">
-                <x-ts-heading level="1" size="xl">{{ $gallery->name }}</x-ts-heading>
-            </div>
 
-            <div class="mt-3 h-1 w-10 rounded-full bg-(--color-accent)"></div>
+        <div class="mx-auto w-full max-w-5xl px-4 py-8 text-center">
+            <a href="{{ route('handle.show', ['handle' => $gallery->team->handle]) }}" class="inline-block">
+                <img src="{{ $gallery->team->brand_logo_url }}" class="mx-auto max-h-16 md:max-h-24" />
+            </a>
+
+            <x-ts-heading level="1" size="xl" class="mt-4">{{ $gallery->name }}</x-ts-heading>
+
+            <div class="mx-auto mt-3 h-1 w-10 rounded-full bg-(--color-accent)"></div>
 
             @if ($gallery->share_description)
                 <x-ts-subheading class="mt-2">
@@ -254,20 +257,36 @@ new #[Layout('layouts.guest')] class extends Component
                 </x-ts-subheading>
             @endif
         </div>
+    </section>
+
+    <div
+        class="sticky top-0 z-40 bg-white/85 py-3 backdrop-blur-md dark:bg-zinc-900/85"
+        data-gallery-menu
+        x-data
+        x-on:click="
+            const y = window.scrollY;
+            const menuTop = $el.getBoundingClientRect().top + y;
+            const hasCover = document.querySelector('[data-gallery-has-cover]')?.dataset.galleryHasCover === 'true';
+            const target = hasCover && y < menuTop ? menuTop : y;
+            setTimeout(() => window.scrollTo(0, target), 250);
+        "
+    >
+        <div class="mx-auto flex w-full max-w-7xl justify-center px-4 lg:px-8">
+            <x-gallery-tabs
+                :favorites-count="$this->totalFavorites"
+                :selection-limit="$gallery->share_selection_limit"
+                :comments-count="$this->totalComments()"
+                :show-favorites="$gallery->is_share_selectable"
+                :show-comments="$gallery->are_comments_enabled"
+                :show-download="$gallery->is_share_downloadable"
+                :active-tab="$activeTab"
+                variant="pills"
+                :centered="true"
+            />
+        </div>
     </div>
     @if ($this->totalPhotos > 0)
         <div class="mt-8">
-            <div class="mx-auto w-full max-w-7xl px-4 lg:px-8">
-                <x-gallery-tabs
-                    :favorites-count="$this->totalFavorites"
-                    :selection-limit="$gallery->share_selection_limit"
-                    :comments-count="$this->totalComments()"
-                    :show-favorites="$gallery->is_share_selectable"
-                    :show-comments="$gallery->are_comments_enabled"
-                    :show-download="$gallery->is_share_downloadable"
-                />
-            </div>
-
             <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
                     <x-photo-masonry :photos="$this->allPhotos" :$gallery context="shared" html-id-prefix="photo" />
 
@@ -344,8 +363,15 @@ new #[Layout('layouts.guest')] class extends Component
             if (hash) {
                 setTimeout(() => {
                     const element = document.querySelector(hash);
-                    if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    if (! element) {
+                        return;
+                    }
+
+                    const rect = element.getBoundingClientRect();
+                    const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+                    if (! isVisible) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }, 500);
             }

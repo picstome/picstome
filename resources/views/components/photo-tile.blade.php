@@ -54,7 +54,7 @@
 <div
     class="group relative mb-1 break-inside-avoid overflow-hidden bg-zinc-100 dark:bg-white/10"
     x-data="{
-        showActions: false,
+        showActions: ! window.matchMedia('(hover: hover)').matches,
         moreActionsOpen: false,
         downloadOptionsOpen: false,
     }"
@@ -164,7 +164,7 @@
                     :aria-label="__('Favorite')"
                 >
                     @if ($photo->isFavorited())
-                        <x-icon name="heart" class="size-5 text-red-500" variant="solid" />
+                        <x-icon name="heart" solid class="size-5 text-red-500" />
                     @else
                         <x-icon name="heart" class="size-5" />
                     @endif
@@ -178,7 +178,7 @@
                     >
                         <x-slot:action>
                             <x-ts-button
-                                icon="arrow-down-tray"
+                                icon="cloud-arrow-down"
                                 variant="overlay"
                                 square
                                 size="sm"
@@ -189,19 +189,19 @@
 
                         <x-dropdown.items
                             :text="__('Download JPG')"
-                            icon="arrow-down-tray"
+                            icon="cloud-arrow-down"
                             :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
                         />
                         <x-dropdown.items
                             :text="__('Download Raw')"
-                            icon="arrow-down-tray"
+                            icon="cloud-arrow-down"
                             :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
                         />
                     </x-dropdown>
                 @else
                     <x-ts-button
                         :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-                        icon="arrow-down-tray"
+                        icon="cloud-arrow-down"
                         variant="overlay"
                         square
                         size="sm"
@@ -228,6 +228,7 @@
 
                     @if ($photo->isImage())
                         @if ($gallery->coverPhoto?->is($photo))
+                            <x-dropdown.items :text="__('Adjust Cover Focus')" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)" />
                             <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover({{ $photo->id }})" />
                         @else
                             <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover({{ $photo->id }})" />
@@ -243,7 +244,7 @@
                 </x-dropdown>
             </div>
         @elseif ($isSelectable || $isDownloadable)
-            <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
+            <div class="absolute right-1.5 bottom-1.5 flex gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                 @if ($isSelectable)
                     <x-ts-button
                         wire:click="toggleFavorite({{ $photo->id }})"
@@ -253,7 +254,7 @@
                         :aria-label="__('Favorite')"
                     >
                         @if ($photo->isFavorited())
-                            <x-icon name="heart" class="size-5 text-red-500" variant="solid" />
+                            <x-icon name="heart" solid class="size-5 text-red-500" />
                         @else
                             <x-icon name="heart" class="size-5" />
                         @endif
@@ -263,7 +264,7 @@
                 @if ($isDownloadable)
                     <x-ts-button
                         :href="route('shares.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-                        icon="arrow-down-tray"
+                        icon="cloud-arrow-down"
                         variant="overlay"
                         square
                         size="sm"

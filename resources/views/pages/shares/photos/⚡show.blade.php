@@ -233,6 +233,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     $watermarkRepeatedFontPx = (int) round($watermarkFontPx * 1.75);
 @endphp
 
+<x-slot name="font">{{ $photo->gallery->team->brand_font }}</x-slot>
+
+<x-slot name="color">{{ $photo->gallery->team->brand_color }}</x-slot>
+
 <x-slot name="watermarkFont">{{ $watermarkTeam->isTextWatermark() ? $watermarkTeam->brand_watermark_font : '' }}</x-slot>
 
 <div
@@ -551,6 +555,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         <div class="relative flex w-full items-center justify-center overflow-hidden">
             @if ($photo->isImage())
                 <img
+                    wire:ignore
                     src="{{ $photo->thumbnail_url }}"
                     srcset="{{ $photo->thumbnail_url }} 1000w, {{ $photo->large_thumbnail_url }} 2040w"
                     sizes="(max-width: 640px) 100vw, 80vw"
@@ -756,8 +761,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     icon="arrow-left"
                     size="sm"
                     icon:variant="micro"
-                    variant="primary"
-                    class="btn-ink"
+                    variant="secondary"
                     data-photo-back
                 >
                     {{ __('Back') }}
@@ -771,7 +775,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @if ($photo->gallery->are_comments_enabled)
                     <div class="contents" x-show="! annotating">
                         <x-ts-modal-trigger name="add-comment">
-                            <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
+                            <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="secondary">
                                 @if ($this->comments->isEmpty())
                                     {{ __('Add comment') }}
                                 @else
@@ -783,7 +787,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                                 icon="chat-bubble-left-ellipsis"
                                 size="sm"
                                 class="sm:hidden"
-                                variant="primary"
+                                variant="secondary"
                                 square
                                 :aria-label="__('Comments')"
                                 data-mobile-comments
@@ -800,7 +804,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     @if ($photo->path && $photo->raw_path)
                         <x-dropdown position="bottom-end">
                             <x-slot:action>
-                                <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" class="btn-ink" square x-on:click="show = ! show" />
+                                <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" square x-on:click="show = ! show" />
                             </x-slot:action>
 
                             <x-dropdown.items
@@ -821,7 +825,6 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                             icon:variant="mini"
                             size="sm"
                             variant="primary"
-                            class="btn-ink"
                             square
                         />
                     @endif
@@ -831,13 +834,17 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     <x-ts-button
                         name="favorite"
                         wire:click="favorite"
-                        icon="heart"
-                        :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
-                        :variant="$photo->isFavorited() ? 'primary' : 'outline'"
+                        variant="overlay"
                         size="sm"
-                        @class(['btn-coral' => $photo->isFavorited()])
                         square
-                    />
+                        :aria-label="__('Favorite')"
+                    >
+                        @if ($photo->isFavorited())
+                            <x-icon name="heart" solid class="size-5 text-red-500" />
+                        @else
+                            <x-icon name="heart" class="size-5" />
+                        @endif
+                    </x-ts-button>
                 @endif
             </div>
         </div>

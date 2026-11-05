@@ -31,6 +31,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     #[Url]
     public $navigateCommented = false;
 
+    public bool $adjustingCover = false;
+
     public function mount(Photo $photo)
     {
         $this->photo = $photo;
@@ -94,6 +96,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         abort_unless($this->photo->isImage(), 422);
 
         $this->photo->gallery->setCoverPhoto($this->photo);
+
+        $this->adjustingCover = true;
     }
 
     /**
@@ -169,6 +173,13 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
             $this->photo->gallery->removeCoverPhoto();
         }
+    }
+
+    public function setCoverFocalPoint(float $x, float $y): void
+    {
+        $this->authorize('updateCover', $this->photo->gallery);
+
+        $this->photo->gallery->setCoverFocalPoint($x, $y);
     }
 
     #[Computed]
@@ -592,6 +603,16 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 <span x-data x-tooltip="{{ $photo->name }}">
                     <x-ts-button icon="information-circle" size="sm" variant="subtle" />
                 </span>
+
+                @if ($photo->isImage() && ! $photo->gallery->coverPhoto?->is($photo))
+                    <x-ts-button
+                        icon="star"
+                        size="sm"
+                        variant="subtle"
+                        wire:click="setAsCover"
+                        title="{{ __('Set as Cover') }}"
+                    />
+                @endif
                 <x-dropdown position="bottom-end">
                     <x-slot:action>
                         <x-ts-button icon="ellipsis-vertical" size="sm" variant="subtle" x-on:click="show = ! show" />
@@ -599,6 +620,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
                     @if ($photo->isImage())
                         @if ($photo->gallery->coverPhoto?->is($photo))
+                            <x-dropdown.items :text="__('Adjust Cover Focus')" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)" />
                             <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover" />
                         @else
                             <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover" />
@@ -659,13 +681,17 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 @endif
                 <x-ts-button
                     wire:click="favorite"
-                    icon="heart"
-                    :icon:variant="$photo->isFavorited() ? 'mini' : 'outline'"
-                    :variant="$photo->isFavorited() ? 'primary' : 'outline'"
+                    variant="overlay"
                     size="sm"
-                    @class(['btn-coral' => $photo->isFavorited()])
                     square
-                />
+                    :aria-label="__('Favorite')"
+                >
+                    @if ($photo->isFavorited())
+                        <x-icon name="heart" solid class="size-5 text-red-500" />
+                    @else
+                        <x-icon name="heart" class="size-5" />
+                    @endif
+                </x-ts-button>
             </div>
         </div>
 
@@ -739,6 +765,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         :message="__('This action cannot be undone.')"
         :method="$this->pendingCommentId ? 'deleteComment(' . $this->pendingCommentId . ')' : null"
     />
+
+    <x-cover-focus-overlay :gallery="$photo->gallery" :photo="$photo" :adjusting="$adjustingCover" />
 </div>
 
 

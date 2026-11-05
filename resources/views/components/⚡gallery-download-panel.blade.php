@@ -343,7 +343,7 @@ new class extends Component
         <x-ts-button
             :href="$shared ? route('shares.download', ['gallery' => $gallery]) : route('galleries.download', ['gallery' => $gallery])"
             variant="primary"
-            icon="arrow-down-tray"
+            icon="cloud-arrow-down"
         >
             {{ __('Download ZIP') }}
         </x-ts-button>
@@ -519,7 +519,7 @@ new class extends Component
 
         <div class="flex flex-wrap gap-3">
             @if ($ready)
-                <x-ts-button :href="$this->downloadUrl" variant="primary" icon="arrow-down-tray">
+                <x-ts-button :href="$this->downloadUrl" variant="primary" icon="cloud-arrow-down">
                     {{ __('Download ZIP') }}
                 </x-ts-button>
             @elseif ($building || $pending)
@@ -527,7 +527,7 @@ new class extends Component
                     {{ $packing ? __('Packing…') : __('Preparing…') }}
                 </x-ts-button>
             @else
-                <x-ts-button wire:click="openPrepareModal('prepare')" variant="primary" icon="arrow-down-tray">
+                <x-ts-button wire:click="openPrepareModal('prepare')" variant="primary" icon="cloud-arrow-down">
                     {{ __('Prepare download') }}
                 </x-ts-button>
             @endif
@@ -561,7 +561,7 @@ new class extends Component
         <div class="space-y-5">
             <div class="flex items-start gap-3">
                 <span class="bg-brand-green/10 text-brand-green dark:bg-brand-sage/15 dark:text-brand-sage flex size-9 shrink-0 items-center justify-center rounded-full">
-                    <x-icon name="arrow-down-tray" class="size-5" />
+                    <x-icon name="cloud-arrow-down" class="size-5" />
                 </span>
 
                 <div>
