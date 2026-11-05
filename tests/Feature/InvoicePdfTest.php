@@ -128,3 +128,18 @@ it('does not download the pdf from a revoked link', function () {
 
     $this->get('/i/'.str_repeat('c', 40).'/pdf')->assertNotFound();
 });
+
+it('sanitizes slashes in the pdf filename', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team), null, now()->year.'/0042');
+
+    expect($invoice->full_number)->toBe(now()->year.'/0042')
+        ->and($invoice->pdf_file_name)->toBe(now()->year.'-0042.pdf')
+        ->and($invoice->pdf_path)->toEndWith(now()->year.'-0042.pdf');
+
+    Storage::disk(config('picstome.disk'))->assertExists($invoice->pdf_path);
+
+    $this->actingAs($this->user)
+        ->get(route('invoices.pdf', $invoice))
+        ->assertOk()
+        ->assertDownload(now()->year.'-0042.pdf');
+});

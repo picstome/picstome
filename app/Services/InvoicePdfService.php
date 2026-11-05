@@ -4,9 +4,6 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -60,7 +57,6 @@ class InvoicePdfService
                 'notes' => $invoice->invoice_data['notes'] ?? null,
                 'accentColor' => $this->accentColor($invoice),
                 'logo' => $this->logo($invoice),
-                'qr' => $this->qr($invoice),
                 'publicUrl' => $invoice->public_token ? route('invoices.public.show', $invoice->public_token) : null,
             ])->output();
         } finally {
@@ -111,28 +107,6 @@ class InvoicePdfService
         };
 
         return 'data:'.$mime.';base64,'.base64_encode($contents);
-    }
-
-    /**
-     * QR code of the public verification page, as a data URI.
-     */
-    public function qr(Invoice $invoice): ?string
-    {
-        if (blank($invoice->public_token)) {
-            return null;
-        }
-
-        $url = route('invoices.public.show', $invoice->public_token);
-
-        return (new Builder(
-            writer: new PngWriter,
-            writerOptions: [],
-            validateResult: false,
-            data: $url,
-            errorCorrectionLevel: ErrorCorrectionLevel::Medium,
-            size: (int) config('invoices.qr.size'),
-            margin: (int) config('invoices.qr.margin'),
-        ))->build()->getDataUri();
     }
 
     /**

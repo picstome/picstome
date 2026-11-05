@@ -1,11 +1,9 @@
 <?php
 
-use TallStackUi\Traits\Interactions;
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
-use App\Models\Payment;
-use App\Services\InvoiceFingerprintService;
 use App\Services\InvoiceDuplicationService;
+use App\Services\InvoiceFingerprintService;
 use App\Services\InvoiceIssuanceService;
 use App\Services\InvoicePdfService;
 use App\Traits\FormatsMoney;
@@ -13,11 +11,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use Interactions;
     use FormatsMoney;
+    use Interactions;
 
     public Invoice $invoice;
 
@@ -42,7 +41,7 @@ new class extends Component
     #[Computed]
     public function paidAmount(): float
     {
-        return round($this->invoice->payments->sum(fn (Payment $payment) => $payment->amount / 100), 2);
+        return $this->invoice->paidAmount();
     }
 
     /**
@@ -51,13 +50,60 @@ new class extends Component
     #[Computed]
     public function pendingAmount(): float
     {
-        return max(0, round((float) $this->invoice->total - $this->paidAmount(), 2));
+        return $this->invoice->pendingAmount();
     }
 
     #[Computed]
     public function isPaid(): bool
     {
-        return (float) $this->invoice->total > 0 && $this->pendingAmount() <= 0;
+        return $this->invoice->isPaid();
+    }
+
+    #[Computed]
+    public function isSettledByPayments(): bool
+    {
+        return $this->invoice->isSettledByPayments();
+    }
+
+    /**
+     * Record the invoice as paid for the internal record of the team.
+     */
+    public function markAsPaid(): void
+    {
+        $this->authorize('markAsPaid', $this->invoice);
+
+        if ($this->invoice->isPaid()) {
+            return;
+        }
+
+        $this->invoice->update(['paid_at' => now()]);
+        $this->invoice->recordEvent(InvoiceEvent::MARKED_PAID, Auth::user());
+
+        $this->invoice->refresh();
+        unset($this->isPaid, $this->isSettledByPayments);
+
+        $this->toast()->success(__('The invoice has been marked as paid.'))->send();
+    }
+
+    /**
+     * Clear the manual paid flag. The invoice stays paid when the linked
+     * payments settle it on their own.
+     */
+    public function markAsPending(): void
+    {
+        $this->authorize('markAsPaid', $this->invoice);
+
+        if (! $this->invoice->isMarkedPaid()) {
+            return;
+        }
+
+        $this->invoice->update(['paid_at' => null]);
+        $this->invoice->recordEvent(InvoiceEvent::MARKED_UNPAID, Auth::user());
+
+        $this->invoice->refresh();
+        unset($this->isPaid, $this->isSettledByPayments);
+
+        $this->toast()->success(__('The invoice has been marked as payment pending.'))->send();
     }
 
     #[Computed]
@@ -204,45 +250,42 @@ new class extends Component
                     · {{ $this->invoice->issue_date->format('Y-m-d') }}
                 @endif
             </x-ts-subheading>
+
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+                <x-ts-badge :color="$this->invoice->isIssued() ? 'green' : ($this->invoice->isRectified() ? 'orange' : 'zinc')" inset>
+                    {{ $this->invoice->status_label }}
+                </x-ts-badge>
+
+                @if (! $this->invoice->isDraft() && ! $this->invoice->isRectificative())
+                    <x-ts-badge :color="$this->isPaid ? 'lime' : 'yellow'" inset>
+                        {{ $this->isPaid ? __('Paid invoice') : __('Payment pending') }}
+                    </x-ts-badge>
+                @endif
+            </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-            <x-ts-badge :color="$this->invoice->isIssued() ? 'green' : ($this->invoice->isRectified() ? 'orange' : 'zinc')" inset>
-                {{ $this->invoice->status_label }}
-            </x-ts-badge>
-
-            @if ($this->isPaid)
-                <x-ts-badge color="lime" inset>{{ __('Paid') }}</x-ts-badge>
-            @endif
-
-            @if ($this->invoice->pdf_path)
-                <x-ts-button variant="primary" class="btn-ink" icon="document-arrow-down" :href="route('invoices.pdf', $this->invoice)">
-                    {{ __('Download PDF') }}
-                </x-ts-button>
-            @endif
-
-            @if ($this->invoice->isIssued())
-                <x-ts-button variant="primary" class="btn-ink" icon="document-duplicate" wire:click="duplicate">
-                    {{ __('Duplicate') }}
-                </x-ts-button>
-            @endif
-
-            @if ($this->invoice->isIssued() && ! $this->invoice->isRectificative() && ! $this->invoice->rectifications()->exists())
-                <x-ts-modal-trigger name="rectify-invoice">
-                    <x-ts-button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</x-ts-button>
-                </x-ts-modal-trigger>
-            @endif
-
-            @if ($this->invoice->isDraft())
-                <x-ts-button variant="primary" class="btn-ink" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
-                    {{ __('Edit') }}
-                </x-ts-button>
-
-                <x-ts-modal-trigger name="delete-invoice">
-                    <x-ts-button variant="primary" class="btn-coral" icon="trash">{{ __('Delete') }}</x-ts-button>
-                </x-ts-modal-trigger>
-            @endif
-        </div>
+        @if (! $this->invoice->isDraft() && ! $this->invoice->isRectificative())
+            <div class="ms-auto flex items-center">
+                @if (! $this->isPaid)
+                    <x-ts-button variant="primary" wire:click="markAsPaid">
+                        {{ __('Mark as paid') }}
+                    </x-ts-button>
+                @elseif ($this->invoice->isMarkedPaid() && ! $this->isSettledByPayments)
+                    <x-ts-button
+                        variant="primary"
+                        icon="check-circle"
+                        wire:click="markAsPending"
+                        :tooltip="__('Mark as pending')"
+                    >
+                        {{ __('Paid invoice') }}
+                    </x-ts-button>
+                @else
+                    <x-ts-button variant="primary" icon="check-circle" disabled>
+                        {{ __('Paid invoice') }}
+                    </x-ts-button>
+                @endif
+            </div>
+        @endif
     </div>
 
     @if ($this->invoice->isRectificative() && $this->invoice->rectifiesInvoice)
@@ -286,7 +329,15 @@ new class extends Component
             <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
                 <x-ts-heading level="3" size="sm">{{ __('Client') }}</x-ts-heading>
                 <dl class="mt-3 space-y-1 text-sm">
-                    <div>{{ $this->invoice->invoice_data['customer']['legal_name'] ?? ($this->invoice->customer?->name ?? '—') }}</div>
+                    <div>
+                        @if ($this->invoice->customer)
+                            <a href="{{ route('customers.show', $this->invoice->customer) }}" wire:navigate class="hover:underline">
+                                {{ $this->invoice->invoice_data['customer']['legal_name'] ?? ($this->invoice->customer?->name ?? '—') }}
+                            </a>
+                        @else
+                            {{ $this->invoice->invoice_data['customer']['legal_name'] ?? '—' }}
+                        @endif
+                    </div>
                     @if (filled($this->invoice->invoice_data['customer']['tax_id'] ?? null))
                         <div class="text-zinc-500">{{ __('Tax ID') }}: {{ $this->invoice->invoice_data['customer']['tax_id'] }}</div>
                     @endif
@@ -298,11 +349,13 @@ new class extends Component
                         </div>
                     @endif
                 </dl>
+
+                <x-email-invoice-button :invoice="$this->invoice" size="sm" variant="outline" class="mt-4" />
             </div>
 
             @if (! $this->invoice->isDraft())
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
-                    <x-ts-heading level="3" size="sm">{{ __('Public link') }}</x-ts-heading>
+                    <x-ts-heading level="3" size="sm">{{ __('Online invoice') }}</x-ts-heading>
                     <x-ts-subheading size="sm">
                         {{ __('Share it with your client so they can check the invoice online.') }}
                     </x-ts-subheading>
@@ -315,8 +368,10 @@ new class extends Component
                             copyable
                             class="mt-3"
                         />
+                    @endif
 
-                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        @if (filled($this->invoice->public_token))
                             <x-ts-button
                                 size="sm"
                                 variant="primary"
@@ -328,26 +383,35 @@ new class extends Component
                             >
                                 {{ __('View invoice') }}
                             </x-ts-button>
+                        @else
+                            <x-ts-button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
+                                {{ __('Generate a new link') }}
+                            </x-ts-button>
+                        @endif
 
+                        @if ($this->invoice->pdf_path)
+                            <x-ts-button
+                                size="sm"
+                                variant="outline"
+                                icon="document-arrow-down"
+                                :href="route('invoices.pdf', $this->invoice)"
+                            >
+                                {{ __('Download PDF') }}
+                            </x-ts-button>
+                        @endif
+
+                        @if (filled($this->invoice->public_token))
                             <x-ts-modal-trigger name="revoke-link">
                                 <x-ts-button size="sm" variant="ghost" icon="link-slash">
                                     {{ __('Deactivate link') }}
                                 </x-ts-button>
                             </x-ts-modal-trigger>
-                        </div>
-                    @else
-                        <div class="mt-3 flex flex-wrap items-center gap-2">
-                            <x-ts-button size="sm" variant="primary" class="btn-ink" icon="link" wire:click="regenerateLink">
-                                {{ __('Generate a new link') }}
-                            </x-ts-button>
-
-                            @if ($this->invoice->public_token_revoked_at)
-                                <x-ts-text size="sm" class="text-zinc-500">
-                                    {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
-                                </x-ts-text>
-                            @endif
-                        </div>
-                    @endif
+                        @elseif ($this->invoice->public_token_revoked_at)
+                            <x-ts-text size="sm" class="text-zinc-500">
+                                {{ __('Deactivated on :date', ['date' => $this->invoice->public_token_revoked_at->format('Y-m-d H:i')]) }}
+                            </x-ts-text>
+                        @endif
+                    </div>
 
                     <x-ts-text size="sm" class="mt-3 text-zinc-500">
                         {{ __('The link printed in the PDF cannot be changed: the already delivered documents keep the previous one.') }}
@@ -431,7 +495,7 @@ new class extends Component
 
                     <dl class="mt-3 space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <dt class="text-zinc-500">{{ __('Paid') }}</dt>
+                            <dt class="text-zinc-500">{{ __('Paid amount') }}</dt>
                             <dd>{{ $this->money($this->paidAmount) }} {{ $this->invoice->currency }}</dd>
                         </div>
                         <div class="flex justify-between">
@@ -493,6 +557,32 @@ new class extends Component
             </div>
         </div>
     </div>
+
+    @if ($this->invoice->isDraft() || $this->invoice->isIssued())
+        <div class="mt-8 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 pt-6 dark:border-white/10">
+            @if ($this->invoice->isDraft())
+                <x-ts-button variant="outline" icon="pencil-square" :href="route('invoices.create', ['invoice' => $this->invoice->ulid])">
+                    {{ __('Edit') }}
+                </x-ts-button>
+
+                <x-ts-modal-trigger name="delete-invoice">
+                    <x-ts-button variant="outline" color="red" icon="trash">{{ __('Delete') }}</x-ts-button>
+                </x-ts-modal-trigger>
+            @endif
+
+            @if ($this->invoice->isIssued())
+                @if (! $this->invoice->isRectificative() && ! $this->invoice->rectifications()->exists())
+                    <x-ts-modal-trigger name="rectify-invoice">
+                        <x-ts-button variant="primary" class="btn-coral" icon="pencil-square">{{ __('Rectify') }}</x-ts-button>
+                    </x-ts-modal-trigger>
+                @endif
+
+                <x-ts-button variant="primary" icon="document-duplicate" wire:click="duplicate">
+                    {{ __('Duplicate') }}
+                </x-ts-button>
+            @endif
+        </div>
+    @endif
 
     <x-ts-modal name="rectify-invoice" class="w-full sm:max-w-lg">
         <form wire:submit="rectify" class="space-y-6">

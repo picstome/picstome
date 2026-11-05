@@ -1,27 +1,29 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\CustomerForm;
 use App\Livewire\Forms\InvoiceForm;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Services\InvoiceIssuanceService;
+use App\Services\InvoiceNumberingService;
 use App\Services\InvoicePlanLimitService;
 use App\Services\InvoiceService;
 use App\Traits\FormatsMoney;
+use App\Traits\InteractsWithTallStackModals;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
-    use Interactions;
     use FormatsMoney;
+    use Interactions;
+    use InteractsWithTallStackModals;
 
     public InvoiceForm $form;
 
@@ -133,6 +135,101 @@ new class extends Component
     public function settings(): InvoiceSetting
     {
         return Auth::user()->currentTeam->invoiceSetting;
+    }
+
+    /**
+     * Full number suggested from the last invoice of the same series.
+     */
+    #[Computed]
+    public function suggestedFullNumber(): string
+    {
+        return app(InvoiceNumberingService::class)->suggestFullNumber(
+            $this->settings,
+            $this->fullNumberSeries(),
+            $this->fullNumberYear(),
+        );
+    }
+
+    /**
+     * Last invoice generated for the series, shown as a reference next to
+     * the number field.
+     */
+    #[Computed]
+    public function lastInvoice(): ?Invoice
+    {
+        return app(InvoiceNumberingService::class)->lastIssued($this->settings, $this->fullNumberSeries());
+    }
+
+    /**
+     * Non-blocking warning when the number is lower than the last one or
+     * leaves a gap. Only duplicates are rejected.
+     */
+    #[Computed]
+    public function fullNumberWarning(): ?string
+    {
+        $value = trim($this->form->full_number);
+
+        if ($value === '') {
+            return null;
+        }
+
+        $last = $this->lastInvoice();
+
+        if (! $last || blank($last->full_number)) {
+            return null;
+        }
+
+        $current = $this->trailingNumber($value);
+        $previous = $this->trailingNumber((string) $last->full_number);
+
+        if ($current === null || $previous === null) {
+            return null;
+        }
+
+        if ($current <= $previous) {
+            return __('This number is lower than the last generated invoice. You can still issue it.');
+        }
+
+        if ($current > $previous + 1) {
+            return __('This number leaves a gap after the last generated invoice. You can still issue it.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Series of the number to suggest: the rectification series for
+     * corrective invoices.
+     */
+    protected function fullNumberSeries(): string
+    {
+        return $this->form->invoice?->isRectificative()
+            ? $this->settings->rectification_series
+            : $this->settings->series;
+    }
+
+    /**
+     * Exercise used to suggest the number.
+     */
+    protected function fullNumberYear(): int
+    {
+        if (! Carbon::hasFormat($this->form->issue_date, 'Y-m-d')) {
+            return (int) now()->year;
+        }
+
+        return (int) Carbon::parse($this->form->issue_date)->year;
+    }
+
+    /**
+     * Last consecutive number of a full number, used only for the warning.
+     */
+    protected function trailingNumber(string $value): ?int
+    {
+        if (! preg_match('/(\d+)\D*$/', $value, $matches)) {
+            return null;
+        }
+
+        return (int) $matches[1];
     }
 
     /**
@@ -316,7 +413,7 @@ new class extends Component
     {
         $this->authorize('create', Invoice::class);
 
-        $invoice = $this->form->persist(Auth::user()->currentTeam);
+        $invoice = $this->form->persist(Auth::user()->currentTeam, validateFullNumber: false);
 
         $this->form->setInvoice($invoice);
 
@@ -335,7 +432,11 @@ new class extends Component
             return;
         }
 
-        app(InvoiceIssuanceService::class)->issue($invoice, Auth::user());
+        app(InvoiceIssuanceService::class)->issue(
+            $invoice,
+            Auth::user(),
+            filled($this->form->full_number) ? $this->form->full_number : null,
+        );
 
         $this->redirect(route('invoices.show', $invoice), navigate: true);
     }
@@ -522,8 +623,30 @@ new class extends Component
                     </x-ts-callout>
                 @endif
 
-                <x-ts-input wire:model="form.issue_date" :label="__('Issue date')" type="date" />
-                <x-ts-input wire:model="form.due_date" :label="__('Due date')" type="date" />
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-ts-input wire:model.live="form.issue_date" :label="__('Issue date')" type="date" />
+                    <x-ts-input wire:model="form.due_date" :label="__('Due date')" type="date" />
+                </div>
+
+                <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-white/5">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <x-ts-label>{{ __('Invoice number') }}</x-ts-label>
+                            <div class="mt-1 font-mono text-lg">
+                                {{ filled($this->form->full_number) ? $this->form->full_number : $this->suggestedFullNumber }}
+                            </div>
+                            <div class="mt-1 text-xs text-zinc-500">
+                                {{ __('Suggested: :number', ['number' => $this->suggestedFullNumber]) }}
+                            </div>
+                        </div>
+
+                        <x-ts-modal-trigger name="edit-invoice-number">
+                            <x-ts-button size="sm" variant="outline" icon="pencil-square">
+                                {{ __('Edit') }}
+                            </x-ts-button>
+                        </x-ts-modal-trigger>
+                    </div>
+                </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-ts-select wire:model.live="form.vat_percent" :label="__('VAT rate')">
@@ -561,18 +684,6 @@ new class extends Component
                     />
                 @endif
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <x-ts-select wire:model.live="form.discount_type" :label="__('Discount')">
-                        <option value="">{{ __('No discount') }}</option>
-                        <option value="percentage">{{ __('Percentage') }}</option>
-                        <option value="fixed">{{ __('Fixed amount') }}</option>
-                    </x-ts-select>
-
-                    <x-ts-input wire:model.live.debounce.500ms="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
-                </div>
-
-                <x-ts-textarea wire:model="form.payment_terms" :label="__('Payment terms')" rows="2" />
-                <x-ts-textarea wire:model="form.notes" :label="__('Invoice footer')" rows="2" />
             </div>
 
             <div>
@@ -611,6 +722,21 @@ new class extends Component
                     </dl>
                 </div>
 
+                <div class="mt-4 space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <x-ts-select wire:model.live="form.discount_type" :label="__('Discount')">
+                            <option value="">{{ __('No discount') }}</option>
+                            <option value="percentage">{{ __('Percentage') }}</option>
+                            <option value="fixed">{{ __('Fixed amount') }}</option>
+                        </x-ts-select>
+
+                        <x-ts-input wire:model.live.debounce.500ms="form.discount_amount" :label="__('Discount amount')" type="number" step="0.01" min="0" />
+                    </div>
+
+                    <x-ts-textarea wire:model="form.payment_terms" :label="__('Payment terms')" rows="2" />
+                    <x-ts-textarea wire:model="form.notes" :label="__('Invoice footer')" rows="2" />
+                </div>
+
                 @unless ($this->canIssue)
                     <x-ts-callout icon="exclamation-triangle" variant="outline" class="mt-4">
                         <x-ts-callout-heading>{{ __('Monthly limit reached') }}</x-ts-callout-heading>
@@ -641,6 +767,49 @@ new class extends Component
             @endif
         </div>
     </div>
+
+    <x-ts-modal name="edit-invoice-number" class="w-full sm:max-w-lg">
+        <div class="space-y-6">
+            <div>
+                <x-ts-heading size="lg">{{ __('Invoice number') }}</x-ts-heading>
+                <x-ts-subheading>
+                    {{ __('Leave it empty to use the suggested number. The number is assigned only when you issue the invoice.') }}
+                </x-ts-subheading>
+            </div>
+
+            <x-ts-input
+                wire:model.live="form.full_number"
+                :label="__('Invoice number')"
+                :placeholder="$this->suggestedFullNumber"
+            />
+
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+                <span>{{ __('Suggested: :number', ['number' => $this->suggestedFullNumber]) }}</span>
+
+                @if ($this->lastInvoice)
+                    <span>·</span>
+
+                    <x-ts-tooltip content="{{ $this->lastInvoice->full_number.' · '.($this->lastInvoice->customer?->name ?? __('No client')).' · '.$this->lastInvoice->issue_date?->format('Y-m-d') }}">
+                        <x-ts-link :href="route('invoices.show', $this->lastInvoice)" wire:navigate>
+                            {{ __('Last invoice: :number', ['number' => $this->lastInvoice->full_number]) }}
+                        </x-ts-link>
+                    </x-ts-tooltip>
+                @endif
+            </div>
+
+            @if ($this->fullNumberWarning)
+                <x-ts-callout icon="exclamation-triangle" variant="outline">
+                    <x-ts-callout-text>{{ $this->fullNumberWarning }}</x-ts-callout-text>
+                </x-ts-callout>
+            @endif
+
+            <div class="flex justify-end">
+                <x-ts-modal-close>
+                    <x-ts-button variant="primary">{{ __('Close') }}</x-ts-button>
+                </x-ts-modal-close>
+            </div>
+        </div>
+    </x-ts-modal>
 
     <x-ts-modal name="customer" class="w-full sm:max-w-lg">
         <form wire:submit="saveCustomer" class="space-y-6">

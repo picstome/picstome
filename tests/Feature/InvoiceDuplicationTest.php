@@ -32,6 +32,7 @@ it('duplicates an issued invoice as a draft', function () {
         ->and((float) $draft->vat_amount)->toBe((float) $original->vat_amount)
         ->and((float) $draft->total)->toBe((float) $original->total)
         ->and($draft->number)->toBeNull()
+        ->and($draft->full_number)->toBeNull()
         ->and($draft->series)->toBeNull()
         ->and($draft->year)->toBeNull()
         ->and($draft->fingerprint)->toBeNull()
@@ -124,6 +125,19 @@ it('does not consume the monthly limit', function () {
     $draft = $this->duplication->duplicate($original, $this->user);
 
     expect($draft->status)->toBe(Invoice::STATUS_DRAFT);
+});
+
+it('gives a duplicated invoice a new full number when it is issued', function () {
+    $original = $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $draft = $this->duplication->duplicate($original, $this->user);
+
+    expect($draft->full_number)->toBeNull();
+
+    $issued = $this->issuance->issue($draft->fresh());
+
+    expect($issued->full_number)->toBe('INV-0043')
+        ->and($issued->full_number)->not->toBe($original->full_number);
 });
 
 it('recalculates the totals from the copied line items', function () {

@@ -52,6 +52,100 @@ it('creates and issues an invoice from the guided flow', function () {
         ->and($invoice->public_token)->toHaveLength(40);
 });
 
+it('issues an invoice with a custom full number', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->call('nextStep')
+        ->set('form.full_number', 'INV-0042')
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    $invoice = $this->team->invoices()->first();
+
+    expect($invoice->full_number)->toBe('INV-0042')
+        ->and($invoice->number)->toBe(1);
+});
+
+it('shows the suggested full number and the last generated invoice', function () {
+    $this->issuance = app(InvoiceIssuanceService::class);
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->call('nextStep')
+        ->assertSee('Suggested: INV-0043')
+        ->assertSee('Last invoice: INV-0042')
+        ->assertSee('edit-invoice-number', false)
+        ->assertSee(route('invoices.show', Invoice::where('full_number', 'INV-0042')->first()), false);
+});
+
+it('warns about lower numbers and gaps without blocking the issuance', function () {
+    $this->issuance = app(InvoiceIssuanceService::class);
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->call('nextStep')
+        ->set('form.full_number', 'INV-0040')
+        ->assertSee('This number is lower than the last generated invoice. You can still issue it.')
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    expect($this->team->invoices()->where('full_number', 'INV-0040')->exists())->toBeTrue();
+});
+
+it('warns about gaps without blocking the issuance', function () {
+    $this->issuance = app(InvoiceIssuanceService::class);
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->call('nextStep')
+        ->set('form.full_number', 'INV-0044')
+        ->assertSee('This number leaves a gap after the last generated invoice. You can still issue it.')
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    expect($this->team->invoices()->where('full_number', 'INV-0044')->exists())->toBeTrue();
+});
+
+it('rejects a duplicated full number', function () {
+    $this->issuance = app(InvoiceIssuanceService::class);
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->call('nextStep')
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->call('nextStep')
+        ->set('form.full_number', 'INV-0042')
+        ->call('issue')
+        ->assertHasErrors(['form.full_number' => 'This invoice number is already used by another invoice.']);
+});
+
 it('saves a draft without consuming a number', function () {
     $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
 
@@ -67,6 +161,26 @@ it('saves a draft without consuming a number', function () {
     expect($invoice->status)->toBe(Invoice::STATUS_DRAFT)
         ->and($invoice->number)->toBeNull()
         ->and($invoice->pdf_path)->toBeNull();
+});
+
+it('does not block saving a draft with a full number that is already used', function () {
+    $this->issuance = app(InvoiceIssuanceService::class);
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->set('form.lineItems.0.description', 'Photo session')
+        ->set('form.lineItems.0.quantity', 1)
+        ->set('form.lineItems.0.unit_price', 150)
+        ->set('form.full_number', 'INV-0042')
+        ->call('saveDraft')
+        ->assertHasNoErrors();
+
+    $draft = $this->team->invoices()->where('status', Invoice::STATUS_DRAFT)->first();
+
+    expect($draft)->not->toBeNull()
+        ->and($draft->full_number)->toBeNull();
 });
 
 it('starts a new invoice with one line item', function () {

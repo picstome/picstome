@@ -3,9 +3,11 @@
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Models\User;
+use App\Services\InvoiceFingerprintService;
 use App\Services\InvoiceIssuanceService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -105,4 +107,111 @@ it('rejects a duplicated number for the same series and exercise', function () {
         'year' => (int) now()->year,
         'number' => 1,
     ]))->toThrow(QueryException::class);
+});
+
+it('stores the full number provided when issuing', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    expect($invoice->full_number)->toBe('INV-0042')
+        ->and($invoice->series)->toBe('F')
+        ->and($invoice->year)->toBe((int) now()->year)
+        ->and($invoice->number)->toBe(1);
+});
+
+it('suggests the next full number from the last invoice of the series', function () {
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    $next = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($next->full_number)->toBe('INV-0043')
+        ->and($next->number)->toBe(2);
+});
+
+it('preserves the padding when suggesting the next full number', function () {
+    $format = 'F-'.now()->year.'-';
+
+    $this->issuance->issue(draftInvoice($this->team), null, $format.'0009');
+
+    $next = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($next->full_number)->toBe($format.'0010');
+});
+
+it('updates the year of the suggested full number on a new exercise', function () {
+    $lastYear = (int) now()->subYear()->year;
+
+    $this->issuance->issue(
+        draftInvoice($this->team, ['issue_date' => now()->subYear()->toDateString()]),
+        null,
+        'F-'.$lastYear.'-0042',
+    );
+
+    $next = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($next->full_number)->toBe('F-'.now()->year.'-0043')
+        ->and($next->year)->toBe((int) now()->year);
+});
+
+it('updates the year of slash separated full numbers', function () {
+    $lastYear = (int) now()->subYear()->year;
+
+    $this->issuance->issue(
+        draftInvoice($this->team, ['issue_date' => now()->subYear()->toDateString()]),
+        null,
+        $lastYear.'/0042',
+    );
+
+    $next = $this->issuance->issue(draftInvoice($this->team));
+
+    expect($next->full_number)->toBe(now()->year.'/0043');
+});
+
+it('allows lower numbers and gaps in the full number', function () {
+    $format = 'F-'.now()->year.'-';
+
+    $this->issuance->issue(draftInvoice($this->team), null, $format.'0050');
+
+    $lower = $this->issuance->issue(draftInvoice($this->team), null, $format.'0040');
+    $gap = $this->issuance->issue(draftInvoice($this->team), null, $format.'0060');
+
+    expect($lower->full_number)->toBe($format.'0040')
+        ->and($gap->full_number)->toBe($format.'0060');
+});
+
+it('rejects a duplicated full number for the same team', function () {
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+
+    expect(fn () => $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042'))
+        ->toThrow(ValidationException::class);
+});
+
+it('allows the same full number for another team', function () {
+    $otherUser = User::factory()->withPersonalTeam()->create();
+    $otherTeam = $otherUser->currentTeam;
+    $otherTeam->update(['monthly_invoice_limit' => 100]);
+    InvoiceSetting::factory()->for($otherTeam)->create();
+
+    $first = $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+    $second = $this->issuance->issue(draftInvoice($otherTeam), null, 'INV-0042');
+
+    expect($first->full_number)->toBe('INV-0042')
+        ->and($second->full_number)->toBe('INV-0042');
+});
+
+it('keeps the fingerprint chain when a custom full number is used', function () {
+    $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
+    $second = $this->issuance->issue(draftInvoice($this->team));
+
+    $verification = app(InvoiceFingerprintService::class)->verify($second->fresh());
+
+    expect($second->full_number)->toBe('INV-0043')
+        ->and($verification['valid'])->toBeTrue()
+        ->and($verification['position'])->toBe(2);
+});
+
+it('does not store a full number while the invoice is a draft', function () {
+    $draft = draftInvoice($this->team);
+
+    expect($draft->full_number)->toBeNull()
+        ->and($draft->number)->toBeNull();
 });

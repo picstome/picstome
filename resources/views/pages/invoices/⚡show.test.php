@@ -28,6 +28,9 @@ it('shows an issued invoice', function () {
         ->assertHasNoErrors()
         ->assertSee($invoice->full_number)
         ->assertSee('Issued')
+        ->assertSee('Online invoice')
+        ->assertSee('Download PDF')
+        ->assertSee(route('customers.show', $invoice->customer), false)
         ->assertSee('Verified');
 });
 
@@ -97,6 +100,7 @@ it('issues the corrective invoice with the reason', function () {
     expect($rectificative)->not->toBeNull()
         ->and($rectificative->status)->toBe(Invoice::STATUS_ISSUED)
         ->and($rectificative->series)->toBe('R')
+        ->and($rectificative->full_number)->toBe('R-'.now()->year.'-0001')
         ->and($rectificative->rectification_type)->toBe(Invoice::RECTIFICATION_SUBSTITUTION)
         ->and($rectificative->rectification_reason)->toBe('Wrong client name')
         ->and($rectificative->customer_id)->toBe($invoice->customer_id)
@@ -120,6 +124,31 @@ it('can review the corrective invoice before issuing it', function () {
 
     expect($rectificative->status)->toBe(Invoice::STATUS_DRAFT)
         ->and($invoice->fresh()->status)->toBe(Invoice::STATUS_ISSUED);
+});
+
+it('lets the user edit the full number of a reviewed corrective invoice', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->set('rectificationReason', 'Wrong amount')
+        ->call('rectify', true)
+        ->assertHasNoErrors();
+
+    $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
+
+    expect($rectificative->full_number)->toBeNull();
+
+    Livewire::withQueryParams(['invoice' => $rectificative->ulid])
+        ->actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertSet('step', 3)
+        ->set('form.full_number', 'R-'.now()->year.'-0099')
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    expect($rectificative->fresh()->full_number)->toBe('R-'.now()->year.'-0099')
+        ->and($rectificative->fresh()->status)->toBe(Invoice::STATUS_ISSUED);
 });
 
 it('copies the exchange rate to the corrective invoice', function () {
@@ -197,7 +226,7 @@ it('does not show the public link of a draft invoice', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->assertDontSee('Public link')
+        ->assertDontSee('Online invoice')
         ->assertDontSee('Generate a new link');
 });
 
@@ -240,6 +269,81 @@ it('does not allow editing an issued invoice', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
         ->assertDontSee(route('invoices.create', ['invoice' => $invoice->ulid]), false);
+});
+
+it('marks an issued invoice as paid and back as pending', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertSee('Payment pending')
+        ->call('markAsPaid')
+        ->assertHasNoErrors()
+        ->assertSee('Paid');
+
+    expect($invoice->fresh()->paid_at)->not->toBeNull()
+        ->and($invoice->events()->pluck('event'))->toContain(InvoiceEvent::MARKED_PAID);
+
+    $component->call('markAsPending')
+        ->assertHasNoErrors()
+        ->assertSee('Payment pending');
+
+    expect($invoice->fresh()->paid_at)->toBeNull()
+        ->and($invoice->events()->pluck('event'))->toContain(InvoiceEvent::MARKED_UNPAID);
+});
+
+it('does not offer the paid action for a rectificative invoice', function () {
+    $original = $this->issuance->issue(draftInvoice($this->team));
+
+    $rectificative = $this->issuance->issue(draftInvoice($this->team, [
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+    ]));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $rectificative])
+        ->assertDontSee('Mark as paid')
+        ->assertDontSee('Payment pending')
+        ->assertDontSee('Paid invoice')
+        ->call('markAsPaid')
+        ->assertStatus(403);
+});
+
+it('does not offer the paid action for a draft invoice', function () {
+    $invoice = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertDontSee('Mark as paid')
+        ->assertDontSee('Payment pending');
+});
+
+it('shows the email action of an issued invoice', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertSee('Email invoice')
+        ->assertSee('mailto:', false);
+});
+
+it('does not show the email action of a draft invoice', function () {
+    $invoice = draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->assertDontSee('Email invoice')
+        ->assertDontSee('mailto:', false);
+});
+
+it('does not show the email action when the public link is revoked', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $invoice])
+        ->call('revokeLink')
+        ->assertDontSee('mailto:', false);
 });
 
 it('shows the payments of the invoice and the pending amount', function () {

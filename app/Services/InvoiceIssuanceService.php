@@ -26,19 +26,44 @@ class InvoiceIssuanceService
     /**
      * Issue a draft invoice.
      *
-     * The number is assigned at this moment, so drafts never consume a
-     * number and never leave a gap in the sequence.
+     * The internal number is assigned at this moment, so drafts never
+     * consume a number and never leave a gap in the sequence. The full
+     * number printed to the client can be provided by the user; otherwise it
+     * is suggested from the last invoice of the series.
      */
-    public function issue(Invoice $invoice, ?User $user = null): Invoice
+    public function issue(Invoice $invoice, ?User $user = null, ?string $fullNumber = null): Invoice
     {
         $settings = $this->settings($invoice);
 
         $this->guard($invoice, $settings);
 
+        $requestedFullNumber = $fullNumber ?? $invoice->full_number;
+        $generatedPdfPath = null;
+
         try {
-            return DB::transaction(function () use ($invoice, $user) {
+            return DB::transaction(function () use ($invoice, $user, $requestedFullNumber, &$generatedPdfPath) {
                 /** @var InvoiceSetting $locked */
                 $locked = InvoiceSetting::where('team_id', $invoice->team_id)->lockForUpdate()->firstOrFail();
+
+                // The team lock serializes issuance. Refresh after taking it
+                // so a retry and a concurrent request always work on the
+                // persisted draft, not on a stale model.
+                $invoice->refresh();
+
+                if (! $invoice->isDraft()) {
+                    // The invoice may have been issued by another request
+                    // while this one was retrying. Never touch its PDF.
+                    $generatedPdfPath = null;
+
+                    throw ValidationException::withMessages([
+                        'invoice' => __('Only draft invoices can be issued.'),
+                    ]);
+                }
+
+                if (filled($generatedPdfPath)) {
+                    Storage::disk(config('picstome.disk'))->delete($generatedPdfPath);
+                    $generatedPdfPath = null;
+                }
 
                 $year = (int) $invoice->issue_date->year;
                 $series = $invoice->isRectificative() ? $locked->rectification_series : $locked->series;
@@ -55,6 +80,7 @@ class InvoiceIssuanceService
                 $invoice->series = $series;
                 $invoice->year = $year;
                 $invoice->number = $number;
+                $invoice->full_number = $this->resolveFullNumber($invoice, $locked, $series, $year, $requestedFullNumber);
 
                 if (blank($invoice->public_token)) {
                     $invoice->public_token = $this->pdf->newPublicToken();
@@ -65,7 +91,9 @@ class InvoiceIssuanceService
                 $invoice->fingerprint = $fingerprint;
                 $invoice->previous_fingerprint = $previousFingerprint;
 
+                $this->forgetStoredPdf($invoice);
                 $this->storePdf($invoice);
+                $generatedPdfPath = $invoice->pdf_path;
 
                 $invoice->status = Invoice::STATUS_ISSUED;
                 $invoice->issued_at = now();
@@ -85,14 +113,68 @@ class InvoiceIssuanceService
                 $this->markOriginalAsRectified($invoice, $original, $user);
 
                 return $invoice;
-            });
+            }, 3);
         } catch (\Throwable $exception) {
-            if (filled($invoice->pdf_path)) {
-                Storage::disk(config('picstome.disk'))->delete($invoice->pdf_path);
+            if (filled($generatedPdfPath)) {
+                Storage::disk(config('picstome.disk'))->delete($generatedPdfPath);
             }
 
             throw $exception;
         }
+    }
+
+    /**
+     * Resolve the full number shown to the client.
+     *
+     * Only duplicates are blocked: gaps and lower numbers are allowed, the
+     * form warns about them without stopping the issuance.
+     *
+     * @throws ValidationException
+     */
+    private function resolveFullNumber(
+        Invoice $invoice,
+        InvoiceSetting $locked,
+        string $series,
+        int $year,
+        ?string $fullNumber,
+    ): string {
+        $candidate = trim((string) $fullNumber);
+
+        if ($candidate === '') {
+            $candidate = $this->numbering->suggestFullNumber($locked, $series, $year, $invoice->id);
+        }
+
+        if (mb_strlen($candidate) > 100) {
+            throw ValidationException::withMessages([
+                'full_number' => __('The invoice number cannot be longer than 100 characters.'),
+            ]);
+        }
+
+        if ($this->numbering->fullNumberExists($locked, $candidate, $invoice->id)) {
+            throw ValidationException::withMessages([
+                'full_number' => __('This invoice number is already used by another invoice.'),
+            ]);
+        }
+
+        return $candidate;
+    }
+
+    /**
+     * Remove the PDF left by a previous attempt before retrying the
+     * transaction, so a failed issuance never leaves an orphan file.
+     */
+    private function forgetStoredPdf(Invoice $invoice): void
+    {
+        if (blank($invoice->pdf_path)) {
+            return;
+        }
+
+        Storage::disk(config('picstome.disk'))->delete($invoice->pdf_path);
+
+        $invoice->pdf_path = null;
+        $invoice->pdf_size = null;
+        $invoice->pdf_hash = null;
+        $invoice->pdf_generated_at = null;
     }
 
     /**
