@@ -1588,7 +1588,7 @@ new class extends Component
         :method="$this->pendingPhotoId ? 'deletePhoto('.$this->pendingPhotoId.')' : null"
     />
 
-    <x-cover-focus-overlay :gallery="$gallery" :adjusting="$adjustingCover" />
+    <x-cover-focus-overlay :gallery="$gallery" :photo="$gallery->coverPhoto" :adjusting="$adjustingCover" />
 </div>
 
 @script

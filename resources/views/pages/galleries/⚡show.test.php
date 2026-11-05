@@ -1505,7 +1505,8 @@ describe('Cover Photo', function () {
             ->call('setAsCover', $photo);
 
         expect($component->get('adjustingCover'))->toBeTrue()
-            ->and($component->html())->toContain('Adjust cover focus');
+            ->and($component->html())->toContain('Adjust cover focus')
+            ->and($component->html())->toContain(str_replace('&', '&amp;', $photo->large_thumbnail_url));
     });
 });
 
