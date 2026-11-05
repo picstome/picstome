@@ -83,3 +83,51 @@ it('falls back to the cdn resize when a photo has no stored thumbnail', function
         ->toContain('width=500')
         ->toContain('v=123');
 });
+
+it('uses the gallery cover focal point for the shared cover image', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'wsrv.nl',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+    ]);
+
+    $gallery = Gallery::factory()->shared()->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'disk' => 's3',
+        'path' => 'galleries/cover.jpg',
+    ]);
+
+    $gallery->setCoverPhoto($photo);
+    $gallery->setCoverFocalPoint(0.25, 0.75);
+    $gallery->load('coverPhoto.gallery');
+
+    parse_str(parse_url($gallery->coverPhoto->cover_image_url, PHP_URL_QUERY), $query);
+
+    expect($query['fit'])->toBe('cover')
+        ->and($query['a'])->toBe('focal')
+        ->and((float) $query['fpx'])->toBe(0.25)
+        ->and((float) $query['fpy'])->toBe(0.75);
+});
+
+it('uses focus crop for bunny cover images', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'bunny',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+    ]);
+
+    $gallery = Gallery::factory()->shared()->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'disk' => 's3',
+        'path' => 'galleries/cover.jpg',
+    ]);
+
+    $gallery->setCoverPhoto($photo);
+    $gallery->setCoverFocalPoint(0.25, 0.75);
+    $gallery->load('coverPhoto.gallery');
+
+    parse_str(parse_url($gallery->coverPhoto->cover_image_url, PHP_URL_QUERY), $query);
+
+    expect($query['focus_crop'])->toBe('2560,960,0.25,0.75')
+        ->and($query['format'])->toBe('webp');
+});

@@ -19,6 +19,7 @@ class PhotoUrlService
         protected bool $keepOriginalSize = false,
         protected ?string $thumbPath = null,
         protected int $version = 0,
+        protected ?Gallery $gallery = null,
     ) {}
 
     public static function make(object $photoLike, ?Gallery $gallery = null): self
@@ -44,6 +45,7 @@ class PhotoUrlService
             $keep,
             $photoLike->thumb_path ?? null,
             (int) ($photoLike->stored_size ?? 0),
+            $gallery ?? (isset($photoLike->gallery) && is_object($photoLike->gallery) ? $photoLike->gallery : null),
         );
     }
 
@@ -122,13 +124,26 @@ class PhotoUrlService
         $width = 2560;
         $height = 960;
 
-        return $this->cdn([
+        $fpx = (float) ($this->gallery?->cover_focal_x ?? 0.5);
+        $fpy = (float) ($this->gallery?->cover_focal_y ?? 0.5);
+
+        $params = [
             'w' => $width,
             'h' => $height,
             'q' => 93,
             'output' => 'webp',
-            'face_crop' => "{$width},{$height}",
-        ]);
+        ];
+
+        if (in_array(config('picstome.photo_cdn_domain'), ['bunny', 'bunny.net'], true)) {
+            $params['focus_crop'] = "{$width},{$height},{$fpx},{$fpy}";
+        } else {
+            $params['fit'] = 'cover';
+            $params['a'] = 'focal';
+            $params['fpx'] = $fpx;
+            $params['fpy'] = $fpy;
+        }
+
+        return $this->cdn($params);
     }
 
     /**
@@ -211,14 +226,18 @@ class PhotoUrlService
         if ($cdn === 'bunny' || $cdn === 'bunny.net') {
             $bunnyParams = [];
 
-            foreach (['w', 'h', 'q', 'output', 'face_crop', 'aspect_ratio'] as $key) {
+            foreach (['w', 'h', 'q', 'output', 'fit', 'a', 'fpx', 'fpy', 'focus_crop', 'aspect_ratio'] as $key) {
                 if (isset($params[$key])) {
                     $map = [
                         'w' => 'width',
                         'h' => 'height',
                         'q' => 'quality',
                         'output' => 'format',
-                        'face_crop' => 'face_crop',
+                        'fit' => 'fit',
+                        'a' => 'gravity',
+                        'fpx' => 'fpx',
+                        'fpy' => 'fpy',
+                        'focus_crop' => 'focus_crop',
                         'aspect_ratio' => 'aspect_ratio',
                     ];
                     $bunnyParams[$map[$key]] = $params[$key];

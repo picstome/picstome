@@ -56,6 +56,9 @@
                     --color-primary-800: var(--color-{{ $accentColor }}-800);
                     --color-primary-900: var(--color-{{ $accentColor }}-900);
                     --color-primary-950: var(--color-{{ $accentColor }}-950);
+                    --color-accent: var(--color-primary-500);
+                    --color-accent-content: var(--color-primary-600);
+                    --color-accent-foreground: white;
                 }
             </style>
         @else
@@ -63,6 +66,9 @@
                 :root {
                     --color-primary-500: var(--color-brand-green);
                     --color-primary-600: var(--color-brand-green-deep);
+                    --color-accent: var(--color-brand-green);
+                    --color-accent-content: var(--color-brand-green-deep);
+                    --color-accent-foreground: white;
                 }
             </style>
         @endif

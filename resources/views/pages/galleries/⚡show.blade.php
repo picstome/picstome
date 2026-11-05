@@ -37,6 +37,8 @@ new class extends Component
     /** Number of cards rendered per tab. Increased by the "load more" action. */
     public int $allPhotoLimit = 60;
 
+    public bool $adjustingCover = false;
+
     public int $favoritePhotoLimit = 60;
 
     public int $commentedPhotoLimit = 60;
@@ -338,6 +340,7 @@ new class extends Component
         $this->forgetPhotoCollections();
 
         $this->dispatch('gallery-cover-changed');
+        $this->adjustingCover = true;
     }
 
     public function removeAsCover(Photo $photo): void
@@ -354,6 +357,18 @@ new class extends Component
 
             $this->dispatch('gallery-cover-changed');
         }
+    }
+
+    public function setCoverFocalPoint(float $x, float $y): void
+    {
+        $this->authorize('updateCover', $this->gallery);
+
+        $this->gallery->setCoverFocalPoint($x, $y);
+        $this->gallery->load('coverPhoto');
+
+        $this->forgetPhotoCollections();
+
+        $this->dispatch('gallery-cover-changed');
     }
 
     public function update()
@@ -608,7 +623,7 @@ new class extends Component
     }
 }; ?>
 
-<div>
+<div x-data x-on:open-cover-focus.window="$wire.adjustingCover = true">
     <livewire:gallery-live-watcher
         :$gallery
         :scan-inbox="true"
@@ -678,6 +693,21 @@ new class extends Component
                     x-on:click="show = false"
                 />
 
+                @if ($gallery->coverPhoto)
+                    <x-dropdown.items
+                        :text="__('Adjust Cover Focus')"
+                        icon="viewfinder-circle"
+                        wire:click="$set('adjustingCover', true)"
+                        x-on:click="show = false"
+                    />
+                    <x-dropdown.items
+                        :text="__('Remove as Cover')"
+                        icon="x-mark"
+                        wire:click="removeAsCover({{ $gallery->coverPhoto->id }})"
+                        x-on:click="show = false"
+                    />
+                @endif
+
                 @if ($this->totalFavorites > 0)
                     <x-dropdown.items
                         :text="__('Favorite list')"
@@ -741,6 +771,10 @@ new class extends Component
             <x-ts-modal-trigger name="add-photos">
                 <x-ts-button variant="primary">{{ __('Add media') }}</x-ts-button>
             </x-ts-modal-trigger>
+
+            @if ($gallery->coverPhoto)
+                <x-ts-button variant="secondary" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)">{{ __('Adjust cover') }}</x-ts-button>
+            @endif
         </div>
     </div>
 
@@ -752,6 +786,7 @@ new class extends Component
                 :comments-count="$this->totalComments()"
                 :show-sync="$this->syncEnabled"
                 :show-download="true"
+                :active-tab="$activeTab"
             >
                 <x-slot name="afterFavorites">
                     @if ($this->totalFavorites > 0)
@@ -1552,6 +1587,8 @@ new class extends Component
         :message="__('This action cannot be undone.')"
         :method="$this->pendingPhotoId ? 'deletePhoto('.$this->pendingPhotoId.')' : null"
     />
+
+    <x-cover-focus-overlay :gallery="$gallery" :adjusting="$adjustingCover" />
 </div>
 
 @script

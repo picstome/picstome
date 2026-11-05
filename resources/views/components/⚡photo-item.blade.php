@@ -45,6 +45,7 @@ new class extends Component
         $this->gallery->setCoverPhoto($this->photo);
 
         $this->dispatch('gallery-cover-changed');
+        $this->dispatch('open-cover-focus');
     }
 
     public function removeAsCover()
@@ -57,12 +58,21 @@ new class extends Component
             $this->dispatch('gallery-cover-changed');
         }
     }
+
+    public function setCoverFocalPoint(float $x, float $y): void
+    {
+        $this->authorize('updateCover', $this->gallery);
+
+        $this->gallery->setCoverFocalPoint($x, $y);
+
+        $this->dispatch('gallery-cover-changed');
+    }
 }; ?>
 
 <div
     class="group relative flex aspect-square overflow-hidden bg-zinc-100 dark:bg-white/10"
     x-data="{
-        showActions: false,
+        showActions: ! window.matchMedia('(hover: hover)').matches,
         moreActionsOpen: false,
         downloadOptionsOpen: false,
     }"
@@ -145,7 +155,7 @@ new class extends Component
             :aria-label="__('Favorite')"
         >
             @if ($photo->isFavorited())
-                <x-icon name="heart" class="size-5 text-red-500" variant="solid" />
+                <x-icon name="heart" solid class="size-5 text-red-500" />
             @else
                 <x-icon name="heart" class="size-5" />
             @endif
@@ -158,7 +168,7 @@ new class extends Component
             >
                 <x-slot:action>
                     <x-ts-button
-                        icon="arrow-down-tray"
+                        icon="cloud-arrow-down"
                         variant="overlay"
                         square
                         size="sm"
@@ -169,19 +179,19 @@ new class extends Component
 
                 <x-dropdown.items
                     :text="__('Download JPG')"
-                    icon="arrow-down-tray"
+                    icon="cloud-arrow-down"
                     :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
                 />
                 <x-dropdown.items
                     :text="__('Download Raw')"
-                    icon="arrow-down-tray"
+                    icon="cloud-arrow-down"
                     :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
                 />
             </x-dropdown>
         @else
             <x-ts-button
                 :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-                icon="arrow-down-tray"
+                icon="cloud-arrow-down"
                 variant="overlay"
                 square
                 size="sm"
@@ -207,6 +217,7 @@ new class extends Component
 
             @if ($photo->isImage())
                 @if ($gallery->coverPhoto?->is($this->photo))
+                    <x-dropdown.items :text="__('Adjust Cover Focus')" icon="viewfinder-circle" x-on:click="show = false; $dispatch('open-cover-focus')" />
                     <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover" />
                 @else
                     <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover" />

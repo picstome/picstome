@@ -99,7 +99,7 @@ new class extends Component
         </div>
     @endif
 
-    <div class="absolute right-1.5 bottom-1.5 hidden gap-2 group-hover:flex">
+    <div class="absolute right-1.5 bottom-1.5 flex gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
         @if ($photo->gallery->is_share_selectable)
             <x-ts-button
                 wire:click="favorite({{ $photo->id }})"
@@ -109,7 +109,7 @@ new class extends Component
                 :aria-label="__('Favorite')"
             >
                 @if ($photo->isFavorited())
-                    <x-icon name="heart" class="size-5 text-red-500" variant="solid" />
+                    <x-icon name="heart" solid class="size-5 text-red-500" />
                 @else
                     <x-icon name="heart" class="size-5" />
                 @endif
@@ -119,7 +119,7 @@ new class extends Component
         @if ($photo->gallery->is_share_downloadable)
             <x-ts-button
                 :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                icon="arrow-down-tray"
+                icon="cloud-arrow-down"
                 variant="overlay"
                 square
                 size="sm"

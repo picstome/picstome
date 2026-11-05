@@ -55,6 +55,8 @@ class Gallery extends Model
             'portfolio_order' => 'integer',
             'are_comments_enabled' => 'boolean',
             'are_annotations_enabled' => 'boolean',
+            'cover_focal_x' => 'float',
+            'cover_focal_y' => 'float',
         ];
     }
 
@@ -710,7 +712,19 @@ class Gallery extends Model
             throw new \InvalidArgumentException('Only images can be used as a gallery cover.');
         }
 
-        $this->update(['cover_photo_id' => $photo->id]);
+        $this->update([
+            'cover_photo_id' => $photo->id,
+            'cover_focal_x' => 0.5,
+            'cover_focal_y' => 0.5,
+        ]);
+    }
+
+    public function setCoverFocalPoint(float $x, float $y): void
+    {
+        $this->update([
+            'cover_focal_x' => max(0.0, min(1.0, $x)),
+            'cover_focal_y' => max(0.0, min(1.0, $y)),
+        ]);
     }
 
     public function removeCoverPhoto()
