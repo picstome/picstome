@@ -66,6 +66,7 @@
 @if ($isImage)
     @if ($isRepeated)
         <div
+            data-watermark-image
             class="pointer-events-none absolute inset-0 {{ $repeatedClass }}"
             style="background-image: url('{{ $imageUrl }}'); background-repeat: repeat; background-size: {{ $repeatedSize }}; opacity: {{ $opacity }};"
             aria-hidden="true"
@@ -73,6 +74,7 @@
     @else
         <div class="{{ $wrapperClass }} {{ $alignmentClass }} {{ $paddingClass }}" aria-hidden="true">
             <img
+                data-watermark-image
                 src="{{ $imageUrl }}"
                 alt=""
                 class="{{ $imageClass }}"
@@ -90,6 +92,7 @@
             $patternTextY = (int) round($patternHeight * 0.6);
         @endphp
         <svg
+            data-watermark-text
             class="pointer-events-none absolute inset-0 h-full w-full {{ $repeatedClass }}"
             style="opacity: {{ $opacity }};"
             aria-hidden="true"
@@ -109,7 +112,7 @@
         </svg>
     @else
         <div class="{{ $wrapperClass }} {{ $alignmentClass }} {{ $paddingClass }}" aria-hidden="true">
-            <span class="{{ $textClass }} text-center font-semibold text-white select-none" style="opacity: {{ $opacity }}; font-family: {{ $fontFamily }}; font-size: {{ $fontPx }}px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 0, 0, 0.9);">{{ $text }}</span>
+            <span data-watermark-text class="{{ $textClass }} text-center font-semibold text-white select-none" style="opacity: {{ $opacity }}; font-family: {{ $fontFamily }}; font-size: {{ $fontPx }}px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 0, 0, 0.9);">{{ $text }}</span>
         </div>
     @endif
 @endif

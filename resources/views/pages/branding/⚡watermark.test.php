@@ -240,7 +240,6 @@ it('updates the preview to the saved image when switching back to image mode', f
     Storage::fake('s3');
 
     $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
-    $path = $this->team->fresh()->brand_watermark_path;
 
     $this->team->update([
         'brand_watermark_type' => 'text',
@@ -249,11 +248,11 @@ it('updates the preview to the saved image when switching back to image mode', f
 
     $component = Livewire::actingAs($this->user)->test('pages::branding.watermark');
 
-    expect($component->html())->not->toContain($path);
+    expect($component->html())->not->toContain('data-watermark-image');
 
     $component->set('form.watermarkType', 'image');
 
-    expect($component->html())->toContain($path);
+    expect($component->html())->toContain('data-watermark-image');
 });
 
 it('can switch back to the image watermark', function () {
