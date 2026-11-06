@@ -82,6 +82,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->photo);
+
         $gallery = $this->photo->gallery;
 
         $this->photo->deleteFromDisk()->delete();
@@ -433,14 +435,28 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             Livewire.navigate(ref.href)
             setTimeout(() => { this.navigating = false }, 500)
         },
+        requestDelete(event) {
+            if (
+                event.target instanceof Element &&
+                event.target.closest('input, textarea, select, [contenteditable]')
+            ) {
+                return
+            }
+
+            event.preventDefault()
+            this.$dispatch('modal:delete-photo-open')
+        },
     }"
     x-init="initPhotoViewer()"
     data-full-image-url="{{ $photo->url }}"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @keyup.window.f="$wire.favorite()"
+    @keyup.window.delete="requestDelete($event)"
+    @keyup.window.backspace="requestDelete($event)"
     x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
-    class="flex h-screen flex-col"
+    style="height: 100vh; height: 100dvh;"
+    class="flex flex-col"
 >
     <div
         id="photo"
@@ -600,7 +616,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 x-data="{ annotating: false }"
                 x-on:annotations-toggled.window="annotating = $event.detail.active"
             >
-                <span x-data x-tooltip="{{ $photo->name }}">
+                <span x-data x-tooltip="{{ $photo->name }}" class="max-sm:hidden">
                     <x-ts-button icon="information-circle" size="sm" variant="subtle" />
                 </span>
 
@@ -611,6 +627,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                         variant="subtle"
                         wire:click="setAsCover"
                         title="{{ __('Set as Cover') }}"
+                        class="max-sm:hidden"
                     />
                 @endif
                 <x-dropdown position="bottom-end">
@@ -692,6 +709,17 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                         <x-icon name="heart" class="size-5" />
                     @endif
                 </x-ts-button>
+                <x-ts-button
+                    icon="trash"
+                    variant="overlay"
+                    size="sm"
+                    square
+                    :aria-label="__('Delete')"
+                    title="{{ __('Delete') }}"
+                    data-photo-delete
+                    class="max-sm:hidden"
+                    x-on:click="$dispatch('modal:delete-photo-open')"
+                />
             </div>
         </div>
 
@@ -710,6 +738,18 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 <x-photo-annotations-toggle />
             @endif
         </div>
+    </div>
+
+    <div class="flex items-center justify-center px-3 pt-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:hidden">
+        <x-ts-button
+            icon="trash"
+            variant="danger"
+            size="sm"
+            data-photo-delete-mobile
+            x-on:click="$dispatch('modal:delete-photo-open')"
+        >
+            {{ __('Delete') }}
+        </x-ts-button>
     </div>
 
     <x-ts-modal name="add-comment" class="w-full sm:max-w-lg">

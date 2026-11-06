@@ -666,3 +666,94 @@ test('pinch uses the full image and disables swipe until zoom is left', function
 
     expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
 });
+
+test('the photo viewer offers a quick delete action with a confirmation', function () {
+    Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+
+    actingAs($this->user)
+        ->get('/galleries/1/photos/1')
+        ->assertOk()
+        ->assertSee('data-photo-delete', false)
+        ->assertSee('data-photo-delete-mobile', false)
+        ->assertSee('keyup.window.delete', false)
+        ->assertSee('keyup.window.backspace', false)
+        ->assertSee('modal:delete-photo-open', false);
+});
+
+test('pressing delete asks for confirmation before removing the photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
+    $page->wait(0.5);
+    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Delete', bubbles: true }))");
+    $page->wait(0.3);
+
+    expect($page->script(<<<'JS'
+        [...document.querySelectorAll('[role="dialog"]')]
+            .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                && dialog.innerText.includes('Delete photo?'))
+    JS))->toBeTrue();
+
+    expect(Photo::find($photo->id))->not->toBeNull();
+});
+
+test('the quick delete button asks for confirmation before removing the photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
+    $page->wait(0.5);
+    $page->click('[data-photo-delete]');
+    $page->wait(0.3);
+
+    expect($page->script(<<<'JS'
+        [...document.querySelectorAll('[role="dialog"]')]
+            .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                && dialog.innerText.includes('Delete photo?'))
+    JS))->toBeTrue();
+
+    expect(Photo::find($photo->id))->not->toBeNull();
+});
+
+test('the quick delete button is reachable at the bottom of the mobile viewer', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
+    $page->resize(375, 900);
+    $page->wait(0.3);
+
+    expect($page->script(<<<'JS'
+        (() => {
+            const button = document.querySelector('[data-photo-delete-mobile]')
+
+            if (! button) return false
+
+            const rect = button.getBoundingClientRect()
+
+            return getComputedStyle(button).display !== 'none'
+                && rect.top >= 0
+                && rect.bottom <= window.innerHeight
+                && rect.left >= 0
+                && rect.right <= window.innerWidth
+        })()
+    JS))->toBeTrue();
+
+    $page->click('[data-photo-delete-mobile]');
+    $page->wait(0.3);
+
+    expect($page->script(<<<'JS'
+        [...document.querySelectorAll('[role="dialog"]')]
+            .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                && dialog.innerText.includes('Delete photo?'))
+    JS))->toBeTrue();
+
+    expect(Photo::find($photo->id))->not->toBeNull();
+});

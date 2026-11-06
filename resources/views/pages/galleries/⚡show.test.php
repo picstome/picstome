@@ -180,7 +180,7 @@ describe('Gallery Viewing', function () {
             ->assertDontSeeHtml('picstome://sync');
     });
 
-    it('selects a cover photo from the photo actions menu', function () {
+    it('selects a cover photo from the photo tile', function () {
         Storage::fake('s3');
 
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -191,12 +191,36 @@ describe('Gallery Viewing', function () {
         $page = visit("/galleries/{$gallery->id}");
         $page->hover('[data-photo-card]');
         $page->wait(0.2);
-        $page->click('[data-photo-actions]');
-        $page->wait(0.2);
-        $page->click('Set as Cover');
+        $page->click('[data-photo-cover]');
         $page->wait(0.3);
 
         expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('keeps only cover, delete and favorite actions on the photo tile', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+        $page->wait(0.2);
+
+        expect($page->script(<<<'JS'
+            (() => {
+                const card = document.querySelector('[data-photo-card]')
+                return {
+                    cover: card.querySelectorAll('[data-photo-cover]').length,
+                    delete: card.querySelectorAll('[data-photo-delete]').length,
+                    favorite: card.querySelectorAll('[aria-label="Favorite"]').length,
+                    download: card.querySelectorAll('[aria-label="Download"]').length,
+                    more: card.querySelectorAll('[data-photo-actions]').length,
+                }
+            })()
+        JS))->toBe(['cover' => 1, 'delete' => 1, 'favorite' => 1, 'download' => 0, 'more' => 0]);
     });
 
     it('opens the favorite list from the actions menu', function () {
@@ -1065,6 +1089,29 @@ describe('Photo Deletion', function () {
             ->call('requestDeletePhoto', $photo->id);
 
         expect($component->get('pendingPhotoId'))->toBe($photo->id);
+        expect($gallery->photos()->count())->toBe(1);
+    });
+
+    it('offers a quick delete button next to the favorite action on the photo tile', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+        $page->wait(0.2);
+        $page->click('[data-photo-delete]');
+        $page->wait(0.5);
+
+        expect($page->script(<<<'JS'
+            [...document.querySelectorAll('[role="dialog"]')]
+                .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                    && dialog.innerText.includes('Delete photo?'))
+        JS))->toBeTrue();
+
         expect($gallery->photos()->count())->toBe(1);
     });
 

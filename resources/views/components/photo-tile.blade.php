@@ -55,13 +55,10 @@
     class="group relative mb-1 break-inside-avoid overflow-hidden bg-zinc-100 dark:bg-white/10"
     x-data="{
         showActions: ! window.matchMedia('(hover: hover)').matches,
-        moreActionsOpen: false,
-        downloadOptionsOpen: false,
     }"
     @if ($isOwner)
         @mouseenter="showActions = true"
-        @mouseleave="if (!moreActionsOpen && !downloadOptionsOpen) showActions = false"
-        x-on:click.outside="moreActionsOpen = false; downloadOptionsOpen = false"
+        @mouseleave="showActions = false"
     @endif
     data-photo-card
     wire:key="{{ $htmlId ?? 'photo-'.$photo->id }}"
@@ -170,78 +167,43 @@
                     @endif
                 </x-ts-button>
 
-                @if ($photo->path && $photo->raw_path)
-                    <x-dropdown
-                        position="bottom-end"
-                        x-on:open="downloadOptionsOpen = $event.detail.status"
-                        x-on:select="downloadOptionsOpen = false"
-                    >
-                        <x-slot:action>
-                            <x-ts-button
-                                icon="cloud-arrow-down"
-                                variant="overlay"
-                                square
-                                size="sm"
-                                :aria-label="__('Download')"
-                                x-on:click="show = ! show; $refs.dropdown.dispatchEvent(new CustomEvent('open', { detail: { status: show } }))"
-                            />
-                        </x-slot:action>
+                <x-ts-button
+                    wire:click="requestDeletePhoto({{ $photo->id }})"
+                    icon="trash"
+                    variant="danger"
+                    square
+                    size="sm"
+                    :aria-label="__('Delete')"
+                    title="{{ __('Delete') }}"
+                    data-photo-delete
+                />
 
-                        <x-dropdown.items
-                            :text="__('Download JPG')"
-                            icon="cloud-arrow-down"
-                            :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'jpg'])"
-                        />
-                        <x-dropdown.items
-                            :text="__('Download Raw')"
-                            icon="cloud-arrow-down"
-                            :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo, 'type' => 'raw'])"
-                        />
-                    </x-dropdown>
-                @else
-                    <x-ts-button
-                        :href="route('galleries.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
-                        icon="cloud-arrow-down"
-                        variant="overlay"
-                        square
-                        size="sm"
-                        :aria-label="__('Download')"
-                    />
-                @endif
-
-                <x-dropdown
-                    position="bottom-end"
-                    x-on:open="moreActionsOpen = $event.detail.status"
-                    x-on:select="moreActionsOpen = false"
-                >
-                    <x-slot:action>
+                @if ($photo->isImage())
+                    @if ($gallery->coverPhoto?->is($photo))
                         <x-ts-button
-                            icon="ellipsis-vertical"
                             variant="overlay"
                             square
                             size="sm"
-                            :aria-label="__('More actions')"
-                            data-photo-actions
-                            x-on:click="show = ! show; $refs.dropdown.dispatchEvent(new CustomEvent('open', { detail: { status: show } }))"
+                            :aria-label="__('Adjust cover focus')"
+                            title="{{ __('Adjust cover focus') }}"
+                            wire:click="$set('adjustingCover', true)"
+                            data-photo-cover
+                        >
+                            <x-icon name="star" solid class="size-5 text-amber-500" />
+                        </x-ts-button>
+                    @else
+                        <x-ts-button
+                            icon="star"
+                            variant="overlay"
+                            square
+                            size="sm"
+                            :aria-label="__('Set as cover')"
+                            title="{{ __('Set as cover') }}"
+                            wire:click="setAsCover({{ $photo->id }})"
+                            data-photo-cover
                         />
-                    </x-slot:action>
-
-                    @if ($photo->isImage())
-                        @if ($gallery->coverPhoto?->is($photo))
-                            <x-dropdown.items :text="__('Adjust Cover Focus')" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)" />
-                            <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover({{ $photo->id }})" />
-                        @else
-                            <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover({{ $photo->id }})" />
-                        @endif
                     @endif
-
-                    <x-dropdown.items
-                        :text="__('Delete')"
-                        icon="trash"
-                        wire:click="requestDeletePhoto({{ $photo->id }})"
-                        class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                    />
-                </x-dropdown>
+                @endif
             </div>
         @elseif ($isSelectable || $isDownloadable)
             <div class="absolute right-1.5 bottom-1.5 flex gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
