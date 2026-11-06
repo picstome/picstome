@@ -2,7 +2,7 @@
     'method' => 'loadMore',
     'args' => [],
     'hasMore' => false,
-    'margin' => 600,
+    'margin' => 1200,
 ])
 
 @php
@@ -22,11 +22,27 @@
                 }
 
                 this.loading = true;
+                const scrollPosition = window.scrollY;
 
                 Promise.resolve({{ $request }})
                     .then(() => {
                         this.loading = false;
-                        this.$nextTick(() => this.recheck());
+
+                        this.$nextTick(() => {
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    // The masonry height collapses briefly during
+                                    // the Livewire morph, which can clamp the
+                                    // scroll to the top. Restore the position
+                                    // the visitor had before the update.
+                                    if (window.scrollY < scrollPosition - 50) {
+                                        window.scrollTo(0, scrollPosition);
+                                    }
+
+                                    this.recheck();
+                                });
+                            });
+                        });
                     })
                     .catch(() => {
                         this.loading = false;

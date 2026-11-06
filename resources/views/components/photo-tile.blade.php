@@ -61,6 +61,7 @@
         @mouseleave="showActions = false"
     @endif
     data-photo-card
+    data-photo-id="{{ $photo->id }}"
     wire:key="{{ $htmlId ?? 'photo-'.$photo->id }}"
 >
     @if (! $isReady)

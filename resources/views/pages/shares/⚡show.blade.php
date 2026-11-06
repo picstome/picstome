@@ -358,6 +358,8 @@ new #[Layout('layouts.guest')] class extends Component
 </div>
 @script
     <script>
+        @include('partials.photo-masonry-script')
+
         document.addEventListener('livewire:navigated', () => {
             const hash = window.location.hash;
             if (hash) {
