@@ -33,8 +33,9 @@ class ScheduledTasks
             ->dailyAt('00:10')
             ->name('subscriptions:cleanup');
 
-        $schedule->command('cleanup:livewire-tmp')
+        $schedule->command('cleanup:livewire-tmp --force')
             ->dailyAt('00:20')
+            ->withoutOverlapping()
             ->name('cleanup:livewire-tmp');
 
         $schedule->command('ingest:ftp-uploads')
