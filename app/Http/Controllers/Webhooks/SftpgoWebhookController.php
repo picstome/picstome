@@ -49,7 +49,7 @@ class SftpgoWebhookController
             return response()->noContent();
         }
 
-        IngestFtpUpload::dispatch($account->id, $account->inboxPath().'/'.basename($path));
+        IngestFtpUpload::dispatch($account->id, $account->inboxPathFor($path));
 
         return response()->noContent();
     }

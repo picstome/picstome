@@ -42,6 +42,18 @@ it('queues stable inbox files and skips files still transferring', function () {
     Queue::assertPushed(IngestFtpUpload::class, fn ($job) => $job->path === $stable);
 });
 
+it('scans nested camera upload folders', function () {
+    Queue::fake();
+
+    $account = FtpAccount::factory()->create();
+    $path = putInboxFile($account, 'queen/DSC_0001.JPG', 120);
+
+    $dispatched = app(FtpInboxIngestor::class)->dispatchStableUploads($account, 60);
+
+    expect($dispatched)->toBe(1);
+    Queue::assertPushed(IngestFtpUpload::class, fn ($job) => $job->path === $path);
+});
+
 it('uses a short live window for completed s3 uploads', function () {
     Queue::fake();
 
