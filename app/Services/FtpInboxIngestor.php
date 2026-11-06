@@ -50,14 +50,30 @@ class FtpInboxIngestor
                 $cutoff = now()->subSeconds($stabilitySeconds)->getTimestamp();
                 $dispatched = 0;
 
-                foreach ($disk->files($account->inboxPath()) as $path) {
-                    $lastModified = $disk->lastModified($path);
-
-                    if ($lastModified === false || $lastModified > $cutoff) {
+                // Cameras may upload into subfolders (for example queen/ or
+                // DCIM/100CANON/), so the inbox has to be listed recursively.
+                // Reading LastModified from the listing avoids one HEAD per
+                // file.
+                foreach ($disk->getDriver()->listContents($account->inboxPath(), true) as $item) {
+                    if (! $item->isFile()) {
                         continue;
                     }
 
-                    IngestFtpUpload::dispatch($account->id, $path);
+                    $lastModified = $item->lastModified();
+
+                    if ($lastModified === null) {
+                        try {
+                            $lastModified = $disk->lastModified($item->path());
+                        } catch (Throwable) {
+                            continue;
+                        }
+                    }
+
+                    if ($lastModified > $cutoff) {
+                        continue;
+                    }
+
+                    IngestFtpUpload::dispatch($account->id, $item->path());
 
                     $dispatched++;
                 }

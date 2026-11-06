@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class FtpAccount extends Model
 {
@@ -126,8 +127,18 @@ class FtpAccount extends Model
 
         $disk = static::disk();
 
-        foreach ($disk->files($oldAccount->inboxPath()) as $path) {
-            $disk->move($path, $this->inboxPath().'/'.basename($path));
+        // Preserve subfolders created by cameras (for example queen/ or
+        // DCIM/100CANON/) when moving pending uploads to the new inbox.
+        foreach ($disk->getDriver()->listContents($oldAccount->inboxPath(), true) as $item) {
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            $relativePath = Str::after($item->path(), $oldAccount->inboxPath().'/');
+            $targetPath = $this->inboxPath().'/'.$relativePath;
+
+            $disk->makeDirectory(dirname($targetPath));
+            $disk->move($item->path(), $targetPath);
         }
 
         return true;
@@ -262,6 +273,29 @@ class FtpAccount extends Model
     public function inboxPath(): string
     {
         return rtrim(config('picstome.ftp_uploads.inbox_prefix', 'camera-uploads'), '/').'/'.$this->username;
+    }
+
+    /**
+     * Resolve an SFTPGo path to the full inbox key, preserving subfolders.
+     *
+     * SFTPGo reports virtual paths such as /queen/DSC_0001.JPG. The path is
+     * relative to the account's home, which is the inbox root.
+     */
+    public function inboxPathFor(string $path): string
+    {
+        $path = ltrim(trim($path), '/');
+
+        if ($path === '') {
+            return $this->inboxPath();
+        }
+
+        $inbox = $this->inboxPath();
+
+        if (str_starts_with($path, $inbox.'/')) {
+            return $path;
+        }
+
+        return $inbox.'/'.$path;
     }
 
     /**

@@ -30,6 +30,21 @@ it('ingests immediately when a valid upload event arrives', function () {
         && $job->path === $this->account->inboxPath().'/1Z8A0660.JPG');
 });
 
+it('preserves nested camera upload paths', function () {
+    Queue::fake();
+
+    $this->postJson('/webhooks/sftpgo', [
+        'action' => 'upload',
+        'username' => '234816',
+        'virtual_path' => '/queen/1Z8A0660.JPG',
+        'status' => 1,
+        'file_size' => 1024,
+    ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
+
+    Queue::assertPushed(IngestFtpUpload::class, fn ($job) => $job->ftpAccountId === $this->account->id
+        && $job->path === $this->account->inboxPath().'/queen/1Z8A0660.JPG');
+});
+
 it('rejects requests without the token', function () {
     $this->postJson('/webhooks/sftpgo', ['action' => 'upload', 'username' => '234816'], ['X-PICSTOME-TOKEN' => 'wrong'])
         ->assertUnauthorized();

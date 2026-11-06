@@ -181,6 +181,22 @@ describe('ingest job', function () {
         expect($this->account->fresh()->last_upload_at)->not->toBeNull();
     });
 
+    it('moves a nested camera upload into the receiving gallery', function () {
+        Queue::fake();
+
+        $path = putUpload($this->account, 'queen/DSC_0001.JPG');
+
+        (new IngestFtpUpload($this->account->id, $path))->handle();
+
+        tap($this->gallery->fresh()->photos()->first(), function ($photo) {
+            expect($photo)->not->toBeNull();
+            expect($photo->name)->toBe('DSC_0001.JPG');
+            expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+        });
+
+        expect(Storage::disk('s3')->exists($path))->toBeFalse();
+    });
+
     it('removes uploads with unsupported extensions', function () {
         $path = putUpload($this->account, 'virus.exe');
 

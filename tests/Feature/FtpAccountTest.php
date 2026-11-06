@@ -167,6 +167,22 @@ it('moves pending inbox files to the new inbox when rotating', function () {
     expect(Storage::disk('s3')->exists('camera-uploads/JXQJSR2U/DSC_0001.JPG'))->toBeFalse();
 });
 
+it('moves nested pending inbox files to the new inbox when rotating', function () {
+    config(['picstome.ftp_uploads.sftpgo_url' => null]);
+    Storage::fake('s3');
+
+    $account = FtpAccount::factory()->create(['username' => 'JXQJSR2U']);
+
+    Storage::disk('s3')->put($account->inboxPath().'/queen/DSC_0001.JPG', 'pending');
+
+    $account->rotateCredentials();
+
+    $newPath = $account->fresh()->inboxPath().'/queen/DSC_0001.JPG';
+
+    expect(Storage::disk('s3')->exists($newPath))->toBeTrue();
+    expect(Storage::disk('s3')->exists('camera-uploads/JXQJSR2U/queen/DSC_0001.JPG'))->toBeFalse();
+});
+
 it('rolls back the rotation when the sftpgo server cannot be reached', function () {
     config([
         'picstome.ftp_uploads.sftpgo_url' => 'https://sftpgo.test',
