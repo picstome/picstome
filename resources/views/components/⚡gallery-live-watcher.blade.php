@@ -4,6 +4,7 @@ use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Services\FtpInboxIngestor;
 use App\Services\GalleryUnlockService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
@@ -114,6 +115,13 @@ new class extends Component
 
     protected function authorizeGallery(Gallery $gallery): void
     {
+        // The photographer and their team can always open their own gallery,
+        // even when it is shared behind a password. Without this check the
+        // watcher aborts with a 404 before the owner page can render.
+        if (Auth::check() && Gate::allows('view', $gallery)) {
+            return;
+        }
+
         if ($gallery->is_shared) {
             if ($gallery->share_password && ! app(GalleryUnlockService::class)->isUnlocked($gallery)) {
                 abort(404);

@@ -4,6 +4,7 @@ use App\Jobs\IngestFtpUpload;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\User;
 use App\Services\FtpInboxIngestor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -151,6 +152,16 @@ it('rejects a locked shared gallery', function () {
 
     Livewire::test('gallery-live-watcher', ['gallery' => $gallery])
         ->assertStatus(404);
+});
+
+it('allows the owner to watch their own password-protected gallery', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->shared()->protected()->for($user->currentTeam)->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('gallery-live-watcher', ['gallery' => $gallery, 'scanInbox' => true])
+        ->assertOk();
 });
 
 it('dispatches a photo event when a pending photo becomes ready', function () {
