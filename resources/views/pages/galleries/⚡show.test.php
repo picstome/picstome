@@ -1092,6 +1092,27 @@ describe('Photo Deletion', function () {
         expect($gallery->photos()->count())->toBe(1);
     });
 
+    it('removes the deleted photo from the grid after confirmation', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]:first-of-type');
+        $page->wait(0.2);
+        $page->click('[data-photo-card]:first-of-type [data-photo-delete]');
+        $page->wait(0.3);
+        $page->click('#delete-photo button[wire\\:click]');
+        $page->wait(1);
+
+        expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
+        expect($gallery->photos()->count())->toBe(1);
+    });
+
     it('offers a quick delete button next to the favorite action on the photo tile', function () {
         Storage::fake('s3');
 

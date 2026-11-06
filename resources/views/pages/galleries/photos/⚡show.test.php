@@ -132,6 +132,79 @@ test('can delete a photo', function () {
     Storage::disk('public')->assertMissing(['galleries/1/photos/photo1_thumb.jpg']);
 });
 
+test('deleting a photo opens the next photo in the viewer', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $first])
+        ->call('delete');
+
+    $component->assertRedirect(route('galleries.photos.show', [
+        'gallery' => $gallery,
+        'photo' => $second,
+    ]));
+
+    expect(Photo::find($first->id))->toBeNull();
+});
+
+test('deleting the last photo opens the previous photo in the viewer', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $second])
+        ->call('delete');
+
+    $component->assertRedirect(route('galleries.photos.show', [
+        'gallery' => $gallery,
+        'photo' => $first,
+    ]));
+
+    expect(Photo::find($second->id))->toBeNull();
+});
+
+test('deleting a photo keeps the favorites navigation mode', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->favorited()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->favorited()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['navigateFavorites' => true])
+        ->test('pages::galleries.photos.show', ['photo' => $first])
+        ->call('delete');
+
+    $component->assertRedirect(route('galleries.photos.show', [
+        'gallery' => $gallery,
+        'photo' => $second,
+        'navigateFavorites' => true,
+    ]));
+
+    expect(Photo::find($first->id))->toBeNull();
+});
+
+test('deleting the only photo returns to the gallery', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('delete');
+
+    $component->assertRedirect("/galleries/{$gallery->id}");
+    expect(Photo::find($photo->id))->toBeNull();
+});
+
 test('asks for confirmation before deleting a comment', function () {
     $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
     $comment = PhotoComment::factory()->for($photo)->create();
