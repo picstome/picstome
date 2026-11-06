@@ -142,3 +142,9 @@ class extends Component
         @endsubscribed
     </div>
 </div>
+
+@script
+    <script>
+        @include('partials.photo-masonry-script')
+    </script>
+@endscript

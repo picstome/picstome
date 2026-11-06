@@ -1595,6 +1595,8 @@ new class extends Component
 
 @script
     <script>
+        @include('partials.photo-masonry-script')
+
         document.addEventListener('livewire:navigated', () => {
             const hash = window.location.hash;
             if (hash) {

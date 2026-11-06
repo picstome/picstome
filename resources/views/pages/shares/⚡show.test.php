@@ -465,13 +465,137 @@ test('shared gallery renders a bounded page and loads more photos on demand', fu
     $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
 
     expect($component->allPhotos)->toHaveCount(60)
-        ->and(substr_count($component->html(), 'data-photo-card'))->toBe(60)
+        ->and(substr_count($component->html(), 'data-photo-id='))->toBe(60)
         ->and($component->html())->toContain('x-on:scroll.window.throttle.150ms')
         ->and($component->html())->not->toContain('wire:name="shared-photo-item"');
 
     $component->call('loadMore', 'all');
 
     expect($component->allPhotos)->toHaveCount(65);
+});
+
+test('shared gallery appends more photos below the existing masonry columns', function () {
+    $gallery = Gallery::factory()->shared()->for($this->team)->create();
+    Photo::factory()->count(65)->for($gallery)->create(['status' => 'processed']);
+
+    $page = visit('/shares/'.$gallery->ulid.'/'.$gallery->slug);
+
+    $ready = false;
+
+    for ($attempt = 0; $attempt < 30; $attempt++) {
+        $ready = $page->script(<<<'JS'
+            (() => {
+                const wall = document.querySelector('[data-photo-masonry]');
+
+                return wall?.dataset.masonryReady === 'true'
+                    && wall.querySelectorAll(':scope > [data-photo-card]').length === 60;
+            })()
+        JS);
+
+        if ($ready) {
+            break;
+        }
+
+        $page->wait(0.2);
+    }
+
+    expect($ready)->toBeTrue();
+
+    // Load the placeholder/fallback images before recording column heights.
+    $page->script("document.querySelectorAll('[data-photo-card] img').forEach((img) => { img.loading = 'eager'; })");
+    $page->wait(1);
+    $page->script('window.Alpine.$data(document.querySelector(\'[data-photo-masonry]\')).layout()');
+    $page->wait(0.2);
+
+    $before = $page->script(<<<'JS'
+        (() => {
+            const wall = document.querySelector('[data-photo-masonry]');
+            const state = window.Alpine.$data(wall);
+            const wallRect = wall.getBoundingClientRect();
+
+            return Array.from(wall.querySelectorAll(':scope > [data-photo-card]')).map((tile) => {
+                const rect = tile.getBoundingClientRect();
+
+                return {
+                    id: tile.dataset.photoId,
+                    column: state.assignments.get(tile.dataset.photoId),
+                    top: Math.round(rect.top - wallRect.top),
+                    bottom: Math.round(rect.bottom - wallRect.top),
+                };
+            });
+        })()
+    JS);
+
+    $page->script("window.Livewire.first().call('loadMore', 'all')");
+    waitForPhotoCardCount($page, 65);
+
+    $laidOut = false;
+
+    for ($attempt = 0; $attempt < 30; $attempt++) {
+        $laidOut = $page->script(<<<'JS'
+            (() => {
+                const wall = document.querySelector('[data-photo-masonry]');
+                const state = window.Alpine.$data(wall);
+                const tiles = Array.from(wall.querySelectorAll(':scope > [data-photo-card]'));
+
+                return tiles.length === 65
+                    && (state?.assignments?.size ?? 0) >= 65
+                    && tiles.every((tile) => getComputedStyle(tile).position === 'absolute' && tile.style.top !== '');
+            })()
+        JS);
+
+        if ($laidOut) {
+            break;
+        }
+
+        $page->wait(0.2);
+    }
+
+    expect($laidOut)->toBeTrue()
+        ->and($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
+
+    $after = $page->script(<<<'JS'
+        (() => {
+            const wall = document.querySelector('[data-photo-masonry]');
+            const state = window.Alpine.$data(wall);
+            const wallRect = wall.getBoundingClientRect();
+
+            return Array.from(wall.querySelectorAll(':scope > [data-photo-card]')).map((tile) => {
+                const rect = tile.getBoundingClientRect();
+
+                return {
+                    id: tile.dataset.photoId,
+                    column: state.assignments.get(tile.dataset.photoId),
+                    top: Math.round(rect.top - wallRect.top),
+                    bottom: Math.round(rect.bottom - wallRect.top),
+                };
+            });
+        })()
+    JS);
+
+    $beforeById = collect($before)->keyBy('id');
+    $newTiles = collect($after)->reject(fn ($tile) => $beforeById->has($tile['id']));
+    $movedTiles = collect($after)->filter(fn ($tile) => $beforeById->has($tile['id'])
+        && $beforeById[$tile['id']]['column'] !== $tile['column']);
+
+    $overlaps = collect($after)
+        ->groupBy('column')
+        ->flatMap(function ($tiles) {
+            $sorted = $tiles->sortBy('top')->values();
+            $overlaps = [];
+
+            for ($index = 1; $index < $sorted->count(); $index++) {
+                if ($sorted[$index]['top'] < $sorted[$index - 1]['bottom'] - 1) {
+                    $overlaps[] = [$sorted[$index - 1]['id'], $sorted[$index]['id']];
+                }
+            }
+
+            return $overlaps;
+        });
+
+    expect($newTiles)->toHaveCount(5)
+        ->and($movedTiles)->toBeEmpty()
+        ->and($overlaps)->toBeEmpty();
 });
 
 test('shared gallery reveals the photo referenced by the viewer back link', function () {

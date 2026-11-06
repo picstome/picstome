@@ -1869,7 +1869,7 @@ test('owner gallery renders a bounded page and loads more photos on demand', fun
     $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
 
     expect($component->allPhotos)->toHaveCount(60)
-        ->and(substr_count($component->html(), 'data-photo-card'))->toBe(60)
+        ->and(substr_count($component->html(), 'data-photo-id='))->toBe(60)
         ->and($component->html())->toContain('x-on:scroll.window.throttle.150ms')
         ->and($component->html())->not->toContain('wire:name="photo-item"');
 
