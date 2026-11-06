@@ -311,6 +311,8 @@ new class extends Component
 
         $photo->deleteFromDisk()->delete();
 
+        $this->pendingPhotoId = null;
+
         $this->forgetPhotoCollections();
     }
 
