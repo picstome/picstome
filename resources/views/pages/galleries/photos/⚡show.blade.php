@@ -15,9 +15,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
     public Photo $photo;
 
-    public ?Photo $next;
+    public ?Photo $next = null;
 
-    public ?Photo $previous;
+    public ?Photo $previous = null;
 
     public $commentText = '';
 
@@ -85,10 +85,37 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $this->authorize('delete', $this->photo);
 
         $gallery = $this->photo->gallery;
+        $next = $this->next;
+        $previous = $this->previous;
 
         $this->photo->deleteFromDisk()->delete();
 
+        if ($next) {
+            return $this->redirect($this->viewerUrl($next));
+        }
+
+        if ($previous) {
+            return $this->redirect($this->viewerUrl($previous));
+        }
+
         return $this->redirect("/galleries/{$gallery->id}");
+    }
+
+    /**
+     * Build the viewer URL for an adjacent photo, keeping the active
+     * favorites/commented navigation mode.
+     */
+    protected function viewerUrl(Photo $photo): string
+    {
+        $query = array_filter([
+            'navigateFavorites' => $this->navigateFavorites ? true : null,
+            'navigateCommented' => $this->navigateCommented ? true : null,
+        ]);
+
+        return route('galleries.photos.show', [
+            'gallery' => $photo->gallery_id,
+            'photo' => $photo->id,
+        ] + $query);
     }
 
     public function setAsCover()
