@@ -10,6 +10,7 @@ use App\Http\Controllers\Webhooks\SftpgoWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\NoIndex;
 use App\Http\Middleware\PasswordProtectGallery;
+use App\Http\Middleware\RedirectToCanonicalSharedGallerySlug;
 use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
 use App\Models\Photo;
@@ -73,7 +74,7 @@ Route::get('/shares/{gallery:ulid}', function (Gallery $gallery) {
     return redirect('/shares/'.$gallery->ulid.'/'.$gallery->slug);
 })->name('shares.redirect');
 
-Route::livewire('/shares/{gallery:ulid}/{slug}', 'pages::shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class]);
+Route::livewire('/shares/{gallery:ulid}/{slug}', 'pages::shares.show')->name('shares.show')->middleware([PasswordProtectGallery::class, RedirectToCanonicalSharedGallerySlug::class]);
 
 Route::livewire('/clients/{customer:ulid}', 'pages::clients.show')->name('clients.show');
 

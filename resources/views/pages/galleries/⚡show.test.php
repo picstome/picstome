@@ -1951,3 +1951,11 @@ it('enables comments when annotations are enabled in the share modal', function 
         ->assertChecked('@share-annotations-toggle')
         ->assertNoJavascriptErrors();
 });
+
+test('the owner can open their own password-protected shared gallery', function () {
+    $gallery = Gallery::factory()->shared()->protected()->for($this->team)->create();
+
+    $this->actingAs($this->user)
+        ->get('/galleries/'.$gallery->id)
+        ->assertOk();
+});
