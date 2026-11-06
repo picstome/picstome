@@ -89,6 +89,35 @@ test('bare share URL redirects to the slug URL', function () {
     $response->assertRedirect('/shares/0123ABC/'.$gallery->slug);
 });
 
+test('stale share URL redirects to the canonical URL after the gallery is renamed', function () {
+    Gallery::factory()->shared()->for($this->team)->create([
+        'ulid' => '0123ABC',
+        'name' => 'Renamed Gallery',
+    ]);
+
+    get('/shares/0123ABC/old-gallery-name')
+        ->assertRedirect('/shares/0123ABC/renamed-gallery');
+});
+
+test('stale share URL keeps the query string when redirecting', function () {
+    Gallery::factory()->shared()->for($this->team)->create([
+        'ulid' => '0123ABC',
+        'name' => 'Renamed Gallery',
+    ]);
+
+    get('/shares/0123ABC/old-gallery-name?activeTab=favorited&photo=42')
+        ->assertRedirect('/shares/0123ABC/renamed-gallery?activeTab=favorited&photo=42');
+});
+
+test('stale share URL for an unshared gallery still returns 404', function () {
+    Gallery::factory()->unshared()->for($this->team)->create([
+        'ulid' => '0123ABC',
+        'name' => 'Renamed Gallery',
+    ]);
+
+    get('/shares/0123ABC/old-gallery-name')->assertNotFound();
+});
+
 test('visitors can view a shared gallery', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
     $photoA = Photo::factory()->for($gallery)->create();

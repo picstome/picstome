@@ -14,12 +14,11 @@ homologated:
 
 - The invoices never print «VERIFACTU» nor «Factura verificable en la sede
   electrónica de la AEAT».
-- The QR code points to the Picstome verification page and is labelled
-  «Picstome verification». It is not the official «QR tributario» of the
-  Agencia Tributaria.
+- The PDF prints the Picstome verification link so the client can open the
+  public page. It does not print a QR code yet.
 - The verification offered by Picstome is its own: a fingerprint chain plus a
-  public page. The link and the label are prepared to be replaced by the
-  official ones when the homologation arrives.
+  public page. The link is prepared to be replaced by the official one when the
+  homologation arrives.
 
 References used by this feature:
 
@@ -36,7 +35,7 @@ References used by this feature:
 | Table | Purpose |
 |---|---|
 | `invoice_settings` | One row per team: issuer fiscal data, tax defaults, currency, series and the numbering state. |
-| `invoices` | The invoices, with their amounts, the snapshot of the issuer and the client, the fingerprint and the stored PDF. |
+| `invoices` | The invoices, with their full number, amounts, issuer and client snapshots, fingerprint, stored PDF and manual paid flag. |
 | `invoice_events` | Append only audit trail of every relevant operation. |
 
 `customers` gains the fiscal fields used to issue a complete invoice:
@@ -55,8 +54,25 @@ that has already been issued.
 Invoices are numbered by **series + exercise + consecutive number**, for
 example `F-2026-0001`.
 
-- The number is assigned when the invoice is **issued**. Drafts never consume a
-  number, so there are no gaps.
+The number printed to the client is stored in `invoices.full_number` and is
+unique per team. It can be edited when the invoice is issued (`INV-0042`,
+`2026/0042`, `F-2026-0001`). The internal `series/year/number` and the
+fingerprint chain are not affected, and drafts still consume no number.
+
+The form suggests the next number from the last invoice of the same series:
+the trailing number is incremented preserving its padding, and when the last
+invoice belongs to another exercise the year is replaced too
+(`F-2026-0042` → `F-2027-0043`). Gaps and lower numbers are allowed with a
+non-blocking warning; only duplicates are rejected. The last generated invoice
+(number, client and date) is shown as a reference next to the field.
+
+Corrective invoices use their own series. When a corrective invoice is reviewed
+before issuing, its full number is editable; when it is issued directly, the
+suggestion is used automatically. Duplicated invoices always get a new number
+when they are issued.
+
+- The internal number is assigned when the invoice is **issued**. Drafts never
+  consume a number, so there are no gaps.
 - The state of the numbering lives in `invoice_settings.invoice_sequence_state`,
   with one entry per series and exercise:
 
@@ -103,8 +119,8 @@ removed from the database.
 The `Invoice` model is the first barrier:
 
 - An issued or rectified invoice cannot be modified. Only the rectification
-  status, the revocation of the public link and the stored PDF metadata can be
-  written.
+  status, the revocation of the public link, the manual paid flag and the
+  stored PDF metadata can be written. The full number is frozen once issued.
 - Only draft invoices can be deleted.
 
 The fingerprint chain and the stored PDF hash are the second barrier, at the
@@ -158,15 +174,19 @@ the issuer is Spanish and the invoice is not in euros:
 ## PDF
 
 The PDF is rendered once, when the invoice is issued, and stored on the team
-disk (`teams/{team}/invoices/{ulid}/{number}.pdf`). It is never regenerated,
-so the document a client received always matches the data of the invoice.
+disk (`teams/{team}/invoices/{ulid}/{full_number}.pdf`). It is never
+regenerated, so the document a client received always matches the data of the
+invoice. Slashes in the full number are replaced by hyphens in the file name,
+so `2026/0042` is stored and downloaded as `2026-0042.pdf`.
 
 - `pdf_path`, `pdf_size` and `pdf_hash` are stored with the invoice.
 - The size of the PDF counts in the storage usage of the team
   (`StorageUsageService`). When the team has no space left, the invoice is not
   issued.
 - The PDF contains the logo of the team as a data URI, the accent color of the
-  branding, the QR code, the public link and the fingerprint.
+  branding, and the public verification link at the footer. The document does
+  not print a QR code. The fingerprint is not printed on the document either;
+  it is available on the public verification page.
 
 ## Public verification
 
@@ -181,6 +201,16 @@ documents keep the previous one. The public pages are not indexed
 The public page shows the data of the invoice, the breakdown of the VAT and
 the IRPF, the fingerprint, the position in the chain, the state and the
 corrective invoice when there is one.
+
+## Email invoice
+
+The invoice detail and the invoices list offer an **Email invoice** action. It
+opens the email client of the photographer through a `mailto:` link: Picstome
+never sends the email from the server and does not attach the PDF. The
+recipient is the client email stored in the invoice snapshot, and the subject
+and body are prefilled with the full number, total, due date, public invoice
+link, public PDF link, payment terms and footer. The action is only offered
+while the public link is active.
 
 ## Rectification
 
@@ -198,6 +228,9 @@ An issued invoice is never voided: it is **rectified** (article 15 of RD
   public page.
 - Corrective invoices never consume the monthly plan limit, so a team can
   always correct an invoice it already issued.
+- The full number of the corrective invoice can be edited while it is reviewed
+  before issuing. When it is issued directly, the number suggested from the
+  rectification series is used.
 - The deadline is four years since the tax accrual. The app warns when the
   original invoice belongs to a previous exercise.
 
@@ -208,11 +241,13 @@ The copy is a **new draft** with the same client, line items, discount, taxes,
 payment terms and notes, opened on the line-items step of the guided creation
 so the amounts can be adjusted before issuing it.
 
-The copy never inherits the number, the fingerprint, the PDF, the public link
-or the status of the original, and it is never a corrective invoice, even when
-the original one is. The issue date is the current date and the due date is
-left empty. The currency is the one configured in the invoicing settings, and
-the exchange rate is only reused when the currency has not changed.
+The copy never inherits the number, the full number, the fingerprint, the PDF,
+the public link or the status of the original, and it is never a corrective
+invoice, even when the original one is. When the copy is issued it receives a
+new number suggested from the last invoice of its series. The issue date is the
+current date and the due date is left empty. The currency is the one configured
+in the invoicing settings, and the exchange rate is only reused when the
+currency has not changed.
 
 The audit trail records the `created` event of the draft with the invoice it
 comes from in its context, so a recurring invoice can always be traced back to
@@ -238,6 +273,16 @@ never invoiced twice, and the invoice detail shows the payments that settle
 it, the amount paid and the amount pending. A payment does not replace the
 invoice: it is issued by the photographer.
 
+## Payment status
+
+The team can mark an issued invoice as paid for its internal record. The flag
+is stored in `invoices.paid_at`; it does not change the amounts, the PDF or the
+fingerprint and is never shown on the public page. An invoice is displayed as
+paid when the flag is set or when the linked payments fully settle the amount.
+Otherwise it is displayed as payment pending. The manual flag can be undone,
+and every change is recorded in the audit trail as `marked_paid` or
+`marked_unpaid`.
+
 ## Invoicing a client
 
 The client record has its own **Invoices** block, below the payments, with the
@@ -250,7 +295,8 @@ left behind.
 
 `invoice_events` is append only: the model forbids updating and deleting the
 rows. The recorded events are `created`, `updated`, `issued`, `rectified`,
-`pdf_downloaded`, `public_viewed`, `public_pdf_downloaded` and `link_revoked`.
+`pdf_downloaded`, `public_viewed`, `public_pdf_downloaded`, `link_revoked`,
+`link_regenerated`, `marked_paid` and `marked_unpaid`.
 
 ## Retention
 

@@ -46,6 +46,7 @@ class Invoice extends Model
         'status',
         'public_token',
         'public_token_revoked_at',
+        'paid_at',
         'updated_at',
     ];
 
@@ -75,6 +76,7 @@ class Invoice extends Model
             'rectified_amount' => 'decimal:2',
             'invoice_data' => 'array',
             'issued_at' => 'datetime',
+            'paid_at' => 'datetime',
             'pdf_generated_at' => 'datetime',
             'public_token_revoked_at' => 'datetime',
         ];
@@ -210,6 +212,47 @@ class Invoice extends Model
     }
 
     /**
+     * Whether the team marked the invoice as paid for its internal record.
+     */
+    public function isMarkedPaid(): bool
+    {
+        return $this->paid_at !== null;
+    }
+
+    /**
+     * Amount settled by the payments linked to the invoice.
+     */
+    public function paidAmount(): float
+    {
+        return round($this->payments->sum(fn (Payment $payment) => $payment->amount / 100), 2);
+    }
+
+    /**
+     * Amount still pending after the linked payments.
+     */
+    public function pendingAmount(): float
+    {
+        return max(0, round((float) $this->total - $this->paidAmount(), 2));
+    }
+
+    /**
+     * Whether the linked payments settle the invoice on their own.
+     */
+    public function isSettledByPayments(): bool
+    {
+        return (float) $this->total > 0 && $this->pendingAmount() <= 0;
+    }
+
+    /**
+     * An invoice is paid when the team marks it manually or when the linked
+     * payments settle the amount.
+     */
+    public function isPaid(): bool
+    {
+        return $this->isMarkedPaid() || $this->isSettledByPayments();
+    }
+
+    /**
      * Append an entry to the audit trail.
      *
      * @param  array<string, mixed>  $context
@@ -225,12 +268,19 @@ class Invoice extends Model
     }
 
     /**
-     * Formatted number, e.g. F-2026-0001.
+     * Full number shown to the client, e.g. F-2026-0001.
+     *
+     * The value stored in `full_number` wins. The fallback keeps invoices
+     * created before the column existed readable while the backfill runs.
      */
     protected function fullNumber(): Attribute
     {
-        return Attribute::get(function (): ?string {
-            if (blank($this->series) || blank($this->year) || blank($this->number)) {
+        return Attribute::get(function (?string $value): ?string {
+            if (filled($value)) {
+                return $value;
+            }
+
+            if ($this->isDraft() || blank($this->series) || blank($this->year) || blank($this->number)) {
                 return null;
             }
 
@@ -257,12 +307,17 @@ class Invoice extends Model
     }
 
     /**
-     * Name used when the PDF is downloaded.
+     * Name used when the PDF is stored and downloaded.
+     *
+     * The slash is common in invoice numbers such as 2026/0042, but it cannot
+     * be part of a file name or it would create a subdirectory.
      */
     protected function pdfFileName(): Attribute
     {
         return Attribute::get(function (): string {
-            return ($this->full_number ?? $this->ulid).'.pdf';
+            $name = str_replace(['/', '\\'], '-', (string) ($this->full_number ?? $this->ulid));
+
+            return $name.'.pdf';
         });
     }
 }

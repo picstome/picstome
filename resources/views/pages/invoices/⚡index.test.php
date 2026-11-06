@@ -22,7 +22,17 @@ it('lists the invoices of the team', function () {
         ->test('pages::invoices')
         ->assertHasNoErrors()
         ->assertSee('Invoices')
-        ->assertSee('Draft');
+        ->assertSee('Draft')
+        ->assertSee(route('customers.show', $invoice->customer), false);
+});
+
+it('does not show the status or actions labels in the table header', function () {
+    draftInvoice($this->team);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertDontSee('Status')
+        ->assertDontSee('Actions');
 });
 
 it('does not show the invoices of another team', function () {
@@ -53,26 +63,31 @@ it('requires authentication', function () {
     $this->get(route('invoices'))->assertRedirect(route('login'));
 });
 
-it('shows the links to the pdf and the public page of an issued invoice', function () {
+it('shows only the view and duplicate actions for an issued invoice', function () {
     $this->team->update(['monthly_invoice_limit' => 10]);
 
     $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices')
-        ->assertSee(route('invoices.pdf', $invoice), false)
-        ->assertSee(route('invoices.public.show', $invoice->public_token), false);
+        ->assertSee(route('invoices.show', $invoice), false)
+        ->assertSee('confirmDuplicate('.$invoice->id.')', false)
+        ->assertDontSee(route('invoices.pdf', $invoice), false)
+        ->assertDontSee(route('invoices.public.show', $invoice->public_token), false)
+        ->assertDontSee('mailto:', false);
 });
 
-it('duplicates an issued invoice from the list', function () {
+it('duplicates an issued invoice from the list after confirmation', function () {
     $this->team->update(['monthly_invoice_limit' => 10]);
 
     $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
 
     $component = Livewire::actingAs($this->user)
         ->test('pages::invoices')
-        ->assertSee('duplicate('.$invoice->id.')', false)
-        ->call('duplicate', $invoice->id)
+        ->call('confirmDuplicate', $invoice->id)
+        ->assertSet('duplicateInvoiceId', $invoice->id)
+        ->assertSet('duplicateInvoiceNumber', $invoice->full_number)
+        ->call('duplicate')
         ->assertHasNoErrors();
 
     $draft = $this->team->invoices()->where('status', Invoice::STATUS_DRAFT)->first();
@@ -83,7 +98,48 @@ it('duplicates an issued invoice from the list', function () {
     $component->assertRedirect(route('invoices.create', ['invoice' => $draft->ulid]));
 });
 
-it('does not duplicate an invoice of another team', function () {
+it('shows the payment status of an issued invoice', function () {
+    $this->team->update(['monthly_invoice_limit' => 10]);
+
+    $invoice = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee('Payment pending')
+        ->assertDontSee('mailto:', false);
+
+    $invoice->update(['paid_at' => now()]);
+
+    app()->setLocale('es');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee('Pagada');
+});
+
+it('shows the rectificative and issued tags without a payment status', function () {
+    $this->team->update(['monthly_invoice_limit' => 10]);
+
+    $original = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    $original->update(['paid_at' => now()]);
+
+    app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team, [
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+    ]));
+
+    app()->setLocale('es');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee('Rectificativa')
+        ->assertSee('Emitida')
+        ->assertDontSee('Pago pendiente');
+});
+
+it('does not show the view action of an invoice of another team', function () {
     $otherTeam = User::factory()->withPersonalTeam()->create()->currentTeam;
 
     InvoiceSetting::factory()->for($otherTeam)->create();
@@ -92,10 +148,7 @@ it('does not duplicate an invoice of another team', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices')
-        ->call('duplicate', $invoice->id)
-        ->assertStatus(404);
-
-    expect($this->team->invoices()->count())->toBe(0);
+        ->assertDontSee(route('invoices.show', $invoice), false);
 });
 
 it('does not show the duplicate action for a draft invoice', function () {
@@ -103,7 +156,7 @@ it('does not show the duplicate action for a draft invoice', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices')
-        ->assertDontSee('duplicate('.$draft->id.')', false);
+        ->assertDontSee('confirmDuplicate('.$draft->id.')', false);
 });
 
 it('does not show the links for a draft invoice', function () {
@@ -112,5 +165,6 @@ it('does not show the links for a draft invoice', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices')
         ->assertDontSee(route('invoices.pdf', ['invoice' => 'x']), false)
+        ->assertDontSee('mailto:', false)
         ->assertSee('Draft');
 });

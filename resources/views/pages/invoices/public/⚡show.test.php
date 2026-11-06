@@ -22,9 +22,26 @@ it('shows a public invoice', function () {
     $this->get('/i/'.$invoice->public_token)
         ->assertOk()
         ->assertSee($invoice->full_number)
+        ->assertSee('Download PDF')
+        ->assertSee('Traceability')
         ->assertSee('Verified')
         ->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive')
         ->assertHeader('Referrer-Policy', 'no-referrer');
+});
+
+it('shows the team logo and the download action', function () {
+    $invoice = $this->issuance->issue(draftInvoice($this->team));
+
+    Storage::disk(config('picstome.disk'))->put('teams/logo.png', 'logo');
+
+    $this->team->update(['brand_logo_path' => 'teams/logo.png']);
+
+    $logoUrl = $this->team->fresh()->brand_logo_url;
+
+    $this->get('/i/'.$invoice->public_token)
+        ->assertOk()
+        ->assertSee(e($logoUrl), false)
+        ->assertSee(route('invoices.public.pdf', $invoice->public_token), false);
 });
 
 it('records the public view', function () {
