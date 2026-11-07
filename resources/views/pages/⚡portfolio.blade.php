@@ -147,6 +147,9 @@ new class extends Component
                                 <img
                                     src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->firstImagePhoto?->small_thumbnail_url }}"
                                     alt=""
+                                    @if ($gallery->cover_focal_position)
+                                        style="object-position: {{ $gallery->cover_focal_position }};"
+                                    @endif
                                     class="size-16 rounded-lg object-cover"
                                 />
                                 <div>
@@ -207,6 +210,9 @@ new class extends Component
                                     <img
                                         src="{{ $gallery->coverPhoto?->small_thumbnail_url ?? $gallery->firstImagePhoto?->small_thumbnail_url }}"
                                         alt=""
+                                        @if ($gallery->cover_focal_position)
+                                            style="object-position: {{ $gallery->cover_focal_position }};"
+                                        @endif
                                         class="size-16 rounded-lg object-cover"
                                     />
                                     <div>

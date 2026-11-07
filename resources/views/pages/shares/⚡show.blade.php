@@ -236,7 +236,7 @@ new #[Layout('layouts.guest')] class extends Component
                 <img
                     src="{{ $this->coverImage?->cover_image_url }}"
                     class="h-full w-full object-cover"
-                    style="object-position: {{ round(($gallery->cover_focal_x ?? 0.5) * 100) }}% {{ round(($gallery->cover_focal_y ?? 0.5) * 100) }}%;"
+                    style="object-position: {{ $gallery->cover_focal_position ?? '50% 50%' }};"
                     alt=""
                 />
             </div>

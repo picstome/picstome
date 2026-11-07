@@ -84,7 +84,13 @@ class extends Component
 
         @if($photos->isNotEmpty())
             <div class="relative h-[164px] md:h-[240px] overflow-hidden mt-4 lg:mt-8">
-                <img src="{{ ($gallery->coverPhoto ?? $photos->first())->large_thumbnail_url }}" class="w-full h-full object-cover" />
+                <img
+                    src="{{ ($gallery->coverPhoto ?? $photos->first())->large_thumbnail_url }}"
+                    class="w-full h-full object-cover"
+                    @if ($gallery->cover_focal_position)
+                        style="object-position: {{ $gallery->cover_focal_position }};"
+                    @endif
+                />
             </div>
         @endif
 
