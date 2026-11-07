@@ -93,19 +93,38 @@ it('allows users to reorder bio links', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $team = $user->currentTeam;
 
-    $link1 = BioLink::factory()->for($team)->create(['order' => 1]);
-    $link2 = BioLink::factory()->for($team)->create(['order' => 2]);
+    $link1 = BioLink::factory()->for($team)->create(['order' => 0]);
+    $link2 = BioLink::factory()->for($team)->create(['order' => 1]);
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->call('reorderLink', $link2, 1);
+        ->call('reorderLink', $link2, 0);
 
     $response->assertHasNoErrors();
 
     $link1->refresh();
     $link2->refresh();
 
-    expect($link1->order)->toEqual(2);
-    expect($link2->order)->toEqual(1);
+    expect($link2->order)->toEqual(0);
+    expect($link1->order)->toEqual(1);
+});
+
+it('resequences bio link order so non-contiguous legacy values still move', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    $link1 = BioLink::factory()->for($team)->create(['order' => 1]);
+    $link2 = BioLink::factory()->for($team)->create(['order' => 3]);
+    $link3 = BioLink::factory()->for($team)->create(['order' => 7]);
+
+    Livewire::actingAs($user)->test('pages::public-profile')
+        ->call('reorderLink', $link3, 0);
+
+    expect($link3->fresh()->order)->toBe(0)
+        ->and($link1->fresh()->order)->toBe(1)
+        ->and($link2->fresh()->order)->toBe(2);
+
+    $ordered = $team->bioLinks()->pluck('id')->all();
+    expect($ordered)->toBe([$link3->id, $link1->id, $link2->id]);
 });
 
 it('requires bio link title', function () {

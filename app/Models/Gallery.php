@@ -683,6 +683,28 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * CSS `object-position` value that mirrors the stored cover focal point.
+     *
+     * Every cover thumbnail is rendered with `object-cover`, so the browser
+     * crops it around this point instead of its own centre. Returns null when
+     * the gallery has no explicit cover, letting the fallback image keep the
+     * default centred crop.
+     */
+    protected function coverFocalPosition(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! $this->cover_photo_id) {
+                return null;
+            }
+
+            $x = max(0.0, min(1.0, (float) ($this->cover_focal_x ?? 0.5)));
+            $y = max(0.0, min(1.0, (float) ($this->cover_focal_y ?? 0.5)));
+
+            return round($x * 100).'% '.round($y * 100).'%';
+        });
+    }
+
     public function deletePhotos()
     {
         $this->photos()->with('versions')->cursor()->each(

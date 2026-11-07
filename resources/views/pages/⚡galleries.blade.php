@@ -169,6 +169,7 @@ new class extends Component
                                     x-on:error="errored = true"
                                     class="aspect-3/2 w-full rounded-t-lg bg-zinc-300 object-cover transition-transform duration-300 group-hover:scale-105 dark:bg-zinc-700"
                                     :class="loaded || errored ? '' : 'animate-pulse'"
+                                    style="object-position: {{ $gallery->cover_focal_position }};"
                                     loading="lazy"
                                     width="400"
                                     height="267"
