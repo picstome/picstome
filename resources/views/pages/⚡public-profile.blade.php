@@ -1,20 +1,21 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\BioLinkForm;
 use App\Livewire\Forms\PublicProfileForm;
 use App\Livewire\Forms\SocialLinksForm;
 use App\Models\BioLink;
 use App\Models\Team;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
     use Interactions;
+    use InteractsWithTallStackModals;
+
     public Team $team;
 
     public PublicProfileForm $form;
@@ -83,11 +84,15 @@ new class extends Component
         $link->delete();
     }
 
-    public function reorderLink(BioLink $link, int $newOrder)
+    /**
+     * Persist the position chosen with `wire:sort`. Livewire passes the
+     * zero-based drop index, so the model resequences the whole list.
+     */
+    public function reorderLink(BioLink $link, int $position)
     {
         $this->authorize('update', $link);
 
-        $link->reorder($newOrder);
+        $link->reorder($position);
     }
 
     public function editLink(BioLink $link)
@@ -194,13 +199,15 @@ new class extends Component
                     <x-ts-separator variant="subtle" />
                     @if ($this->bioLinks->isNotEmpty())
                         <x-data-table>
-                            <x-data-table.rows x-sort="handleReorder">
+                            {{-- Livewire's own wire:sort binds the drag handler to the
+                                 reorderLink action, so no Alpine scope is required. --}}
+                            <x-data-table.rows wire:sort="reorderLink">
                                 @foreach ($this->bioLinks as $link)
-                                    <x-data-table.row :key="$link->id" x-sort:item="{{ $link->id }}">
+                                    <x-data-table.row :key="$link->id" wire:sort:item="{{ $link->id }}">
                                         <x-data-table.cell>
                                             <div class="flex items-center gap-3">
                                                 <x-ts-button
-                                                    x-sort:handle
+                                                    wire:sort:handle
                                                     variant="subtle"
                                                     size="sm"
                                                     inset="top bottom"
@@ -542,5 +549,4 @@ new class extends Component
 @assets
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css" />
     <script type="text/javascript" src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/sort@3.x.x/dist/cdn.min.js"></script>
 @endassets

@@ -33,6 +33,17 @@ it('asks for confirmation before deleting a bio link', function () {
     expect($this->team->bioLinks()->count())->toBe(1);
 });
 
+it('wires the bio link rows to the reorder action', function () {
+    BioLink::factory()->for($this->team)->count(2)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::public-profile')
+        ->assertSeeHtml('wire:sort="reorderLink"')
+        ->assertSeeHtml('wire:sort:item=')
+        ->assertSeeHtml('wire:sort:handle')
+        ->assertDontSeeHtml('x-sort=');
+});
+
 it('allows user to update handle successfully', function () {
     $newHandle = 'newhandle';
 
