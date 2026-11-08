@@ -278,3 +278,92 @@ it('archives a live photo and advances to the next live one', function () {
     expect($first->fresh()->isArchived())->toBeTrue()
         ->and($second->fresh()->isArchived())->toBeFalse();
 });
+
+it('returns to All photos after restoring the last archived photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $only = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $live = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $only->archive();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', [
+        'photo' => $only->fresh(),
+        'navigateArchived' => true,
+    ]);
+
+    expect($component->instance()->next)->toBeNull()
+        ->and($component->instance()->previous)->toBeNull();
+
+    $component->call('archive')
+        ->assertRedirect(route('galleries.show', ['gallery' => $gallery]));
+
+    // The Archived tab no longer exists, so the grid must open on All photos,
+    // where the restored photo and the live one are both visible.
+    expect($only->fresh()->isArchived())->toBeFalse()
+        ->and($live->fresh()->isArchived())->toBeFalse();
+});
+
+it('returns to All photos when the dock restores the last archived photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $only = Photo::factory()->for($gallery)->create();
+
+    $only->archive();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', [
+        'photo' => $only->fresh(),
+        'navigateArchived' => true,
+    ]);
+
+    $component->call('unarchive')
+        ->assertRedirect(route('galleries.show', ['gallery' => $gallery]));
+
+    expect($only->fresh()->isArchived())->toBeFalse();
+});
+
+it('keeps looking at the photo when the dock restores one of several archived', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $first->archive();
+    $second->archive();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', [
+        'photo' => $first->fresh(),
+        'navigateArchived' => true,
+    ]);
+
+    $component->call('unarchive')
+        ->assertNoRedirect();
+
+    expect($first->fresh()->isArchived())->toBeFalse()
+        ->and($second->fresh()->isArchived())->toBeTrue();
+});
+
+it('falls back to All photos in the grid when the last archived one is restored', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $only = Photo::factory()->for($gallery)->create();
+
+    $only->archive();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.show', ['gallery' => $gallery])
+        ->set('activeTab', 'archived')
+        ->call('toggleArchive', $only->id);
+
+    // The Archived tab disappears with its last photo, so the grid must not
+    // stay on an empty panel.
+    expect($component->get('activeTab'))->toBe('all')
+        ->and($only->fresh()->isArchived())->toBeFalse();
+});
+
+it('ignores a stale archived tab link when nothing is archived', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['activeTab' => 'archived'])
+        ->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->get('activeTab'))->toBe('all');
+});

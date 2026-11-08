@@ -47,8 +47,14 @@ The owner keeps a dedicated **Archived** tab, placed **immediately after
     so one key both removes and puts photos back in the selection.
   - Neighbours are resolved *before* the change, because archiving/unarchiving
     changes the list the photo belongs to.
+  - Restoring the **last** archived photo leaves the Archived tab empty, and
+    the tab only exists while something is archived. In that case the viewer
+    redirects to **All photos** instead of the (now unreachable) Archived tab.
   It ignores modifiers and never fires while typing in an input, textarea,
   select or contenteditable field.
+- **Dock Unarchive** keeps the photographer on the current photo. When it restores
+  the last archived photo it also returns to **All photos**, because the Archived
+  tab disappears with its last item.
 - **Delete all archived photos**: button inside the Archived tab. It opens a
   confirmation modal whose message states that **the action CANNOT be undone**
   and that the files and originals are gone for good. Requesting only opens the
