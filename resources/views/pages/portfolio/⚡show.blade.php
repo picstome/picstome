@@ -27,7 +27,7 @@ class extends Component
 
         $this->team = $gallery->team;
         $this->gallery = $gallery;
-        $this->photoCount = $this->gallery->photos()->images()->ready()->count();
+        $this->photoCount = $this->gallery->photos()->images()->ready()->notArchived()->count();
         $this->photos = $this->photoPage();
     }
 
@@ -37,6 +37,7 @@ class extends Component
             ->with('gallery')
             ->images()
             ->ready()
+            ->notArchived()
             ->take($this->photoLimit)
             ->get()
             ->values();

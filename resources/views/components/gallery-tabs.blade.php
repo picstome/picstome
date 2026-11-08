@@ -10,6 +10,7 @@
     'favoritesCount' => 0,
     'selectionLimit' => null,
     'commentsCount' => 0,
+    'archivedCount' => 0,
     'showFavorites' => true,
     'showComments' => true,
     'showSync' => false,
@@ -31,6 +32,8 @@
     $commentsLabel = $commentsCount > 0
         ? __('Comments (:count)', ['count' => $commentsCount])
         : __('Comments');
+
+    $archivedLabel = __('Archived (:count)', ['count' => $archivedCount]);
 
     if ($variant === 'pills') {
         $tabClass = 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-zinc-700 bg-white shadow-sm ring-1 ring-zinc-200 cursor-pointer transition hover:bg-zinc-50 data-[current=true]:bg-primary-500 data-[current=true]:text-white data-[current=true]:ring-primary-500 data-[current=true]:shadow-md dark:text-zinc-200 dark:bg-white/10 dark:ring-white/10 dark:hover:bg-white/20';
@@ -58,6 +61,22 @@
         <x-icon name="camera" class="size-5" />
         <span class="max-sm:sr-only">{{ __('All photos') }}</span>
     </button>
+
+    {{-- Owner only: the archived tab only exists when something is archived. --}}
+    @if ($archivedCount > 0)
+        <button
+            type="button"
+            @click="$wire.activeTab = 'archived'; $dispatch('gallery-tab-changed')"
+            x-bind:data-current="$wire.activeTab === 'archived'"
+            class="{{ $tabClassFor('archived') }}"
+            aria-label="{{ $archivedLabel }}"
+            title="{{ $archivedLabel }}"
+            data-archived-tab
+        >
+            <x-icon name="archive-box" class="size-5" />
+            <span class="max-sm:sr-only">{{ $archivedLabel }}</span>
+        </button>
+    @endif
 
     @if ($showFavorites)
         <button

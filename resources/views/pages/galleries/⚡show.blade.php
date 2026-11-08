@@ -43,6 +43,11 @@ new class extends Component
 
     public int $commentedPhotoLimit = 60;
 
+    public int $archivedPhotoLimit = 60;
+
+    /** Archived photo ids awaiting the "delete all" confirmation. */
+    public int $pendingArchivedCount = 0;
+
     public array $existingPhotoNames = [];
 
     public ?Collection $photoshoots;
@@ -327,6 +332,65 @@ new class extends Component
         $this->dispatch('photo-favorited');
     }
 
+    /**
+     * Archive or restore one photo from the gallery grid.
+     *
+     * Archiving is reversible, so it needs no confirmation: the individual
+     * action is instant, exactly like favoriting. Only the destructive
+     * "delete all archived" goes through a modal.
+     */
+    public function toggleArchive(Photo $photo): void
+    {
+        abort_unless($photo->gallery_id === $this->gallery->id, 404);
+
+        $this->authorize('update', $this->gallery);
+
+        $photo->toggleArchive();
+
+        // A cover photo that is archived would leak back into the public page.
+        if ($photo->isArchived() && $this->gallery->coverPhoto?->is($photo)) {
+            $this->gallery->update(['cover_photo_id' => null]);
+            $this->gallery->unsetRelation('coverPhoto');
+        }
+
+        $this->forgetPhotoCollections();
+    }
+
+    /**
+     * Ask for confirmation before deleting every archived photo. The modal
+     * states that the action is NOT reversible, so it is never auto-run.
+     */
+    public function requestDeleteArchived(): void
+    {
+        $this->authorize('update', $this->gallery);
+
+        $this->pendingArchivedCount = $this->archivedIds->count();
+
+        if ($this->pendingArchivedCount === 0) {
+            return;
+        }
+
+        $this->openModal('delete-archived');
+    }
+
+    public function deleteArchived(): void
+    {
+        $this->authorize('update', $this->gallery);
+
+        $this->gallery->photos()->archived()->with('versions')->cursor()->each(
+            fn (Photo $photo) => $photo->deleteFromDisk()->delete()
+        );
+
+        $this->pendingArchivedCount = 0;
+        $this->activeTab = 'all';
+
+        $this->forgetPhotoCollections();
+
+        $this->closeModal('delete-archived');
+
+        $this->toast()->success(__('All archived photos were deleted.'))->send();
+    }
+
     public function setAsCover(Photo $photo): void
     {
         abort_unless($photo->gallery_id === $this->gallery->id, 404);
@@ -413,6 +477,9 @@ new class extends Component
             $this->favoriteNames,
             $this->commentedIds,
             $this->commentedPhotos,
+            $this->archivedIds,
+            $this->archivedPhotos,
+            $this->totalArchived,
             $this->mediaCounts,
         );
     }
@@ -525,11 +592,36 @@ new class extends Component
         return $this->gallery->mediaCounts();
     }
 
+    /**
+     * Archived photo ids, naturally sorted. Owner-only list: archived photos
+     * never reach the public gallery, the favorites or the client ZIP.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    #[Computed]
+    public function archivedIds(): \Illuminate\Support\Collection
+    {
+        return $this->gallery->archivedPhotoIds();
+    }
+
+    #[Computed]
+    public function archivedPhotos()
+    {
+        return $this->gallery->photosInOrder($this->archivedIds->take($this->archivedPhotoLimit));
+    }
+
+    #[Computed]
+    public function totalArchived(): int
+    {
+        return $this->archivedIds->count();
+    }
+
     public function loadMore(string $tab = 'all'): void
     {
         match ($tab) {
             'favorited' => $this->favoritePhotoLimit += 60,
             'commented' => $this->commentedPhotoLimit += 60,
+            'archived' => $this->archivedPhotoLimit += 60,
             default => $this->allPhotoLimit += 60,
         };
 
@@ -780,7 +872,9 @@ new class extends Component
         </div>
     </div>
 
-    @if ($this->totalPhotos > 0)
+    {{-- The tabs also render when everything is archived: the archived tab is
+         the only way back to those photos. --}}
+    @if ($this->totalPhotos > 0 || $this->totalArchived > 0)
         <div class="mt-8 max-sm:-mx-5">
             <x-gallery-tabs
                 :favorites-count="$this->totalFavorites"
@@ -788,6 +882,7 @@ new class extends Component
                 :comments-count="$this->totalComments()"
                 :show-sync="$this->syncEnabled"
                 :show-download="true"
+                :archived-count="$this->totalArchived"
                 :active-tab="$activeTab"
             >
                 <x-slot name="afterFavorites">
@@ -837,6 +932,33 @@ new class extends Component
                         </div>
                     @endif
                 </div>
+            @if ($this->totalArchived > 0)
+                <div x-show="$wire.activeTab === 'archived'" class="pt-1" data-gallery-panel>
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <x-ts-text class="text-sm">
+                            {{ __('Archived photos are hidden from clients and from the gallery download. You can restore them at any time.') }}
+                        </x-ts-text>
+
+                        <x-ts-button
+                            variant="danger"
+                            icon="trash"
+                            size="sm"
+                            wire:click="requestDeleteArchived"
+                            data-delete-archived
+                        >
+                            {{ __('Delete all archived photos') }}
+                        </x-ts-button>
+                    </div>
+
+                    <x-photo-masonry :photos="$this->archivedPhotos" :$gallery context="owner" html-id-prefix="archived" :as-archived="true" />
+
+                    <x-auto-load-more
+                        method="loadMore"
+                        :args="['archived']"
+                        :has-more="$this->totalArchived > $this->archivedPhotos->count()"
+                    />
+                </div>
+            @endif
             @if ($this->syncEnabled)
                 <div x-show="$wire.activeTab === 'sync'" class="pt-1">
                     <x-gallery-sync-panel :$gallery />
@@ -1574,6 +1696,14 @@ new class extends Component
         :title="__('Replace the current versions? Older versions will be kept.')"
         alpine-action="$dispatch(`confirm-replace-all`)"
         :confirm-label="__('Replace all')"
+    />
+
+    <x-confirm-modal
+        name="delete-archived"
+        :title="__('Delete all archived photos?')"
+        :message="__('This deletes every archived photo and its files. This action CANNOT be undone: the photos and their originals are gone for good.')"
+        :confirm-label="__('Delete all archived')"
+        method="deleteArchived"
     />
 
     <x-confirm-modal

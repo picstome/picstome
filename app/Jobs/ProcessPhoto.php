@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Image\Image;
@@ -375,15 +376,29 @@ class ProcessPhoto implements ShouldQueue
                 ->first();
         }
 
+        // Pixel dimensions of the file that is actually served. The floating
+        // info panel shows resolution and aspect ratio from the row, and the
+        // API upload path already writes these; local uploads used to leave
+        // them null, so the panel silently hid both rows.
+        //
+        // They live only on the photo (versions have no dimension columns) and
+        // only describe the current file, so only the current target gets them.
+        $dimensions = @getimagesize($this->temporaryPhotoPath) ?: [];
+
+        if (isset($dimensions[0], $dimensions[1])) {
+            $updateData['width'] = $dimensions[0];
+            $updateData['height'] = $dimensions[1];
+        }
+
         if ($version) {
-            $version->update($updateData);
+            $version->update(Arr::except($updateData, ['width', 'height']));
         } else {
             $this->photo->update($updateData);
 
             if ($this->photo->current_version_id) {
                 $this->photo->versions()
                     ->whereKey($this->photo->current_version_id)
-                    ->update($updateData);
+                    ->update(Arr::except($updateData, ['width', 'height']));
             }
         }
 

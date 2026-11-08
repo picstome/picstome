@@ -41,6 +41,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
         abort_unless($this->photo->gallery_id === $this->gallery->id, 404);
 
+        // Archived photos are invisible to clients, so their shared link must
+        // not resolve either.
+        abort_if($this->photo->isArchived(), 404);
+
         if ($this->navigateFavorites) {
             $this->next = $this->photo->nextFavorite();
             $this->previous = $this->photo->previousFavorite();
@@ -718,152 +722,133 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 @endif
             @endif
         </div>
-        <div
-            class="absolute top-0 bottom-0 left-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
-            :class="zoom ? 'hidden' : 'flex'"
-        >
-            @if ($previous)
-                <x-ts-button
-                    href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
-                    wire:navigate.hover
-                    x-ref="previous"
-                    icon="chevron-left"
-                    size="sm"
-                    class="py-10 max-sm:py-0"
-                    square
-                />
-            @endif
-        </div>
-        <div
-            class="absolute top-0 right-0 bottom-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
-            :class="zoom ? 'hidden' : 'flex'"
-        >
-            @if ($next)
-                <x-ts-button
-                    href="{{ route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null]) }}"
-                    wire:navigate.hover
-                    x-ref="next"
-                    icon="chevron-right"
-                    size="sm"
-                    class="py-10 max-sm:py-0"
-                    square
-                />
-            @endif
-        </div>
+        {{-- Keep only the back affordance floating at the top: every action
+             now lives in the bottom dock, so the photo is not boxed in. --}}
         <div
             class="absolute top-0 right-0 left-0 z-30 flex items-center justify-between gap-4 p-3 max-sm:p-1"
             :class="zoom ? 'hidden' : 'flex'"
         >
-            <div class="flex gap-3">
-                <x-ts-button
-                    :href="$this->galleryUrl"
-                    wire:navigate.hover
-                    icon="arrow-left"
-                    size="sm"
-                    icon:variant="micro"
-                    variant="secondary"
-                    data-photo-back
-                >
-                    {{ __('Back') }}
-                </x-ts-button>
-            </div>
-            <div
-                class="flex gap-3"
-                x-data="{ annotating: false }"
-                x-on:annotations-toggled.window="annotating = $event.detail.active"
+            <x-ts-button
+                :href="$this->galleryUrl"
+                icon="arrow-left"
+                icon:variant="micro"
+                size="sm"
+                variant="secondary"
+                data-photo-back
+                wire:navigate.hover
+                :tooltip="__('Back to gallery :name', ['name' => $photo->gallery->name])"
+                :aria-label="__('Back to gallery :name', ['name' => $photo->gallery->name])"
             >
-                @if ($photo->gallery->are_comments_enabled)
-                    <div class="contents" x-show="! annotating">
-                        <x-ts-modal-trigger name="add-comment">
-                            <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="secondary">
-                                @if ($this->comments->isEmpty())
-                                    {{ __('Add comment') }}
-                                @else
-                                    {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
-                                @endif
-                            </x-ts-button>
+                {{ __('Back') }}
+            </x-ts-button>
 
-                            <x-ts-button
-                                icon="chat-bubble-left-ellipsis"
-                                size="sm"
-                                class="sm:hidden"
-                                variant="secondary"
-                                square
-                                :aria-label="__('Comments')"
-                                data-mobile-comments
-                            />
-                        </x-ts-modal-trigger>
-                    </div>
-
-                    <x-photo-annotate-button
-                        :can-annotate="$photo->isImage() && $photo->gallery->are_annotations_enabled"
-                    />
-                @endif
-
-                @if ($this->photo->gallery->is_share_downloadable)
-                    @if ($photo->path && $photo->raw_path)
-                        <x-dropdown position="bottom-end">
-                            <x-slot:action>
-                                <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" square x-on:click="show = ! show" />
-                            </x-slot:action>
-
-                            <x-dropdown.items
-                                :text="__('Download JPG')"
-                                icon="cloud-arrow-down"
-                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
-                            />
-                            <x-dropdown.items
-                                :text="__('Download Raw')"
-                                icon="cloud-arrow-down"
-                                :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
-                            />
-                        </x-dropdown>
-                    @else
-                        <x-ts-button
-                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                            icon="cloud-arrow-down"
-                            icon:variant="mini"
-                            size="sm"
-                            variant="primary"
-                            square
-                        />
-                    @endif
-                @endif
-
-                @if ($this->photo->gallery->is_share_selectable)
-                    <x-ts-button
-                        name="favorite"
-                        wire:click="favorite"
-                        variant="overlay"
-                        size="sm"
-                        square
-                        :aria-label="__('Favorite')"
-                    >
-                        @if ($photo->isFavorited())
-                            <x-icon name="heart" solid class="size-5 text-red-500" />
-                        @else
-                            <x-icon name="heart" class="size-5" />
-                        @endif
-                    </x-ts-button>
-                @endif
-            </div>
         </div>
 
-        <div
-            x-data="{ annotating: false }"
-            x-on:annotations-toggled.window="annotating = $event.detail.active"
-            x-show="! annotating && ! zoom"
+        {{-- Bottom dock: the same icon-only controls as the owner viewer,
+             minus everything the client is not allowed to do. --}}
+        <x-photo-dock
+            x-show="! zoom"
             style="display: none"
-            class="absolute right-3 bottom-3 z-10 flex items-center gap-2"
+            data-viewer-dock
         >
-            @if (config('picstome.file_versions_enabled') && $photo->gallery->is_share_versions_visible)
+            {{-- Navigation first: previous / next live in the dock now. --}}
+            @if ($previous)
+                <x-dock-button
+                    :href="route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $previous, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null])"
+                    icon="chevron-left"
+                    :label="__('Previous photo')"
+                    hint="←"
+                    x-ref="previous"
+                    wire:navigate.hover
+                />
+            @endif
+
+            @if ($next)
+                <x-dock-button
+                    :href="route('shares.photos.show', ['gallery' => $photo->gallery, 'photo' => $next, 'navigateCommented' => $navigateCommented ? true : null, 'navigateFavorites' => $navigateFavorites ? true : null])"
+                    icon="chevron-right"
+                    :label="__('Next photo')"
+                    hint="→"
+                    x-ref="next"
+                    wire:navigate.hover
+                />
+            @endif
+
+            <x-dock-divider />
+
+            @if ($this->photo->gallery->is_share_selectable)
+                <x-dock-button
+                    icon="heart"
+                    :label="__('Favorite')"
+                    hint="F"
+                    :tone="$photo->isFavorited() ? 'favorite' : 'default'"
+                    data-dock-favorite
+                    wire:click="favorite"
+                />
+            @endif
+
+            @if ($photo->gallery->are_comments_enabled)
+                <x-ts-modal-trigger name="add-comment">
+                    <x-dock-button
+                        icon="chat-bubble-left-ellipsis"
+                        :label="__('Comments (:count)', ['count' => $this->comments->count()])"
+                        :tone="$this->comments->isEmpty() ? 'default' : 'ink'"
+                        data-photo-comments
+                    />
+                </x-ts-modal-trigger>
+
+                <x-photo-annotate-button
+                    :can-annotate="$photo->isImage() && $photo->gallery->are_annotations_enabled"
+                    :has-annotations="$this->annotationsCount > 0"
+                />
+            @endif
+
+            @if ($photo->gallery->are_comments_enabled && $photo->gallery->are_annotations_enabled && $this->annotationsCount > 0)
+                <x-photo-annotations-toggle />
+            @endif
+
+            @php
+                $showsVersions = config('picstome.file_versions_enabled')
+                    && $photo->gallery->is_share_versions_visible;
+                $showsDownload = $this->photo->gallery->is_share_downloadable;
+            @endphp
+
+            @if ($showsVersions || $showsDownload)
+                <x-dock-divider />
+            @endif
+
+            @if ($showsVersions)
                 <livewire:photo-versions :photo="$photo" :manageable="false" />
             @endif
 
-            @if ($photo->gallery->are_comments_enabled && $this->annotationsCount > 0)
-                <x-photo-annotations-toggle />
+            @if ($showsDownload)
+                @if ($photo->path && $photo->raw_path)
+                    <x-dropdown position="top-end">
+                        <x-slot:action>
+                            <x-dock-button icon="cloud-arrow-down" :label="__('Download')" tone="accent" x-on:click="show = ! show" />
+                        </x-slot:action>
+
+                        <x-dropdown.items
+                            :text="__('Download JPG')"
+                            icon="cloud-arrow-down"
+                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                        />
+                        <x-dropdown.items
+                            :text="__('Download Raw')"
+                            icon="cloud-arrow-down"
+                            :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                        />
+                    </x-dropdown>
+                @else
+                    <x-dock-button
+                        icon="cloud-arrow-down"
+                        :label="__('Download')"
+                        :href="route('shares.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                        tone="accent"
+                    />
+                @endif
             @endif
-        </div>
+        </x-photo-dock>
     </div>
     @if ($photo->gallery->are_comments_enabled)
         <x-ts-modal name="add-comment" class="w-full sm:max-w-lg">
@@ -923,5 +908,3 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     <x-selection-limit-modal :limit="$photo->gallery->share_selection_limit" />
 </div>
 
-@assets
-@endassets

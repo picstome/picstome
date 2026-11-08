@@ -19,6 +19,10 @@ class extends Component
     {
         abort_unless($photo->gallery->is_public, 404);
 
+        // Archived photos are hidden from clients, so their public page must
+        // 404 as well: a shared link would otherwise leak the photo.
+        abort_if($photo->isArchived(), 404);
+
         $this->photo = $photo;
         $this->next = $this->imageNeighbor(1);
         $this->previous = $this->imageNeighbor(-1);
@@ -31,6 +35,7 @@ class extends Component
     protected function imageNeighbor(int $offset): ?Photo
     {
         $imageIds = $this->photo->gallery->photos()
+            ->notArchived()
             ->get()
             ->filter(fn ($photo) => $photo->isImage())
             ->pluck('name', 'id')

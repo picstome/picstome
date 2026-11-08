@@ -165,38 +165,43 @@ class Gallery extends Model
     /**
      * Cached, naturally sorted by name photo ids of the gallery.
      *
+     * Archived photos are excluded: they are hidden from every visitor-facing
+     * list, including the public gallery, and only the owner's archived tab
+     * reads them through `archivedPhotoIds()`.
+     *
      * @return Collection<int, int>
      */
     public function photoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:photos:ids", now()->addHours(1), function () {
-            return $this->photos()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->photos()->notArchived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
     /**
      * Cached, naturally sorted ids of photos that finished processing and may
      * be shown to visitors. Pending, processing and CDN-warming photos are
-     * intentionally excluded.
+     * intentionally excluded, and so are archived ones.
      *
      * @return Collection<int, int>
      */
     public function readyPhotoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:photos:ready:ids", now()->addHours(1), function () {
-            return $this->photos()->ready()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->photos()->ready()->notArchived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
     /**
      * Cached, naturally sorted by name ids of the gallery's favorited photos.
+     * Archived photos never appear in the client's favorite tab.
      *
      * @return Collection<int, int>
      */
     public function favoritePhotoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:favorites:ids", now()->addHours(1), function () {
-            return $this->favorites()->ready()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->favorites()->ready()->notArchived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
@@ -208,7 +213,20 @@ class Gallery extends Model
     public function commentedPhotoIds(): Collection
     {
         return Cache::remember("gallery:{$this->id}:commented:ids", now()->addHours(1), function () {
-            return $this->photos()->ready()->whereHas('comments')->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+            return $this->photos()->ready()->notArchived()->whereHas('comments')->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
+     * Cached, naturally sorted ids of the photos the photographer archived.
+     * Owner-only: this list is never exposed to clients.
+     *
+     * @return Collection<int, int>
+     */
+    public function archivedPhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:archived:ids", now()->addHours(1), function () {
+            return $this->photos()->archived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
@@ -898,7 +916,7 @@ class Gallery extends Model
     {
         return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
             if ($this->relationLoaded('photos')) {
-                return $this->photos->first(fn (Photo $photo) => $photo->isImage());
+                return $this->photos->first(fn (Photo $photo) => $photo->isImage() && ! $photo->isArchived());
             }
 
             return $this->firstImagePhoto;
@@ -924,14 +942,14 @@ class Gallery extends Model
     {
         return Cache::remember("gallery:{$this->id}:media_counts", now()->addHours(1), function (): array {
             return [
-                'all' => $this->photos()->ready()->count(),
-                'images' => $this->photos()->ready()->images()->count(),
-                'videos' => $this->photos()->ready()->where(function (Builder $query) {
+                'all' => $this->photos()->ready()->notArchived()->count(),
+                'images' => $this->photos()->ready()->notArchived()->images()->count(),
+                'videos' => $this->photos()->ready()->notArchived()->where(function (Builder $query) {
                     foreach (['mp4', 'webm', 'ogg'] as $extension) {
                         $query->orWhere('path', 'like', '%.'.$extension);
                     }
                 })->count(),
-                'pdfs' => $this->photos()->ready()->where('path', 'like', '%.pdf')->count(),
+                'pdfs' => $this->photos()->ready()->notArchived()->where('path', 'like', '%.pdf')->count(),
             ];
         });
     }
@@ -939,7 +957,7 @@ class Gallery extends Model
     public function downloadSize(): int
     {
         return Cache::remember("gallery:{$this->id}:download_size", now()->addHours(1), function (): int {
-            return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->photos()->ready()->cursor());
+            return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->photos()->ready()->notArchived()->cursor());
         });
     }
 

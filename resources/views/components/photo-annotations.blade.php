@@ -13,7 +13,23 @@
     <div
         x-data="{
             annotating: false,
-            annotationsVisible: true,
+            // Remembered across photos: once the photographer hides the pins,
+            // every following photo starts with them hidden too. Stored in
+            // localStorage because each photo is a fresh Livewire render.
+            annotationsVisible: (() => {
+                try {
+                    return window.localStorage.getItem('picstome-annotations-visible') !== '0'
+                } catch (exception) {
+                    return true
+                }
+            })(),
+            persistVisibility() {
+                try {
+                    window.localStorage.setItem('picstome-annotations-visible', this.annotationsVisible ? '1' : '0')
+                } catch (exception) {
+                    // Private mode: the toggle still works, it just forgets.
+                }
+            },
             box: { left: 0, top: 0, width: 0, height: 0 },
             pointerStart: null,
             visibleImage() {
@@ -84,6 +100,7 @@
 
                 if (this.annotating && !this.annotationsVisible) {
                     this.annotationsVisible = true
+                    this.persistVisibility()
                     this.$dispatch('annotations-visibility-changed', { visible: true })
                 }
 
@@ -95,6 +112,7 @@
             },
             toggleVisibility() {
                 this.annotationsVisible = !this.annotationsVisible
+                this.persistVisibility()
                 this.$dispatch('annotations-visibility-changed', { visible: this.annotationsVisible })
             },
             startPointer(event) {
@@ -137,10 +155,13 @@
         x-show="typeof zoom === 'undefined' || !zoom"
         class="pointer-events-none absolute inset-0 z-20"
     >
+        {{-- `x-bind:class`, not `x-show`: inside this Livewire-rendered scope
+             the `x-show` effect does not re-run when `annotating` flips, so the
+             layer stayed at its initial `display: none` and annotation mode
+             could not be used. --}}
         <div
-            x-show="annotating"
             x-cloak
-            style="display: none"
+            x-bind:class="annotating ? 'block' : 'hidden'"
             class="pointer-events-auto absolute cursor-crosshair"
             :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             x-on:pointerdown="startPointer($event)"
@@ -148,8 +169,12 @@
         ></div>
 
         @if ($pins->isNotEmpty())
+            {{-- `x-bind:class` for the same reason as the layer above: this
+                 element also carries a `:style` binding, and `x-show` kept
+                 re-applying the initial `display: none` over the value it had
+                 just written, so hiding the pins never actually hid them. --}}
             <div
-                x-show="annotationsVisible"
+                x-bind:class="annotationsVisible ? 'block' : 'hidden'"
                 class="absolute"
                 :style="{ left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' }"
             >
@@ -176,7 +201,12 @@
             </div>
         @endif
 
-        <div x-show="annotating" x-cloak style="display: none" class="pointer-events-none absolute inset-x-0 top-16 flex justify-center">
+        {{-- `hidden!` wins the cascade against the `flex` utility below. --}}
+        <div
+            x-cloak
+            x-bind:class="annotating ? '' : 'hidden!'"
+            class="pointer-events-none absolute inset-x-0 top-16 flex justify-center"
+        >
             <span class="bg-brand-green text-brand-cream rounded-full px-3 py-1 text-xs shadow">
                 {{ __('Click on the photo to mark a spot') }}
             </span>

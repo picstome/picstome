@@ -16,6 +16,7 @@
     'htmlIdPrefix' => 'photo',
     'asFavorite' => false,
     'asCommented' => false,
+    'asArchived' => false,
 ])
 
 @php
@@ -42,6 +43,7 @@
             :$context
             :as-favorite="$asFavorite"
             :as-commented="$asCommented"
+            :as-archived="$asArchived"
             :html-id="$htmlIdPrefix.'-'.$photo->id"
             :index="$loop->index"
         />

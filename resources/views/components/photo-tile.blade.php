@@ -5,6 +5,7 @@
     'htmlId' => null,
     'asFavorite' => false,
     'asCommented' => false,
+    'asArchived' => false,
     'index' => 0,
 ])
 
@@ -36,6 +37,7 @@
             'photo' => $photo,
             'navigateFavorites' => $asFavorite ? true : null,
             'navigateCommented' => $asCommented ? true : null,
+            'navigateArchived' => $asArchived ? true : null,
         ]),
         $isPortfolio => route('portfolio.photos.show', [
             'handle' => $gallery->team->handle,
@@ -153,88 +155,76 @@
         @endif
 
         @if ($isOwner)
-            <div class="absolute right-1.5 bottom-1.5 flex flex-row-reverse gap-2" :class="showActions ? 'flex' : 'hidden'">
-                <x-ts-button
+            <x-photo-mini-dock x-bind:class="showActions ? 'flex' : 'hidden'">
+                <x-dock-button
                     wire:click="toggleFavorite({{ $photo->id }})"
-                    variant="overlay"
-                    square
-                    size="sm"
-                    :aria-label="__('Favorite')"
-                >
-                    @if ($photo->isFavorited())
-                        <x-icon name="heart" solid class="size-5 text-red-500" />
-                    @else
-                        <x-icon name="heart" class="size-5" />
-                    @endif
-                </x-ts-button>
+                    icon="heart"
+                    :label="__('Favorite')"
+                    :tone="$photo->isFavorited() ? 'favorite' : 'default'"
+                    compact
+                />
 
-                <x-ts-button
+                <x-dock-button
+                    wire:click="toggleArchive({{ $photo->id }})"
+                    icon="archive-box"
+                    :label="$photo->isArchived() ? __('Unarchive') : __('Archive')"
+                    :tone="$photo->isArchived() ? 'active' : 'default'"
+                    compact
+                    data-photo-archive
+                />
+
+                <x-dock-button
                     wire:click="requestDeletePhoto({{ $photo->id }})"
                     icon="trash"
-                    variant="danger"
-                    square
-                    size="sm"
-                    :aria-label="__('Delete')"
-                    title="{{ __('Delete') }}"
+                    :label="__('Delete')"
+                    tone="danger"
+                    compact
                     data-photo-delete
                 />
 
                 @if ($photo->isImage())
                     @if ($gallery->coverPhoto?->is($photo))
-                        <x-ts-button
-                            variant="overlay"
-                            square
-                            size="sm"
-                            :aria-label="__('Adjust cover focus')"
-                            title="{{ __('Adjust cover focus') }}"
+                        <x-dock-button
+                            icon="star"
+                            :label="__('Adjust cover focus')"
+                            tone="active"
+                            compact
                             wire:click="$set('adjustingCover', true)"
                             data-photo-cover
-                        >
-                            <x-icon name="star" solid class="size-5 text-amber-500" />
-                        </x-ts-button>
+                        />
                     @else
-                        <x-ts-button
+                        <x-dock-button
                             icon="star"
-                            variant="overlay"
-                            square
-                            size="sm"
-                            :aria-label="__('Set as cover')"
-                            title="{{ __('Set as cover') }}"
+                            :label="__('Set as cover')"
+                            compact
                             wire:click="setAsCover({{ $photo->id }})"
                             data-photo-cover
                         />
                     @endif
                 @endif
-            </div>
+            </x-photo-mini-dock>
         @elseif ($isSelectable || $isDownloadable)
-            <div class="absolute right-1.5 bottom-1.5 flex gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+            <x-photo-mini-dock class="transition-opacity md:opacity-0 md:group-hover:opacity-100">
                 @if ($isSelectable)
-                    <x-ts-button
+                    <x-dock-button
                         wire:click="toggleFavorite({{ $photo->id }})"
-                        variant="overlay"
-                        square
-                        size="sm"
-                        :aria-label="__('Favorite')"
-                    >
-                        @if ($photo->isFavorited())
-                            <x-icon name="heart" solid class="size-5 text-red-500" />
-                        @else
-                            <x-icon name="heart" class="size-5" />
-                        @endif
-                    </x-ts-button>
+                        icon="heart"
+                        :label="__('Favorite')"
+                        :tone="$photo->isFavorited() ? 'favorite' : 'default'"
+                        compact
+                    />
                 @endif
 
                 @if ($isDownloadable)
-                    <x-ts-button
+                    <x-dock-button
                         :href="route('shares.photos.download', ['gallery' => $gallery, 'photo' => $photo])"
                         icon="cloud-arrow-down"
-                        variant="overlay"
-                        square
-                        size="sm"
-                        :aria-label="__('Download')"
+                        :label="__('Download')"
+                        tone="accent"
+                        compact
                     />
                 @endif
-            </div>
+            </x-photo-mini-dock>
         @endif
     @endif
 </div>

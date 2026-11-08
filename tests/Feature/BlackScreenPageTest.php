@@ -54,7 +54,7 @@ it('toggles the black screen with the keyboard shortcut', function () {
 
     expect($page->script("getComputedStyle(document.querySelector('[data-black-screen-overlay]')).display"))
         ->toBe('none');
-});
+})->group('browser');
 
 it('redirects guests to the login page', function () {
     get(route('tools.black-screen'))
