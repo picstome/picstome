@@ -90,6 +90,25 @@ it('rejects unsupported file extensions', function () {
     expect($gallery->photos()->count())->toBe(0);
 });
 
+it('rejects a file that is not a readable image before storing it', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Sanctum::actingAs($user);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'broken.jpg',
+        'file' => UploadedFile::fake()->createWithContent('broken.jpg', 'not an image'),
+    ], ['Accept' => 'application/json'])
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'invalid_image');
+
+    expect($gallery->photos()->count())->toBe(0);
+});
+
 it('returns 404 for an unknown gallery', function () {
     Storage::fake('s3');
 

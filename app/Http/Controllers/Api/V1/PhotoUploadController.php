@@ -36,10 +36,41 @@ class PhotoUploadController extends Controller
         $file = $request->file('file');
         $filename = $this->safeFilename((string) $request->string('filename'), $file);
 
+        $uploadedSize = (int) $file->getSize();
+
+        if ($uploadedSize <= 0) {
+            return $this->apiError('invalid_image', __('The uploaded file is empty.'), 422);
+        }
+
         // Hash and dimensions are read from the temporary upload before the
-        // file is moved to storage. Clients may send a hash but it is ignored.
+        // file is moved to storage. If the client sent its own hash, verify it
+        // here so a truncated or mutating upload is rejected before it creates
+        // a photo/version that ProcessPhoto cannot read.
         $hash = hash_file('sha256', $file->getRealPath());
+        $expectedHash = strtolower((string) $request->string('hash'));
+        $expectedSize = (int) $request->integer('size');
+
+        if ($expectedSize > 0 && $uploadedSize !== $expectedSize) {
+            return $this->apiError(
+                'upload_integrity_error',
+                __('The uploaded file size does not match the client copy. Please try again.'),
+                422,
+            );
+        }
+
+        if ($expectedHash !== '' && ! hash_equals($expectedHash, $hash)) {
+            return $this->apiError(
+                'upload_integrity_error',
+                __('The uploaded file changed during upload. Please try again.'),
+                422,
+            );
+        }
+
         [$width, $height] = $this->dimensions($file);
+
+        if ($this->isRasterImage($filename) && ($width === null || $height === null)) {
+            return $this->apiError('invalid_image', __('The uploaded file is not a readable image.'), 422);
+        }
 
         $upload = new UploadedFile(
             $file->getRealPath(),
@@ -77,6 +108,17 @@ class PhotoUploadController extends Controller
                 return $this->apiError('storage_quota_exceeded', __('There is not enough storage available.'), 413);
             }
 
+            if ($exception instanceof \RuntimeException
+                && preg_match('/S3|storage/i', $exception->getMessage()) === 1) {
+                report($exception);
+
+                return $this->apiError(
+                    'storage_error',
+                    __('The photo could not be stored. Please try again.'),
+                    503,
+                );
+            }
+
             throw $exception;
         }
 
@@ -95,6 +137,8 @@ class PhotoUploadController extends Controller
             'id' => (string) $photo->id,
             'filename' => $photo->name,
             'rev' => $revisions->for($gallery->fresh()),
+            'hash' => $hash,
+            'size' => $uploadedSize,
             'version_count' => $photo->version_count,
             'version_number' => $photo->currentVersionNumber(),
         ], $created ? 201 : 200);
@@ -112,6 +156,15 @@ class PhotoUploadController extends Controller
         }
 
         return $filename;
+    }
+
+    protected function isRasterImage(string $filename): bool
+    {
+        return in_array(
+            strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
+            ['jpg', 'jpeg', 'png', 'tiff', 'tif'],
+            true,
+        );
     }
 
     /**

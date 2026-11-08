@@ -16,6 +16,8 @@ class UploadPhotoRequest extends ApiFormRequest
         return [
             'gallery_id' => ['required', 'string', 'ulid'],
             'filename' => ['required', 'string', 'max:255'],
+            'hash' => ['nullable', 'string', 'regex:/^[a-fA-F0-9]{64}$/'],
+            'size' => ['nullable', 'integer', 'min:1'],
             'file' => [
                 'required',
                 'file',

@@ -28,6 +28,11 @@ class ProcessPhoto implements ShouldQueue
 
     public $timeout = 60 * 4; // 4 minutes
 
+    /** Retry transient S3/local-storage failures before marking the version failed. */
+    public $tries = 3;
+
+    public $backoff = [10, 60];
+
     public $temporaryPhotoPath;
 
     public $temporaryPhotoRelativePath;
@@ -87,6 +92,7 @@ class ProcessPhoto implements ShouldQueue
 
         if (! RawPhotoService::isRawFile($this->targetSourceName())) {
             $this->prepareTemporaryPhoto();
+            $this->assertTemporaryPhotoIsReadable();
         } elseif (! $this->processRawFile()) {
             $this->markSkipped();
 
@@ -277,12 +283,36 @@ class ProcessPhoto implements ShouldQueue
 
         $this->temporaryPhotoPath = Storage::disk('local')->path($tempFileRelativePath);
 
-        file_put_contents(
-            $this->temporaryPhotoPath,
-            Storage::disk('s3')->get($this->targetPath())
-        );
+        $contents = Storage::disk('s3')->get($this->targetPath());
+
+        if (! is_string($contents) || $contents === '') {
+            throw new \RuntimeException(
+                'Could not read the uploaded photo from S3.'
+            );
+        }
+
+        $written = file_put_contents($this->temporaryPhotoPath, $contents);
+
+        if ($written === false || $written !== strlen($contents)) {
+            @unlink($this->temporaryPhotoPath);
+
+            throw new \RuntimeException(
+                'Could not write the temporary photo to the local disk.'
+            );
+        }
 
         $this->temporaryPhotoRelativePath = $tempFileRelativePath;
+    }
+
+    protected function assertTemporaryPhotoIsReadable(): void
+    {
+        if (! is_file($this->temporaryPhotoPath) || filesize($this->temporaryPhotoPath) === 0) {
+            throw new \RuntimeException('The temporary photo is empty.');
+        }
+
+        if (@getimagesize($this->temporaryPhotoPath) === false) {
+            throw new \RuntimeException('The temporary photo is not a readable image.');
+        }
     }
 
     protected function resizePhoto(): void
@@ -456,7 +486,13 @@ class ProcessPhoto implements ShouldQueue
         }
 
         $maxPixels = config('picstome.max_photo_pixels');
-        [$width, $height] = getimagesize($this->temporaryPhotoPath);
+        $imageSize = @getimagesize($this->temporaryPhotoPath);
+
+        if (! is_array($imageSize)) {
+            throw new \RuntimeException('The temporary photo is not a readable image.');
+        }
+
+        [$width, $height] = $imageSize;
 
         if ($width * $height <= $maxPixels) {
             return false;
