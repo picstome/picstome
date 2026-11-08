@@ -244,7 +244,14 @@ class Gallery extends Model
             ->get()
             ->keyBy('id');
 
-        return EloquentCollection::make($ids->map(fn ($id) => $photos->get($id))->filter()->values()->all());
+        $ordered = $ids->map(fn ($id) => $photos->get($id))->filter()->values();
+
+        // PhotoUrlService reads `$photo->gallery->keep_original_size` for every
+        // CDN URL. The relation is lazy, so a 60-tile wall used to fire 60
+        // duplicate `select * from galleries` queries. They all belong here.
+        return EloquentCollection::make(
+            $ordered->each(fn (Photo $photo) => $photo->setRelation('gallery', $this))->all()
+        );
     }
 
     #[Scope]
@@ -954,10 +961,15 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * Rough ZIP size, answered by one aggregate query over the photo rows.
+     * The exact size is stored on `gallery_archives.size_bytes` once the ZIP
+     * is built, so the UI never needs to look at the bucket.
+     */
     public function downloadSize(): int
     {
         return Cache::remember("gallery:{$this->id}:download_size", now()->addHours(1), function (): int {
-            return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->photos()->ready()->notArchived()->cursor());
+            return app(GalleryArchiveService::class)->estimatedSize($this, 'all');
         });
     }
 
