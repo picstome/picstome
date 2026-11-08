@@ -17,11 +17,15 @@ class SystemInfoService
     /**
      * Git branch, commit and the repository root that produced the checkout.
      *
+     * Detached HEADs (a CI checkout) report a branch of null, so callers must
+     * treat both values as optional. The root is injectable to keep the parsing
+     * testable against a fixture directory.
+     *
      * @return array{branch: ?string, commit: ?string, root: ?string}
      */
-    public function git(): array
+    public function git(?string $root = null): array
     {
-        $root = base_path();
+        $root ??= base_path();
         $gitDir = $this->resolveGitDir($root);
 
         if ($gitDir === null) {
