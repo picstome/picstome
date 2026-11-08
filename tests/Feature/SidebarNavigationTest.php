@@ -106,7 +106,9 @@ it('shows the admin navigation only to admins', function () {
         ->assertOk()
         ->assertDontSee(route('users'), false)
         ->assertDontSee(route('admin.stats'), false)
-        ->assertDontSee('Statistics');
+        ->assertDontSee(route('admin.system'), false)
+        ->assertDontSee('Statistics')
+        ->assertDontSee('System info');
 
     config(['picstome.admin_emails' => [$user->email]]);
 
@@ -115,5 +117,7 @@ it('shows the admin navigation only to admins', function () {
         ->assertOk()
         ->assertSee(route('users'), false)
         ->assertSee(route('admin.stats'), false)
-        ->assertSee('Statistics');
+        ->assertSee(route('admin.system'), false)
+        ->assertSee('Statistics')
+        ->assertSee('System info');
 });

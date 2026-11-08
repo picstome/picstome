@@ -293,6 +293,14 @@
                             >
                                 {{ __('Queue') }}
                             </x-app-nav-link>
+
+                            <x-app-nav-link
+                                :href="route('admin.system')"
+                                icon="server"
+                                :current="request()->routeIs('admin.system')"
+                            >
+                                {{ __('System info') }}
+                            </x-app-nav-link>
                         @endif
                     </nav>
 
