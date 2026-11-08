@@ -1022,7 +1022,9 @@ class GalleryArchiveService
 
     protected function photosQuery(Gallery $gallery, string $variant): HasMany
     {
-        return ($variant === 'favorites' ? $gallery->favorites() : $gallery->photos())->ready();
+        // Archived photos are never shipped: the customer ZIP is exactly the
+        // selection the photographer wants them to see.
+        return ($variant === 'favorites' ? $gallery->favorites() : $gallery->photos())->ready()->notArchived();
     }
 
     protected function normalizeVariant(string $variant): string

@@ -447,28 +447,38 @@ test('the annotation overlay stays hidden until annotate mode is enabled', funct
     $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
     $page->wait(0.2);
 
-    expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
-        ->toBe('none')
-        ->and($page->script(<<<'JS'
-            getComputedStyle(
-                [...document.querySelectorAll('[data-annotate-button]')]
-                    .find((button) => getComputedStyle(button).display !== 'none')
-            ).backgroundColor
-        JS))->not->toBe('rgba(0, 0, 0, 0)');
+    // The dock is icon-only: the toggles are reached by their data hooks.
+    // "Quiet by default" means the annotate button is NOT filled until the mode
+    // actually runs, and then the exit button takes its place.
+    expect($page->script(<<<'JS'
+        (() => {
+            const enter = document.querySelector('[data-annotate-button]')
+            const exit = document.querySelector('[data-annotate-exit]')
 
-    $page->click('Annotate');
+            return {
+                enter: getComputedStyle(enter).backgroundColor,
+                exitVisible: exit ? getComputedStyle(exit).display !== 'none' : null,
+            }
+        })()
+    JS))->toBe(['enter' => 'rgba(0, 0, 0, 0)', 'exitVisible' => false]);
+
+    $page->click('[data-annotate-button]');
     $page->wait(0.2);
 
     expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
         ->toBe('block')
         ->and($page->script(<<<'JS'
-            getComputedStyle(
-                [...document.querySelectorAll('[data-annotate-button]')]
-                    .find((button) => getComputedStyle(button).display !== 'none')
-            ).backgroundColor
-        JS))->not->toBe('rgba(0, 0, 0, 0)');
+            (() => {
+                const exit = document.querySelector('[data-annotate-exit]')
 
-    $page->click('Exit annotation mode');
+                return {
+                    exitVisible: exit ? getComputedStyle(exit).display !== 'none' : false,
+                    exitFilled: exit ? getComputedStyle(exit).backgroundColor !== 'rgba(0, 0, 0, 0)' : false,
+                }
+            })()
+        JS))->toBe(['exitVisible' => true, 'exitFilled' => true]);
+
+    $page->click('[data-annotate-exit]');
     $page->wait(0.2);
 
     expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
@@ -738,6 +748,68 @@ test('pinch uses the full image and disables swipe until zoom is left', function
     $page->wait(1);
 
     expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
+});
+
+test('the hidden annotations state is kept while moving between photos', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create();
+    $second = Photo::factory()->for($gallery)->create();
+
+    foreach ([$first, $second] as $photo) {
+        PhotoComment::factory()->for($photo)->create([
+            'x' => 40,
+            'y' => 45,
+            'annotated_version_number' => 1,
+        ]);
+    }
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$first->id}");
+
+    $pinIsVisible = fn (): bool => (bool) $page->script(<<<'JS'
+        (() => {
+            const pin = document.querySelector('#photo button[title="Photo annotation"]')
+
+            return pin ? pin.offsetParent !== null : false
+        })()
+    JS);
+
+    expect($pinIsVisible())->toBeTrue();
+
+    // Filled state, same rule as the comments button: one toggle, green when
+    // the pins are visible.
+    expect($page->script(<<<'JS'
+        (() => {
+            const toggle = document.querySelector('[data-annotations-hide], [data-annotations-show]')
+
+            return toggle ? [
+                toggle.getAttribute('aria-label'),
+                getComputedStyle(toggle).backgroundColor,
+            ] : null
+        })()
+    JS))->toBe(['Hide annotations', 'rgb(49, 109, 97)']);
+
+    $page->script("document.querySelector('[data-annotations-hide]')?.click()");
+    $page->wait(0.2);
+
+    expect($pinIsVisible())->toBeFalse()
+        ->and($page->script("localStorage.getItem('picstome-annotations-visible')"))->toBe('0');
+
+    // Arrow-key navigation is a fresh Livewire render of the next photo.
+    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowRight', bubbles: true }))");
+    $page->wait(0.8);
+
+    expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
+
+    expect($pinIsVisible())->toBeFalse();
+    expect($page->script(<<<'JS'
+        (() => {
+            const show = document.querySelector('[data-annotations-show]')
+
+            return show ? show.offsetParent !== null : false
+        })()
+    JS))->toBeTrue();
 });
 
 test('the photo viewer offers a quick delete action with a confirmation', function () {

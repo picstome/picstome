@@ -40,6 +40,11 @@ it('resizes an added photo', function () {
     expect($height)->toBe(128);
     expect($photo->disk)->toBe('s3');
     expect($photo->status)->toBe('processed');
+
+    // The served file's own dimensions, read by the floating info panel.
+    // Local uploads used to leave them null while API uploads filled them in.
+    expect($photo->width)->toBe(128);
+    expect($photo->height)->toBe(128);
 });
 
 it('fails cleanly when the uploaded object is missing from storage', function () {

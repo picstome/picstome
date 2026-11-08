@@ -31,6 +31,10 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     #[Url]
     public $navigateCommented = false;
 
+    /** Paging through the Archived tab: neighbours stay inside that set. */
+    #[Url]
+    public $navigateArchived = false;
+
     public bool $adjustingCover = false;
 
     public function mount(Photo $photo)
@@ -45,6 +49,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         } elseif ($this->navigateCommented) {
             $this->next = $this->photo->nextCommented();
             $this->previous = $this->photo->previousCommented();
+        } elseif ($this->navigateArchived) {
+            $this->next = $this->photo->nextArchived();
+            $this->previous = $this->photo->previousArchived();
         } else {
             $this->next = $this->photo->next();
             $this->previous = $this->photo->previous();
@@ -80,6 +87,67 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $this->photo->toggleFavorite();
     }
 
+    /**
+     * Toggle the archive state of the current photo and move on, exactly like
+     * the F favourite shortcut keeps culling moving.
+     *
+     * Pressing A on an archived photo restores it and jumps to the next one, so
+     * the shortcut is one single "get this out of / back into the selection"
+     * key instead of two.
+     *
+     * Neighbours are captured BEFORE mutating: archiving removes the photo from
+     * the live lists and unarchiving removes it from the archived list, so the
+     * "next" has to be resolved against the set we are paging through at the
+     * moment the key was pressed.
+     *
+     * It is reversible, so no modal is shown here.
+     */
+    public function archive()
+    {
+        $this->authorize('update', $this->photo->gallery);
+
+        $next = $this->next;
+        $previous = $this->previous;
+        $wasArchived = $this->photo->isArchived();
+
+        if ($wasArchived) {
+            $this->photo->unarchive();
+        } else {
+            $this->photo->archive();
+
+            if ($this->photo->gallery->coverPhoto?->is($this->photo)) {
+                $this->photo->gallery->update(['cover_photo_id' => null]);
+                $this->photo->gallery->unsetRelation('coverPhoto');
+            }
+        }
+
+        if ($next) {
+            return $this->redirect($this->viewerUrl($next));
+        }
+
+        if ($previous) {
+            return $this->redirect($this->viewerUrl($previous));
+        }
+
+        // Restoring the last archived photo leaves the archived tab empty.
+        if ($wasArchived && $this->navigateArchived) {
+            return $this->redirect("/galleries/{$this->photo->gallery_id}?activeTab=archived");
+        }
+
+        return $this->redirect("/galleries/{$this->photo->gallery_id}");
+    }
+
+    /**
+     * Restore (unarchive) the current photo without leaving the viewer, used by
+     * the dock button when the photographer wants to keep looking at it.
+     */
+    public function unarchive()
+    {
+        $this->authorize('update', $this->photo->gallery);
+
+        $this->photo->unarchive();
+    }
+
     public function delete()
     {
         $this->authorize('delete', $this->photo);
@@ -110,6 +178,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $query = array_filter([
             'navigateFavorites' => $this->navigateFavorites ? true : null,
             'navigateCommented' => $this->navigateCommented ? true : null,
+            'navigateArchived' => $this->navigateArchived ? true : null,
         ]);
 
         return route('galleries.photos.show', [
@@ -214,12 +283,30 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     #[Computed]
     public function galleryUrl()
     {
+        // `#[Url]` properties arrive as strings ("true"/"1"), so `match (true)`
+        // (strict comparison) needs real booleans.
+        $favorites = filter_var($this->navigateFavorites, FILTER_VALIDATE_BOOLEAN);
+        $commented = filter_var($this->navigateCommented, FILTER_VALIDATE_BOOLEAN);
+        $archived = filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN);
+
+        $tab = match (true) {
+            $favorites => 'favorited',
+            $commented => 'commented',
+            $archived => 'archived',
+            default => null,
+        };
+
         $query = array_filter([
-            'activeTab' => $this->navigateFavorites ? 'favorited' : ($this->navigateCommented ? 'commented' : null),
+            'activeTab' => $tab,
             'photo' => $this->photo->id,
         ]);
 
-        $anchor = $this->navigateFavorites ? 'favorite-' : ($this->navigateCommented ? 'commented-' : 'photo-');
+        $anchor = match (true) {
+            $favorites => 'favorite-',
+            $commented => 'commented-',
+            $archived => 'archived-',
+            default => 'photo-',
+        };
 
         return route('galleries.show', ['gallery' => $this->photo->gallery] + $query)
             .'#'.$anchor.$this->photo->id;
@@ -473,12 +560,27 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             event.preventDefault()
             this.$dispatch('modal:delete-photo-open')
         },
+        archiveByKey(event) {
+            // Never hijack typing: comments and annotation inputs must win.
+            const target = event?.target
+
+            if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]')) {
+                return
+            }
+
+            if (event?.metaKey || event?.ctrlKey || event?.altKey) {
+                return
+            }
+
+            $wire.archive()
+        },
     }"
     x-init="initPhotoViewer()"
     data-full-image-url="{{ $photo->url }}"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @keyup.window.f="$wire.favorite()"
+    @keyup.window.a="archiveByKey($event)"
     @keyup.window.delete="requestDelete($event)"
     @keyup.window.backspace="requestDelete($event)"
     x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
@@ -588,195 +690,182 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             <div class="h-full w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
         @endif
 
-        <div
-            class="absolute top-0 bottom-0 left-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
-            :class="zoom ? 'hidden' : 'flex'"
-        >
-            @if ($previous)
-                <x-ts-button
-                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
-                    wire:navigate
-                    x-ref="previous"
-                    icon="chevron-left"
-                    size="sm"
-                    class="py-10 max-sm:py-0"
-                    square
-                />
-            @endif
-        </div>
-        <div
-            class="absolute top-0 right-0 bottom-0 z-30 flex items-center px-3 max-sm:top-auto max-sm:px-1 max-sm:py-1"
-            :class="zoom ? 'hidden' : 'flex'"
-        >
-            @if ($next)
-                <x-ts-button
-                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : '') }}"
-                    wire:navigate
-                    x-ref="next"
-                    icon="chevron-right"
-                    size="sm"
-                    class="py-10 max-sm:py-0"
-                    square
-                />
-            @endif
-        </div>
+        {{-- Keep only the back affordance floating at the top: every action
+             now lives in the bottom dock, so the photo is not boxed in. --}}
         <div
             class="absolute top-0 right-0 left-0 z-30 flex items-center justify-between gap-4 p-3 max-sm:p-1"
             :class="zoom ? 'hidden' : 'flex'"
         >
-            <div class="flex gap-3">
-                <x-ts-button
-                    :href="$this->galleryUrl"
-                    wire:navigate
-                    icon="arrow-left"
-                    size="sm"
-                    icon:variant="micro"
-                    variant="primary"
-                    class="btn-ink"
-                    data-photo-back
-                >
-                    {{ __('Back') }}
-                </x-ts-button>
-            </div>
-            <div
-                class="flex gap-3"
-                x-data="{ annotating: false }"
-                x-on:annotations-toggled.window="annotating = $event.detail.active"
+            <x-ts-button
+                :href="$this->galleryUrl"
+                icon="arrow-left"
+                icon:variant="micro"
+                size="sm"
+                variant="primary"
+                class="btn-ink"
+                data-photo-back
+                wire:navigate
+                :tooltip="__('Back to gallery :name', ['name' => $photo->gallery->name])"
+                :aria-label="__('Back to gallery :name', ['name' => $photo->gallery->name])"
             >
-                <span x-data x-tooltip="{{ $photo->name }}" class="max-sm:hidden">
-                    <x-ts-button icon="information-circle" size="sm" variant="subtle" />
-                </span>
+                {{ __('Back') }}
+            </x-ts-button>
 
-                @if ($photo->isImage() && ! $photo->gallery->coverPhoto?->is($photo))
-                    <x-ts-button
-                        icon="star"
-                        size="sm"
-                        variant="subtle"
-                        wire:click="setAsCover"
-                        title="{{ __('Set as Cover') }}"
-                        class="max-sm:hidden"
-                    />
-                @endif
-                <x-dropdown position="bottom-end">
-                    <x-slot:action>
-                        <x-ts-button icon="ellipsis-vertical" size="sm" variant="subtle" x-on:click="show = ! show" />
-                    </x-slot:action>
-
-                    @if ($photo->isImage())
-                        @if ($photo->gallery->coverPhoto?->is($photo))
-                            <x-dropdown.items :text="__('Adjust Cover Focus')" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)" />
-                            <x-dropdown.items :text="__('Remove as Cover')" icon="x-mark" wire:click="removeAsCover" />
-                        @else
-                            <x-dropdown.items :text="__('Set as Cover')" icon="star" wire:click="setAsCover" />
-                        @endif
-                    @endif
-
-                    <x-dropdown.items
-                        :text="__('Delete')"
-                        icon="trash"
-                        x-on:click="show = false; $tsui.open.modal('delete-photo')"
-                        class="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                    />
-                </x-dropdown>
-
-                <div class="contents" x-show="! annotating">
-                    <x-ts-modal-trigger name="add-comment">
-                        <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="max-sm:hidden" variant="primary">
-                            @if ($this->comments->isEmpty())
-                                {{ __('Add comment') }}
-                            @else
-                                {{ __('Comments (:count)', ['count' => $this->comments->count()]) }}
-                            @endif
-                        </x-ts-button>
-
-                        <x-ts-button icon="chat-bubble-left-ellipsis" size="sm" class="sm:hidden" variant="primary" square />
-                    </x-ts-modal-trigger>
-                </div>
-
-                <x-photo-annotate-button :can-annotate="$photo->isImage()" />
-
-                @if ($photo->path && $photo->raw_path)
-                    <x-dropdown position="bottom-end">
-                        <x-slot:action>
-                            <x-ts-button icon="cloud-arrow-down" size="sm" variant="primary" class="btn-ink" square x-on:click="show = ! show" />
-                        </x-slot:action>
-
-                        <x-dropdown.items
-                            :text="__('Download JPG')"
-                            icon="cloud-arrow-down"
-                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
-                        />
-                        <x-dropdown.items
-                            :text="__('Download Raw')"
-                            icon="cloud-arrow-down"
-                            :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
-                        />
-                    </x-dropdown>
-                @else
-                    <x-ts-button
-                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
-                        icon="cloud-arrow-down"
-                        icon:variant="mini"
-                        size="sm"
-                        variant="primary"
-                        class="btn-ink"
-                        square
-                    />
-                @endif
-                <x-ts-button
-                    wire:click="favorite"
-                    variant="overlay"
-                    size="sm"
-                    square
-                    :aria-label="__('Favorite')"
-                >
-                    @if ($photo->isFavorited())
-                        <x-icon name="heart" solid class="size-5 text-red-500" />
-                    @else
-                        <x-icon name="heart" class="size-5" />
-                    @endif
-                </x-ts-button>
-                <x-ts-button
-                    icon="trash"
-                    variant="overlay"
-                    size="sm"
-                    square
-                    :aria-label="__('Delete')"
-                    title="{{ __('Delete') }}"
-                    data-photo-delete
-                    class="max-sm:hidden"
-                    x-on:click="$dispatch('modal:delete-photo-open')"
-                />
-            </div>
+            <x-photo-info :$photo :facts="$photo->infoFacts()" />
         </div>
 
-        <div
-            x-data="{ annotating: false }"
-            x-on:annotations-toggled.window="annotating = $event.detail.active"
-            x-show="! annotating && ! zoom"
+        <x-closeup-panel
+            :photo="$photo"
+            :image-url="$photo->large_thumbnail_url"
+            :full-url="$photo->url"
+            :original-url="$photo->original_url"
+        />
+
+        {{-- Bottom dock: one icon-only button per action, grouped by meaning.
+             Destructive actions are last and tinted red, so nothing can be hit
+             by accident while culling. --}}
+        <x-photo-dock
+            x-show="! zoom"
             style="display: none"
-            class="absolute right-3 bottom-3 z-10 flex items-center gap-2"
+            data-viewer-dock
         >
-            @if (config('picstome.file_versions_enabled'))
-                <livewire:photo-versions :photo="$photo" :manageable="true" />
+            {{-- Navigation first: previous / next live here now, so the photo
+                 is not framed by two floating arrows. x-ref stays so the
+                 arrow-key shortcuts keep navigating. --}}
+            @if ($previous)
+                <x-dock-button
+                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : ($navigateArchived ? '?navigateArchived=true' : '')) }}"
+                    icon="chevron-left"
+                    :label="__('Previous photo')"
+                    hint="←"
+                    x-ref="previous"
+                    wire:navigate
+                />
             @endif
+
+            @if ($next)
+                <x-dock-button
+                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : ($navigateArchived ? '?navigateArchived=true' : '')) }}"
+                    icon="chevron-right"
+                    :label="__('Next photo')"
+                    hint="→"
+                    x-ref="next"
+                    wire:navigate
+                />
+            @endif
+
+            <x-dock-divider />
+
+            <x-dock-button
+                icon="heart"
+                :label="__('Favorite')"
+                hint="F"
+                :tone="$photo->isFavorited() ? 'favorite' : 'default'"
+                wire:click="favorite"
+                data-dock-favorite
+            />
+
+            @if ($photo->isImage() && ! $photo->gallery->coverPhoto?->is($photo))
+                <x-dock-button icon="star" :label="__('Set as Cover')" wire:click="setAsCover" />
+            @elseif ($photo->isImage())
+                {{-- Already the cover: one button opens both cover actions so
+                     nothing is lost when the dock replaced the old dropdown. --}}
+                <x-dropdown position="top-end">
+                    <x-slot:action>
+                        <x-dock-button icon="star" :label="__('Cover actions')" tone="active" x-on:click="show = ! show" />
+                    </x-slot:action>
+
+                    <x-dropdown.items
+                        :text="__('Adjust Cover Focus')"
+                        icon="viewfinder-circle"
+                        wire:click="$set('adjustingCover', true)"
+                    />
+                    <x-dropdown.items
+                        :text="__('Remove as Cover')"
+                        icon="x-mark"
+                        wire:click="removeAsCover"
+                    />
+                </x-dropdown>
+            @endif
+
+            <x-dock-divider />
+
+            <x-closeup-panel-button hint="C" />
+
+            <x-ts-modal-trigger name="add-comment">
+                <x-dock-button
+                    icon="chat-bubble-left-ellipsis"
+                    :label="__('Comments (:count)', ['count' => $this->comments->count()])"
+                    :tone="$this->comments->isEmpty() ? 'default' : 'ink'"
+                    data-photo-comments
+                />
+            </x-ts-modal-trigger>
+
+            <x-photo-annotate-button
+                :can-annotate="$photo->isImage()"
+                :has-annotations="$this->annotationsCount > 0"
+            />
 
             @if ($this->annotationsCount > 0)
                 <x-photo-annotations-toggle />
             @endif
-        </div>
-    </div>
 
-    <div class="flex items-center justify-center px-3 pt-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:hidden">
-        <x-ts-button
-            icon="trash"
-            variant="danger"
-            size="sm"
-            data-photo-delete-mobile
-            x-on:click="$dispatch('modal:delete-photo-open')"
-        >
-            {{ __('Delete') }}
-        </x-ts-button>
+            <x-dock-divider />
+
+            @if (config('picstome.file_versions_enabled'))
+                <livewire:photo-versions :photo="$photo" :manageable="true" />
+            @endif
+
+            @if ($photo->path && $photo->raw_path)
+                <x-dropdown position="top-end">
+                    <x-slot:action>
+                        <x-dock-button
+                            icon="cloud-arrow-down"
+                            :label="__('Download')"
+                            x-on:click="show = ! show"
+                        />
+                    </x-slot:action>
+
+                    <x-dropdown.items
+                        :text="__('Download JPG')"
+                        icon="cloud-arrow-down"
+                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'jpg'])"
+                    />
+                    <x-dropdown.items
+                        :text="__('Download Raw')"
+                        icon="cloud-arrow-down"
+                        :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo, 'type' => 'raw'])"
+                    />
+                </x-dropdown>
+            @else
+                <x-dock-button
+                    icon="cloud-arrow-down"
+                    :label="__('Download')"
+                    :href="route('galleries.photos.download', ['gallery' => $photo->gallery, 'photo' => $photo])"
+                />
+            @endif
+
+            {{-- Archive sits immediately left of Delete, so the two "get it out
+                 of the client's view" actions are next to each other. --}}
+            <x-dock-button
+                icon="archive-box"
+                :label="$photo->isArchived() ? __('Unarchive') : __('Archive')"
+                hint="A"
+                :tone="$photo->isArchived() ? 'active' : 'default'"
+                wire:click="{{ $photo->isArchived() ? 'unarchive' : 'archive' }}"
+                data-photo-archive
+            />
+
+            <x-dock-button
+                icon="trash"
+                :label="__('Delete')"
+                hint="DEL"
+                tone="danger"
+                data-photo-delete
+                data-photo-delete-mobile
+                x-on:click="$dispatch('modal:delete-photo-open')"
+            />
+        </x-photo-dock>
     </div>
 
     <x-ts-modal name="add-comment" class="w-full sm:max-w-lg">
@@ -836,11 +925,11 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     <x-cover-focus-overlay :gallery="$photo->gallery" :photo="$photo" :adjusting="$adjustingCover" />
 </div>
 
-
-
-
-@assets
-@endassets
+@script
+    <script>
+        @include('partials.closeup-panel-script')
+    </script>
+@endscript
 
 @push('head')
     @if ($photo->isImage())

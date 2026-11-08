@@ -75,10 +75,29 @@ legacy migrations that are not fully reversible.
 - Run the full suite with `composer test` (Pest in parallel). While iterating,
   use `./vendor/bin/pest --compact --filter=testName`.
 - Feature tests cover the happy path, permissions and failure cases.
-- UI changes require a browser test where practical.
+- UI changes require a browser test where practical. Browser tests are tagged
+  `->group('browser')` so `composer test:feature` can skip them while iterating
+  and `composer test:browser` runs them before the PR.
 - Queue jobs must be tested with a fake/sync queue.
 - Storage/URL tests must call `Storage::fake()` for the relevant disk.
 - Tests must not depend on production bucket names, credentials or cache state.
+
+### When to run the browser tests
+
+The browser suite (Pest + Playwright, `--testsuite=Components`) is slow: each
+test boots a real page in headless Chromium, so it takes minutes and it is the
+main reason local iteration feels sluggish.
+
+- **While developing**, run only what you changed: `--filter=testName` on a
+  feature test, or the specific `.test.php` file. Do not run the browser suite
+  on every save.
+- **Before opening a pull request**, run it once:
+  `composer test:browser` (or `composer test` for
+  everything). That is the moment the browser tests earn their cost.
+- If a browser test fails only under a full run and passes alone, re-run it
+  alone first: `Target page, context or browser has been closed` and geometry
+  timeouts are environment flakiness (RAM / parallel workers), not a
+  regression. Say so in the PR instead of chasing it.
 
 ### Testing payments locally
 

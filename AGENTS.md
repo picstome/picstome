@@ -278,6 +278,9 @@ Minimum checklist:
 - Review DRY: reuse existing services, components and traits.
 - Add feature and regression tests; fake S3/FTP/queues in tests.
 - Run `vendor/bin/pint --dirty` and `composer test`.
+- **Browser tests: only before opening the PR.** While iterating run the
+  affected test with `--filter=`; the Playwright suite boots a real page per
+  test and would stall development.
 - Migrations need a working `down()` and fresh + rollback verification.
 - Destructive data operations require dry-run and explicit `--force`.
 - Update `docs/` for operational, migration or rollback requirements.

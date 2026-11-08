@@ -223,6 +223,36 @@ describe('Gallery Viewing', function () {
         JS))->toBe(['cover' => 1, 'delete' => 1, 'favorite' => 1, 'download' => 0, 'more' => 0]);
     });
 
+    it('centres the tile actions dock at the bottom of the thumbnail', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+        $page->wait(0.2);
+
+        // The same frosted pill as the viewer dock, in the same place: centred
+        // at the bottom of the thumbnail, not tucked into a corner.
+        expect($page->script(<<<'JS'
+            (() => {
+                const card = document.querySelector('[data-photo-card]')
+                const dock = card.querySelector('.rounded-full')
+                const d = dock.getBoundingClientRect()
+                const c = card.getBoundingClientRect()
+
+                return {
+                    centred: Math.abs((d.left + d.width / 2) - (c.left + c.width / 2)) <= 2,
+                    nearBottom: Math.round(c.bottom - d.bottom),
+                    radius: dock.className.includes('rounded-full'),
+                }
+            })()
+        JS))->toBe(['centred' => true, 'nearBottom' => 6, 'radius' => true]);
+    });
+
     it('opens the favorite list from the actions menu', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->favorited()->create();

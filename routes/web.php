@@ -53,6 +53,9 @@ Route::get('/shares/{gallery:ulid}/photos/{photo}/download', function (Gallery $
 
     abort_unless($photo->gallery_id === $gallery->id, 404);
 
+    // Archived photos are part of the photographer's private selection.
+    abort_if($photo->isArchived(), 404);
+
     abort_unless($gallery->is_share_downloadable, 401);
 
     $type = request()->input('type') === 'raw' ? 'raw' : 'processed';
@@ -64,6 +67,8 @@ Route::get('/shares/{gallery:ulid}/photos/{photo}/pdf', function (Gallery $galle
     abort_unless($gallery->is_shared, 404);
 
     abort_unless($photo->gallery_id === $gallery->id, 404);
+
+    abort_if($photo->isArchived(), 404);
 
     abort_unless($photo->isPdf(), 404);
 

@@ -52,6 +52,7 @@ class Photo extends Model
             'version_count' => 'integer',
             'uploaded_at' => 'datetime',
             'favorited_at' => 'datetime',
+            'archived_at' => 'datetime',
             'status' => 'string',
         ];
     }
@@ -75,6 +76,7 @@ class Photo extends Model
             Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:archived:ids");
             Cache::forget("gallery:{$photo->gallery_id}:media_counts");
             Cache::forget("gallery:{$photo->gallery_id}:download_size");
 
@@ -105,6 +107,25 @@ class Photo extends Model
                 $variants[] = 'favorites';
             }
 
+            // Archiving changes what clients see and what the ZIP contains, so
+            // the live lists, the counts and both archive variants go stale.
+            if ($photo->wasChanged('archived_at')) {
+                $variants[] = 'all';
+
+                Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:archived:ids");
+                Cache::forget("gallery:{$photo->gallery_id}:first_image");
+                Cache::forget("gallery:{$photo->gallery_id}:media_counts");
+                Cache::forget("gallery:{$photo->gallery_id}:download_size");
+
+                if ($photo->favorited_at) {
+                    $variants[] = 'favorites';
+                }
+            }
+
             if ($variants !== []) {
                 static::invalidateGalleryArchives($photo, array_values(array_unique($variants)));
             }
@@ -117,6 +138,7 @@ class Photo extends Model
             Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
             Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
             Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
+            Cache::forget("gallery:{$photo->gallery_id}:archived:ids");
             Cache::forget("gallery:{$photo->gallery_id}:media_counts");
             Cache::forget("gallery:{$photo->gallery_id}:download_size");
             Cache::forget("gallery:{$photo->gallery_id}:comments_count");
@@ -238,6 +260,47 @@ class Photo extends Model
         return $query->whereNull('favorited_at');
     }
 
+    /**
+     * Photos the photographer archived: hidden from clients, from the gallery
+     * ZIP and from the public tabs, but still on disk.
+     */
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    /**
+     * Photos that are still live (not archived).
+     */
+    public function scopeNotArchived($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    public function toggleArchive(): void
+    {
+        $this->update(['archived_at' => $this->archived_at ? null : Carbon::now()]);
+    }
+
+    public function archive(): void
+    {
+        if (! $this->archived_at) {
+            $this->update(['archived_at' => Carbon::now()]);
+        }
+    }
+
+    public function unarchive(): void
+    {
+        if ($this->archived_at) {
+            $this->update(['archived_at' => null]);
+        }
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null;
+    }
+
     public function toggleFavorite()
     {
         $this->update(['favorited_at' => $this->favorited_at ? null : Carbon::now()]);
@@ -294,6 +357,20 @@ class Photo extends Model
     public function previousCommented(): ?Photo
     {
         return $this->navigationNeighbor($this->gallery->commentedPhotoIds(), -1);
+    }
+
+    /**
+     * Neighbours inside the archived set, so paging through the Archived tab
+     * only visits archived photos.
+     */
+    public function nextArchived(): ?Photo
+    {
+        return $this->navigationNeighbor($this->gallery->archivedPhotoIds(), 1);
+    }
+
+    public function previousArchived(): ?Photo
+    {
+        return $this->navigationNeighbor($this->gallery->archivedPhotoIds(), -1);
     }
 
     /**
@@ -397,6 +474,70 @@ class Photo extends Model
     protected function largeThumbnailUrl(): Attribute
     {
         return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->largeThumbnail() : null);
+    }
+
+    /**
+     * Untouched original bytes from the storage/CDN, with no resize params.
+     * Used by the Closeup Panel: sharpness and blur can only be judged on the
+     * native pixels, never on a 2048px preview that has already been
+     * resampled and WebP-compressed by the CDN.
+     */
+    protected function originalUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->original() : null);
+    }
+
+    /**
+     * Facts about the file, shown in the floating info panel of the viewer.
+     *
+     * Everything here is derived from the stored row: no EXIF parsing, no
+     * network call. The panel is photographer-only, and rows whose value is
+     * null are skipped instead of guessed.
+     *
+     * `uploaded` is the only date shown: `uploaded_at` and `created_at` hold
+     * the same instant for a photo that has never been re-uploaded, so showing
+     * both duplicated the same line under two different labels.
+     *
+     * @return array<string, string|null>
+     */
+    public function infoFacts(): array
+    {
+        $resolution = $this->width && $this->height
+            ? $this->width.' x '.$this->height.' px'
+            : null;
+
+        $ratio = $this->width && $this->height
+            ? $this->aspectRatioLabel($this->width, $this->height)
+            : null;
+
+        return [
+            'name' => $this->name,
+            'type' => strtoupper(pathinfo($this->name, PATHINFO_EXTENSION)),
+            'size' => $this->formattedSize(),
+            'resolution' => $resolution,
+            'ratio' => $ratio,
+            'uploaded' => $this->uploaded_at?->isoFormat('LLL'),
+        ];
+    }
+
+    /**
+     * Simplified aspect ratio ("3:2", "4:5) reduced by the greatest common
+     * divisor), the way photographers describe a crop.
+     */
+    protected function aspectRatioLabel(int $width, int $height): string
+    {
+        $divisor = $this->greatestCommonDivisor($width, $height);
+
+        return (int) ($width / $divisor).':'.(int) ($height / $divisor);
+    }
+
+    protected function greatestCommonDivisor(int $a, int $b): int
+    {
+        while ($b !== 0) {
+            [$a, $b] = [$b, $a % $b];
+        }
+
+        return $a ?: 1;
     }
 
     protected function smallThumbnailUrl(): Attribute

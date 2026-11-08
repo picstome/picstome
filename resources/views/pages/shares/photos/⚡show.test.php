@@ -147,7 +147,10 @@ test('favorite photo via browser on watermarked gallery', function () {
 
     $page = visit("/shares/test123/photos/{$photo->id}");
 
-    $page->pressAndWaitFor('favorite', 0.1);
+    // The dock is icon-only: the F shortcut is the stable way in, and the
+    // button itself is reached through its data hook.
+    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'f', bubbles: true }))");
+    $page->wait(0.3);
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
 });
@@ -301,7 +304,9 @@ test('only the team owner can delete any comment', function () {
 });
 
 test('shared gallery can show and compare versions when enabled', function () {
-    $gallery = Gallery::factory()->shared()->create([
+    // Downloadable so both actions are on screen and their order can be
+    // asserted below.
+    $gallery = Gallery::factory()->shared()->downloadable()->create([
         'ulid' => '0123ABC',
         'is_share_versions_visible' => true,
     ]);
@@ -317,8 +322,19 @@ test('shared gallery can show and compare versions when enabled', function () {
 
     $response->assertStatus(200);
     $response->assertSee('Compare versions');
-    $response->assertSee('Versions');
+    // The dock is icon-only: the versions trigger is reached by its hook, and
+    // its label lives in the tooltip / accessible name.
+    $response->assertSee('data-photo-versions', false);
+    $response->assertSee('Versions (2)');
     $response->assertDontSee('Restore');
+
+    // Order: versions sit immediately left of download.
+    $html = $response->getContent();
+    $versionsPosition = strpos($html, 'data-photo-versions');
+    $downloadPosition = strpos($html, 'aria-label="Download"');
+    expect($downloadPosition)->toBeInt()
+        ->and($versionsPosition)->toBeInt()
+        ->and($versionsPosition)->toBeLessThan($downloadPosition);
 });
 
 test('shared gallery hides versions by default', function () {
@@ -508,10 +524,33 @@ test('annotation mode can be toggled from the toolbar in the browser', function 
 
     $page = visit("/shares/annotate1/photos/{$photo->id}");
 
-    $page->assertSee('Annotate')
-        ->click('Annotate')
-        ->assertSee('Exit annotation mode')
-        ->assertSee('Click on the photo to mark a spot');
+    // The dock is icon-only: labels live in the tooltip / accessible name,
+    // not in visible text.
+    expect($page->script(<<<'JS'
+        (() => {
+            const enter = document.querySelector('[data-annotate-button]')
+
+            return enter ? enter.getAttribute('aria-label') : null
+        })()
+    JS))->toBe('Annotate');
+
+    $page->click('[data-annotate-button]');
+    $page->wait(0.2);
+
+    $state = $page->script(<<<'JS'
+        (() => {
+            const exit = document.querySelector('[data-annotate-exit]')
+
+            return {
+                label: exit ? exit.getAttribute('aria-label') : null,
+                visible: exit ? getComputedStyle(exit).display !== 'none' : false,
+            }
+        })()
+    JS);
+
+    expect($state)->toBe(['label' => 'Exit annotation mode', 'visible' => true]);
+
+    $page->assertSee('Click on the photo to mark a spot');
 });
 
 test('a guest can create an annotation from the browser', function () {
@@ -536,10 +575,18 @@ test('a guest can create an annotation from the browser', function () {
     $page->wait(0.3);
 
     // The comments button hides and the toolbar stays clickable above the
-    // annotation capture layer.
+    // annotation capture layer. The dock is icon-only, so "Annotate" is an
+    // accessible name, not text.
+    expect($page->script(<<<'JS'
+        (() => {
+            const enter = document.querySelector('[data-annotate-button]')
+
+            return enter ? enter.getAttribute('aria-label') : null
+        })()
+    JS))->toBe('Annotate');
+
     $page->assertDontSee('Add comment')
-        ->click('Exit annotation mode')
-        ->assertSee('Annotate');
+        ->click('[data-annotate-exit]');
 
     $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
     $page->wait(0.3);
@@ -584,40 +631,111 @@ test('a guest can create an annotation from the browser', function () {
         })()
     JS);
 
-    $clickToggle = function (string $label) use ($page): void {
-        $page->script(<<<JS
-            (() => {
-                const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === '{$label}')
-                button?.click()
-            })()
-        JS);
+    // The dock is icon-only, so toggles are reached by their data hooks.
+    $clickToggle = function (string $selector) use ($page): void {
+        $page->script("document.querySelector('{$selector}')?.click()");
 
         $page->wait(0.2);
     };
 
     expect($pinIsVisible())->toBeTrue();
 
-    $clickToggle('Hide annotations');
+    // One button, two colours: pins visible = green ("Hide annotations"),
+    // pins hidden = sage ("Show annotations"). Same reading as the comments
+    // button, where a filled tone means there is something to look at.
+    expect($page->script(<<<'JS'
+        (() => {
+            const toggle = document.querySelector('[data-annotations-hide], [data-annotations-show]')
+
+            return toggle ? [
+                toggle.getAttribute('aria-label'),
+                getComputedStyle(toggle).backgroundColor,
+            ] : null
+        })()
+    JS))->toBe(['Hide annotations', 'rgb(49, 109, 97)']);
+
+    $clickToggle('[data-annotations-hide]');
     expect($pinIsVisible())->toBeFalse();
 
-    $clickToggle('Show annotations');
+    expect($page->script(<<<'JS'
+        (() => {
+            const toggle = document.querySelector('[data-annotations-hide], [data-annotations-show]')
+
+            return toggle ? [
+                toggle.getAttribute('aria-label'),
+                getComputedStyle(toggle).backgroundColor,
+            ] : null
+        })()
+    JS))->toBe(['Show annotations', 'rgb(198, 216, 175)']);
+
+    $clickToggle('[data-annotations-show]');
     expect($pinIsVisible())->toBeTrue();
 
-    $controlsAreVisible = fn (): bool => (bool) $page->script(<<<'JS'
+    // The pins toggle stays reachable. Whether the dock stays visible during
+    // annotation mode is covered by the dedicated toggle test above.
+    expect($page->script(<<<'JS'
         (() => {
-            const button = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Hide annotations')
+            const button = document.querySelector('[data-annotations-hide]')
 
             return button ? button.offsetParent !== null : false
         })()
+    JS))->toBeTrue();
+
+    // The choice survives a new render: the key the overlay reads is the same
+    // one the toggle writes, so the state restored on the next photo is the
+    // one the photographer last chose (here: visible again).
+    expect($page->script("localStorage.getItem('picstome-annotations-visible')"))
+        ->toBe('1');
+});
+
+test('the hidden annotations state is kept while moving between photos', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => 'annotate3',
+        'are_comments_enabled' => true,
+        'are_annotations_enabled' => true,
+    ]);
+    $first = Photo::factory()->for($gallery)->create();
+    $second = Photo::factory()->for($gallery)->create();
+
+    foreach ([$first, $second] as $photo) {
+        PhotoComment::factory()->for($photo)->create([
+            'x' => 40,
+            'y' => 45,
+            'annotated_version_number' => 1,
+        ]);
+    }
+
+    $page = visit("/shares/annotate3/photos/{$first->id}");
+
+    $pinIsVisible = fn (): bool => (bool) $page->script(<<<'JS'
+        (() => {
+            const pin = document.querySelector('#photo button[title="Photo annotation"]')
+
+            return pin ? pin.offsetParent !== null : false
+        })()
     JS);
 
-    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
-    $page->wait(0.2);
-    expect($controlsAreVisible())->toBeFalse();
+    expect($pinIsVisible())->toBeTrue();
 
-    $page->script("window.dispatchEvent(new CustomEvent('toggle-annotations'))");
+    $page->script("document.querySelector('[data-annotations-hide]')?.click()");
     $page->wait(0.2);
-    expect($controlsAreVisible())->toBeTrue();
+    expect($pinIsVisible())->toBeFalse();
+
+    // Navigate to the next photo the same way the arrow keys do.
+    $page->script("Livewire.navigate(document.querySelector('[data-viewer-dock] a[aria-label=\"Next photo (→)\"]').href)");
+    $page->wait(0.8);
+
+    expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id)
+        ->and($page->script("localStorage.getItem('picstome-annotations-visible')"))->toBe('0');
+
+    expect($pinIsVisible())->toBeFalse();
+    expect($page->script(<<<'JS'
+        (() => {
+            const show = document.querySelector('[data-annotations-show]')
+
+            return show ? show.offsetParent !== null : false
+        })()
+    JS))->toBeTrue();
 });
 
 test('the annotations toggle appears only when the photo has annotations', function () {
@@ -699,7 +817,7 @@ test('a platform admin can comment and delete comments on a shared photo', funct
     expect($photo->comments()->find($guestComment->id))->toBeNull();
 });
 
-test('mobile comments button opens the comments modal', function () {
+test('the mobile dock opens the comments modal', function () {
     $gallery = Gallery::factory()->shared()->create([
         'are_comments_enabled' => true,
         'are_annotations_enabled' => true,
@@ -710,7 +828,10 @@ test('mobile comments button opens the comments modal', function () {
     $page = visit("/shares/{$gallery->ulid}/photos/{$photo->id}");
     $page->resize(375, 900);
     $page->wait(0.2);
-    $page->click('[data-mobile-comments]');
+
+    // There is no separate mobile toolbar any more: the dock carries every
+    // action on every width, so mobile reaches comments through it.
+    $page->click('[data-photo-comments]');
     $page->wait(0.3);
 
     expect($page->script("getComputedStyle(document.querySelector('#add-comment')).display"))

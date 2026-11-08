@@ -128,6 +128,11 @@ new class extends Component
             'status' => $version->status,
             'current_version_id' => $version->id,
             'uploaded_at' => $version->uploaded_at,
+            // Versions do not store pixel dimensions, so the ones on the photo
+            // describe the file being replaced. Clear them instead of showing
+            // the wrong resolution in the info panel.
+            'width' => null,
+            'height' => null,
         ]);
 
         $this->photo->unsetRelation('currentVersion');
@@ -196,9 +201,11 @@ new class extends Component
 <div class="contents">
     @if ($this->versions->isNotEmpty())
         <x-ts-modal-trigger name="photo-versions-{{ $photo->id }}">
-            <x-ts-button size="sm" icon="rectangle-stack" variant="primary" class="btn-ink">
-                {{ __('Versions') }} ({{ $this->versions->count() }})
-            </x-ts-button>
+            <x-dock-button
+                icon="rectangle-stack"
+                :label="__('Versions (:count)', ['count' => $this->versions->count()])"
+                data-photo-versions
+            />
         </x-ts-modal-trigger>
 
         <x-ts-modal name="photo-versions-{{ $photo->id }}" class="w-full max-w-6xl">

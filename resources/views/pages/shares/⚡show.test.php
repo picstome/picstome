@@ -191,6 +191,21 @@ test('shared gallery hides the download tab when downloads are disabled', functi
         ->assertDontSee('This ZIP includes processed images');
 });
 
+test('the public download action uses the studio accent colour', function () {
+    $this->team->update(['brand_color' => 'violet']);
+
+    $gallery = Gallery::factory()->shared()->downloadable()->for($this->team)->create(['ulid' => '0123ABC']);
+    Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+    get('/shares/0123ABC/'.$gallery->slug)
+        ->assertOk()
+        // The guest layout maps the brand colour onto `--color-accent`, and the
+        // download button fills with it so the client's main action matches the
+        // photographer's branding.
+        ->assertSee('--color-accent', false)
+        ->assertSeeHtml('bg-(--color-accent)');
+});
+
 test('shared gallery shows the favorite count and selection limit', function () {
     $gallery = Gallery::factory()->shared()->selectable(10)->for($this->team)->create();
     Photo::factory()->count(3)->for($gallery)->favorited()->create();

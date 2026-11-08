@@ -38,6 +38,9 @@ class PhotoResource extends JsonResource
             'version_count' => $this->version_count,
             'version_number' => $this->currentVersionNumber(),
             'favorited_at' => $this->favorited_at?->toIso8601String(),
+            // Archived photos are still returned (the companion app must be
+            // able to show and unarchive them); this field is the only signal.
+            'archived_at' => $this->archived_at?->toIso8601String(),
         ];
     }
 }
