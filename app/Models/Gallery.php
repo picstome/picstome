@@ -388,6 +388,10 @@ class Gallery extends Model
 
         $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
 
+        // Store first so a failed S3 transfer cannot bump version_count or
+        // snapshot the previous version without a usable replacement.
+        $newPath = $this->storeUploadedPhoto($photo, $sourceName);
+
         $this->prepareNewVersion($existing);
 
         $existing->update([
@@ -397,7 +401,7 @@ class Gallery extends Model
             'size' => $photoSize,
             'stored_size' => $photoSize,
             'stored_hash' => null,
-            'path' => $this->storeUploadedPhoto($photo, $sourceName),
+            'path' => $newPath,
             'thumb_path' => null,
             'raw_path' => null,
             'disk' => 's3',
@@ -506,8 +510,16 @@ class Gallery extends Model
 
     protected function replaceStoredPhoto(UploadedFile $photo, string $path): string
     {
+        $sourceSize = (int) @filesize($photo->getRealPath());
+
         if (FileUploadConfiguration::isUsingS3()) {
-            Storage::disk('s3')->move($photo->getRealPath(), $path);
+            $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
+
+            if (! $moved) {
+                throw new \RuntimeException('Could not replace the current photo in storage.');
+            }
+
+            $this->verifyStoredPhoto($path, $sourceSize);
 
             return $path;
         }
@@ -518,23 +530,72 @@ class Gallery extends Model
             name: basename($path),
         );
 
-        if (! $stored) {
+        if (! is_string($stored) || $stored === '') {
             throw new \RuntimeException('Could not replace the current photo.');
         }
+
+        $this->verifyStoredPhoto($stored, $sourceSize);
 
         return $stored;
     }
 
+    /**
+     * Detect the silent S3 failures where move()/putFileAs() return success but
+     * the object is missing or incomplete. Without this the API stores a row
+     * that ProcessPhoto can never read, leaving a broken photo in the gallery.
+     */
+    protected function verifyStoredPhoto(string $path, int $sourceSize): void
+    {
+        try {
+            $exists = Storage::disk('s3')->exists($path);
+            $storedSize = $exists ? (int) Storage::disk('s3')->size($path) : 0;
+        } catch (Throwable $exception) {
+            throw new \RuntimeException(
+                'Could not verify the uploaded photo in S3.',
+                0,
+                $exception,
+            );
+        }
+
+        if (! $exists) {
+            throw new \RuntimeException('The uploaded photo is missing from S3.');
+        }
+
+        if ($sourceSize > 0 && $storedSize !== $sourceSize) {
+            throw new \RuntimeException('The uploaded photo is incomplete in S3.');
+        }
+    }
+
     protected function storeUploadedPhoto(UploadedFile $photo, string $sourceName): string
     {
+        $sourceSize = (int) @filesize($photo->getRealPath());
+
         if (FileUploadConfiguration::isUsingS3()) {
             $path = $this->storage_path.'/'.Str::ulid().'-'.$sourceName;
-            Storage::disk('s3')->move($photo->getRealPath(), $path);
+
+            // Laravel's move() returns false when the S3 transfer fails instead
+            // of throwing. Without this check the database would point at a
+            // missing object and ProcessPhoto would fail much later.
+            $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
+
+            if (! $moved) {
+                throw new \RuntimeException('Could not store the uploaded photo in S3.');
+            }
+
+            $this->verifyStoredPhoto($path, $sourceSize);
 
             return $path;
         }
 
-        return $photo->store(path: $this->storage_path, options: ['disk' => 's3']);
+        $stored = $photo->store(path: $this->storage_path, options: ['disk' => 's3']);
+
+        if (! is_string($stored) || $stored === '') {
+            throw new \RuntimeException('Could not store the uploaded photo.');
+        }
+
+        $this->verifyStoredPhoto($stored, $sourceSize);
+
+        return $stored;
     }
 
     /**

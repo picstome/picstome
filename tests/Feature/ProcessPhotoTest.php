@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
+function seedRawFixture(Photo $photo, int $size = 1024): string
+{
+    $path = 'raw-fixtures/'.str()->ulid().'.cr2';
+    Storage::disk('s3')->put($path, str_repeat('R', $size));
+    $photo->update(['path' => $path, 'size' => $size, 'stored_size' => $size]);
+
+    return $path;
+}
+
 it('resizes an added photo', function () {
     config(['picstome.photo_resize' => 128]);
     Storage::fake('s3');
@@ -31,6 +40,18 @@ it('resizes an added photo', function () {
     expect($height)->toBe(128);
     expect($photo->disk)->toBe('s3');
     expect($photo->status)->toBe('processed');
+});
+
+it('fails cleanly when the uploaded object is missing from storage', function () {
+    Storage::fake('s3');
+    Storage::fake('local');
+
+    $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
+    $photo = $gallery->addPhoto(UploadedFile::fake()->image('photo.jpg', 10, 10));
+    Storage::disk('s3')->delete($photo->path);
+
+    expect(fn () => (new ProcessPhoto($photo))->handle())
+        ->toThrow(RuntimeException::class, 'Could not read the uploaded photo from S3');
 });
 
 it('does not resize photo when keep original size is enabled', function () {
@@ -128,7 +149,7 @@ it('does not process photo if extension is not allowed', function () {
     Storage::fake('local');
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
-    $photoFile = UploadedFile::fake()->create('photo1.gif', 100, 'image/gif');
+    $photoFile = UploadedFile::fake()->createWithContent('photo1.gif', str_repeat('G', 100));
     $photo = $gallery->addPhoto($photoFile);
     $originalPath = $photo->path;
 
@@ -196,8 +217,9 @@ it('skips processing when exiftool is not available', function () {
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
 
-    $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
+    $rawFile = UploadedFile::fake()->createWithContent('photo.cr2', str_repeat('R', 1024));
     $photo = $gallery->addPhoto($rawFile);
+    seedRawFixture($photo, 1024);
 
     RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(false);
@@ -215,8 +237,9 @@ it('skips processing when raw file has no extractable image', function () {
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC']);
 
-    $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
+    $rawFile = UploadedFile::fake()->createWithContent('photo.cr2', str_repeat('R', 1024));
     $photo = $gallery->addPhoto($rawFile);
+    seedRawFixture($photo, 1024);
 
     RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
@@ -259,8 +282,9 @@ it('keeps original size of extracted jpg when gallery setting is enabled', funct
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
 
-    $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
+    $rawFile = UploadedFile::fake()->createWithContent('photo.cr2', str_repeat('R', 1024));
     $photo = $gallery->addPhoto($rawFile);
+    seedRawFixture($photo, 1024);
 
     RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
@@ -283,8 +307,9 @@ it('keeps oversized extracted jpg when keep_original_size is enabled and raw_pat
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
 
-    $rawFile = UploadedFile::fake()->create('photo.cr2', 1024);
+    $rawFile = UploadedFile::fake()->createWithContent('photo.cr2', str_repeat('R', 1024));
     $photo = $gallery->addPhoto($rawFile);
+    seedRawFixture($photo, 1024);
 
     RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
@@ -328,8 +353,9 @@ it('uses raw file size when raw_path exists and keep_original_size is enabled', 
 
     $gallery = Gallery::factory()->create(['ulid' => '1243ABC', 'keep_original_size' => true]);
 
-    $rawFile = UploadedFile::fake()->create('photo.cr2', 2048); // 2KB raw file
+    $rawFile = UploadedFile::fake()->createWithContent('photo.cr2', str_repeat('R', 2048)); // 2KB raw file
     $photo = $gallery->addPhoto($rawFile);
+    seedRawFixture($photo, 2048);
 
     RawPhotoService::shouldReceive('isRawFile')->with($photo->source_name)->andReturn(true);
     RawPhotoService::shouldReceive('isExifToolAvailable')->andReturn(true);
