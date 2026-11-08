@@ -108,9 +108,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
         $next = $this->next;
         $previous = $this->previous;
-        $wasArchived = $this->photo->isArchived();
 
-        if ($wasArchived) {
+        if ($this->photo->isArchived()) {
             $this->photo->unarchive();
         } else {
             $this->photo->archive();
@@ -129,23 +128,39 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             return $this->redirect($this->viewerUrl($previous));
         }
 
-        // Restoring the last archived photo leaves the archived tab empty.
-        if ($wasArchived && $this->navigateArchived) {
-            return $this->redirect("/galleries/{$this->photo->gallery_id}?activeTab=archived");
-        }
-
-        return $this->redirect("/galleries/{$this->photo->gallery_id}");
+        // There is no neighbour to open: back to the gallery on All photos. The
+        // Archived tab cannot be the target because it disappears as soon as
+        // the last archived photo is restored, leaving the grid empty.
+        return $this->redirect($this->galleryUrlWithoutPhoto());
     }
 
     /**
      * Restore (unarchive) the current photo without leaving the viewer, used by
      * the dock button when the photographer wants to keep looking at it.
+     *
+     * Restoring the only archived photo empties the Archived tab, so leaving
+     * the viewer on that (now hidden) tab would strand the photographer: go
+     * back to All photos instead.
      */
     public function unarchive()
     {
         $this->authorize('update', $this->photo->gallery);
 
         $this->photo->unarchive();
+
+        // `#[Url]` values arrive as strings, so compare as booleans.
+        if (filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN)
+            && $this->photo->gallery->archivedPhotoIds()->isEmpty()) {
+            return $this->redirect($this->galleryUrlWithoutPhoto());
+        }
+    }
+
+    /**
+     * Gallery URL on its default tab, for when there is no photo to reveal.
+     */
+    protected function galleryUrlWithoutPhoto(): string
+    {
+        return route('galleries.show', ['gallery' => $this->photo->gallery_id]);
     }
 
     public function delete()

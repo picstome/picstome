@@ -67,6 +67,12 @@ new class extends Component
         $this->gallery->loadMissing(['coverPhoto', 'team']);
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
+
+        // The Archived tab only exists while something is archived. A stale
+        // link (`?activeTab=archived` after a restore, or browser back) would
+        // otherwise render an empty gallery, so fall back to All photos.
+        $this->fallBackFromEmptyArchivedTab();
+
         $this->revealRequestedPhoto();
 
         if (request()->boolean('live')) {
@@ -482,6 +488,20 @@ new class extends Component
             $this->totalArchived,
             $this->mediaCounts,
         );
+
+        $this->fallBackFromEmptyArchivedTab();
+    }
+
+    /**
+     * The Archived tab is rendered only while at least one photo is archived.
+     * Restoring the last one hides the panel it was showing, so the grid must
+     * switch to All photos instead of rendering an empty tab.
+     */
+    protected function fallBackFromEmptyArchivedTab(): void
+    {
+        if ($this->activeTab === 'archived' && $this->archivedIds->isEmpty()) {
+            $this->activeTab = 'all';
+        }
     }
 
     public function markFavorites()
