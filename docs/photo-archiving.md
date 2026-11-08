@@ -34,6 +34,11 @@ The owner keeps a dedicated **Archived** tab, placed **immediately after
 *All photos*** and rendered only when at least one photo is archived
 (`data-archived-tab`).
 
+The archived id list is deliberately **not cached**: its *presence* is what
+decides whether that tab exists, so a cached copy made the tab appear late (or
+not at all) right after archiving — exactly when the photographer looks for it.
+It is a single pluck on an indexed column and only the owner runs it.
+
 ## Actions
 
 - **Archive / Unarchive one photo**: dock button immediately **left of

@@ -218,16 +218,21 @@ class Gallery extends Model
     }
 
     /**
-     * Cached, naturally sorted ids of the photos the photographer archived.
+     * Naturally sorted ids of the photos the photographer archived.
      * Owner-only: this list is never exposed to clients.
+     *
+     * Deliberately **not cached**. This is the one gallery list whose
+     * *presence* decides whether the Archived tab exists, so a one-hour cached
+     * copy made the tab appear late (or not at all) right after archiving, which
+     * is exactly when the photographer looks for it. The query is a single
+     * pluck on an indexed column and only the owner ever runs it, so caching
+     * buys nothing and only adds a staleness window.
      *
      * @return Collection<int, int>
      */
     public function archivedPhotoIds(): Collection
     {
-        return Cache::remember("gallery:{$this->id}:archived:ids", now()->addHours(1), function () {
-            return $this->photos()->archived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
-        });
+        return $this->photos()->archived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
     }
 
     /**

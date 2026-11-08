@@ -278,3 +278,49 @@ it('archives a live photo and advances to the next live one', function () {
     expect($first->fresh()->isArchived())->toBeTrue()
         ->and($second->fresh()->isArchived())->toBeFalse();
 });
+
+it('shows the archived tab right after archiving with a warm cache', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    // Prime every gallery cache the tabs read from, as a page load would.
+    $gallery->photoIds();
+    $gallery->readyPhotoIds();
+    $gallery->favoritePhotoIds();
+    $gallery->commentedPhotoIds();
+    $gallery->archivedPhotoIds();
+    $gallery->mediaCounts();
+
+    expect($gallery->archivedPhotoIds())->toHaveCount(0);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.show', ['gallery' => $gallery])
+        ->call('toggleArchive', $photo->id)
+        ->assertSeeHtml('data-archived-tab');
+});
+
+it('reflects an archive made outside the request immediately', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    expect($gallery->archivedPhotoIds())->toHaveCount(0);
+
+    // Archived from another process (a queue job, a second browser tab): the
+    // archived list must not be served from a stale cache.
+    (new Photo)->newQuery()->whereKey($photo->id)->first()->archive();
+
+    expect($gallery->archivedPhotoIds())->toHaveCount(1)
+        ->and($gallery->photoIds())->toHaveCount(0);
+});
+
+it('shows the archived tab late-cache free after archiving twice in a row', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create();
+    $second = Photo::factory()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.show', ['gallery' => $gallery])
+        ->call('toggleArchive', $first->id)
+        ->call('toggleArchive', $second->id)
+        ->assertSeeHtml('Archived (2)');
+});
