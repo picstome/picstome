@@ -59,6 +59,10 @@ it('has no closeup option in the share form or the gallery model', function () {
 });
 
 it('feeds the panel the untouched original url for sharpness and zoom', function () {
+    // Pin the CDN so the assertions are deterministic: the local .env may use
+    // Bunny (`width=`) while CI uses wsrv.nl (`w=`).
+    config(['picstome.photo_cdn_domain' => 'bunny']);
+
     $gallery = Gallery::factory()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create([
         'path' => 'teams/1/photos/native.jpg',
@@ -69,8 +73,11 @@ it('feeds the panel the untouched original url for sharpness and zoom', function
         ->test('pages::galleries.photos.show', ['photo' => $photo]);
 
     // The CDN preview carries resize params; the original must not, otherwise
-    // sharpness would be measured on pixels the CDN invented.
-    expect($photo->large_thumbnail_url)->toContain('width=')
+    // sharpness would be measured on pixels the CDN invented. Check for the
+    // query string itself instead of one vendor's parameter names.
+    expect($photo->large_thumbnail_url)->toContain('?')
+        ->and($photo->large_thumbnail_url)->toContain('width=')
+        ->and($photo->original_url)->not->toContain('?')
         ->and($photo->original_url)->not->toContain('width=')
         ->and($photo->original_url)->not->toContain('format=')
         ->and($photo->original_url)->toContain('native.jpg');
