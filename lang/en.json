@@ -982,6 +982,7 @@
     "Yellow": "Yellow",
     "You are editing a draft invoice. It keeps no number until you issue it.": "You are editing a draft invoice. It keeps no number until you issue it.",
     "You do not have enough storage space to upload this photo.": "You do not have enough storage space to upload this photo.",
+    "The file could not be uploaded. Please try again.": "The file could not be uploaded. Please try again.",
     "You have less than 5% storage remaining. ": "You have less than 5% storage remaining. ",
     "You have reached the limit for photo selection.": "You have reached the limit for photo selection.",
     "You have reached the limit of :limit photos.": "You have reached the limit of :limit photos.",

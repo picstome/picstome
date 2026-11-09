@@ -22,7 +22,7 @@ class extends Component
 
         $this->galleries = $this->team->galleries()
             ->public()
-            ->with(['coverPhoto', 'firstImagePhoto'])
+            ->with(['coverPhoto.gallery', 'firstImagePhoto.gallery'])
             ->withCount('photos')
             ->get();
     }

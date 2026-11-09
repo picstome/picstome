@@ -1062,6 +1062,7 @@
     "You are receiving this email because we received a password reset request for your account.": "Estás recibiendo este correo electrónico porque recibimos una solicitud de restablecimiento de contraseña para tu cuenta.",
     "You can now start working on the selected photos.": "Ya puedes comenzar a trabajar en las fotos seleccionadas.",
     "You do not have enough storage space to upload this photo.": "No tienes suficiente espacio de almacenamiento para subir esta foto.",
+    "The file could not be uploaded. Please try again.": "No se pudo subir el archivo. Inténtalo de nuevo.",
     "You have less than 5% storage remaining. ": "Te queda menos del 5% de almacenamiento. ",
     "You have reached the limit for photo selection.": "Has alcanzado el límite para la selección de fotos.",
     "You have reached the limit of :limit photos.": "Has alcanzado el límite de :limit fotos.",

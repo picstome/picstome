@@ -6,6 +6,7 @@ use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
 use App\Traits\RevealsGalleryPhoto;
 use App\Traits\SummarizesGalleryTabs;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -57,6 +59,9 @@ new class extends Component
 
     public $photos = [];
 
+    /** Bytes the team can still store. Null means unlimited storage. */
+    public ?int $remainingStorageBytes = null;
+
     public string $favoriteFileNames = '';
 
     public function mount(Gallery $gallery)
@@ -65,6 +70,12 @@ new class extends Component
         $this->form->setGallery($gallery);
         $this->shareForm->setGallery($gallery);
         $this->gallery->loadMissing(['coverPhoto', 'team']);
+
+        $team = $this->gallery->team;
+        $this->remainingStorageBytes = $team->storage_limit === null
+            ? null
+            : max(0, $team->storage_limit - StorageUsageService::forTeam($team));
+
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
 
@@ -143,23 +154,42 @@ new class extends Component
         $uploadedPhoto = $this->photos[$index];
         $identityKey = Gallery::identityKey($uploadedPhoto->getClientOriginalName());
 
-        $photo = $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): Photo {
-            $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
+        try {
+            $photo = $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): Photo {
+                $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
 
-            if ($existingPhoto !== null && $action === 'replace') {
-                return $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
+                if ($existingPhoto !== null && $action === 'replace') {
+                    return $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
+                }
+
+                if ($existingPhoto !== null) {
+                    return $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
+                }
+
+                return $this->addPhotoToGallery($uploadedPhoto);
+            });
+        } catch (\Exception $exception) {
+            // The first check runs before the temp file moves to S3, but a
+            // concurrent upload can fill the quota between the two checks.
+            // Surface it as a field error so the uploader can show it per file.
+            if ($exception->getMessage() === 'Not enough storage') {
+                throw ValidationException::withMessages([
+                    "photos.{$index}" => __('You do not have enough storage space to upload this photo.'),
+                ]);
             }
 
-            if ($existingPhoto !== null) {
-                return $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
-            }
+            throw $exception;
+        }
 
-            return $this->addPhotoToGallery($uploadedPhoto);
-        });
+        $team = $this->gallery->team;
+        $this->remainingStorageBytes = $team->storage_limit === null
+            ? null
+            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
 
         return [
             'photoId' => $photo->id,
             'status' => $photo->status,
+            'remainingStorageBytes' => $this->remainingStorageBytes,
         ];
     }
 
@@ -1028,7 +1058,7 @@ new class extends Component
                 </x-ts-subheading>
             </div>
 
-            @if (auth()->user()?->currentTeam->storage_used_percent > 95)
+            @if (auth()->user()?->currentTeam?->storageUsedPercentage() >= config('picstome.storage_warning_percent', 95))
                 <x-ts-callout icon="bolt" variant="secondary">
                     <x-ts-callout-heading>{{ __('Low storage space') }}</x-ts-callout-heading>
                     <x-ts-callout-text>
@@ -1066,6 +1096,7 @@ new class extends Component
                 <x-ts-input
                     @change="handleFileSelect($event)"
                     type="file"
+                    data-test="upload-files"
                     accept="{{ '.'.implode(',.', config('picstome.upload_extensions')) }}"
                     multiple
                 />
@@ -1804,6 +1835,43 @@ new class extends Component
                 'failed' => __('Failed'),
             ]),
 
+            remainingBytes: @js($this->remainingStorageBytes),
+
+            quotaMessage: @js(__('You do not have enough storage space to upload this photo.')),
+
+            uploadFailedMessage: @js(__('The file could not be uploaded. Please try again.')),
+
+            reservedBytes() {
+                return this.files
+                    .filter((fileObj) => ['checking', 'pending', 'queued', 'uploading', 'conflict'].includes(fileObj.status))
+                    .reduce((total, fileObj) => total + (fileObj.file?.size ?? 0), 0);
+            },
+
+            errorMessage(errors) {
+                if (! errors) {
+                    return null;
+                }
+
+                if (typeof errors === 'string') {
+                    return errors;
+                }
+
+                if (Array.isArray(errors)) {
+                    return errors[0] ?? null;
+                }
+
+                return null;
+            },
+
+            failUpload(fileObj, message) {
+                fileObj.error = message;
+                fileObj.status = 'failed';
+                fileObj.progress = 0;
+                this.activeUploads = Math.max(0, this.activeUploads - 1);
+                this.processUploadQueue();
+                this.closeIfAllResolved();
+            },
+
             init() {
                 setInterval(() => {
                     const oneMinuteAgo = Date.now() - 60000;
@@ -1816,8 +1884,9 @@ new class extends Component
                 const selectedFiles = Array.from(event.target.files);
                 this.oversizedFiles = [];
                 this.unsupportedFiles = [];
-                this.processFiles(selectedFiles);
+                const added = this.processFiles(selectedFiles);
                 await this.markConflicts();
+                this.applyStoragePrecheck(added);
                 this.processUploadQueue();
             },
 
@@ -1827,8 +1896,9 @@ new class extends Component
                 this.unsupportedFiles = [];
                 const dt = event.dataTransfer;
                 if (dt && dt.files && dt.files.length > 0) {
-                    this.processFiles(Array.from(dt.files));
+                    const added = this.processFiles(Array.from(dt.files));
                     await this.markConflicts();
+                    this.applyStoragePrecheck(added);
                     this.processUploadQueue();
                 }
             },
@@ -2102,19 +2172,27 @@ new class extends Component
                     uploadName,
                     fileObj.file,
                     () => {
-                        $wire.save(index, fileObj.conflictAction || 'version').then((result) => {
-                            if (result && result.errors && result.errors['photos.' + index]) {
-                                const error = result.errors['photos.' + index];
-                                fileObj.error = typeof error === 'string' ? error : null;
-                                fileObj.status = 'failed';
-                                this.activeUploads--;
-                                this.processUploadQueue();
-                            } else {
+                        $wire.save(index, fileObj.conflictAction || 'version')
+                            .then((result) => {
+                                const validationError = this.errorMessage(result?.errors?.['photos.' + index]);
+
+                                if (validationError) {
+                                    this.failUpload(fileObj, validationError);
+
+                                    return;
+                                }
+
                                 fileObj.status = 'completed';
+                                fileObj.error = null;
                                 fileObj.photoId = result?.photoId ?? null;
                                 fileObj.photoStatus = result?.status ?? 'pending';
                                 fileObj.progress = 100;
-                                this.activeUploads--;
+
+                                if (typeof result?.remainingStorageBytes !== 'undefined') {
+                                    this.remainingBytes = result.remainingStorageBytes;
+                                }
+
+                                this.activeUploads = Math.max(0, this.activeUploads - 1);
                                 this.processUploadQueue();
 
                                 if (fileObj.photoId && ! this.isPhotoStatusTerminal(fileObj.photoStatus)) {
@@ -2122,14 +2200,20 @@ new class extends Component
                                 }
 
                                 this.closeIfAllResolved();
-                            }
-                        });
+                            })
+                            .catch((error) => {
+                                // Livewire rejects the action promise with
+                                // {status: 422, errors: {...}} when the server
+                                // validation fails (for example, quota exceeded).
+                                const validationError = this.errorMessage(error?.errors?.['photos.' + index])
+                                    ?? this.errorMessage(error?.response?.errors?.['photos.' + index]);
+
+                                this.failUpload(fileObj, validationError ?? this.uploadFailedMessage);
+                            });
                     },
                     (error) => {
-                        fileObj.status = 'failed';
                         console.error('Upload failed:', error);
-                        this.activeUploads--;
-                        this.processUploadQueue();
+                        this.failUpload(fileObj, this.uploadFailedMessage);
                     },
                     (event) => {
                         fileObj.progress = Math.round((event.loaded / event.total) * 100);
@@ -2140,6 +2224,7 @@ new class extends Component
             processFiles(files) {
                 const allowedExtensions = {{ Js::from(config('picstome.upload_extensions')) }};
                 const maxSize = 5 * 1024 * 1024 * 1024;
+                const added = [];
 
                 files.forEach((file) => {
                     const name = file.name;
@@ -2158,16 +2243,62 @@ new class extends Component
                         return;
                     }
 
-                    this.files.push({
+                    const fileObj = {
                         file,
                         progress: 0,
                         status: 'checking',
-                    });
+                    };
+
+                    this.files.push(fileObj);
+                    added.push(file);
+                });
+
+                return added;
+            },
+
+            applyStoragePrecheck(newFiles) {
+                if (this.remainingBytes === null) {
+                    return;
+                }
+
+                const selected = this.files.filter((fileObj) => newFiles.includes(fileObj.file));
+
+                // Files that are already queued count against the remaining
+                // bytes. Conflicts are left to the server because replacing a
+                // photo only needs the difference, not the whole new file.
+                let reserved = this.files
+                    .filter((fileObj) => ! selected.includes(fileObj) && ['checking', 'pending', 'queued', 'uploading', 'conflict'].includes(fileObj.status))
+                    .reduce((total, fileObj) => total + (fileObj.file?.size ?? 0), 0);
+
+                selected.forEach((fileObj) => {
+                    if (! ['pending', 'queued'].includes(fileObj.status)) {
+                        return;
+                    }
+
+                    const available = Math.max(0, this.remainingBytes - reserved);
+
+                    if (fileObj.file.size > available) {
+                        fileObj.status = 'failed';
+                        fileObj.error = this.quotaMessage;
+                        fileObj.progress = 0;
+
+                        return;
+                    }
+
+                    reserved += fileObj.file.size;
                 });
             },
 
             retryUpload(index) {
                 const fileObj = this.files[index];
+
+                if (this.remainingBytes !== null && fileObj.conflictAction !== 'replace' && fileObj.file.size > Math.max(0, this.remainingBytes - this.reservedBytes())) {
+                    fileObj.status = 'failed';
+                    fileObj.error = this.quotaMessage;
+
+                    return;
+                }
+
                 fileObj.status = 'pending';
                 fileObj.progress = 0;
                 fileObj.error = null;

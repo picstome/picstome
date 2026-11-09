@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
+use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
 use App\Traits\HasDownloadFilename;
 use Database\Factories\PhotoVersionFactory;
@@ -25,6 +26,14 @@ class PhotoVersion extends Model
     use FormatsFileSize, HasDownloadFilename, HasFactory;
 
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        // Retained versions are part of the team's billable storage, so any
+        // write to them invalidates the cached total.
+        static::saved(fn (PhotoVersion $version) => StorageUsageService::forgetForPhoto($version->photo_id));
+        static::deleted(fn (PhotoVersion $version) => StorageUsageService::forgetForPhoto($version->photo_id));
+    }
 
     protected function casts()
     {

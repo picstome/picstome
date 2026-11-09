@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Photo;
 use App\Models\PhotoVersion;
+use App\Services\StorageUsageService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,6 +30,7 @@ class RecalculateStoredSizesCommand extends Command
 
                     if (! $dryRun) {
                         $photo->updateQuietly(['stored_size' => $storedSize]);
+                        StorageUsageService::forgetForGallery($photo->gallery_id);
                     }
                 }
             }
@@ -44,6 +46,7 @@ class RecalculateStoredSizesCommand extends Command
 
                     if (! $dryRun) {
                         $version->updateQuietly(['stored_size' => $storedSize]);
+                        StorageUsageService::forgetForPhoto($version->photo_id);
                     }
                 }
             }

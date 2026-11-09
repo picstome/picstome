@@ -2057,3 +2057,33 @@ test('the owner can open their own password-protected shared gallery', function 
         ->get('/galleries/'.$gallery->id)
         ->assertOk();
 });
+
+it('rejects a file in the modal without uploading it when the team has no storage left', function () {
+    Storage::fake('s3');
+
+    $this->team->update(['custom_storage_limit' => 0]);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    $page->click('Add media');
+
+    // The browser runs on a remote Playwright server, so local file paths
+    // cannot be attached. Dispatch a real File through the input instead.
+    $page->script(<<<'JS'
+        const input = document.querySelector('#add-photos-uploader input[type=file]');
+        const file = new File([new Uint8Array(200 * 1024)], 'quota.jpg', { type: 'image/jpeg' });
+        const data = new DataTransfer();
+        data.items.add(file);
+        input.files = data.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    JS);
+
+    $page->assertSee('You do not have enough storage space to upload this photo.')
+        ->assertNoJavascriptErrors();
+
+    expect($gallery->fresh()->photos()->count())->toBe(0);
+});

@@ -77,3 +77,49 @@ it('includes generated thumbnails in gallery storage usage', function () {
 
     expect($gallery->fresh()->getTotalStorageSize())->toBe(140);
 });
+
+it('shows storage usage with one decimal and precise MB for the 1 GB plan', function () {
+    $gallery = Gallery::factory()->create();
+    $team = $gallery->team;
+
+    $team->update(['custom_storage_limit' => 1073741824]);
+
+    Photo::factory()->for($gallery)->create([
+        'size' => 1070553068,
+        'stored_size' => 1070553068,
+    ]);
+
+    $team = $team->fresh();
+
+    expect($team->storage_used_percent)->toBe('99.7')
+        ->and($team->storage_used_gb)->toBe('1,020 MB')
+        ->and($team->storage_limit_gb)->toBe('1,024 MB');
+});
+
+it('shows exactly 100 percent when the storage limit is reached', function () {
+    $gallery = Gallery::factory()->create();
+    $team = $gallery->team;
+
+    $team->update(['custom_storage_limit' => 1000]);
+
+    Photo::factory()->for($gallery)->create([
+        'size' => 1000,
+        'stored_size' => 1000,
+    ]);
+
+    expect($team->fresh()->storage_used_percent)->toBe('100');
+});
+
+it('never displays a non-full team as 100 percent', function () {
+    $gallery = Gallery::factory()->create();
+    $team = $gallery->team;
+
+    $team->update(['custom_storage_limit' => 2000]);
+
+    Photo::factory()->for($gallery)->create([
+        'size' => 1999,
+        'stored_size' => 1999,
+    ]);
+
+    expect($team->fresh()->storage_used_percent)->toBe('99.9');
+});

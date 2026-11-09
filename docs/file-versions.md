@@ -133,6 +133,23 @@ Passwords and description text are never stored there.
 - Deleting a photo or version also deletes its `thumb_path` through
   `DeleteFromDisk`.
 
+### The team total is cached
+
+Summing three aggregates on every read made the sidebar indicator, the
+dashboard card, the storage alert and the "low space" callout pay for the same
+value several times per page (36 queries on the admin users table). The team
+total now lives in the cache store:
+
+- `StorageUsageService::forTeam()` reads `team:{id}:storage_used` for 10 minutes
+  and memoises it per request.
+- Writes that move bytes invalidate it: `Photo` created/updated/deleted,
+  `PhotoVersion` saved/deleted, `Gallery` deleted and `Invoice` saved/deleted.
+- `StorageUsageService::forTeams()` answers the admin table (and the CSV
+  export) in three grouped queries regardless of the page size.
+
+Never read `Team::calculateStorageUsed()` in a loop. Use `forTeams()` with the
+ids you already have.
+
 Backfill thumbnails for existing media after deploying:
 
 ```bash
