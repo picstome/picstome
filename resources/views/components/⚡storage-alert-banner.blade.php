@@ -7,7 +7,7 @@ new class extends Component
 {
     public bool $visible = false;
 
-    public int $percent = 0;
+    public string $percent = '0';
 
     public string $upgradeUrl = '';
 
@@ -20,7 +20,7 @@ new class extends Component
         }
 
         $this->visible = $team->shouldShowStorageAlert();
-        $this->percent = (int) round($team->storageUsedPercentage());
+        $this->percent = (string) ($team->storage_used_percent ?? '0');
         $this->upgradeUrl = $team->storageUpgradeUrl();
     }
 

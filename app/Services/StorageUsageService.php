@@ -86,6 +86,28 @@ class StorageUsageService
     }
 
     /**
+     * Uncached team total.
+     *
+     * Storage quota decisions (`Team::canStoreFile()`, the almost-full email,
+     * invoice issuance) must never run on a ten-minute-old number: a stale
+     * total is the difference between accepting and rejecting an upload that
+     * overflows the plan. Everything that only *displays* bytes uses
+     * `forTeam()`.
+     */
+    public static function forTeamFresh(Team $team): int
+    {
+        $teamId = $team->id;
+
+        unset(self::$requestMemo[$teamId]);
+
+        $total = self::calculateForTeam($teamId);
+
+        self::$requestMemo[$teamId] = $total;
+
+        return $total;
+    }
+
+    /**
      * Drop the cached team total. Called on every write that moves bytes:
      * photo created/updated/deleted, gallery deleted and invoices issued.
      */

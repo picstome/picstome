@@ -947,16 +947,18 @@ class Gallery extends Model
      */
     public function firstImage()
     {
-        return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
+        $photo = Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
             if ($this->relationLoaded('photos')) {
                 return $this->photos->first(fn (Photo $photo) => $photo->isImage() && ! $photo->isArchived());
             }
 
-            // The caller renders a CDN URL from it, and PhotoUrlService reads
-            // this gallery's `keep_original_size`; without the relation set
-            // that becomes a lazy query per page.
-            return $this->firstImagePhoto?->setRelation('gallery', $this);
+            return $this->firstImagePhoto;
         });
+
+        // The relation is attached after the cache read, never inside it: the
+        // cached row must not embed a snapshot of this gallery, or a later
+        // `keep_original_size` change would keep resolving the old CDN variant.
+        return $photo?->setRelation('gallery', $this);
     }
 
     /**

@@ -50,7 +50,10 @@ class Team extends Model
             return true;
         }
 
-        return ($this->calculateStorageUsed() + $size) <= $this->storage_limit;
+        // Quota decisions must see the current bytes, not the cached display
+        // value: an upload accepted on a ten-minute-old total can overflow
+        // the plan.
+        return (StorageUsageService::forTeamFresh($this) + $size) <= $this->storage_limit;
     }
 
     protected function casts()
@@ -354,15 +357,29 @@ class Team extends Model
     protected function storageUsedGb(): Attribute
     {
         return Attribute::get(function () {
-            $gb = $this->calculateStorageUsed() / 1073741824;
+            $bytes = $this->calculateStorageUsed();
+            $limit = $this->storage_limit;
 
-            return number_format($gb, 2).' GB';
+            // Below 1 GB the MB figure is much easier to read (and the free
+            // plan is exactly 1 GB). Keep MB for a 1 GB plan even when a
+            // lowered limit leaves the team slightly over quota.
+            if ($bytes < 1073741824 || ($limit !== null && $limit <= 1073741824)) {
+                return number_format(floor($bytes / 1048576), 0).' MB';
+            }
+
+            $gb = $bytes / 1073741824;
+
+            return number_format(floor($gb * 100) / 100, 2).' GB';
         });
     }
 
     protected function storageLimitGb(): Attribute
     {
         return Attribute::get(function () {
+            if ($this->storage_limit !== null && $this->storage_limit <= 1073741824) {
+                return number_format(floor($this->storage_limit / 1048576), 0).' MB';
+            }
+
             $gb = $this->storage_limit / 1073741824;
 
             return number_format($gb, 0).' GB';
@@ -380,7 +397,16 @@ class Team extends Model
                 return 100;
             }
 
-            return number_format($this->storageUsedPercentage());
+            $percent = $this->storageUsedPercentage();
+
+            // One decimal so 99.7% is not shown as 100%. Cap the rounded
+            // value below 100 so 99.95% never displays as "100.0%"; only a
+            // team that actually reached the limit gets the integer 100.
+            if ($percent >= 100) {
+                return '100';
+            }
+
+            return number_format(min(99.9, $percent), 1);
         });
     }
 
@@ -436,13 +462,17 @@ class Team extends Model
      */
     public function notifyOwnerWhenStorageAlmostFull(): void
     {
-        if ($this->storage_limit === null
-            || $this->storage_limit_notification_sent_at !== null
-            || $this->storageUsedPercentage() < config('picstome.storage_warning_percent', 95)) {
+        if ($this->storage_limit === null || $this->storage_limit_notification_sent_at !== null) {
             return;
         }
 
-        $used = $this->calculateStorageUsed();
+        // This is a one-shot decision that flips a persistent flag, so it must
+        // read fresh bytes instead of the cached display value.
+        $used = StorageUsageService::forTeamFresh($this);
+
+        if ($this->storage_limit > 0 && ($used / $this->storage_limit) * 100 < config('picstome.storage_warning_percent', 95)) {
+            return;
+        }
 
         $this->forceFill(['storage_limit_notification_sent_at' => now()])->save();
 

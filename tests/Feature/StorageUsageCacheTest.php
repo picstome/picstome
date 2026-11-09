@@ -134,3 +134,33 @@ it('does not leak a memoised total into the next request', function () {
 
     expect($this->team->calculateStorageUsed())->toBe(1000);
 });
+
+it('checks the quota against fresh bytes, not the cached display value', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['stored_size' => 1000]);
+
+    $this->team->update(['custom_storage_limit' => 2000]);
+
+    // Warm the display cache with the small value.
+    expect($this->team->calculateStorageUsed())->toBe(1000);
+
+    // Bytes grow behind the cached read (a sync batch, a quiet update).
+    $gallery->photos()->update(['stored_size' => 1900]);
+
+    // A 200-byte upload must be rejected: 1000 + 200 would fit, 1900 + 200 does not.
+    expect($this->team->fresh()->canStoreFile(200))->toBeFalse()
+        ->and($this->team->fresh()->canStoreFile(50))->toBeTrue();
+
+    // The fresh read also refreshes the memo, so the displayed total is right.
+    expect($this->team->calculateStorageUsed())->toBe(1900);
+});
+
+it('counts a byte-exact upload at the limit as allowed', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->for($gallery)->create(['stored_size' => 1000]);
+
+    $this->team->update(['custom_storage_limit' => 2000]);
+
+    expect($this->team->fresh()->canStoreFile(1000))->toBeTrue()
+        ->and($this->team->fresh()->canStoreFile(1001))->toBeFalse();
+});
