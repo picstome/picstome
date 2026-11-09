@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
+use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,53 @@ new class extends Component
     public function users()
     {
         return $this->usersQuery()->paginate(25);
+    }
+
+    /**
+     * Billable bytes for the teams on this page, in three grouped queries.
+     *
+     * The table shows a storage bar per row. Reading `storage_used_gb` per
+     * user ran three aggregates each (36 queries for 18 rows), and the
+     * per-team cache added one cache read per row on top.
+     *
+     * @return array<int, int>
+     */
+    #[Computed]
+    public function storageBytesByUserId(): array
+    {
+        $teams = $this->users->getCollection()
+            ->map(fn (User $user) => $user->personalTeam())
+            ->filter();
+
+        return StorageUsageService::forTeams($teams->pluck('id')->all());
+    }
+
+    /**
+     * Storage column values for one row, read from the batched totals. A null
+     * return means the user has no personal team.
+     *
+     * @return array{used: string, limit: ?string, percent: ?float, unlimited: bool}|null
+     */
+    public function storageFor(User $user): ?array
+    {
+        $team = $user->personalTeam();
+
+        if (! $team) {
+            return null;
+        }
+
+        $bytes = (int) ($this->storageBytesByUserId[$team->id] ?? 0);
+        $unlimited = (bool) $team->has_unlimited_storage;
+        $limit = $team->storage_limit;
+
+        return [
+            'used' => number_format($bytes / 1073741824, 2).' GB',
+            'limit' => $unlimited ? null : $team->storage_limit_gb,
+            'percent' => $unlimited
+                ? null
+                : ($limit > 0 ? min(100, ($bytes / $limit) * 100) : 100),
+            'unlimited' => $unlimited,
+        ];
     }
 
     public function sort($column)
@@ -99,6 +147,11 @@ new class extends Component
         ];
 
         return response()->streamDownload(function () use ($users) {
+            // One grouped read for every row instead of three aggregates per
+            // user while the stream is open.
+            $teams = $users->map(fn (User $user) => $user->personalTeam())->filter();
+            $bytes = StorageUsageService::forTeams($teams->pluck('id')->all());
+
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
                 'ID', 'Name', 'Email', 'Created At', 'Lifetime', 'Subscribed', 'Subscribed Since', 'Storage Used (GB)', 'Storage Limit (GB)',
@@ -119,7 +172,7 @@ new class extends Component
                     $team?->lifetime_at ? 'Yes' : 'No',
                     $team?->subscribed() ? 'Yes' : 'No',
                     $subscribedSince,
-                    $team?->storage_used_gb,
+                    $team ? number_format(((int) ($bytes[$team->id] ?? 0)) / 1073741824, 2) : null,
                     $team?->has_unlimited_storage ? 'Unlimited' : $team?->storage_limit_gb,
                 ]);
             }
@@ -295,25 +348,25 @@ new class extends Component
 
                         <x-data-table.cell class="whitespace-nowrap">
                             @php
-                                $team = $user->personalTeam();
+                                $storage = $this->storageFor($user);
                             @endphp
 
-                            @if ($team?->has_unlimited_storage)
+                            @if ($storage && $storage['unlimited'])
                                 <div class="text-xs tabular-nums">
-                                    {{ $team->storage_used_gb }} / {{ __('Unlimited') }}
+                                    {{ $storage['used'] }} / {{ __('Unlimited') }}
                                 </div>
-                            @elseif ($team)
+                            @elseif ($storage)
                                 <div>
                                     <div class="text-xs tabular-nums">
-                                        {{ $team->storage_used_gb }} /
-                                        {{ $team->storage_limit_gb }}
+                                        {{ $storage['used'] }} /
+                                        {{ $storage['limit'] }}
                                     </div>
                                     <div
                                         class="bg-brand-sage/30 mt-1 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10"
                                     >
                                         <div
-                                            class="{{ $team->storage_used_percent > 90 ? 'bg-brand-coral' : ($team->storage_used_percent > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
-                                            style="width: {{ min($team->storage_used_percent, 100) }}%"
+                                            class="{{ $storage['percent'] > 90 ? 'bg-brand-coral' : ($storage['percent'] > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
+                                            style="width: {{ min($storage['percent'], 100) }}%"
                                         ></div>
                                     </div>
                                 </div>

@@ -91,6 +91,17 @@ class Gallery extends Model
             }
         });
 
+        // The gallery header shows its own total; moving galleries between
+        // teams would leave both cached totals stale.
+        static::saved(function (Gallery $gallery) {
+            if (! $gallery->wasChanged('team_id')) {
+                return;
+            }
+
+            StorageUsageService::forgetForGallery($gallery->id);
+            StorageUsageService::forgetForTeam($gallery->getOriginal('team_id'));
+        });
+
         static::deleting(function (Gallery $gallery) {
             try {
                 app(GalleryArchiveService::class)->deleteForGallery($gallery);
@@ -100,15 +111,13 @@ class Gallery extends Model
         });
 
         static::deleted(function (Gallery $gallery) {
-            Cache::forget("gallery:{$gallery->id}:first_image");
-            Cache::forget("gallery:{$gallery->id}:photos_count");
-            Cache::forget("gallery:{$gallery->id}:photos:ids");
-            Cache::forget("gallery:{$gallery->id}:photos:ready:ids");
-            Cache::forget("gallery:{$gallery->id}:favorites:ids");
-            Cache::forget("gallery:{$gallery->id}:commented:ids");
-            Cache::forget("gallery:{$gallery->id}:media_counts");
-            Cache::forget("gallery:{$gallery->id}:download_size");
-            Cache::forget("gallery:{$gallery->id}:comments_count");
+            foreach (Photo::galleryCacheKeys((int) $gallery->id) as $key) {
+                Cache::forget($key);
+            }
+
+            // The row is already gone, so the team id must come from the
+            // in-memory model instead of another lookup.
+            StorageUsageService::forgetForTeam($gallery->team_id);
         });
     }
 
@@ -189,6 +198,23 @@ class Gallery extends Model
     {
         return Cache::remember("gallery:{$this->id}:photos:ready:ids", now()->addHours(1), function () {
             return $this->photos()->ready()->notArchived()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
+     * Cached, naturally sorted ids of the images visitors can page through.
+     *
+     * The portfolio viewer needs the previous and next image of the current
+     * one. Answering that from `readyPhotoIds()` alone would still hydrate
+     * every row twice per visit just to test the extension, so the filter is
+     * applied in SQL once and cached like the other visitor-facing lists.
+     *
+     * @return Collection<int, int>
+     */
+    public function readyImagePhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:photos:ready:image:ids", now()->addHours(1), function () {
+            return $this->photos()->ready()->notArchived()->images()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
         });
     }
 
@@ -926,7 +952,10 @@ class Gallery extends Model
                 return $this->photos->first(fn (Photo $photo) => $photo->isImage() && ! $photo->isArchived());
             }
 
-            return $this->firstImagePhoto;
+            // The caller renders a CDN URL from it, and PhotoUrlService reads
+            // this gallery's `keep_original_size`; without the relation set
+            // that becomes a lazy query per page.
+            return $this->firstImagePhoto?->setRelation('gallery', $this);
         });
     }
 

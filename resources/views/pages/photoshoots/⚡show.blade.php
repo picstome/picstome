@@ -1,6 +1,5 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractForm;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\PaymentLinkForm;
@@ -10,6 +9,7 @@ use App\Models\ContractTemplate;
 use App\Models\Invoice;
 use App\Models\Photoshoot;
 use App\Services\InvoiceFromPaymentService;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -18,6 +18,7 @@ use Livewire\Component;
 new class extends Component
 {
     use InteractsWithTallStackModals;
+
     public PaymentLinkForm $paymentLinkForm;
 
     public Photoshoot $photoshoot;
@@ -57,6 +58,11 @@ new class extends Component
         $this->authorize('view', $photoshoot);
 
         $this->photoshoot = $photoshoot;
+
+        // The Galleries block renders a thumbnail per gallery; eager loading
+        // the photo and its gallery keeps PhotoUrlService from resolving both
+        // lazily (one pair of queries per card).
+        $this->photoshoot->loadMissing('galleries.firstImagePhoto.gallery');
 
         $this->form->setPhotoshoot($this->photoshoot);
 

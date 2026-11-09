@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Photo;
+use App\Services\StorageUsageService;
 use Illuminate\Console\Command;
 
 /**
@@ -49,6 +50,9 @@ class CollapsePhotoVersionsCommand extends Command
                             'version_count' => 1,
                             'current_version_id' => null,
                         ]);
+
+                        // Quiet updates skip the storage cache invalidation.
+                        StorageUsageService::forgetForGallery($photo->gallery_id);
                     }
                 }
             });

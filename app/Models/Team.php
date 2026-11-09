@@ -482,7 +482,12 @@ class Team extends Model
     }
 
     /**
-     * Dynamically calculate total storage used by all galleries/photos for this team.
+     * Cached total storage used by all galleries/photos.
+     *
+     * The value itself is cached for 10 minutes because a single page reads it
+     * several times (sidebar indicator, dashboard card, storage alert, the
+     * "low space" callout). Writes that move bytes invalidate it through
+     * `StorageUsageService::forgetForTeam()` / `forgetForGallery()`.
      *
      * @return int Total bytes used
      */

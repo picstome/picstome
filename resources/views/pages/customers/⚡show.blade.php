@@ -1,9 +1,10 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
+use App\Models\Gallery;
 use App\Traits\FormatsMoney;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
@@ -11,8 +12,8 @@ use Livewire\Component;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
     use FormatsMoney;
+    use InteractsWithTallStackModals;
 
     public Customer $customer;
 
@@ -78,7 +79,13 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        return $this->customer->photoshoots->flatMap->galleries;
+        $galleries = $this->customer->photoshoots->flatMap->galleries;
+
+        // The card below renders a thumbnail per gallery, and PhotoUrlService
+        // needs the gallery to resolve `keep_original_size`.
+        $galleries->each(fn (Gallery $gallery) => $gallery->loadMissing('firstImagePhoto.gallery'));
+
+        return $galleries;
     }
 
     #[Computed]
