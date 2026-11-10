@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Jobs\DeleteFromDisk;
 use App\Services\GalleryArchiveService;
 use App\Services\PhotoUrlService;
+use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
 use App\Traits\HasDownloadFilename;
 use Carbon\Carbon;
@@ -57,6 +58,35 @@ class Photo extends Model
         ];
     }
 
+    /**
+     * Every cached gallery listing and summary. One list so a new key cannot
+     * be forgotten in one of the three model events below.
+     *
+     * @return list<string>
+     */
+    public static function galleryCacheKeys(int $galleryId): array
+    {
+        return [
+            "gallery:{$galleryId}:first_image",
+            "gallery:{$galleryId}:photos_count",
+            "gallery:{$galleryId}:photos:ids",
+            "gallery:{$galleryId}:photos:ready:ids",
+            "gallery:{$galleryId}:photos:ready:image:ids",
+            "gallery:{$galleryId}:favorites:ids",
+            "gallery:{$galleryId}:commented:ids",
+            "gallery:{$galleryId}:media_counts",
+            "gallery:{$galleryId}:download_size",
+            "gallery:{$galleryId}:comments_count",
+        ];
+    }
+
+    protected static function forgetGalleryCaches(int $galleryId): void
+    {
+        foreach (static::galleryCacheKeys($galleryId) as $key) {
+            Cache::forget($key);
+        }
+    }
+
     protected static function booted()
     {
         static::creating(function (Photo $photo) {
@@ -70,14 +100,8 @@ class Photo extends Model
         });
 
         static::created(function (Photo $photo) {
-            Cache::forget("gallery:{$photo->gallery_id}:first_image");
-            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:media_counts");
-            Cache::forget("gallery:{$photo->gallery_id}:download_size");
+            static::forgetGalleryCaches((int) $photo->gallery_id);
+            StorageUsageService::forgetForGallery($photo->gallery_id);
 
             static::invalidateGalleryArchives($photo, ['all']);
         });
@@ -91,6 +115,12 @@ class Photo extends Model
 
                 Cache::forget("gallery:{$photo->gallery_id}:media_counts");
                 Cache::forget("gallery:{$photo->gallery_id}:download_size");
+            }
+
+            // Any of these changes what the thumbnails, the URLs or the
+            // downloadable bytes look like, so the image list must be rebuilt.
+            if ($photo->wasChanged(['name', 'path', 'status', 'archived_at'])) {
+                Cache::forget("gallery:{$photo->gallery_id}:photos:ready:image:ids");
             }
 
             if ($photo->wasChanged('status')) {
@@ -124,21 +154,21 @@ class Photo extends Model
                 }
             }
 
+            // Stored bytes moved: the team's and the gallery's cached totals
+            // are wrong now. `current_version_id` also changes which version
+            // rows are excluded from the gallery total.
+            if ($photo->wasChanged(['size', 'stored_size', 'raw_path', 'disk', 'current_version_id'])) {
+                StorageUsageService::forgetForGallery($photo->gallery_id);
+            }
+
             if ($variants !== []) {
                 static::invalidateGalleryArchives($photo, array_values(array_unique($variants)));
             }
         });
 
         static::deleted(function (Photo $photo) {
-            Cache::forget("gallery:{$photo->gallery_id}:first_image");
-            Cache::forget("gallery:{$photo->gallery_id}:photos_count");
-            Cache::forget("gallery:{$photo->gallery_id}:photos:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
-            Cache::forget("gallery:{$photo->gallery_id}:media_counts");
-            Cache::forget("gallery:{$photo->gallery_id}:download_size");
-            Cache::forget("gallery:{$photo->gallery_id}:comments_count");
+            static::forgetGalleryCaches((int) $photo->gallery_id);
+            StorageUsageService::forgetForGallery($photo->gallery_id);
 
             $variants = ['all'];
 
@@ -374,6 +404,10 @@ class Photo extends Model
      * Find the neighbor photo offset positions away within the given
      * naturally sorted photo id list.
      *
+     * The neighbour is hydrated with its gallery so the viewer can build CDN
+     * URLs (which read `keep_original_size`) without an extra query per
+     * neighbour. It always belongs to the gallery holding this photo.
+     *
      * @param  Collection<int, int>  $photoIds
      */
     protected function navigationNeighbor(Collection $photoIds, int $offset): ?Photo
@@ -386,7 +420,13 @@ class Photo extends Model
 
         $neighborId = $photoIds->get($currentIndex + $offset);
 
-        return $neighborId === null ? null : static::find($neighborId);
+        if ($neighborId === null) {
+            return null;
+        }
+
+        $neighbor = static::find($neighborId);
+
+        return $neighbor?->setRelation('gallery', $this->gallery);
     }
 
     /**

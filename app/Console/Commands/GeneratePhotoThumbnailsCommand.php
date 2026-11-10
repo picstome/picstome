@@ -6,6 +6,7 @@ use App\Jobs\DeleteFromDisk;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
 use App\Services\PhotoThumbnailService;
+use App\Services\StorageUsageService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -109,6 +110,12 @@ class GeneratePhotoThumbnailsCommand extends Command
             'thumb_path' => $newThumbPath,
             'stored_size' => $this->storedSize($media, $disk, $newThumbPath),
         ]);
+
+        // `updateQuietly` skips the model events that keep the cached storage
+        // totals honest, so refresh them here.
+        $media instanceof Photo
+            ? StorageUsageService::forgetForGallery($media->gallery_id)
+            : StorageUsageService::forgetForPhoto($media->photo_id);
 
         if ($previousThumbPath && $previousThumbPath !== $newThumbPath) {
             DeleteFromDisk::dispatch($previousThumbPath, $disk);

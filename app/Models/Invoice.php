@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\StorageUsageService;
 use Database\Factories\InvoiceFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -137,6 +138,10 @@ class Invoice extends Model
                 throw new LogicException('Only draft invoices can be deleted.');
             }
         });
+
+        // Issued invoice PDFs count towards the team's billable storage.
+        static::saved(fn (Invoice $invoice) => StorageUsageService::forgetForTeam($invoice->team_id));
+        static::deleted(fn (Invoice $invoice) => StorageUsageService::forgetForTeam($invoice->team_id));
     }
 
     public function team(): BelongsTo

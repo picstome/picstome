@@ -69,6 +69,29 @@ for that gallery (`StorageUsageService::archivesForGallery`). Archives are
 **not** included in `Team::canStoreFile()` or storage-almost-full emails, so a
 temporary ZIP never blocks uploads.
 
+### The ZIP size is an estimate, then the archive's real size
+
+The Download tab shows a size before anything is packed. That number must never
+cost a round trip to storage: it is one aggregate query over the `photos`
+columns.
+
+- `size` is the processed file that goes into the ZIP. For galleries with
+  `keep_original_size`, `size` is the original RAW and `stored_size` is
+  `processed + thumbnail + RAW`, so the processed part is `stored_size - size`.
+- Thumbnails are **never** included in the ZIP, so no thumbnail size has to be
+  read at all. Using `stored_size - size` for a retained-RAW gallery includes
+  the thumbnail bytes, which overestimates by a few KB per photo. That is
+  acceptable for an estimate.
+- `GalleryArchiveService::estimatedSize()` does the arithmetic in SQL for the
+  UI; `estimatedSizeForPhoto()` does the same in PHP while building the ZIP.
+- Once the archive is built, its exact size is stored on
+  `gallery_archives.size_bytes` and the panel switches to `$archive->formattedSize()`
+  (`resources/views/components/⚡gallery-download-panel.blade.php`).
+
+Never list or stat bucket objects to estimate a size. `Storage::exists()` +
+`Storage::size()` per photo is two HEAD requests each: on a 221-photo gallery
+that was ~440 requests and 20+ seconds for a value that was already on the row.
+
 ## Queue and worker requirements
 
 The archive job is long-running compared with photo processing:

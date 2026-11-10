@@ -115,7 +115,9 @@ new class extends Component
     public function galleries()
     {
         return $this->team->galleries()
-            ->with(['coverPhoto', 'firstImagePhoto'])
+            // PhotoUrlService reads the gallery to resolve `keep_original_size`,
+            // which is needed for the cover/first-image CDN URLs below.
+            ->with(['coverPhoto.gallery', 'firstImagePhoto.gallery'])
             ->withCount('photos')
             ->latest()
             ->paginate(24);

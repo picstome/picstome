@@ -34,13 +34,7 @@ class extends Component
      */
     protected function imageNeighbor(int $offset): ?Photo
     {
-        $imageIds = $this->photo->gallery->photos()
-            ->notArchived()
-            ->get()
-            ->filter(fn ($photo) => $photo->isImage())
-            ->pluck('name', 'id')
-            ->sort(SORT_NATURAL)
-            ->keys();
+        $imageIds = $this->photo->gallery->readyImagePhotoIds();
 
         $currentIndex = $imageIds->search($this->photo->id);
 
@@ -50,7 +44,11 @@ class extends Component
 
         $neighborId = $imageIds->get($currentIndex + $offset);
 
-        return $neighborId === null ? null : Photo::find($neighborId);
+        if ($neighborId === null) {
+            return null;
+        }
+
+        return Photo::find($neighborId)?->setRelation('gallery', $this->photo->gallery);
     }
 
     public function rendering(View $view): void

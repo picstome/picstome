@@ -91,6 +91,17 @@ class Gallery extends Model
             }
         });
 
+        // The gallery header shows its own total; moving galleries between
+        // teams would leave both cached totals stale.
+        static::saved(function (Gallery $gallery) {
+            if (! $gallery->wasChanged('team_id')) {
+                return;
+            }
+
+            StorageUsageService::forgetForGallery($gallery->id);
+            StorageUsageService::forgetForTeam($gallery->getOriginal('team_id'));
+        });
+
         static::deleting(function (Gallery $gallery) {
             try {
                 app(GalleryArchiveService::class)->deleteForGallery($gallery);
@@ -100,15 +111,13 @@ class Gallery extends Model
         });
 
         static::deleted(function (Gallery $gallery) {
-            Cache::forget("gallery:{$gallery->id}:first_image");
-            Cache::forget("gallery:{$gallery->id}:photos_count");
-            Cache::forget("gallery:{$gallery->id}:photos:ids");
-            Cache::forget("gallery:{$gallery->id}:photos:ready:ids");
-            Cache::forget("gallery:{$gallery->id}:favorites:ids");
-            Cache::forget("gallery:{$gallery->id}:commented:ids");
-            Cache::forget("gallery:{$gallery->id}:media_counts");
-            Cache::forget("gallery:{$gallery->id}:download_size");
-            Cache::forget("gallery:{$gallery->id}:comments_count");
+            foreach (Photo::galleryCacheKeys((int) $gallery->id) as $key) {
+                Cache::forget($key);
+            }
+
+            // The row is already gone, so the team id must come from the
+            // in-memory model instead of another lookup.
+            StorageUsageService::forgetForTeam($gallery->team_id);
         });
     }
 
@@ -193,6 +202,23 @@ class Gallery extends Model
     }
 
     /**
+     * Cached, naturally sorted ids of the images visitors can page through.
+     *
+     * The portfolio viewer needs the previous and next image of the current
+     * one. Answering that from `readyPhotoIds()` alone would still hydrate
+     * every row twice per visit just to test the extension, so the filter is
+     * applied in SQL once and cached like the other visitor-facing lists.
+     *
+     * @return Collection<int, int>
+     */
+    public function readyImagePhotoIds(): Collection
+    {
+        return Cache::remember("gallery:{$this->id}:photos:ready:image:ids", now()->addHours(1), function () {
+            return $this->photos()->ready()->notArchived()->images()->pluck('name', 'id')->sort(SORT_NATURAL)->keys();
+        });
+    }
+
+    /**
      * Cached, naturally sorted by name ids of the gallery's favorited photos.
      * Archived photos never appear in the client's favorite tab.
      *
@@ -249,7 +275,14 @@ class Gallery extends Model
             ->get()
             ->keyBy('id');
 
-        return EloquentCollection::make($ids->map(fn ($id) => $photos->get($id))->filter()->values()->all());
+        $ordered = $ids->map(fn ($id) => $photos->get($id))->filter()->values();
+
+        // PhotoUrlService reads `$photo->gallery->keep_original_size` for every
+        // CDN URL. The relation is lazy, so a 60-tile wall used to fire 60
+        // duplicate `select * from galleries` queries. They all belong here.
+        return EloquentCollection::make(
+            $ordered->each(fn (Photo $photo) => $photo->setRelation('gallery', $this))->all()
+        );
     }
 
     #[Scope]
@@ -919,13 +952,18 @@ class Gallery extends Model
      */
     public function firstImage()
     {
-        return Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
+        $photo = Cache::remember("gallery:{$this->id}:first_image", now()->addHours(24), function () {
             if ($this->relationLoaded('photos')) {
                 return $this->photos->first(fn (Photo $photo) => $photo->isImage() && ! $photo->isArchived());
             }
 
             return $this->firstImagePhoto;
         });
+
+        // The relation is attached after the cache read, never inside it: the
+        // cached row must not embed a snapshot of this gallery, or a later
+        // `keep_original_size` change would keep resolving the old CDN variant.
+        return $photo?->setRelation('gallery', $this);
     }
 
     /**
@@ -959,10 +997,15 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * Rough ZIP size, answered by one aggregate query over the photo rows.
+     * The exact size is stored on `gallery_archives.size_bytes` once the ZIP
+     * is built, so the UI never needs to look at the bucket.
+     */
     public function downloadSize(): int
     {
         return Cache::remember("gallery:{$this->id}:download_size", now()->addHours(1), function (): int {
-            return app(GalleryArchiveService::class)->estimatedSizeForPhotos($this->photos()->ready()->notArchived()->cursor());
+            return app(GalleryArchiveService::class)->estimatedSize($this, 'all');
         });
     }
 
