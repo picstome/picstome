@@ -74,7 +74,6 @@ class Photo extends Model
             "gallery:{$galleryId}:photos:ready:image:ids",
             "gallery:{$galleryId}:favorites:ids",
             "gallery:{$galleryId}:commented:ids",
-            "gallery:{$galleryId}:archived:ids",
             "gallery:{$galleryId}:media_counts",
             "gallery:{$galleryId}:download_size",
             "gallery:{$galleryId}:comments_count",
@@ -146,7 +145,6 @@ class Photo extends Model
                 Cache::forget("gallery:{$photo->gallery_id}:photos:ready:ids");
                 Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
                 Cache::forget("gallery:{$photo->gallery_id}:commented:ids");
-                Cache::forget("gallery:{$photo->gallery_id}:archived:ids");
                 Cache::forget("gallery:{$photo->gallery_id}:first_image");
                 Cache::forget("gallery:{$photo->gallery_id}:media_counts");
                 Cache::forget("gallery:{$photo->gallery_id}:download_size");
