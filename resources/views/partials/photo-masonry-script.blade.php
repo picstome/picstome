@@ -38,6 +38,11 @@ Alpine.data('photoMasonry', () => ({
         this.observeTiles();
         this.observeMutations();
 
+        // Livewire morphs can drop the inline height while a tile updates.
+        // The morph hook above restores it; this listener re-runs the layout
+        // once the new DOM is in place.
+        this.$el.addEventListener('masonry:relayout', () => this.schedule());
+
         // Wait for the child x-data components (image aspects, video/PDF
         // placeholders) to initialize before measuring tile heights.
         this.$nextTick(() => this.layout(true));
@@ -165,3 +170,42 @@ Alpine.data('photoMasonry', () => ({
         this.observeMutations();
     },
 }));
+
+// Keep the masonry wall from collapsing while Livewire morphs a tile (for
+// example when a photo is favorited). Morphdom drops the inline height Alpine
+// wrote, which shrinks the page and can clamp the scroll position to the top.
+// Copy the current height onto the incoming element before the morph and let
+// the masonry relayout afterwards.
+const preserveMasonryHeight = () => {
+    if (! window.Livewire?.hook) {
+        return;
+    }
+
+    Livewire.hook('morph.updating', ({ el, toEl }) => {
+        if (! el?.hasAttribute?.('data-photo-masonry') || ! toEl) {
+            return;
+        }
+
+        const height = el.style.height || (el.offsetHeight ? `${el.offsetHeight}px` : '');
+
+        if (height) {
+            toEl.style.height = height;
+            toEl.style.minHeight = height;
+        }
+    });
+
+    Livewire.hook('morph.updated', ({ el }) => {
+        if (! el?.hasAttribute?.('data-photo-masonry')) {
+            return;
+        }
+
+        el.style.minHeight = '';
+        el.dispatchEvent(new CustomEvent('masonry:relayout'));
+    });
+};
+
+if (window.Livewire) {
+    preserveMasonryHeight();
+} else {
+    document.addEventListener('livewire:init', preserveMasonryHeight);
+}

@@ -17,6 +17,7 @@
     'asFavorite' => false,
     'asCommented' => false,
     'asArchived' => false,
+    'viewQuery' => [],
 ])
 
 @php
@@ -41,6 +42,7 @@
             :$photo
             :$gallery
             :$context
+            :$viewQuery
             :as-favorite="$asFavorite"
             :as-commented="$asCommented"
             :as-archived="$asArchived"

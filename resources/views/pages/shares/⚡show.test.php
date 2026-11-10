@@ -19,6 +19,16 @@ beforeEach(function () {
     $this->team = $this->user->currentTeam;
 });
 
+test('shared gallery never exposes photographer ratings', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create();
+    Photo::factory()->for($gallery)->rated(4)->favorited()->create();
+
+    $component = Livewire::test('pages::shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]);
+
+    $component->assertDontSeeHtml('data-photo-rating')
+        ->assertDontSeeHtml('data-gallery-filter-bar');
+});
+
 test('shared gallery can be viewed', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => '0123ABC']);
 
@@ -303,7 +313,8 @@ test('visitors can favorite a photo', function () {
     $component = Livewire::test('shared-photo-item', ['photo' => $photo])
         ->call('favorite');
 
-    expect($photo->fresh()->isFavorited())->toBeTrue();
+    expect($photo->fresh()->isFavorited())->toBeTrue()
+        ->and($photo->fresh()->rating)->toBe(5);
 });
 
 test('visitors cannot favorite a photo when gallery is not selectable', function () {

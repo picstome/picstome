@@ -7,6 +7,7 @@
     'asCommented' => false,
     'asArchived' => false,
     'index' => 0,
+    'viewQuery' => [],
 ])
 
 @php
@@ -32,13 +33,13 @@
     };
 
     $link = match (true) {
-        $isOwner => route('galleries.photos.show', [
+        $isOwner => route('galleries.photos.show', array_filter([
             'gallery' => $gallery,
             'photo' => $photo,
             'navigateFavorites' => $asFavorite ? true : null,
             'navigateCommented' => $asCommented ? true : null,
             'navigateArchived' => $asArchived ? true : null,
-        ]),
+        ]) + $viewQuery),
         $isPortfolio => route('portfolio.photos.show', [
             'handle' => $gallery->team->handle,
             'gallery' => $gallery,
@@ -57,10 +58,18 @@
     class="group relative mb-1 break-inside-avoid overflow-hidden bg-zinc-100 dark:bg-white/10"
     x-data="{
         showActions: ! window.matchMedia('(hover: hover)').matches,
+        heartPulse: false,
+        pulseHeart() {
+            this.heartPulse = true
+            setTimeout(() => {
+                this.heartPulse = false
+            }, 420)
+        },
     }"
     @if ($isOwner)
         @mouseenter="showActions = true"
         @mouseleave="showActions = false"
+        x-on:favorite-toggled.window="if ($event.detail.id === {{ $photo->id }}) pulseHeart()"
     @endif
     data-photo-card
     data-photo-id="{{ $photo->id }}"
@@ -138,34 +147,53 @@
             </div>
         @endif
 
-        @if (($photo->comments_count ?? 0) > 0)
-            <div class="absolute top-1.5 left-1.5 z-10 flex" @if ($isOwner) :class="showActions ? 'flex' : 'hidden'" @endif>
-                <x-ts-badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
-                    {{ $photo->comments_count }}
-                </x-ts-badge>
+        {{-- Top-left: versions and comments. Keeping both here leaves the
+             top-right free for the rating. --}}
+        @if (
+            (($photo->comments_count ?? 0) > 0)
+            || (config('picstome.file_versions_enabled') && $photo->version_count > 1 && ($isOwner || $gallery->is_share_versions_visible))
+        )
+            <div class="absolute top-1.5 left-1.5 z-10 flex items-center gap-1">
+                @if (config('picstome.file_versions_enabled') && $photo->version_count > 1 && ($isOwner || $gallery->is_share_versions_visible))
+                    <x-ts-badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
+                        {{ $photo->version_count }}
+                    </x-ts-badge>
+                @endif
+
+                @if (($photo->comments_count ?? 0) > 0)
+                    <x-ts-badge icon="chat-bubble-left" size="sm" color="zinc" variant="solid">
+                        {{ $photo->comments_count }}
+                    </x-ts-badge>
+                @endif
             </div>
         @endif
 
-        @if (config('picstome.file_versions_enabled') && $photo->version_count > 1 && ($isOwner || $gallery->is_share_versions_visible))
-            <div class="absolute top-1.5 right-1.5 z-10 flex">
-                <x-ts-badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
-                    {{ $photo->version_count }}
-                </x-ts-badge>
+        {{-- Photographer-only rating, top-right: only the earned stars, no pill,
+             so it reads as a small mark on the thumbnail instead of a badge. --}}
+        @if ($isOwner && $photo->isRated())
+            <div
+                class="pointer-events-none absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+                data-photo-rating="{{ $photo->rating }}"
+                title="{{ trans_choice(':count star|:count stars', $photo->rating) }}"
+                aria-label="{{ trans_choice(':count star|:count stars', $photo->rating) }}"
+            >
+                <x-rating-stars :rating="$photo->rating" compact filled-only />
             </div>
         @endif
 
         @if ($isOwner)
             <x-photo-mini-dock x-bind:class="showActions ? 'flex' : 'hidden'">
                 <x-dock-button
-                    wire:click="toggleFavorite({{ $photo->id }})"
+                    wire:click.preserve-scroll="toggleFavorite({{ $photo->id }})"
                     icon="heart"
                     :label="__('Favorite')"
                     :tone="$photo->isFavorited() ? 'favorite' : 'default'"
                     compact
+                    x-bind:class="heartPulse ? 'animate-heart-pop' : ''"
                 />
 
                 <x-dock-button
-                    wire:click="toggleArchive({{ $photo->id }})"
+                    wire:click.preserve-scroll="toggleArchive({{ $photo->id }})"
                     icon="archive-box"
                     :label="$photo->isArchived() ? __('Unarchive') : __('Archive')"
                     :tone="$photo->isArchived() ? 'active' : 'default'"
@@ -174,7 +202,7 @@
                 />
 
                 <x-dock-button
-                    wire:click="requestDeletePhoto({{ $photo->id }})"
+                    wire:click.preserve-scroll="requestDeletePhoto({{ $photo->id }})"
                     icon="trash"
                     :label="__('Delete')"
                     tone="danger"
@@ -185,19 +213,19 @@
                 @if ($photo->isImage())
                     @if ($gallery->coverPhoto?->is($photo))
                         <x-dock-button
-                            icon="star"
+                            icon="photo"
                             :label="__('Adjust cover focus')"
                             tone="active"
                             compact
-                            wire:click="$set('adjustingCover', true)"
+                            wire:click.preserve-scroll="$set('adjustingCover', true)"
                             data-photo-cover
                         />
                     @else
                         <x-dock-button
-                            icon="star"
+                            icon="photo"
                             :label="__('Set as cover')"
                             compact
-                            wire:click="setAsCover({{ $photo->id }})"
+                            wire:click.preserve-scroll="setAsCover({{ $photo->id }})"
                             data-photo-cover
                         />
                     @endif
@@ -207,7 +235,7 @@
             <x-photo-mini-dock class="transition-opacity md:opacity-0 md:group-hover:opacity-100">
                 @if ($isSelectable)
                     <x-dock-button
-                        wire:click="toggleFavorite({{ $photo->id }})"
+                        wire:click.preserve-scroll="toggleFavorite({{ $photo->id }})"
                         icon="heart"
                         :label="__('Favorite')"
                         :tone="$photo->isFavorited() ? 'favorite' : 'default'"

@@ -47,6 +47,19 @@ class PhotoFactory extends Factory
         });
     }
 
+    /**
+     * Photographer star rating (1-5). Kept separate from `favorited()` so a
+     * test can model a heart without a rating, which is what clients produce.
+     */
+    public function rated(int $rating = 5): Factory
+    {
+        return $this->state(function (array $attributes) use ($rating) {
+            return [
+                'rating' => $rating,
+            ];
+        });
+    }
+
     public function pdf(): Factory
     {
         return $this->state(function (array $attributes) {

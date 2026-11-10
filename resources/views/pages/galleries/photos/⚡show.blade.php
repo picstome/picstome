@@ -2,6 +2,7 @@
 
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use App\Services\GalleryPhotoQuery;
 use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
@@ -35,6 +36,23 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     #[Url]
     public $navigateArchived = false;
 
+    /**
+     * The owner wall's filter and sort, carried from the tile link so rating,
+     * next/previous and the Back link all use the exact list the photographer
+     * was looking at.
+     */
+    #[Url(as: 'rating')]
+    public ?int $ratingFilter = null;
+
+    #[Url(as: 'favorites')]
+    public bool $favoritesOnly = false;
+
+    #[Url(as: 'sort')]
+    public string $sortField = 'name';
+
+    #[Url(as: 'direction')]
+    public string $sortDirection = 'asc';
+
     public bool $adjustingCover = false;
 
     public function mount(Photo $photo)
@@ -43,21 +61,43 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
         $this->authorize('view', $this->photo);
 
-        if ($this->navigateFavorites) {
-            $this->next = $this->photo->nextFavorite();
-            $this->previous = $this->photo->previousFavorite();
-        } elseif ($this->navigateCommented) {
-            $this->next = $this->photo->nextCommented();
-            $this->previous = $this->photo->previousCommented();
-        } elseif ($this->navigateArchived) {
-            $this->next = $this->photo->nextArchived();
-            $this->previous = $this->photo->previousArchived();
-        } else {
-            $this->next = $this->photo->next();
-            $this->previous = $this->photo->previous();
-        }
+        $ids = $this->currentIds;
+
+        $this->next = $this->photo->neighborIn($ids, 1);
+        $this->previous = $this->photo->neighborIn($ids, -1);
 
         $this->focusRequestedComment();
+    }
+
+    #[Computed]
+    public function photoQuery(): GalleryPhotoQuery
+    {
+        return GalleryPhotoQuery::fromArray([
+            'rating' => $this->ratingFilter,
+            'favorites' => $this->favoritesOnly,
+            'sort' => $this->sortField,
+            'direction' => $this->sortDirection,
+        ]);
+    }
+
+    /**
+     * The ordered set the viewer is paging through. The tab navigation flags
+     * win over the wall's default set, so Favorites/Commented/Archived stay
+     * scoped to their tab while still honouring the active rating/sort filter.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    #[Computed]
+    public function currentIds(): \Illuminate\Support\Collection
+    {
+        $tab = match (true) {
+            filter_var($this->navigateFavorites, FILTER_VALIDATE_BOOLEAN) => 'favorited',
+            filter_var($this->navigateCommented, FILTER_VALIDATE_BOOLEAN) => 'commented',
+            filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN) => 'archived',
+            default => 'all',
+        };
+
+        return $this->photoQuery->idsFor($this->photo->gallery, $tab);
     }
 
     /**
@@ -85,6 +125,50 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     public function favorite()
     {
         $this->photo->toggleFavorite();
+
+        $this->dispatch(
+            'favorite-toggled',
+            id: $this->photo->id,
+            favorited: $this->photo->isFavorited(),
+        );
+    }
+
+    /**
+     * Photographer star rating.
+     *
+     * 5 stars also selects the photo and 0 clears both the rating and the
+     * heart (see Photo::setRating). Pressing 1-5 advances to the next photo in
+     * the current filtered/sorted set after a short client-side pause, so the
+     * photographer sees the stars fill before the viewer moves on. 0 stays on
+     * the photo because clearing is a correction, not a culling decision.
+     */
+    public function setRating(int $rating): void
+    {
+        $this->authorize('update', $this->photo->gallery);
+
+        $rating = max(0, min(5, $rating));
+
+        // Capture the neighbour BEFORE mutating: clearing a rating in the
+        // Favorites tab removes the photo from that set.
+        $next = $this->next;
+
+        $wasFavorited = $this->photo->isFavorited();
+
+        $this->photo->setRating($rating === 0 ? null : $rating);
+
+        if ($wasFavorited !== $this->photo->isFavorited()) {
+            $this->dispatch(
+                'favorite-toggled',
+                id: $this->photo->id,
+                favorited: $this->photo->isFavorited(),
+            );
+        }
+
+        $this->dispatch(
+            'rating-saved',
+            rating: $this->photo->rating,
+            nextUrl: $rating > 0 && $next ? $this->viewerUrl($next) : null,
+        );
     }
 
     /**
@@ -100,7 +184,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
      * "next" has to be resolved against the set we are paging through at the
      * moment the key was pressed.
      *
-     * It is reversible, so no modal is shown here.
+     * It is reversible, so no modal is shown here. Navigation is dispatched to
+     * the client after the archive HUD has been visible for a moment; an
+     * immediate redirect would hide the confirmation.
      */
     public function archive()
     {
@@ -108,6 +194,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
         $next = $this->next;
         $previous = $this->previous;
+        $archived = ! $this->photo->isArchived();
 
         if ($this->photo->isArchived()) {
             $this->photo->unarchive();
@@ -120,18 +207,11 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             }
         }
 
-        if ($next) {
-            return $this->redirect($this->viewerUrl($next));
-        }
+        $nextUrl = $next
+            ? $this->viewerUrl($next)
+            : ($previous ? $this->viewerUrl($previous) : $this->galleryUrlWithoutPhoto());
 
-        if ($previous) {
-            return $this->redirect($this->viewerUrl($previous));
-        }
-
-        // There is no neighbour to open: back to the gallery on All photos. The
-        // Archived tab cannot be the target because it disappears as soon as
-        // the last archived photo is restored, leaving the grid empty.
-        return $this->redirect($this->galleryUrlWithoutPhoto());
+        $this->dispatch('archive-saved', archived: $archived, nextUrl: $nextUrl);
     }
 
     /**
@@ -148,19 +228,27 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
         $this->photo->unarchive();
 
+        $nextUrl = null;
+
         // `#[Url]` values arrive as strings, so compare as booleans.
         if (filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN)
             && $this->photo->gallery->archivedPhotoIds()->isEmpty()) {
-            return $this->redirect($this->galleryUrlWithoutPhoto());
+            $nextUrl = $this->galleryUrlWithoutPhoto();
         }
+
+        $this->dispatch('archive-saved', archived: false, nextUrl: $nextUrl);
     }
 
     /**
      * Gallery URL on its default tab, for when there is no photo to reveal.
+     * Filters and sort are kept so the wall does not jump back to an unfiltered
+     * list after the last photo of a set is archived or deleted.
      */
     protected function galleryUrlWithoutPhoto(): string
     {
-        return route('galleries.show', ['gallery' => $this->photo->gallery_id]);
+        return route('galleries.show', [
+            'gallery' => $this->photo->gallery_id,
+        ] + $this->photoQuery->toQuery());
     }
 
     public function delete()
@@ -181,20 +269,20 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             return $this->redirect($this->viewerUrl($previous));
         }
 
-        return $this->redirect("/galleries/{$gallery->id}");
+        return $this->redirect($this->galleryUrlWithoutPhoto());
     }
 
     /**
      * Build the viewer URL for an adjacent photo, keeping the active
-     * favorites/commented navigation mode.
+     * favorites/commented/archived navigation mode and the wall's filter/sort.
      */
     protected function viewerUrl(Photo $photo): string
     {
         $query = array_filter([
-            'navigateFavorites' => $this->navigateFavorites ? true : null,
-            'navigateCommented' => $this->navigateCommented ? true : null,
-            'navigateArchived' => $this->navigateArchived ? true : null,
-        ]);
+            'navigateFavorites' => filter_var($this->navigateFavorites, FILTER_VALIDATE_BOOLEAN) ? true : null,
+            'navigateCommented' => filter_var($this->navigateCommented, FILTER_VALIDATE_BOOLEAN) ? true : null,
+            'navigateArchived' => filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN) ? true : null,
+        ]) + $this->photoQuery->toQuery();
 
         return route('galleries.photos.show', [
             'gallery' => $photo->gallery_id,
@@ -305,19 +393,21 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $archived = filter_var($this->navigateArchived, FILTER_VALIDATE_BOOLEAN);
 
         $tab = match (true) {
-            $favorites => 'favorited',
             $commented => 'commented',
             $archived => 'archived',
             default => null,
         };
 
+        // The old Favorites tab is now the favourites filter on All photos, so
+        // an old `navigateFavorites` viewer URL returns to that filtered grid
+        // and to the regular photo anchor.
         $query = array_filter([
             'activeTab' => $tab,
+            'favorites' => $favorites ? 1 : null,
             'photo' => $this->photo->id,
-        ]);
+        ]) + $this->photoQuery->toQuery();
 
         $anchor = match (true) {
-            $favorites => 'favorite-',
             $commented => 'commented-',
             $archived => 'archived-',
             default => 'photo-',
@@ -392,6 +482,72 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         panStartY: 0,
         panStartTranslateX: 0,
         panStartTranslateY: 0,
+        heartPulse: false,
+        ratingHud: false,
+        ratingHudValue: 0,
+        ratingHudTimer: null,
+        archiveHud: false,
+        archiveHudArchived: false,
+        archiveHudTimer: null,
+        pulseHeart() {
+            this.heartPulse = true
+            setTimeout(() => {
+                this.heartPulse = false
+            }, 420)
+        },
+        showRatingHud(value) {
+            this.ratingHudValue = value
+            this.ratingHud = true
+            clearTimeout(this.ratingHudTimer)
+            this.ratingHudTimer = setTimeout(() => {
+                this.ratingHud = false
+            }, 700)
+        },
+        onRatingSaved(detail) {
+            this.showRatingHud(detail.rating ?? 0)
+
+            // Let the stars fill before moving on, so culling stays legible.
+            if (detail.nextUrl) {
+                setTimeout(() => {
+                    Livewire.navigate(detail.nextUrl)
+                }, 240)
+            }
+        },
+        onArchiveSaved(detail) {
+            this.archiveHudArchived = !!detail.archived
+            this.archiveHud = true
+            clearTimeout(this.archiveHudTimer)
+            this.archiveHudTimer = setTimeout(() => {
+                this.archiveHud = false
+                if (detail.nextUrl) {
+                    Livewire.navigate(detail.nextUrl)
+                }
+            }, 500)
+        },
+        rateByKey(event) {
+            // Never hijack typing: comments and annotation inputs must win.
+            const target = event?.target
+
+            if (target instanceof Element && target.closest('input, textarea, select, [contenteditable]')) {
+                return
+            }
+
+            if (event?.metaKey || event?.ctrlKey || event?.altKey) {
+                return
+            }
+
+            const key = event?.key
+
+            if (key === '0') {
+                $wire.setRating(0)
+
+                return
+            }
+
+            if (key >= '1' && key <= '5') {
+                $wire.setRating(Number(key))
+            }
+        },
         initPhotoViewer() {
             const source = this.$el.dataset.fullImageUrl
             if (source) {
@@ -595,9 +751,13 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @keyup.window.f="$wire.favorite()"
+    @keyup.window="rateByKey($event)"
     @keyup.window.a="archiveByKey($event)"
     @keyup.window.delete="requestDelete($event)"
     @keyup.window.backspace="requestDelete($event)"
+    x-on:rating-saved.window="onRatingSaved($event.detail)"
+    x-on:favorite-toggled.window="pulseHeart()"
+    x-on:archive-saved.window="onArchiveSaved($event.detail)"
     x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
     style="height: 100vh; height: 100dvh;"
     class="flex flex-col"
@@ -726,7 +886,42 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 {{ __('Back') }}
             </x-ts-button>
 
-            <x-photo-info :$photo :facts="$photo->infoFacts()" />
+            <x-photo-info :$photo :facts="$photo->infoFacts()" :comments-count="$this->comments->count()" />
+        </div>
+
+        {{-- Transient star HUD: confirms a 1-5 keystroke before the viewer
+             advances. Pointer-events-none so it never blocks the photo. --}}
+        <div
+            x-cloak
+            x-show="ratingHud"
+            x-transition.opacity.duration.150ms
+            class="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center"
+            data-rating-hud
+        >
+            <div class="flex items-center gap-1 rounded-2xl bg-black/60 px-4 py-2 shadow-2xl backdrop-blur-md">
+                <template x-for="star in 5" :key="star">
+                    <x-icon
+                        name="star"
+                        class="size-7"
+                        x-bind:class="star <= ratingHudValue ? 'text-brand-star' : 'text-white/30'"
+                    />
+                </template>
+            </div>
+        </div>
+
+        {{-- Archive confirmation, same transient language as the star HUD.
+             Navigation waits 500ms so the photographer sees the result. --}}
+        <div
+            x-cloak
+            x-show="archiveHud"
+            x-transition.opacity.duration.150ms
+            class="pointer-events-none absolute inset-x-0 top-20 z-40 flex justify-center"
+            data-archive-hud
+        >
+            <div class="flex items-center gap-2 rounded-2xl bg-black/65 px-4 py-2 text-sm font-semibold text-white shadow-2xl backdrop-blur-md">
+                <x-icon name="archive-box" class="size-5" />
+                <span x-text="archiveHudArchived ? @js(__('Archived')) : @js(__('Restored'))"></span>
+            </div>
         </div>
 
         <x-closeup-panel
@@ -749,7 +944,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                  arrow-key shortcuts keep navigating. --}}
             @if ($previous)
                 <x-dock-button
-                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $previous->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : ($navigateArchived ? '?navigateArchived=true' : '')) }}"
+                    href="{{ $this->viewerUrl($previous) }}"
                     icon="chevron-left"
                     :label="__('Previous photo')"
                     hint="←"
@@ -760,7 +955,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
             @if ($next)
                 <x-dock-button
-                    href="/galleries/{{ $photo->gallery->id }}/photos/{{ $next->id }}{{ $navigateFavorites ? '?navigateFavorites=true' : ($navigateCommented ? '?navigateCommented=true' : ($navigateArchived ? '?navigateArchived=true' : '')) }}"
+                    href="{{ $this->viewerUrl($next) }}"
                     icon="chevron-right"
                     :label="__('Next photo')"
                     hint="→"
@@ -777,17 +972,22 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 hint="F"
                 :tone="$photo->isFavorited() ? 'favorite' : 'default'"
                 wire:click="favorite"
+                x-bind:class="heartPulse ? 'animate-heart-pop' : ''"
                 data-dock-favorite
             />
 
+            {{-- One compact rating button instead of five inline stars: the
+                 picker opens upwards and the 1-5 keys stay the fast path. --}}
+            <x-photo-rating :rating="$photo->rating" variant="dock" />
+
             @if ($photo->isImage() && ! $photo->gallery->coverPhoto?->is($photo))
-                <x-dock-button icon="star" :label="__('Set as Cover')" wire:click="setAsCover" />
+                <x-dock-button icon="photo" :label="__('Set as cover')" wire:click="setAsCover" />
             @elseif ($photo->isImage())
                 {{-- Already the cover: one button opens both cover actions so
                      nothing is lost when the dock replaced the old dropdown. --}}
                 <x-dropdown position="top-end">
                     <x-slot:action>
-                        <x-dock-button icon="star" :label="__('Cover actions')" tone="active" x-on:click="show = ! show" />
+                        <x-dock-button icon="photo" :label="__('Cover actions')" tone="active" x-on:click="show = ! show" />
                     </x-slot:action>
 
                     <x-dropdown.items

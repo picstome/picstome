@@ -4,6 +4,12 @@
     On mobile the labels are visually hidden so the tab bar only shows icons and
     fits without horizontal scrolling. The full label stays available to screen
     readers through aria-label.
+
+    `favoritesAsFilter` makes the Favorites tab a shortcut for the favourites
+    filter on All photos instead of a separate panel (owner gallery). The shared
+    gallery keeps the dedicated Favorites tab by leaving it false.
+
+    `bordered` is disabled when the parent already draws the sticky row border.
 --}}
 
 @props([
@@ -19,6 +25,9 @@
     'variant' => 'underline',
     'centered' => false,
     'activeTab' => 'all',
+    'favoritesAsFilter' => false,
+    'favoritesFilterActive' => false,
+    'bordered' => true,
 ])
 
 @php
@@ -43,18 +52,32 @@
         $activeClass = ' border-brand-green text-brand-green dark:border-brand-sage dark:text-brand-sage';
     }
 
-    $tabClassFor = fn (string $tab): string => $tabClass.($activeTab === $tab ? $activeClass : '');
+    $tabClassFor = fn (string $tab, ?bool $active = null): string => $tabClass.(($active ?? ($activeTab === $tab)) ? $activeClass : '');
+
+    // When Favorites is a filter instead of a panel, its button toggles the
+    // filter on the All photos grid and the two buttons share the active state.
+    $allClick = $favoritesAsFilter ? '$wire.showAllPhotos()' : '$wire.activeTab = \'all\'';
+    $allCurrent = $favoritesAsFilter
+        ? '$wire.activeTab === \'all\' && ! $wire.favoritesOnly'
+        : '$wire.activeTab === \'all\'';
+    $favoritesClick = $favoritesAsFilter ? '$wire.showFavorites()' : '$wire.activeTab = \'favorited\'';
+    $favoritesCurrent = $favoritesAsFilter
+        ? '$wire.activeTab === \'all\' && $wire.favoritesOnly'
+        : '$wire.activeTab === \'favorited\'';
+    $tabClick = fn (string $tab): string => $favoritesAsFilter
+        ? '$wire.showTab(\''.$tab.'\')'
+        : '$wire.activeTab = \''.$tab.'\'';
 @endphp
 
 <nav
-    class="{{ $variant === 'pills' ? 'flex flex-wrap items-center justify-center gap-2' : 'flex items-center gap-1 overflow-x-auto border-b border-zinc-800/10 dark:border-white/20' }} {{ $centered ? 'justify-center' : '' }}"
+    class="{{ $variant === 'pills' ? 'flex flex-wrap items-center justify-center gap-2' : 'flex items-center gap-1 overflow-x-auto '.($bordered ? 'border-b border-zinc-800/10 dark:border-white/20' : '') }} {{ $centered ? 'justify-center' : '' }}"
     role="tablist"
 >
     <button
         type="button"
-        @click="$wire.activeTab = 'all'; $dispatch('gallery-tab-changed')"
-        x-bind:data-current="$wire.activeTab === 'all'"
-        class="{{ $tabClassFor('all') }}"
+        @click="{{ $allClick }}; $dispatch('gallery-tab-changed')"
+        x-bind:data-current="{{ $allCurrent }}"
+        class="{{ $tabClassFor('all', $favoritesAsFilter ? ! $favoritesFilterActive : null) }}"
         aria-label="{{ __('All photos') }}"
         title="{{ __('All photos') }}"
     >
@@ -66,7 +89,7 @@
     @if ($archivedCount > 0)
         <button
             type="button"
-            @click="$wire.activeTab = 'archived'; $dispatch('gallery-tab-changed')"
+            @click="{{ $tabClick('archived') }}; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'archived'"
             class="{{ $tabClassFor('archived') }}"
             aria-label="{{ $archivedLabel }}"
@@ -81,11 +104,12 @@
     @if ($showFavorites)
         <button
             type="button"
-            @click="$wire.activeTab = 'favorited'; $dispatch('gallery-tab-changed')"
-            x-bind:data-current="$wire.activeTab === 'favorited'"
-            class="{{ $tabClassFor('favorited') }}"
+            @click="{{ $favoritesClick }}; $dispatch('gallery-tab-changed')"
+            x-bind:data-current="{{ $favoritesCurrent }}"
+            class="{{ $tabClassFor('favorited', $favoritesAsFilter ? $favoritesFilterActive : null) }}"
             aria-label="{{ $favoritesLabel }}"
             title="{{ $favoritesLabel }}"
+            data-favorites-tab
         >
             <x-icon name="heart" class="size-5" />
             <span class="max-sm:sr-only">{{ $favoritesLabel }}</span>
@@ -97,7 +121,7 @@
     @if ($showComments)
         <button
             type="button"
-            @click="$wire.activeTab = 'commented'; $dispatch('gallery-tab-changed')"
+            @click="{{ $tabClick('commented') }}; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'commented'"
             class="{{ $tabClassFor('commented') }}"
             aria-label="{{ $commentsLabel }}"
@@ -111,7 +135,7 @@
     @if ($showSync)
         <button
             type="button"
-            @click="$wire.activeTab = 'sync'; $dispatch('gallery-tab-changed')"
+            @click="{{ $tabClick('sync') }}; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'sync'"
             class="{{ $tabClassFor('sync') }}"
             aria-label="{{ __('Sync') }}"
@@ -125,7 +149,7 @@
     @if ($showDownload || $downloadUrl)
         <button
             type="button"
-            @click="$wire.activeTab = 'download'; $dispatch('gallery-tab-changed')"
+            @click="{{ $tabClick('download') }}; $dispatch('gallery-tab-changed')"
             x-bind:data-current="$wire.activeTab === 'download'"
             class="{{ $tabClassFor('download') }}"
             style="background-color: var(--color-primary-500); color: white;"

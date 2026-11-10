@@ -341,7 +341,10 @@ it('returns to All photos after restoring the last archived photo', function () 
         ->and($component->instance()->previous)->toBeNull();
 
     $component->call('archive')
-        ->assertRedirect(route('galleries.show', ['gallery' => $gallery]));
+        ->assertDispatched('archive-saved', function (string $name, array $params) use ($gallery) {
+            return $params['archived'] === false
+                && $params['nextUrl'] === route('galleries.show', ['gallery' => $gallery]);
+        });
 
     // The Archived tab no longer exists, so the grid must open on All photos,
     // where the restored photo and the live one are both visible.
@@ -361,7 +364,10 @@ it('returns to All photos when the dock restores the last archived photo', funct
     ]);
 
     $component->call('unarchive')
-        ->assertRedirect(route('galleries.show', ['gallery' => $gallery]));
+        ->assertDispatched('archive-saved', function (string $name, array $params) use ($gallery) {
+            return $params['archived'] === false
+                && $params['nextUrl'] === route('galleries.show', ['gallery' => $gallery]);
+        });
 
     expect($only->fresh()->isArchived())->toBeFalse();
 });

@@ -289,6 +289,21 @@ describe('Gallery Viewing', function () {
             ->toContain('Favorites');
     });
 
+    it('applies the favorites filter from the favorites tab', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create(['name' => 'a.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->click('[data-favorites-tab]');
+        $page->wait(0.4);
+
+        expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1)
+            ->and($page->script("new URL(location.href).searchParams.get('favorites')"))->toBe('true');
+    });
+
     it('does not overflow horizontally on small mobile screens', function () {
         $user = User::factory()->withPersonalTeam()->create(['language' => 'es']);
         $gallery = Gallery::factory()->for($user->currentTeam)->shared()->selectable(2)->public()->create([
@@ -368,6 +383,172 @@ describe('Gallery Viewing', function () {
         $response = actingAs($this->user)->get('/galleries/1');
 
         $response->assertStatus(403);
+    });
+});
+
+describe('Rating filters and sorting', function () {
+    it('filters by an exact rating', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(1)->create(['name' => 'a.jpg']);
+        $three = Photo::factory()->for($gallery)->rated(3)->create(['name' => 'b.jpg']);
+        Photo::factory()->for($gallery)->rated(5)->create(['name' => 'c.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => 'd.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('filterByRating', 3);
+
+        expect($component->get('ratingFilter'))->toBe(3)
+            ->and($component->allPhotos->pluck('id')->all())->toBe([$three->id]);
+
+        $component->call('clearRatingFilter');
+
+        expect($component->get('ratingFilter'))->toBeNull()
+            ->and($component->allPhotos)->toHaveCount(4);
+    });
+
+    it('the favorites tab applies the favorites filter on all photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $favoriteHigh = Photo::factory()->for($gallery)->rated(4)->favorited()->create(['name' => 'a.jpg']);
+        $favoriteLow = Photo::factory()->for($gallery)->rated(2)->favorited()->create(['name' => 'b.jpg']);
+        Photo::factory()->for($gallery)->rated(5)->create(['name' => 'c.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
+
+        expect($component->get('favoritesOnly'))->toBeTrue()
+            ->and($component->get('activeTab'))->toBe('all')
+            ->and($component->allPhotos->pluck('id')->all())->toBe([$favoriteHigh->id, $favoriteLow->id]);
+
+        $component->call('filterByRating', 4);
+
+        expect($component->allPhotos->pluck('id')->all())->toBe([$favoriteHigh->id]);
+
+        $component->call('showAllPhotos');
+
+        expect($component->get('favoritesOnly'))->toBeFalse()
+            ->and($component->get('ratingFilter'))->toBeNull()
+            ->and($component->allPhotos)->toHaveCount(3);
+    });
+
+    it('leaving all photos drops the favorites filter', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites')
+            ->call('showTab', 'commented');
+
+        expect($component->get('activeTab'))->toBe('commented')
+            ->and($component->get('favoritesOnly'))->toBeFalse();
+    });
+
+    it('clears every filter and restarts paging', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(5)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('allPhotoLimit', 120)
+            ->call('filterByRating', 4)
+            ->call('showFavorites')
+            ->call('clearFilters');
+
+        expect($component->get('ratingFilter'))->toBeNull()
+            ->and($component->get('favoritesOnly'))->toBeFalse()
+            ->and($component->get('allPhotoLimit'))->toBe(60);
+    });
+
+    it('sorts by rating with unrated photos last in both directions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $two = Photo::factory()->for($gallery)->rated(2)->create(['name' => 'a.jpg']);
+        $five = Photo::factory()->for($gallery)->rated(5)->create(['name' => 'b.jpg']);
+        $unrated = Photo::factory()->for($gallery)->create(['name' => 'c.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('sortBy', 'rating');
+
+        expect($component->get('sortDirection'))->toBe('desc')
+            ->and($component->allPhotos->pluck('id')->all())->toBe([$five->id, $two->id, $unrated->id]);
+
+        $component->call('toggleSortDirection');
+
+        expect($component->allPhotos->pluck('id')->all())->toBe([$two->id, $five->id, $unrated->id]);
+    });
+
+    it('sorts by date, size and version count', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $older = Photo::factory()->for($gallery)->create([
+            'name' => 'a.jpg',
+            'uploaded_at' => now()->subDays(2),
+            'size' => 500,
+            'version_count' => 1,
+        ]);
+        $newer = Photo::factory()->for($gallery)->create([
+            'name' => 'b.jpg',
+            'uploaded_at' => now()->subDay(),
+            'size' => 100,
+            'version_count' => 3,
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('sortBy', 'date');
+        expect($component->allPhotos->pluck('id')->all())->toBe([$newer->id, $older->id]);
+
+        $component->call('sortBy', 'size');
+        expect($component->allPhotos->pluck('id')->all())->toBe([$older->id, $newer->id]);
+
+        $component->call('sortBy', 'versions');
+        expect($component->allPhotos->pluck('id')->all())->toBe([$newer->id, $older->id]);
+    });
+
+    it('sorts names naturally in both directions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => 'photo10.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => 'photo2.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->allPhotos->pluck('name')->all())->toBe(['photo2.jpg', 'photo10.jpg']);
+
+        $component->call('toggleSortDirection');
+
+        expect($component->allPhotos->pluck('name')->all())->toBe(['photo10.jpg', 'photo2.jpg']);
+    });
+
+    it('shows a filtered empty state when nothing matches', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(2)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('filterByRating', 5)
+            ->assertSee('No photos match these filters');
+    });
+
+    it('shows the compact sticky toolbar next to the tabs', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(3)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->assertSeeHtml('data-gallery-filter-bar')
+            ->assertSeeHtml('data-rating-filter-trigger')
+            ->assertSeeHtml('data-sort-trigger')
+            ->assertSeeHtml('data-sort-direction')
+            ->assertSeeHtml('data-favorites-tab');
+    });
+
+    it('filters by an exact rating from the sticky toolbar', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(2)->create(['name' => 'a.jpg']);
+        Photo::factory()->for($gallery)->rated(5)->create(['name' => 'b.jpg']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+
+        $page->click('[data-rating-filter-trigger]');
+        $page->click('[data-rating-filter-popover] [data-rating-star="5"]');
+        $page->wait(0.4);
+
+        expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
     });
 });
 
@@ -953,9 +1134,10 @@ describe('Favorites', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         $favorite = Photo::factory()->for($gallery)->favorited()->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
 
-        expect($component->favorites->contains($favorite))->toBeTrue();
+        expect($component->allPhotos->contains($favorite))->toBeTrue();
     });
 
     it('refreshes the favorites list after marking photos as favorites', function () {
@@ -963,14 +1145,16 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
         Photo::factory()->for($gallery)->favorited()->create(['name' => '1Z8A6190.jpg']);
 
-        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
 
-        expect($component->favorites->count())->toBe(1);
+        expect($component->allPhotos->count())->toBe(1);
 
         $component->set('favoriteFileNames', '1Z8A6159')
             ->call('markFavorites');
 
-        expect($component->favorites->pluck('name')->sort()->values()->all())->toBe(['1Z8A6159.jpg', '1Z8A6190.jpg']);
+        expect($component->allPhotos->pluck('name')->sort()->values()->all())->toBe(['1Z8A6159.jpg', '1Z8A6190.jpg'])
+            ->and($gallery->photos()->where('name', '1Z8A6159.jpg')->first()->rating)->toBe(5);
     });
 
     it('allows users to favorite a photo', function () {
@@ -981,7 +1165,8 @@ describe('Favorites', function () {
             ->call('favorite', $photo->id);
 
         $component->assertDispatched('photo-favorited');
-        expect($photo->fresh()->isFavorited())->toBeTrue();
+        expect($photo->fresh()->isFavorited())->toBeTrue()
+            ->and($photo->fresh()->rating)->toBe(5);
     });
 
     it('marks photos as favorites by filenames with extensions', function () {
@@ -1937,9 +2122,11 @@ test('owner gallery reveals a favorited photo referenced by the viewer back link
         ->withQueryParams(['activeTab' => 'favorited', 'photo' => $target->id])
         ->test('pages::galleries.show', ['gallery' => $gallery]);
 
-    expect($component->favorites)->toHaveCount(65)
-        ->and($component->favorites->contains($target))->toBeTrue()
-        ->and($component->get('favoritePhotoLimit'))->toBe(120);
+    expect($component->get('activeTab'))->toBe('all')
+        ->and($component->get('favoritesOnly'))->toBeTrue()
+        ->and($component->allPhotos)->toHaveCount(65)
+        ->and($component->allPhotos->contains($target))->toBeTrue()
+        ->and($component->get('allPhotoLimit'))->toBe(120);
 });
 
 test('going back from a photo beyond the first page scrolls to it', function () {

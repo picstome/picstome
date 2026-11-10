@@ -53,6 +53,7 @@ class Photo extends Model
             'version_count' => 'integer',
             'uploaded_at' => 'datetime',
             'favorited_at' => 'datetime',
+            'rating' => 'integer',
             'archived_at' => 'datetime',
             'status' => 'string',
         ];
@@ -85,6 +86,38 @@ class Photo extends Model
         foreach (static::galleryCacheKeys($galleryId) as $key) {
             Cache::forget($key);
         }
+
+        static::bumpGalleryCacheVersion($galleryId);
+    }
+
+    /**
+     * Monotonic stamp for the owner grid's filtered and sorted listings.
+     *
+     * Those listings are cached per filter/sort combination, so they cannot be
+     * enumerated in `galleryCacheKeys()`. Bumping this stamp makes every old
+     * combination unreachable at once; the stale entries expire on their own.
+     */
+    public static function galleryCacheVersion(int $galleryId): int
+    {
+        return (int) Cache::get("gallery:{$galleryId}:cache_version", 1);
+    }
+
+    protected static function bumpGalleryCacheVersion(int $galleryId): void
+    {
+        Cache::forever(
+            "gallery:{$galleryId}:cache_version",
+            static::galleryCacheVersion($galleryId) + 1,
+        );
+    }
+
+    /**
+     * Public escape hatch for bulk writes that bypass model events (for
+     * example marking a pasted filename list as favourites). Any filtered or
+     * sorted listing cached for this gallery becomes stale immediately.
+     */
+    public static function invalidateGalleryQueryCache(int $galleryId): void
+    {
+        static::bumpGalleryCacheVersion($galleryId);
     }
 
     protected static function booted()
@@ -164,6 +197,11 @@ class Photo extends Model
             if ($variants !== []) {
                 static::invalidateGalleryArchives($photo, array_values(array_unique($variants)));
             }
+
+            // Rating, favourite state, size, version count and upload date all
+            // feed the owner grid filters and sorts. Any update can reorder
+            // that grid, so advance the query cache stamp once per write.
+            static::bumpGalleryCacheVersion((int) $photo->gallery_id);
         });
 
         static::deleted(function (Photo $photo) {
@@ -288,6 +326,20 @@ class Photo extends Model
     }
 
     /**
+     * Photos the photographer rated (1-5 stars). Ratings are internal to the
+     * team and are never exposed to gallery clients.
+     */
+    public function scopeRated($query)
+    {
+        return $query->whereNotNull('rating');
+    }
+
+    public function scopeUnrated($query)
+    {
+        return $query->whereNull('rating');
+    }
+
+    /**
      * Photos the photographer archived: hidden from clients, from the gallery
      * ZIP and from the public tabs, but still on disk.
      */
@@ -328,9 +380,22 @@ class Photo extends Model
         return $this->archived_at !== null;
     }
 
+    /**
+     * Toggle the favourite and keep the internal 5-stars-means-favourite
+     * equivalence in sync: hearting a photo sets five stars, unhearting clears
+     * the rating. Clients only have the heart, so their selection also lands as
+     * five stars for the photographer.
+     *
+     * Ratings 1-4 never reach this method; they leave the heart untouched.
+     */
     public function toggleFavorite()
     {
-        $this->update(['favorited_at' => $this->favorited_at ? null : Carbon::now()]);
+        $favorited = ! $this->isFavorited();
+
+        $this->update([
+            'favorited_at' => $favorited ? Carbon::now() : null,
+            'rating' => $favorited ? 5 : null,
+        ]);
 
         Cache::forget("gallery:{$this->gallery_id}:favorites:ids");
     }
@@ -354,6 +419,41 @@ class Photo extends Model
     public function isFavorited()
     {
         return $this->favorited_at !== null;
+    }
+
+    /**
+     * Set the photographer-only star rating.
+     *
+     * Five stars also selects the photo as a favourite and 0/null clears both
+     * the rating and the heart, matching the culling flow: five stars means
+     * "keep", zero means "drop". Ratings 1-4 never touch the favourite state,
+     * so a client's heart and a photographer's mid rating stay independent.
+     */
+    public function setRating(?int $rating): void
+    {
+        $rating = in_array($rating, [1, 2, 3, 4, 5], true) ? $rating : null;
+
+        $attributes = ['rating' => $rating];
+
+        if ($rating === 5) {
+            $attributes['favorited_at'] = $this->favorited_at ?: Carbon::now();
+        }
+
+        if ($rating === null) {
+            $attributes['favorited_at'] = null;
+        }
+
+        $this->update($attributes);
+    }
+
+    public function clearRating(): void
+    {
+        $this->setRating(null);
+    }
+
+    public function isRated(): bool
+    {
+        return $this->rating !== null;
     }
 
     public function next(): ?Photo
@@ -398,6 +498,20 @@ class Photo extends Model
     public function previousArchived(): ?Photo
     {
         return $this->navigationNeighbor($this->gallery->archivedPhotoIds(), -1);
+    }
+
+    /**
+     * Neighbour inside an arbitrary ordered id list.
+     *
+     * The owner viewer passes the ids produced by the active filter and sort so
+     * arrow keys walk exactly the wall the photographer came from. The shared
+     * gallery keeps using the cached default lists.
+     *
+     * @param  Collection<int, int>  $photoIds
+     */
+    public function neighborIn(Collection $photoIds, int $offset): ?Photo
+    {
+        return $this->navigationNeighbor($photoIds, $offset);
     }
 
     /**
@@ -553,7 +667,7 @@ class Photo extends Model
             'size' => $this->formattedSize(),
             'resolution' => $resolution,
             'ratio' => $ratio,
-            'uploaded' => $this->uploaded_at?->isoFormat('LLL'),
+            'uploaded' => $this->uploaded_at?->format('d/m/Y H:i'),
         ];
     }
 

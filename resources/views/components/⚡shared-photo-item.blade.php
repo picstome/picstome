@@ -102,7 +102,7 @@ new class extends Component
     <div class="absolute right-1.5 bottom-1.5 flex gap-2 transition-opacity md:opacity-0 md:group-hover:opacity-100">
         @if ($photo->gallery->is_share_selectable)
             <x-ts-button
-                wire:click="favorite({{ $photo->id }})"
+                wire:click.preserve-scroll="favorite({{ $photo->id }})"
                 variant="overlay"
                 square
                 size="sm"

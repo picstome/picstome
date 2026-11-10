@@ -6,6 +6,7 @@ use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Services\GalleryPhotoQuery;
 use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
 use App\Traits\RevealsGalleryPhoto;
@@ -41,6 +42,11 @@ new class extends Component
 
     public bool $adjustingCover = false;
 
+    /**
+     * Kept for the shared `RevealsGalleryPhoto` trait, which still knows the
+     * legacy `favorited` tab. The owner wall normalises that tab to the
+     * favourites filter on All photos before revealing a photo.
+     */
     public int $favoritePhotoLimit = 60;
 
     public int $commentedPhotoLimit = 60;
@@ -56,6 +62,23 @@ new class extends Component
 
     #[Url]
     public $activeTab = 'all';
+
+    /**
+     * Owner-grid filter state. Kept in the URL so a filtered, sorted wall can
+     * be bookmarked, survives the round trip to the viewer and is rebuilt
+     * identically by the viewer's next/previous navigation.
+     */
+    #[Url(as: 'rating')]
+    public ?int $ratingFilter = null;
+
+    #[Url(as: 'favorites')]
+    public bool $favoritesOnly = false;
+
+    #[Url(as: 'sort')]
+    public string $sortField = 'name';
+
+    #[Url(as: 'direction')]
+    public string $sortDirection = 'asc';
 
     public $photos = [];
 
@@ -78,6 +101,14 @@ new class extends Component
 
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
+
+        // Old links and bookmarks used a dedicated Favorites tab. It is now a
+        // filter on All photos, so normalise the URL instead of rendering an
+        // empty panel that no longer exists.
+        if ($this->activeTab === 'favorited') {
+            $this->activeTab = 'all';
+            $this->favoritesOnly = true;
+        }
 
         // The Archived tab only exists while something is archived. A stale
         // link (`?activeTab=archived` after a restore, or browser back) would
@@ -366,6 +397,11 @@ new class extends Component
         $this->forgetPhotoCollections();
 
         $this->dispatch('photo-favorited');
+        $this->dispatch(
+            'favorite-toggled',
+            id: $photo->id,
+            favorited: $photo->isFavorited(),
+        );
     }
 
     /**
@@ -503,13 +539,123 @@ new class extends Component
         $this->forgetPhotoCollections();
     }
 
+    /**
+     * Filtering and sorting always restarts paging: the old 60/120/180 windows
+     * belong to the previous list and would leak photos that no longer match.
+     */
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['ratingFilter', 'favoritesOnly', 'sortField', 'sortDirection'], true)) {
+            $this->resetPhotoLimits();
+        }
+    }
+
+    /**
+     * Clicking a star filters the wall to exactly that rating; clicking the
+     * active star clears the filter.
+     */
+    public function filterByRating(int $rating): void
+    {
+        $this->ratingFilter = $this->ratingFilter === $rating ? null : max(1, min(5, $rating));
+
+        $this->resetPhotoLimits();
+    }
+
+    public function clearRatingFilter(): void
+    {
+        $this->ratingFilter = null;
+
+        $this->resetPhotoLimits();
+    }
+
+    /**
+     * The Favorites tab is a filter on All photos, not a separate panel. It
+     * keeps the same grid, sorting and rating filters, and the URL stays
+     * shareable as `?favorites=1`.
+     */
+    public function showFavorites(): void
+    {
+        $this->activeTab = 'all';
+        $this->favoritesOnly = true;
+
+        $this->resetPhotoLimits();
+    }
+
+    public function showAllPhotos(): void
+    {
+        $this->activeTab = 'all';
+        $this->favoritesOnly = false;
+        $this->ratingFilter = null;
+
+        $this->resetPhotoLimits();
+    }
+
+    /**
+     * Switch to a real tab. Any tab outside All photos drops the favourites
+     * filter, so the filter never leaks into Comments or Archived.
+     */
+    public function showTab(string $tab): void
+    {
+        if (! in_array($tab, ['all', 'commented', 'archived', 'sync', 'download'], true)) {
+            return;
+        }
+
+        $this->activeTab = $tab;
+        $this->favoritesOnly = false;
+
+        $this->resetPhotoLimits();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->ratingFilter = null;
+        $this->favoritesOnly = false;
+
+        $this->resetPhotoLimits();
+    }
+
+    /**
+     * Picking a field opens it in its natural direction (newest/highest first,
+     * names A-Z). The arrow next to the dropdown flips it afterwards.
+     */
+    public function sortBy(string $field): void
+    {
+        if (! in_array($field, GalleryPhotoQuery::SORTS, true)) {
+            return;
+        }
+
+        $this->sortField = $field;
+        $this->sortDirection = GalleryPhotoQuery::defaultDirection($field);
+
+        $this->resetPhotoLimits();
+    }
+
+    public function toggleSortDirection(): void
+    {
+        $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+
+        $this->resetPhotoLimits();
+    }
+
+    protected function resetPhotoLimits(): void
+    {
+        $this->allPhotoLimit = 60;
+        $this->favoritePhotoLimit = 60;
+        $this->commentedPhotoLimit = 60;
+        $this->archivedPhotoLimit = 60;
+
+        $this->forgetPhotoCollections();
+    }
+
     protected function forgetPhotoCollections(): void
     {
         unset(
             $this->photoIds,
+            $this->photoQuery,
+            $this->filteredPhotoIds,
+            $this->filteredPhotoCount,
             $this->allPhotos,
             $this->favoriteIds,
-            $this->favorites,
             $this->favoriteNames,
             $this->commentedIds,
             $this->commentedPhotos,
@@ -557,9 +703,10 @@ new class extends Component
             ->where(function ($query) use ($baseNames) {
                 $baseNames->each(fn ($base) => $query->orWhere('name', 'LIKE', $base.'.%'));
             })
-            ->update(['favorited_at' => now()]);
+            ->update(['favorited_at' => now(), 'rating' => 5]);
 
         Cache::forget("gallery:{$this->gallery->id}:favorites:ids");
+        Photo::invalidateGalleryQueryCache((int) $this->gallery->id);
 
         $this->forgetPhotoCollections();
         $this->favoriteFileNames = '';
@@ -576,15 +723,83 @@ new class extends Component
     }
 
     #[Computed]
+    public function photoQuery(): GalleryPhotoQuery
+    {
+        return GalleryPhotoQuery::fromArray([
+            'rating' => $this->ratingFilter,
+            'favorites' => $this->favoritesOnly,
+            'sort' => $this->sortField,
+            'direction' => $this->sortDirection,
+        ]);
+    }
+
+    /**
+     * Stable key for the masonry wrapper. Changing the filter or sort must
+     * rebuild the wall (and its Alpine positioning), while rating or hearting
+     * a tile must not.
+     */
+    #[Computed]
+    public function queryKey(): string
+    {
+        return implode('-', [
+            $this->ratingFilter ?? 'any',
+            $this->favoritesOnly ? 'fav' : 'all',
+            $this->sortField,
+            $this->sortDirection,
+        ]);
+    }
+
+    /**
+     * Returning from the viewer must grow the filtered batch that is actually
+     * rendered, not the unfiltered gallery.
+     */
+    protected function revealIds(string $tab): \Illuminate\Support\Collection
+    {
+        return match ($tab) {
+            'commented' => $this->commentedIds,
+            'archived' => $this->archivedIds,
+            default => $this->filteredPhotoIds,
+        };
+    }
+
+    /**
+     * Ordered ids for the All photos tab, after the active rating/favourite
+     * filters and the chosen sort. Cached per gallery version, not per request.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    #[Computed]
+    public function filteredPhotoIds(): \Illuminate\Support\Collection
+    {
+        return $this->photoQuery->idsFor($this->gallery, 'all');
+    }
+
+    #[Computed]
+    public function filteredPhotoCount(): int
+    {
+        return $this->filteredPhotoIds->count();
+    }
+
+    #[Computed]
     public function allPhotos()
     {
-        return $this->gallery->photosInOrder($this->photoIds->take($this->allPhotoLimit));
+        return $this->gallery->photosInOrder($this->filteredPhotoIds->take($this->allPhotoLimit));
     }
 
     #[Computed]
     public function totalPhotos(): int
     {
         return $this->photoIds->count();
+    }
+
+    /**
+     * Gallery-wide rated count for the header summary. Unfiltered on purpose:
+     * it answers "how much of this shoot did I already cull?".
+     */
+    #[Computed]
+    public function totalRated(): int
+    {
+        return $this->gallery->photos()->rated()->count();
     }
 
     #[Computed]
@@ -597,12 +812,6 @@ new class extends Component
     public function favoriteIds(): \Illuminate\Support\Collection
     {
         return $this->gallery->favoritePhotoIds();
-    }
-
-    #[Computed]
-    public function favorites()
-    {
-        return $this->gallery->photosInOrder($this->favoriteIds->take($this->favoritePhotoLimit));
     }
 
     #[Computed]
@@ -669,7 +878,6 @@ new class extends Component
     public function loadMore(string $tab = 'all'): void
     {
         match ($tab) {
-            'favorited' => $this->favoritePhotoLimit += 60,
             'commented' => $this->commentedPhotoLimit += 60,
             'archived' => $this->archivedPhotoLimit += 60,
             default => $this->allPhotoLimit += 60,
@@ -814,6 +1022,9 @@ new class extends Component
                 <div class="mt-2 text-sm text-zinc-500 dark:text-white/70">
                     {{ $this->totalPhotos }}
                     {{ $this->totalPhotos === 1 ? __('photo') : __('photos') }} •
+                    @if ($this->totalRated > 0)
+                        {{ $this->totalRated }} {{ __('rated') }} •
+                    @endif
                     {{ $gallery->getFormattedStorageSize() }} {{ __('total storage') }}
                 </div>
             @endif
@@ -833,7 +1044,7 @@ new class extends Component
                 <x-dropdown.items
                     :text="__('Download')"
                     icon="cloud-arrow-down"
-                    wire:click="$set('activeTab', 'download')"
+                    wire:click="showTab('download')"
                     x-on:click="show = false"
                 />
 
@@ -915,74 +1126,116 @@ new class extends Component
             <x-ts-modal-trigger name="add-photos">
                 <x-ts-button variant="primary">{{ __('Add media') }}</x-ts-button>
             </x-ts-modal-trigger>
-
-            @if ($gallery->coverPhoto)
-                <x-ts-button variant="secondary" icon="viewfinder-circle" wire:click="$set('adjustingCover', true)">{{ __('Adjust cover') }}</x-ts-button>
-            @endif
         </div>
     </div>
 
     {{-- The tabs also render when everything is archived: the archived tab is
          the only way back to those photos. --}}
     @if ($this->totalPhotos > 0 || $this->totalArchived > 0)
-        <div class="mt-8 max-sm:-mx-5">
-            <x-gallery-tabs
-                :favorites-count="$this->totalFavorites"
-                :selection-limit="$gallery->share_selection_limit"
-                :comments-count="$this->totalComments()"
-                :show-sync="$this->syncEnabled"
-                :show-download="true"
-                :archived-count="$this->totalArchived"
-                :active-tab="$activeTab"
-            >
-                <x-slot name="afterFavorites">
-                    @if ($this->totalFavorites > 0)
-                        <x-ts-modal-trigger name="favorite-list">
-                            <x-ts-badge size="sm" as="button">{{ __('Export') }}</x-ts-badge>
-                        </x-ts-modal-trigger>
-                    @endif
-                </x-slot>
-            </x-gallery-tabs>
+        {{-- Tabs and filter/sort controls share one sticky row, so the
+             controls stay reachable while culling a long wall. --}}
+        <div class="bg-brand-paper/95 dark:bg-brand-night/95 sticky top-0 z-20 -mx-6 mt-8 px-6 backdrop-blur-md lg:-mx-8 lg:px-8">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-800/10 pb-1 dark:border-white/20">
+                <div class="min-w-0 flex-1">
+                    <x-gallery-tabs
+                        :favorites-count="$this->totalFavorites"
+                        :selection-limit="$gallery->share_selection_limit"
+                        :comments-count="$this->totalComments()"
+                        :show-sync="$this->syncEnabled"
+                        :show-download="true"
+                        :archived-count="$this->totalArchived"
+                        :active-tab="$activeTab"
+                        :favorites-as-filter="true"
+                        :favorites-filter-active="$favoritesOnly"
+                        :bordered="false"
+                    >
+                        <x-slot name="afterFavorites">
+                            @if ($this->totalFavorites > 0)
+                                <x-ts-modal-trigger name="favorite-list">
+                                    <x-ts-badge size="sm" as="button">{{ __('Export') }}</x-ts-badge>
+                                </x-ts-modal-trigger>
+                            @endif
+                        </x-slot>
+                    </x-gallery-tabs>
+                </div>
 
-            <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
-                    <x-photo-masonry :photos="$this->allPhotos" :$gallery context="owner" html-id-prefix="photo" />
+                <div
+                    x-cloak
+                    x-show="$wire.activeTab === 'all'"
+                    x-transition.opacity.duration.150ms
+                    class="shrink-0"
+                >
+                    <x-gallery-filter-bar
+                        :rating="$ratingFilter"
+                        :sort-field="$sortField"
+                        :sort-direction="$sortDirection"
+                        :all-count="$this->filteredPhotoCount"
+                        :all-total="$favoritesOnly ? $this->totalFavorites : $this->totalPhotos"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
+            @if ($this->filteredPhotoCount > 0)
+                <div wire:key="all-photos-{{ $this->queryKey }}">
+                    <x-photo-masonry :photos="$this->allPhotos" :$gallery context="owner" html-id-prefix="photo" :view-query="$this->photoQuery->toQuery()" />
 
                     <x-auto-load-more
                         method="loadMore"
                         :args="['all']"
-                        :has-more="$this->totalPhotos > $this->allPhotos->count()"
+                        :has-more="$this->filteredPhotoCount > $this->allPhotos->count()"
                     />
                 </div>
-            <div x-show="$wire.activeTab === 'commented'" class="pt-1" data-gallery-panel>
-                    <x-photo-masonry :photos="$this->commentedPhotos" :$gallery context="owner" html-id-prefix="commented" :as-commented="true" />
+            @elseif ($favoritesOnly)
+                <div class="flex flex-col items-center justify-center py-14" data-filter-empty>
+                    <span class="bg-brand-star/10 text-brand-star mb-4 grid size-14 place-items-center rounded-2xl">
+                        <x-icon name="heart" class="size-7" />
+                    </span>
 
-                    <x-auto-load-more
-                        method="loadMore"
-                        :args="['commented']"
-                        :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
-                    />
-                </div>
-            <div x-show="$wire.activeTab === 'favorited'" class="pt-1" data-gallery-panel>
-                    @if ($this->totalFavorites > 0)
-                        <x-photo-masonry :photos="$this->favorites" :$gallery context="owner" html-id-prefix="favorite" :as-favorite="true" />
-
-                        <x-auto-load-more
-                            method="loadMore"
-                            :args="['favorited']"
-                            :has-more="$this->totalFavorites > $this->favorites->count()"
-                        />
+                    @if ($this->totalFavorites === 0)
+                        <x-ts-heading size="lg" level="3">{{ __('No favorites yet') }}</x-ts-heading>
+                        <x-ts-text class="mt-2 mb-6 max-w-72 text-center">
+                            {{ __('Click the heart on any photo, or add a list of filenames in bulk.') }}
+                        </x-ts-text>
+                        <x-ts-modal-trigger name="mark-favorites">
+                            <x-ts-button variant="primary" icon="heart">{{ __('Add bulk favorites') }}</x-ts-button>
+                        </x-ts-modal-trigger>
                     @else
-                        <div class="flex flex-col items-center justify-center py-14">
-                            <x-ts-text class="mb-4 max-w-72 text-center">
-                                {{ __('No favorites yet. Add them in bulk or click the heart on individual photos.') }}
-                            </x-ts-text>
-                            <x-ts-modal-trigger name="mark-favorites">
-                                <x-ts-button variant="primary" icon="star">{{ __('Add bulk favorites') }}</x-ts-button>
-                            </x-ts-modal-trigger>
-                        </div>
+                        <x-ts-heading size="lg" level="3">{{ __('No favorites match these filters') }}</x-ts-heading>
+                        <x-ts-text class="mt-2 mb-6 max-w-72 text-center">
+                            {{ __('Clear the filters to see every favorited photo.') }}
+                        </x-ts-text>
+                        <x-ts-button wire:click="clearFilters" variant="primary" icon="x-mark">
+                            {{ __('Clear filters') }}
+                        </x-ts-button>
                     @endif
                 </div>
-            @if ($this->totalArchived > 0)
+            @else
+                <div class="flex flex-col items-center justify-center py-14" data-filter-empty>
+                    <span class="bg-brand-star/10 text-brand-star mb-4 grid size-14 place-items-center rounded-2xl">
+                        <x-icon name="funnel" class="size-7" />
+                    </span>
+                    <x-ts-heading size="lg" level="3">{{ __('No photos match these filters') }}</x-ts-heading>
+                    <x-ts-text class="mt-2 mb-6 max-w-72 text-center">
+                        {{ __('Try a different rating or clear the filters to see the whole gallery.') }}
+                    </x-ts-text>
+                    <x-ts-button wire:click="clearFilters" variant="primary" icon="x-mark">
+                        {{ __('Clear filters') }}
+                    </x-ts-button>
+                </div>
+            @endif
+        </div>
+        <div x-show="$wire.activeTab === 'commented'" class="pt-1" data-gallery-panel>
+                <x-photo-masonry :photos="$this->commentedPhotos" :$gallery context="owner" html-id-prefix="commented" :as-commented="true" />
+
+                <x-auto-load-more
+                    method="loadMore"
+                    :args="['commented']"
+                    :has-more="$this->commentedIds->count() > $this->commentedPhotos->count()"
+                />
+            </div>
+        @if ($this->totalArchived > 0)
                 <div x-show="$wire.activeTab === 'archived'" class="pt-1" data-gallery-panel>
                     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                         <x-ts-text class="text-sm">
@@ -1025,7 +1278,6 @@ new class extends Component
                         :key="'download-panel-'.$gallery->id"
                     />
                 </div>
-        </div>
     @else
         <div class="mt-14 flex flex-1 flex-col items-center justify-center pb-32">
             <x-icon name="photo" class="mb-6 size-12 text-zinc-500 dark:text-white/70" />

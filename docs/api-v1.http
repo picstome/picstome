@@ -42,6 +42,8 @@ Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Manifest (core sync; `since` is accepted but ignored in v1)
+# Each photo includes `favorited_at`, `is_favorite` and the photographer-only
+# `rating` (1-5 or null). See docs/photo-ratings.md.
 GET {{baseUrl}}/api/v1/manifest?gallery={{gallery}}
 Authorization: Bearer {{token}}
 Accept: application/json
