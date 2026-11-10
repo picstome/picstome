@@ -1140,6 +1140,25 @@ describe('Favorites', function () {
         expect($component->allPhotos->contains($favorite))->toBeTrue();
     });
 
+    it('refreshes the favorites tab count after rating five stars in the viewer', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->unfavorited()->create();
+
+        // Warm the cached favorites list with the old (empty) value.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        expect($component->totalFavorites)->toBe(0);
+
+        Livewire::actingAs($this->user)
+            ->test('pages::galleries.photos.show', ['photo' => $photo])
+            ->call('setRating', 5);
+
+        // The gallery page is a fresh request after the viewer action.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->totalFavorites)->toBe(1)
+            ->and($photo->fresh()->isFavorited())->toBeTrue();
+    });
+
     it('refreshes the favorites list after marking photos as favorites', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
