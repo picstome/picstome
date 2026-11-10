@@ -39,7 +39,7 @@ decides when it reaches `main`. Report the state of the work and wait.
   adding new logic.
 - New behavior has tests, including a regression test for the bug/feature.
 - `vendor/bin/pint --dirty` passes.
-- `composer test` passes (runs the full Pest suite in parallel).
+- `composer test` passes (full Pest suite, capped at 2 parallel workers).
 - `npm run build` passes when frontend assets changed.
 - Migrations have a working `down()` and have been tested with fresh + rollback.
 - External services and storage are faked in tests. Never rely on a real S3
@@ -72,7 +72,8 @@ legacy migrations that are not fully reversible.
 
 ## Testing
 
-- Run the full suite with `composer test` (Pest in parallel). While iterating,
+- Run the full suite with `composer test` (Pest in parallel, 2 workers so the
+  run fits in this machine's memory). While iterating,
   use `./vendor/bin/pest --compact --filter=testName`.
 - Feature tests cover the happy path, permissions and failure cases.
 - UI changes require a browser test where practical. Browser tests are tagged
