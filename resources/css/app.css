@@ -32,6 +32,14 @@
     --color-brand-night-deep: #161e1b;
 
     /*
+     * Star rating gold. Deliberately outside the green/coral palette: a rating
+     * must read as a rating at a glance, in light and dark mode, and the brand
+     * green would read as a selection instead.
+     */
+    --color-brand-star: #e8b44a;
+    --color-brand-star-soft: #f7e3b5;
+
+    /*
      * TallStackUI color tokens mapped to the Picstome palette so migrated
      * components keep the same brand language as the rest of the app.
      */
@@ -131,4 +139,34 @@
 
 .dark [data-sidebar-scroll]::-webkit-scrollbar-thumb:hover {
     background-color: color-mix(in oklab, var(--color-brand-sage) 45%, transparent);
+}
+
+/*
+ * Heart confirmation shared by the viewer dock and the grid mini dock.
+ * A short pop plus a soft red halo; skipped entirely for reduced motion.
+ */
+@keyframes heart-pop {
+    0% {
+        transform: scale(1);
+    }
+    35% {
+        transform: scale(1.35);
+    }
+    65% {
+        transform: scale(0.94);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-heart-pop {
+    animation: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 0 6px rgb(239 68 68 / 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-heart-pop {
+        animation: none;
+    }
 }

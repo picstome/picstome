@@ -16,6 +16,7 @@
 @props([
     'photo',
     'facts',
+    'commentsCount' => 0,
 ])
 
 <div
@@ -59,6 +60,49 @@
                     <div class="flex justify-between gap-3">
                         <dt class="text-zinc-500 dark:text-zinc-400">{{ __('File size') }}</dt>
                         <dd class="font-medium text-zinc-800 tabular-nums dark:text-white">{{ $facts['size'] }}</dd>
+                    </div>
+                @endif
+
+                @if ($photo->isRated())
+                    <div class="flex items-center justify-between gap-3" data-photo-info-rating>
+                        <dt class="text-zinc-500 dark:text-zinc-400">{{ __('Rating') }}</dt>
+                        <dd class="flex items-center gap-1.5">
+                            <x-photo-rating :rating="$photo->rating" compact />
+                            <span class="text-[0.65rem] font-semibold text-zinc-500 tabular-nums dark:text-zinc-400">
+                                {{ $photo->rating }}/5
+                            </span>
+                        </dd>
+                    </div>
+                @endif
+
+                @if ($commentsCount > 0)
+                    <div class="flex justify-between gap-3" data-photo-info-comments>
+                        <dt class="text-zinc-500 dark:text-zinc-400">{{ __('Comments') }}</dt>
+                        <dd class="font-medium text-zinc-800 tabular-nums dark:text-white">{{ $commentsCount }}</dd>
+                    </div>
+                @endif
+
+                @if ($photo->favorited_at)
+                    <div class="flex justify-between gap-3" data-photo-info-favorite>
+                        <dt class="shrink-0 text-zinc-500 dark:text-zinc-400">{{ __('Favorite since') }}</dt>
+                        <dd class="text-right font-medium text-zinc-800 dark:text-white">{{ $photo->favorited_at->format('d/m/Y H:i') }}</dd>
+                    </div>
+                @endif
+
+                @if ($photo->gallery->coverPhoto?->is($photo))
+                    <div class="flex items-center justify-between gap-3" data-photo-info-cover>
+                        <dt class="text-zinc-500 dark:text-zinc-400">{{ __('Cover') }}</dt>
+                        <dd class="flex items-center gap-1 font-medium text-zinc-800 dark:text-white">
+                            <x-icon name="photo" class="size-3.5 text-brand-green dark:text-brand-sage" />
+                            {{ __('Yes') }}
+                        </dd>
+                    </div>
+                @endif
+
+                @if ($photo->archived_at)
+                    <div class="flex justify-between gap-3" data-photo-info-archived>
+                        <dt class="shrink-0 text-zinc-500 dark:text-zinc-400">{{ __('Archived since') }}</dt>
+                        <dd class="text-right font-medium text-zinc-800 dark:text-white">{{ $photo->archived_at->format('d/m/Y H:i') }}</dd>
                     </div>
                 @endif
 

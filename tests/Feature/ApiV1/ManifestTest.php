@@ -76,6 +76,27 @@ it('returns the full manifest with stable ids and signed urls', function () {
         ->and($urls->expirations[0]->diffInMinutes(now()))->toBeLessThanOrEqual(15);
 });
 
+it('returns favorite and rating state for the companion app', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Photo::factory()->for($gallery)->favorited()->rated(4)->create(['name' => 'a.jpg']);
+    Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    Storage::fake('s3');
+    fakeTemporaryUrls();
+    Sanctum::actingAs($user);
+
+    $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)
+        ->assertOk()
+        ->assertJsonPath('photos.0.filename', 'a.jpg')
+        ->assertJsonPath('photos.0.is_favorite', true)
+        ->assertJsonPath('photos.0.rating', 4)
+        ->assertJsonPath('photos.1.filename', 'b.jpg')
+        ->assertJsonPath('photos.1.is_favorite', false)
+        ->assertJsonPath('photos.1.rating', null);
+});
+
 it('reports a null hash when the server has not computed it', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();

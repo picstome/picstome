@@ -23,6 +23,8 @@ painted with the Picstome palette: they keep the team accent chosen in
 | `--color-brand-coral-deep` | `#d95746` | Coral hover state                                |
 | `--color-brand-sage`    | `#c6d8af` | Dark mode accents, hover tints                   |
 | `--color-brand-sage-soft` | `#eef4e6` | Sidebar surface (light mode)                    |
+| `--color-brand-star`    | `#e8b44a` | Photographer star ratings (never client-facing)  |
+| `--color-brand-star-soft` | `#f7e3b5` | Rating hover tint and empty-state halo          |
 | `--color-brand-cream`   | `#fff9ec` | Text on green/coral surfaces                     |
 | `--color-brand-paper`   | `#fbfcf9` | Page and sidebar surface (light mode)            |
 | `--color-brand-night`   | `#1b2320` | Page surface (dark mode)                         |

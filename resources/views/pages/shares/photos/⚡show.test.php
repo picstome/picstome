@@ -19,6 +19,16 @@ beforeEach(function () {
     Storage::fake('s3');
 });
 
+test('shared viewer never exposes photographer rating controls', function () {
+    $gallery = Gallery::factory()->shared()->selectable()->create(['ulid' => '0123ABC']);
+    $photo = Photo::factory()->for($gallery)->rated(4)->favorited()->create();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->assertDontSeeHtml('data-photo-rating')
+        ->assertDontSeeHtml('data-rating-stars')
+        ->assertDontSeeHtml('data-photo-info');
+});
+
 test('photo can be viewed when the gallery is shared', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create(['ulid' => '0123ABC']);
 
@@ -66,7 +76,8 @@ test('favorite photo when gallery is selectable', function () {
     $component = Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $gallery->photos()->first()])
         ->call('favorite');
 
-    expect($gallery->photos()->first()->isFavorited())->toBeTrue();
+    expect($gallery->photos()->first()->isFavorited())->toBeTrue()
+        ->and($gallery->photos()->first()->rating)->toBe(5);
 });
 
 test('photo cannot be favorited when the gallery is not selectable', function () {

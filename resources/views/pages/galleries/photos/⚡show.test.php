@@ -41,7 +41,7 @@ test('the back link points to the photo position in the gallery', function () {
     );
 });
 
-test('the back link keeps the active favorite tab and target anchor', function () {
+test('the back link keeps the favorites filter and target anchor', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->favorited()->create();
 
@@ -52,9 +52,9 @@ test('the back link keeps the active favorite tab and target anchor', function (
     expect($component->instance()->galleryUrl)->toBe(
         route('galleries.show', [
             'gallery' => $gallery,
-            'activeTab' => 'favorited',
+            'favorites' => 1,
             'photo' => $photo->id,
-        ]).'#favorite-'.$photo->id
+        ]).'#photo-'.$photo->id
     );
 });
 
@@ -75,7 +75,7 @@ test('image photos offer the cover menu', function () {
     $response = actingAs($this->user)->get('/galleries/1/photos/1');
 
     $response->assertSuccessful();
-    $response->assertSee('Set as Cover');
+    $response->assertSee('Set as cover');
 });
 
 test('pdf photos do not offer the cover menu', function () {
@@ -84,7 +84,7 @@ test('pdf photos do not offer the cover menu', function () {
     $response = actingAs($this->user)->get('/galleries/1/photos/1');
 
     $response->assertSuccessful();
-    $response->assertDontSee('Set as Cover');
+    $response->assertDontSee('Set as cover');
     $response->assertDontSee('Remove as Cover');
 });
 
@@ -214,6 +214,209 @@ test('asks for confirmation before deleting a comment', function () {
 
     expect($component->get('pendingCommentId'))->toBe($comment->id);
     expect($photo->comments()->count())->toBe(1);
+});
+
+test('rates a photo and advances to the next photo in the set', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $first])
+        ->call('setRating', 3);
+
+    expect($first->fresh()->rating)->toBe(3)
+        ->and($first->fresh()->isFavorited())->toBeFalse();
+
+    $component->assertDispatched('rating-saved', function (string $name, array $params) use ($gallery, $second) {
+        return $params['rating'] === 3
+            && $params['nextUrl'] === route('galleries.photos.show', [
+                'gallery' => $gallery,
+                'photo' => $second,
+            ]);
+    });
+});
+
+test('five stars also favorites the photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->unfavorited()->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setRating', 5);
+
+    expect($photo->fresh()->rating)->toBe(5)
+        ->and($photo->fresh()->isFavorited())->toBeTrue();
+
+    $component->assertDispatched('favorite-toggled', id: $photo->id, favorited: true);
+});
+
+test('hearting a photo sets five stars', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->unfavorited()->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('favorite');
+
+    expect($photo->fresh()->isFavorited())->toBeTrue()
+        ->and($photo->fresh()->rating)->toBe(5);
+
+    $component->assertDispatched('favorite-toggled', id: $photo->id, favorited: true);
+});
+
+test('unhearting a photo clears the rating', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->favorited()->rated(5)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('favorite');
+
+    expect($photo->fresh()->isFavorited())->toBeFalse()
+        ->and($photo->fresh()->rating)->toBeNull();
+});
+
+test('ratings one to four leave the heart untouched', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $unfavorited = Photo::factory()->for($gallery)->unfavorited()->create(['name' => 'a.jpg']);
+    $favorited = Photo::factory()->for($gallery)->favorited()->create(['name' => 'b.jpg']);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $unfavorited])
+        ->call('setRating', 2);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $favorited])
+        ->call('setRating', 4);
+
+    expect($unfavorited->fresh()->isFavorited())->toBeFalse()
+        ->and($favorited->fresh()->isFavorited())->toBeTrue();
+});
+
+test('zero clears the rating and the heart without advancing', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->rated(4)->favorited()->create(['name' => 'a.jpg']);
+    Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $first])
+        ->call('setRating', 0);
+
+    expect($first->fresh()->rating)->toBeNull()
+        ->and($first->fresh()->isFavorited())->toBeFalse();
+
+    $component->assertDispatched('rating-saved', function (string $name, array $params) {
+        return $params['rating'] === null && $params['nextUrl'] === null;
+    });
+});
+
+test('the viewer pages through the filtered rating set', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->for($gallery)->rated(1)->create(['name' => 'a.jpg']);
+    $three = Photo::factory()->for($gallery)->rated(3)->create(['name' => 'b.jpg']);
+    $nextThree = Photo::factory()->for($gallery)->rated(3)->create(['name' => 'c.jpg']);
+    $lastThree = Photo::factory()->for($gallery)->rated(3)->create(['name' => 'd.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['rating' => 3])
+        ->test('pages::galleries.photos.show', ['photo' => $three]);
+
+    expect($component->get('previous'))->toBeNull()
+        ->and($component->get('next')->id)->toBe($nextThree->id);
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['rating' => 3, 'sort' => 'rating', 'direction' => 'desc'])
+        ->test('pages::galleries.photos.show', ['photo' => $nextThree]);
+
+    expect($component->get('previous')->id)->toBe($three->id)
+        ->and($component->get('next')->id)->toBe($lastThree->id);
+});
+
+test('the back link keeps the active filters and sort', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->rated(3)->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->withQueryParams(['rating' => 3, 'favorites' => 1, 'sort' => 'rating'])
+        ->test('pages::galleries.photos.show', ['photo' => $photo]);
+
+    expect($component->galleryUrl)->toContain('rating=3')
+        ->and($component->galleryUrl)->toContain('favorites=1')
+        ->and($component->galleryUrl)->toContain('sort=rating');
+});
+
+test('rates from the dock popover and advances to the next photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$first->id}");
+    $page->click('[data-dock-rating]');
+    $page->wait(0.2);
+    $page->click('[data-rating-popover] [data-rating-star="4"]');
+    $page->wait(0.8);
+
+    expect($first->fresh()->rating)->toBe(4);
+
+    $page->assertPathIs("/galleries/{$gallery->id}/photos/{$second->id}");
+});
+
+test('archiving dispatches the confirmation and the next photo url', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $first = Photo::factory()->for($gallery)->create(['name' => 'a.jpg']);
+    $second = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $first])
+        ->call('archive');
+
+    expect($first->fresh()->isArchived())->toBeTrue();
+
+    $component->assertDispatched('archive-saved', function (string $name, array $params) use ($gallery, $second) {
+        return $params['archived'] === true
+            && $params['nextUrl'] === route('galleries.photos.show', [
+                'gallery' => $gallery,
+                'photo' => $second,
+            ]);
+    });
+});
+
+test('unarchiving dispatches the restore confirmation without navigating', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create(['archived_at' => now()]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('unarchive');
+
+    expect($photo->fresh()->isArchived())->toBeFalse();
+
+    $component->assertDispatched('archive-saved', function (string $name, array $params) {
+        return $params['archived'] === false && $params['nextUrl'] === null;
+    });
+});
+
+test('the photo info panel lists rating, comments, favorite, cover and archive state', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->rated(4)->favorited()->create([
+        'archived_at' => now(),
+    ]);
+    PhotoComment::factory()->count(2)->for($photo)->create();
+    $gallery->update(['cover_photo_id' => $photo->id]);
+    $photo->unsetRelation('gallery');
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo]);
+
+    $component
+        ->assertSeeHtml('data-photo-info-rating')
+        ->assertSeeHtml('data-photo-info-comments')
+        ->assertSeeHtml('data-photo-info-favorite')
+        ->assertSeeHtml('data-photo-info-cover')
+        ->assertSeeHtml('data-photo-info-archived');
 });
 
 test('can favorite a photo', function () {
@@ -562,7 +765,7 @@ test('video photos do not offer the cover menu', function () {
     $response = actingAs($this->user)->get('/galleries/1/photos/1');
 
     $response->assertSuccessful();
-    $response->assertDontSee('Set as Cover');
+    $response->assertDontSee('Set as cover');
     $response->assertDontSee('Remove as Cover');
 });
 
