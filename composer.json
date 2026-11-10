@@ -10,6 +10,7 @@
         "honeybadger-io/honeybadger-laravel": "^4.6",
         "laravel/cashier": "^15.7",
         "laravel/framework": "^12",
+        "laravel/nightwatch": "^1.30",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
