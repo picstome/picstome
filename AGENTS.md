@@ -250,7 +250,15 @@ protected function isAccessible(User $user, ?string $path = null): bool
 ## Pest
 
 - This project uses Pest for testing. Create tests: `php artisan make:test --pest {name}`.
-- Run tests: `composer test` or filter: `./vendor/bin/pest --compact --filter=testName`.
+- Running tests on this server (4 GB cgroup — read this before launching anything):
+    - `composer test` is the normal, safe command: 2 workers, full suite, no exclusions.
+    - NEVER run `pest --parallel` on its own. Without `--processes` it spawns one
+      worker per CPU core (4 here) and each worker inherits the 1536M
+      `memory_limit` Composer sets for scripts, so the container runs out of memory.
+    - Browser tests: `composer test:browser`, one at a time. Never alongside
+      `composer test` or another session.
+    - Single test while iterating: `./vendor/bin/pest --compact --filter=testName`.
+    - If you need more workers or a different split, ask the maintainer first.
 - Do NOT delete tests without approval.
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Pest documentation and updated code examples.
 - IMPORTANT: Activate `pest-testing` every time you're working with a Pest or testing-related task.
