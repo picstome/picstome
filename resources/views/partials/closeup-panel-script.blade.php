@@ -602,6 +602,7 @@ if (! window.closeupPanelFactory) {
             show() {
                 this.open = true
                 rememberState(true)
+                this.$dispatch('closeup-opened')
 
                 if (this.state === 'idle' || this.state === 'error') {
                     this.detect()
@@ -635,6 +636,7 @@ if (! window.closeupPanelFactory) {
                 this.open = false
                 this.showBreakdown = false
                 rememberState(false)
+                this.$dispatch('closeup-closed')
             },
 
             async detect() {

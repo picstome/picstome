@@ -1005,7 +1005,9 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
             <x-dock-divider />
 
-            <x-closeup-panel-button hint="C" />
+            @if ($photo->isImage())
+                <x-closeup-panel-button hint="C" />
+            @endif
 
             <x-ts-modal-trigger name="add-comment">
                 <x-dock-button

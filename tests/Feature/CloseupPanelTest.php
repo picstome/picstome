@@ -31,6 +31,11 @@ it('always renders the closeup panel on the owner viewer', function () {
         ->assertSeeHtml('data-closeup-panel')
         ->assertSeeHtml('data-closeup-open')
         ->assertSeeHtml('x-on:closeup-open.window="show()"')
+        ->assertSeeHtml('x-on:closeup-close.window="close()"')
+        ->assertSeeHtml('x-on:closeup-opened.window="active = true"')
+        ->assertSeeHtml('x-on:closeup-closed.window="active = false"')
+        ->assertSeeHtml('aria-pressed="true"')
+        ->assertSeeHtml('aria-pressed="false"')
         ->assertSeeHtml('data-closeup-close');
 });
 
