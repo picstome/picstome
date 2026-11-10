@@ -416,7 +416,10 @@ test('the photo info panel lists rating, comments, favorite, cover and archive s
         ->assertSeeHtml('data-photo-info-comments')
         ->assertSeeHtml('data-photo-info-favorite')
         ->assertSeeHtml('data-photo-info-cover')
-        ->assertSeeHtml('data-photo-info-archived');
+        ->assertSeeHtml('data-photo-info-archived')
+        // Livewire must not morph the native <details>: doing so closes it when
+        // a favorite/rating re-render adds a row to the panel.
+        ->assertSeeHtml('wire:ignore.self');
 });
 
 test('can favorite a photo', function () {

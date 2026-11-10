@@ -10,6 +10,12 @@
     checking the same data across a whole shoot should not reopen it every
     photo.
 
+    `wire:ignore.self` is required: rating or favoriting a photo re-renders the
+    panel with a new row, and morphing the `<details>` element itself drops its
+    native `open` attribute, collapsing a panel the photographer opened. The
+    directive keeps the element and its state while still updating the rows
+    inside it.
+
     Rows whose value is null are skipped, so a photo without stored dimensions
     simply does not show that line instead of showing "unknown".
 --}}
@@ -28,6 +34,7 @@
         x-data
         x-init="$el.open = window.localStorage.getItem('picstome-photo-info-open') === '1'"
         x-on:toggle="window.localStorage.setItem('picstome-photo-info-open', $el.open ? '1' : '0')"
+        wire:ignore.self
         data-photo-info-details
     >
         <summary

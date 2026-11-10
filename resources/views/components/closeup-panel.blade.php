@@ -28,6 +28,7 @@
                 fullUrl: @js($fullUrl),
             })"
             x-on:closeup-open.window="show()"
+            x-on:closeup-close.window="close()"
             x-on:keydown.c.window="toggleByKey($event)"
             x-on:keydown.escape.window="close()"
             x-bind:style="{ display: open ? 'flex' : 'none' }"
