@@ -164,6 +164,10 @@ class Photo extends Model
             }
 
             if ($photo->wasChanged('favorited_at')) {
+                // The tab count and the export list read this cached list, so
+                // it must be dropped when a rating of 5 (or 0) changes the
+                // heart outside toggleFavorite().
+                Cache::forget("gallery:{$photo->gallery_id}:favorites:ids");
                 $variants[] = 'favorites';
             } elseif ($photo->wasChanged($contentFields) && ($photo->favorited_at || $photo->getOriginal('favorited_at'))) {
                 $variants[] = 'favorites';
