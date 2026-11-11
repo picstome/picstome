@@ -1018,6 +1018,20 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * Rated photos in this gallery, for the owner header summary.
+     *
+     * Cached for an hour like the rest of the gallery counters. The key is
+     * dropped by `Photo::galleryCacheKeys()` on every photo write, so a rating
+     * is visible immediately; the TTL is only a safety net.
+     */
+    public function ratedPhotoCount(): int
+    {
+        return Cache::remember("gallery:{$this->id}:rated_count", now()->addHours(1), function (): int {
+            return $this->photos()->rated()->count();
+        });
+    }
+
     #[Attribute]
     protected function slug(): Attribute
     {

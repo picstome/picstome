@@ -13,6 +13,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -549,6 +550,46 @@ describe('Rating filters and sorting', function () {
         $page->wait(0.4);
 
         expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
+    });
+});
+
+describe('Rated count cache', function () {
+    it('caches the rated count and drops it when a photo is rated', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->rated(3)->create();
+        Photo::factory()->for($gallery)->create(['rating' => null]);
+
+        expect($gallery->ratedPhotoCount())->toBe(1);
+
+        // The second read must not touch the database: the header asks for
+        // this on every render, including each 2-second upload poll.
+        DB::enableQueryLog();
+        $gallery->ratedPhotoCount();
+        expect(DB::getQueryLog())->toBeEmpty();
+
+        // Rating another photo invalidates the cached value, so the header is
+        // never a whole hour behind.
+        $unrated = $gallery->photos()->whereNull('rating')->firstOrFail();
+        $unrated->update(['rating' => 5]);
+
+        expect($gallery->ratedPhotoCount())->toBe(2);
+    });
+
+    it('shows the rated count in the header on a fresh request after rating a photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create(['rating' => null]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->instance()->totalRated)->toBe(0);
+
+        $photo->update(['rating' => 4]);
+
+        // A new request gets a new component instance, which is what a real
+        // page load or upload poll does.
+        $fresh = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($fresh->instance()->totalRated)->toBe(1);
     });
 });
 
