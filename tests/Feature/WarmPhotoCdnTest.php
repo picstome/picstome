@@ -46,13 +46,99 @@ it('publishes the photo anyway when warming keeps failing', function () {
         'stored_size' => 100,
     ]);
 
-    try {
-        (new WarmPhotoCdn($photo->id))->handle();
-    } catch (Throwable $exception) {
-        (new WarmPhotoCdn($photo->id))->failed($exception);
-    }
+    // Regression: `handle()` used to let the RequestException escape, so the
+    // photo stayed in `warming` and only `failed()` (after the queue retries
+    // were exhausted) published it. Warming is best-effort and must not throw.
+    (new WarmPhotoCdn($photo->id))->handle();
 
     expect($photo->fresh()->status)->toBe(Photo::STATUS_PROCESSED);
+});
+
+it('keeps warming the remaining variants when one of them returns a 500', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'bunny',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+        'picstome.cdn_warming.enabled' => true,
+    ]);
+
+    $succeeded = [];
+    Http::fake(function ($request) use (&$succeeded) {
+        // First variant succeeds, the rest abort like the production CDN did.
+        if ($succeeded === []) {
+            $succeeded[] = $request->url();
+
+            return Http::response('', 200);
+        }
+
+        return Http::response('<Code>InternalError</Code><Message>Transfer aborted</Message>', 500);
+    });
+
+    $photo = Photo::factory()->for(Gallery::factory())->create([
+        'status' => Photo::STATUS_WARMING,
+        'path' => 'galleries/photo.jpg',
+        'thumb_path' => 'galleries/photo.jpg.thumb.webp',
+        'stored_size' => 100,
+    ]);
+
+    (new WarmPhotoCdn($photo->id))->handle();
+
+    expect($photo->fresh()->status)->toBe(Photo::STATUS_PROCESSED)
+        ->and($succeeded)->toHaveCount(1);
+
+    // Both variants were attempted even though only one succeeded.
+    $requested = collect(Http::recorded())->map(fn ($pair) => $pair[0]->url())->unique();
+
+    expect($requested)->toHaveCount(2)
+        ->and($requested->contains(fn (string $url) => str_contains($url, 'photo.jpg.thumb.webp')))->toBeTrue();
+});
+
+it('does not retry a 4xx, only a 5xx', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'bunny',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+        'picstome.cdn_warming.enabled' => true,
+        'picstome.cdn_warming.tries' => 3,
+    ]);
+    Http::fake(['*' => Http::response('', 404)]);
+
+    $photo = Photo::factory()->for(Gallery::factory())->create([
+        'status' => Photo::STATUS_WARMING,
+        'path' => 'galleries/photo.jpg',
+        'thumb_path' => 'galleries/photo.jpg.thumb.webp',
+        'stored_size' => 100,
+    ]);
+
+    (new WarmPhotoCdn($photo->id))->handle();
+
+    // A missing object will not appear by asking again: one attempt per URL.
+    expect(collect(Http::recorded()))->toHaveCount(2)
+        ->and($photo->fresh()->status)->toBe(Photo::STATUS_PROCESSED);
+});
+
+it('retries a 5xx before giving up', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'bunny',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+        'picstome.cdn_warming.enabled' => true,
+        'picstome.cdn_warming.tries' => 3,
+    ]);
+    Http::fake(['*' => Http::response('', 500)]);
+
+    $photo = Photo::factory()->for(Gallery::factory())->create([
+        'status' => Photo::STATUS_WARMING,
+        'path' => 'galleries/photo.jpg',
+        'thumb_path' => 'galleries/photo.jpg.thumb.webp',
+        'stored_size' => 100,
+    ]);
+
+    (new WarmPhotoCdn($photo->id))->handle();
+
+    // Two variants, three attempts each.
+    expect(collect(Http::recorded()))->toHaveCount(6)
+        ->and($photo->fresh()->status)->toBe(Photo::STATUS_PROCESSED);
 });
 
 it('dispatches the warming job after processing when enabled', function () {
