@@ -1188,10 +1188,11 @@ new class extends Component
         </div>
 
         <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
-            {{-- Export favorites lives inside the content, top right, so it never
-                 competes for room in the tab bar. It mirrors the icon shortcut
-                 next to the Favorites tab. --}}
-            @if ($this->totalFavorites > 0)
+            {{-- Export favorites belongs to the favourites view: the coral button
+                 only shows while the Favorites filter is active, so the Photos
+                 tab stays clean. The icon next to the Favorites tab is the
+                 always-available shortcut to the same modal. --}}
+            @if ($favoritesOnly && $this->totalFavorites > 0)
                 <div class="mb-3 flex justify-end">
                     <x-ts-modal-trigger name="favorite-list">
                         <x-ts-button
