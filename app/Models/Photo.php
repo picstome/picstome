@@ -78,6 +78,7 @@ class Photo extends Model
             "gallery:{$galleryId}:media_counts",
             "gallery:{$galleryId}:download_size",
             "gallery:{$galleryId}:comments_count",
+            "gallery:{$galleryId}:rated_count",
         ];
     }
 
@@ -171,6 +172,10 @@ class Photo extends Model
                 $variants[] = 'favorites';
             } elseif ($photo->wasChanged($contentFields) && ($photo->favorited_at || $photo->getOriginal('favorited_at'))) {
                 $variants[] = 'favorites';
+            }
+
+            if ($photo->wasChanged('rating')) {
+                Cache::forget("gallery:{$photo->gallery_id}:rated_count");
             }
 
             // Archiving changes what clients see and what the ZIP contains, so

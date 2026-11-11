@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Renderless;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -127,7 +128,13 @@ new class extends Component
      *
      * Large RAW/video uploads can exceed PHP's default max_execution_time
      * while the local temporary file is copied to S3.
+     *
+     * `#[Renderless]` is deliberate: the uploader only consumes the returned
+     * array (id, status, remaining bytes), and re-rendering the 60-tile wall
+     * after every single file was the most expensive part of a batch upload.
+     * The wall is refreshed once the batch finishes.
      */
+    #[Renderless]
     public function save($index, $action = 'version')
     {
         set_time_limit(300);
@@ -229,9 +236,14 @@ new class extends Component
      * processing and warming the uploaded photos. Returning only ids and
      * statuses keeps polling cheap and avoids hydrating models.
      *
+     * `#[Renderless]` matters as much as the slim payload: without it Livewire
+     * re-rendered the whole photo wall (60 tiles, ~810kB of HTML, hundreds of
+     * queries) every 2 seconds just to hand back a handful of statuses.
+     *
      * @param  array<int, int|string>  $photoIds
      * @return array<int, string>
      */
+    #[Renderless]
     public function uploadStatuses(array $photoIds): array
     {
         $ids = collect($photoIds)
@@ -795,11 +807,16 @@ new class extends Component
     /**
      * Gallery-wide rated count for the header summary. Unfiltered on purpose:
      * it answers "how much of this shoot did I already cull?".
+     *
+     * Cached like its neighbours (`photoIds`, `favoriteIds`, `mediaCounts`):
+     * this ran `count(*)` on every render, including each 2-second upload
+     * poll. `Photo::galleryCacheKeys()` drops the key on every photo write,
+     * so rating a photo is reflected immediately.
      */
     #[Computed]
     public function totalRated(): int
     {
-        return $this->gallery->photos()->rated()->count();
+        return $this->gallery->ratedPhotoCount();
     }
 
     #[Computed]
@@ -2262,6 +2279,11 @@ new class extends Component
                 if (this.checkAllUploadsComplete()) {
                     this.stopStatusPolling();
                     $tsui.close.modal('add-photos');
+
+                    // Upload actions are `#[Renderless]` so the photo wall is
+                    // not re-rendered once per file. Refresh it a single time
+                    // once the whole batch has finished.
+                    $wire.$refresh();
                 }
             },
 
