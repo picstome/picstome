@@ -131,11 +131,17 @@ describe('Gallery Viewing', function () {
         $component->assertDontSeeHtml('data-export-favorites');
     });
 
-    it('shows the export favorites action inside the grid content', function () {
+    it('shows the export favorites action only in the favorites view', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->favorited()->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        // The Photos tab stays clean: the always-available entry point is the
+        // icon next to the Favorites tab, not a coral button over the wall.
+        $component->assertDontSeeHtml('data-export-favorites-content');
+
+        $component->call('showFavorites');
 
         $component->assertSeeHtml('data-export-favorites-content')
             ->assertSee('Export favorites');
@@ -145,7 +151,8 @@ describe('Gallery Viewing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create();
 
-        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
 
         $component->assertDontSeeHtml('data-export-favorites-content');
     });
