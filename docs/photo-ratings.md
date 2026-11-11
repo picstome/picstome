@@ -65,9 +65,10 @@ The rating filter is **exact**: selecting 3 stars shows only 3-star photos.
 Comparisons (`>=`, `<=`) were removed because they were hard to read at a
 glance.
 
-Filters and sorts apply to **All photos**. The **Favorites** tab is a shortcut
-that applies the favourites filter on that same grid (`?favorites=1`); it does
-not have its own panel. Archived and Comments keep their own natural order.
+Filters and sorts apply to the **Photos** tab. The **Favorites** tab is a
+shortcut that applies the favourites filter on that same grid (`?favorites=1`);
+it does not have its own panel. Archived and Comments keep their own natural
+order.
 
 ## Sorting
 
@@ -94,7 +95,11 @@ Unrated and unfavourited rows always sort last, whatever the direction.
   waits ~500ms before moving on, so the confirmation is visible.
 - The photo info card lists the stars, comment count, favourite date, whether
   it is the cover, and the archive date.
-- Clicking **All photos** clears the rating and favourites filters.
+- Clicking **Photos** clears the rating and favourites filters.
+- **Sync** and **Download** are icon-only tabs (tooltip and `aria-label` carry
+  the name). **Export favorites** appears as an icon right after Favorites and
+  as a labelled button in the top right of the grid; both open the same
+  favourite list modal.
 - Gallery thumbnails show versions and comments top-left, and only the earned
   rating stars top-right (small, no pill).
 - The cover action uses the `photo` icon with a tooltip, never a star, so it

@@ -5,9 +5,18 @@
     fits without horizontal scrolling. The full label stays available to screen
     readers through aria-label.
 
+    Sync and Download are icon-only at every width: both icons are unambiguous
+    and the tab bar needs the horizontal room. Their name still reaches screen
+    readers through aria-label, and every tab carries a `x-tooltip` so the icon
+    is explained on hover.
+
     `favoritesAsFilter` makes the Favorites tab a shortcut for the favourites
-    filter on All photos instead of a separate panel (owner gallery). The shared
+    filter on Photos instead of a separate panel (owner gallery). The shared
     gallery keeps the dedicated Favorites tab by leaving it false.
+
+    `showExport` adds an icon-only "Export favorites" shortcut right after the
+    Favorites tab (owner gallery only). It opens `exportModal`, the favorite
+    list modal, and mirrors the same action rendered inside the filtered grid.
 
     `bordered` is disabled when the parent already draws the sticky row border.
 --}}
@@ -22,6 +31,8 @@
     'showSync' => false,
     'downloadUrl' => null,
     'showDownload' => false,
+    'showExport' => false,
+    'exportModal' => 'favorite-list',
     'variant' => 'underline',
     'centered' => false,
     'activeTab' => 'all',
@@ -78,11 +89,11 @@
         @click="{{ $allClick }}; $dispatch('gallery-tab-changed')"
         x-bind:data-current="{{ $allCurrent }}"
         class="{{ $tabClassFor('all', $favoritesAsFilter ? ! $favoritesFilterActive : null) }}"
-        aria-label="{{ __('All photos') }}"
-        title="{{ __('All photos') }}"
+        aria-label="{{ __('Photos') }}"
+        x-tooltip="{{ __('Photos') }}"
     >
         <x-icon name="camera" class="size-5" />
-        <span class="max-sm:sr-only">{{ __('All photos') }}</span>
+        <span class="max-sm:sr-only">{{ __('Photos') }}</span>
     </button>
 
     {{-- Owner only: the archived tab only exists when something is archived. --}}
@@ -93,7 +104,7 @@
             x-bind:data-current="$wire.activeTab === 'archived'"
             class="{{ $tabClassFor('archived') }}"
             aria-label="{{ $archivedLabel }}"
-            title="{{ $archivedLabel }}"
+            x-tooltip="{{ $archivedLabel }}"
             data-archived-tab
         >
             <x-icon name="archive-box" class="size-5" />
@@ -108,14 +119,30 @@
             x-bind:data-current="{{ $favoritesCurrent }}"
             class="{{ $tabClassFor('favorited', $favoritesAsFilter ? $favoritesFilterActive : null) }}"
             aria-label="{{ $favoritesLabel }}"
-            title="{{ $favoritesLabel }}"
+            x-tooltip="{{ $favoritesLabel }}"
             data-favorites-tab
         >
             <x-icon name="heart" class="size-5" />
             <span class="max-sm:sr-only">{{ $favoritesLabel }}</span>
         </button>
 
-        {{ $afterFavorites ?? '' }}
+        {{-- Export favorites shortcut: icon only, using the same sync symbol as
+             the desktop app. It sits right after the Favorites tab because that
+             is the list it exports. The full label stays on aria-label and the
+             tooltip. --}}
+        @if ($showExport)
+            <x-ts-modal-trigger :name="$exportModal">
+                <button
+                    type="button"
+                    x-tooltip="{{ __('Export favorites') }}"
+                    aria-label="{{ __('Export favorites') }}"
+                    class="ms-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                    data-export-favorites
+                >
+                    <x-icon name="arrow-path" class="size-4" />
+                </button>
+            </x-ts-modal-trigger>
+        @endif
     @endif
 
     @if ($showComments)
@@ -125,7 +152,7 @@
             x-bind:data-current="$wire.activeTab === 'commented'"
             class="{{ $tabClassFor('commented') }}"
             aria-label="{{ $commentsLabel }}"
-            title="{{ $commentsLabel }}"
+            x-tooltip="{{ $commentsLabel }}"
         >
             <x-icon name="envelope" class="size-5" />
             <span class="max-sm:sr-only">{{ $commentsLabel }}</span>
@@ -139,10 +166,10 @@
             x-bind:data-current="$wire.activeTab === 'sync'"
             class="{{ $tabClassFor('sync') }}"
             aria-label="{{ __('Sync') }}"
-            title="{{ __('Sync') }}"
+            x-tooltip="{{ __('Sync') }}"
+            data-sync-tab
         >
             <x-icon name="arrow-path" class="size-5" />
-            <span class="max-sm:sr-only">{{ __('Sync') }}</span>
         </button>
     @endif
 
@@ -154,10 +181,9 @@
             class="{{ $tabClassFor('download') }}"
             style="background-color: var(--color-primary-500); color: white;"
             aria-label="{{ __('Download') }}"
-            title="{{ __('Download') }}"
+            x-tooltip="{{ __('Download') }}"
         >
             <x-icon name="cloud-arrow-down" class="size-5" />
-            <span class="max-sm:sr-only">{{ __('Download') }}</span>
         </button>
     @endif
 </nav>

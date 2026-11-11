@@ -31,7 +31,7 @@ photographer's own live lists:
 | External API manifest | **included**, with `archived_at` |
 
 The owner keeps a dedicated **Archived** tab, placed **immediately after
-*All photos*** and rendered only when at least one photo is archived
+*Photos*** and rendered only when at least one photo is archived
 (`data-archived-tab`).
 
 The archived id list is deliberately **not cached**: its *presence* is what
@@ -54,11 +54,11 @@ It is a single pluck on an indexed column and only the owner runs it.
     changes the list the photo belongs to.
   - Restoring the **last** archived photo leaves the Archived tab empty, and
     the tab only exists while something is archived. In that case the viewer
-    redirects to **All photos** instead of the (now unreachable) Archived tab.
+    redirects to **Photos** instead of the (now unreachable) Archived tab.
   It ignores modifiers and never fires while typing in an input, textarea,
   select or contenteditable field.
 - **Dock Unarchive** keeps the photographer on the current photo. When it restores
-  the last archived photo it also returns to **All photos**, because the Archived
+  the last archived photo it also returns to **Photos**, because the Archived
   tab disappears with its last item.
 - **Delete all archived photos**: button inside the Archived tab. It opens a
   confirmation modal whose message states that **the action CANNOT be undone**
