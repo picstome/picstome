@@ -92,6 +92,64 @@ describe('Gallery Viewing', function () {
             ->assertSeeHtml('gallery-download-panel');
     });
 
+    it('labels the all photos tab as photos and keeps sync and download icon only', function () {
+        config(['picstome.admin_emails' => [$this->user->email]]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        // The shorter label frees horizontal room in the tab bar.
+        $component->assertSeeHtml('aria-label="Photos"')
+            ->assertDontSeeHtml('aria-label="All photos"')
+            // Sync and Download keep their accessible name but drop the visible
+            // text at every width, so only the icon is rendered.
+            ->assertSeeHtml('aria-label="Sync"')
+            ->assertSeeHtml('aria-label="Download"')
+            ->assertDontSeeHtml('<span class="max-sm:sr-only">Sync</span>')
+            ->assertDontSeeHtml('<span class="max-sm:sr-only">Download</span>');
+    });
+
+    it('offers the export favorites shortcut next to the favorites tab', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertSeeHtml('data-export-favorites')
+            ->assertSeeHtml('aria-label="Export favorites"')
+            ->assertSeeHtml('x-tooltip="Export favorites"');
+    });
+
+    it('hides the export favorites shortcut when nothing is favorited', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertDontSeeHtml('data-export-favorites');
+    });
+
+    it('shows the export favorites action inside the grid content', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertSeeHtml('data-export-favorites-content')
+            ->assertSee('Export favorites');
+    });
+
+    it('hides the export favorites action inside the grid when nothing is favorited', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        $component->assertDontSeeHtml('data-export-favorites-content');
+    });
+
     it('shows the sync tab and panel with the desktop app deep link', function () {
         config(['picstome.admin_emails' => [$this->user->email]]);
 
@@ -264,7 +322,7 @@ describe('Gallery Viewing', function () {
 
         $page->click('[data-gallery-actions]');
         $page->wait(0.2);
-        $page->click('Favorite list');
+        $page->click('[data-export-favorites-menu]');
         $page->wait(0.3);
 
         expect($page->script("getComputedStyle(document.querySelector('#favorite-list')).display"))
@@ -275,6 +333,20 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("document.getElementById('finder-textarea').value"))
             ->not->toBeEmpty();
+    });
+
+    it('opens the favorite list from the export icon in the tab bar', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create();
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->click('[data-export-favorites]');
+        $page->wait(0.3);
+
+        expect($page->script("getComputedStyle(document.querySelector('#favorite-list')).display"))
+            ->not->toBe('none');
     });
 
     it('opens the favorites tab from the url', function () {
@@ -2275,7 +2347,7 @@ test('owner can switch between photos and download tabs', function () {
 
     $page->assertSee('Download gallery');
 
-    $page->click('[role=tablist] button[aria-label="All photos"]');
+    $page->click('[role=tablist] button[aria-label="Photos"]');
     $page->wait(0.5);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);

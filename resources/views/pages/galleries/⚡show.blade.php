@@ -1082,9 +1082,10 @@ new class extends Component
 
                 @if ($this->totalFavorites > 0)
                     <x-dropdown.items
-                        :text="__('Favorite list')"
-                        icon="heart"
+                        :text="__('Export favorites')"
+                        icon="arrow-path"
                         x-on:click="show = false; $tsui.open.modal('favorite-list')"
+                        data-export-favorites-menu
                     />
                 @endif
 
@@ -1160,20 +1161,13 @@ new class extends Component
                         :comments-count="$this->totalComments()"
                         :show-sync="$this->syncEnabled"
                         :show-download="true"
+                        :show-export="$this->totalFavorites > 0"
                         :archived-count="$this->totalArchived"
                         :active-tab="$activeTab"
                         :favorites-as-filter="true"
                         :favorites-filter-active="$favoritesOnly"
                         :bordered="false"
-                    >
-                        <x-slot name="afterFavorites">
-                            @if ($this->totalFavorites > 0)
-                                <x-ts-modal-trigger name="favorite-list">
-                                    <x-ts-badge size="sm" as="button">{{ __('Export') }}</x-ts-badge>
-                                </x-ts-modal-trigger>
-                            @endif
-                        </x-slot>
-                    </x-gallery-tabs>
+                    />
                 </div>
 
                 <div
@@ -1194,6 +1188,26 @@ new class extends Component
         </div>
 
         <div x-show="$wire.activeTab === 'all'" class="pt-1" data-gallery-panel>
+            {{-- Export favorites lives inside the content, top right, so it never
+                 competes for room in the tab bar. It mirrors the icon shortcut
+                 next to the Favorites tab. --}}
+            @if ($this->totalFavorites > 0)
+                <div class="mb-3 flex justify-end">
+                    <x-ts-modal-trigger name="favorite-list">
+                        <x-ts-button
+                            size="sm"
+                            icon="arrow-path"
+                            variant="primary"
+                            class="btn-coral"
+                            :tooltip="__('Export favorites')"
+                            data-export-favorites-content
+                        >
+                            {{ __('Export favorites') }}
+                        </x-ts-button>
+                    </x-ts-modal-trigger>
+                </div>
+            @endif
+
             @if ($this->filteredPhotoCount > 0)
                 <div wire:key="all-photos-{{ $this->queryKey }}">
                     <x-photo-masonry :photos="$this->allPhotos" :$gallery context="owner" html-id-prefix="photo" :view-query="$this->photoQuery->toQuery()" />
