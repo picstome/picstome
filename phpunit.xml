@@ -28,10 +28,8 @@
         <server name="DB_CONNECTION" value="sqlite"/>
         <server name="DB_DATABASE" value=":memory:"/>
         <server name="MAIL_MAILER" value="array"/>
-        <server name="PULSE_ENABLED" value="false"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
-        <server name="TELESCOPE_ENABLED" value="false"/>
         <server name="LIVEWIRE_TEMP_UPLOAD_DISK" value="null"/>
         <server name="TRANSLATION_OVERRIDES_PATH" value="storage/framework/testing/translations"/>
         <server name="PICSTOME_CDN_WARMING_ENABLED" value="false"/>

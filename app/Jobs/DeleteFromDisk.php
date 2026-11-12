@@ -43,20 +43,33 @@ class DeleteFromDisk implements ShouldQueue
 
     protected function isStillReferenced(): bool
     {
-        $matchesPath = fn ($query) => $query
-            ->where('path', $this->path)
-            ->orWhere('raw_path', $this->path)
-            ->orWhere('thumb_path', $this->path);
+        // Each path column is checked independently instead of through a
+        // `where(...)->orWhere(...)` group. MySQL cannot use an index for an
+        // `OR` across different columns, so the grouped version scanned the
+        // whole table on every check (p95 1.65s). Split queries are ~1ms each
+        // because every one of them is a plain index lookup.
+        foreach (['path', 'raw_path', 'thumb_path'] as $column) {
+            if ($this->referencedIn(Photo::class, $column, $this->ignorePhotoId)) {
+                return true;
+            }
 
-        return Photo::query()
+            if ($this->referencedIn(PhotoVersion::class, $column, $this->ignoreVersionId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  class-string<Photo|PhotoVersion>  $model
+     */
+    protected function referencedIn(string $model, string $column, ?int $ignoreId): bool
+    {
+        return $model::query()
             ->where('disk', $this->disk)
-            ->when($this->ignorePhotoId, fn ($query) => $query->where('id', '!=', $this->ignorePhotoId))
-            ->where($matchesPath)
-            ->exists()
-            || PhotoVersion::query()
-                ->where('disk', $this->disk)
-                ->when($this->ignoreVersionId, fn ($query) => $query->where('id', '!=', $this->ignoreVersionId))
-                ->where($matchesPath)
-                ->exists();
+            ->where($column, $this->path)
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
     }
 }
