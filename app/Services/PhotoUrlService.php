@@ -159,6 +159,21 @@ class PhotoUrlService
         return $this->storageUrl($this->path);
     }
 
+    /**
+     * Playable URL for a video. Videos are never resized through the image
+     * CDN and their bytes are never rewritten in place (processing only
+     * touches images), so no cache-busting version is appended: the URL must
+     * stay stable for range requests and for the CDN to keep serving it.
+     */
+    public function video(): string
+    {
+        if (! $this->isVideo()) {
+            return '';
+        }
+
+        return $this->storageUrl($this->path);
+    }
+
     public function url(): string
     {
         if (! $this->isImage()) {
@@ -183,6 +198,13 @@ class PhotoUrlService
         $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
 
         return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
+    }
+
+    protected function isVideo(): bool
+    {
+        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($ext, ['mp4', 'webm', 'ogg'], true);
     }
 
     /**

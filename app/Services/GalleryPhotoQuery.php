@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Models\PhotoVersion;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -187,7 +188,14 @@ final readonly class GalleryPhotoQuery
                 ->orderBy('size', $this->direction)
                 ->orderBy('id'),
             'versions' => $query
-                ->orderBy('version_count', $this->direction)
+                // Sort by how many versions are really stored, not by the
+                // `version_count` sequence, which stays high after deletions.
+                ->orderBy(
+                    PhotoVersion::query()
+                        ->selectRaw('count(*)')
+                        ->whereColumn('photo_versions.photo_id', 'photos.id'),
+                    $this->direction,
+                )
                 ->orderBy('id'),
             default => $query->orderBy('id'),
         };

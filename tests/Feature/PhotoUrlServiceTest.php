@@ -131,3 +131,38 @@ it('uses focus crop for bunny cover images', function () {
     expect($query['focus_crop'])->toBe('2560,960,0.25,0.75')
         ->and($query['format'])->toBe('webp');
 });
+
+it('builds a playable url for video photos and versions', function () {
+    Storage::fake('s3');
+    config([
+        'picstome.photo_cdn_domain' => 'wsrv.nl',
+        'filesystems.disks.s3.url' => 'https://cdn.example.test/bucket',
+    ]);
+
+    $photo = Photo::factory()->video()->for(Gallery::factory())->create([
+        'disk' => 's3',
+        'path' => 'galleries/clip.mp4',
+    ]);
+
+    $version = PhotoVersion::factory()->for($photo)->create([
+        'path' => 'galleries/clip-old.mp4',
+        'disk' => 's3',
+    ]);
+
+    expect(PhotoUrlService::make($photo)->video())
+        ->toBe('https://cdn.example.test/bucket/galleries/clip.mp4')
+        ->and(PhotoUrlService::make($version, $photo->gallery)->video())
+        ->toBe('https://cdn.example.test/bucket/galleries/clip-old.mp4');
+});
+
+it('does not build a video url for images', function () {
+    Storage::fake('s3');
+    config(['filesystems.disks.s3.url' => 'https://cdn.example.test/bucket']);
+
+    $photo = Photo::factory()->for(Gallery::factory())->create([
+        'disk' => 's3',
+        'path' => 'galleries/photo.jpg',
+    ]);
+
+    expect(PhotoUrlService::make($photo)->video())->toBe('');
+});

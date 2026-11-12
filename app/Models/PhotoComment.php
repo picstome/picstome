@@ -19,6 +19,7 @@ class PhotoComment extends Model
         return [
             'x' => 'float',
             'y' => 'float',
+            'time_seconds' => 'float',
             'annotated_version_number' => 'integer',
         ];
     }
@@ -54,6 +55,56 @@ class PhotoComment extends Model
     public function hasCoordinates(): bool
     {
         return $this->x !== null && $this->y !== null;
+    }
+
+    /**
+     * Whether this comment points at a moment of the video.
+     *
+     * Temporal comments use the same `annotated_version_number` bookkeeping as
+     * image pins, so a comment made on an older cut is flagged the same way.
+     */
+    public function hasTimestamp(): bool
+    {
+        return $this->time_seconds !== null;
+    }
+
+    /**
+     * Whether the comment is anchored to the media (a pin or a second), as
+     * opposed to a plain message.
+     */
+    public function isAnchored(): bool
+    {
+        return $this->hasCoordinates() || $this->hasTimestamp();
+    }
+
+    /**
+     * Playhead position rendered as `mm:ss` (or `h:mm:ss` for long videos).
+     */
+    public function timecode(): ?string
+    {
+        if (! $this->hasTimestamp()) {
+            return null;
+        }
+
+        return self::formatTimecode($this->time_seconds);
+    }
+
+    /**
+     * Render a number of seconds as `mm:ss`, the label used by the comment
+     * chip, the player rail and the composer.
+     */
+    public static function formatTimecode(float $seconds): string
+    {
+        $total = max(0, (int) floor($seconds));
+        $hours = intdiv($total, 3600);
+        $minutes = intdiv($total % 3600, 60);
+        $remaining = $total % 60;
+
+        if ($hours > 0) {
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $remaining);
+        }
+
+        return sprintf('%02d:%02d', $minutes, $remaining);
     }
 
     /**

@@ -33,6 +33,25 @@ class PhotoVersion extends Model
         // write to them invalidates the cached total.
         static::saved(fn (PhotoVersion $version) => StorageUsageService::forgetForPhoto($version->photo_id));
         static::deleted(fn (PhotoVersion $version) => StorageUsageService::forgetForPhoto($version->photo_id));
+
+        // The version badge and the "sort by versions" listing read how many
+        // rows exist, and the gallery wall is cached per filter/sort. Without
+        // this, deleting a version leaves the old count on screen for an hour.
+        static::saved(fn (PhotoVersion $version) => static::forgetGalleryCaches($version->photo_id));
+        static::deleted(fn (PhotoVersion $version) => static::forgetGalleryCaches($version->photo_id));
+    }
+
+    /**
+     * Advance the gallery cache stamp so cached listings (including the
+     * filtered/sorted ones keyed by that stamp) are rebuilt on the next read.
+     */
+    protected static function forgetGalleryCaches(int $photoId): void
+    {
+        $galleryId = Photo::query()->whereKey($photoId)->value('gallery_id');
+
+        if ($galleryId) {
+            Photo::invalidateGalleryQueryCache((int) $galleryId);
+        }
     }
 
     protected function casts()
@@ -58,6 +77,15 @@ class PhotoVersion extends Model
     protected function url(): Attribute
     {
         return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->url() : null);
+    }
+
+    /**
+     * Playable URL for a historical video version. Null for images, which use
+     * `url`/`thumbnail_url` in the comparison UI.
+     */
+    protected function videoUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->isVideo() ? PhotoUrlService::make($this)->video() : null);
     }
 
     protected function thumbnailUrl(): Attribute

@@ -1434,5 +1434,19 @@
     "Up to 1 TB storage": "Up to 1 TB storage",
     "Up to 1000× more space than the free plan.": "Up to 1000× more space than the free plan.",
     "What you unlock with Pro": "What you unlock with Pro",
-    "Your studio, without limits": "Your studio, without limits"
+    "Your studio, without limits": "Your studio, without limits",
+    "Comment at :time": "Comment at :time",
+    "Remove timestamp": "Remove timestamp",
+    "Jump to :time": "Jump to :time",
+    "Seek video": "Seek video",
+    "Playback speed": "Playback speed",
+    "Play": "Play",
+    "Pause": "Pause",
+    "Mute": "Mute",
+    "Unmute": "Unmute",
+    "Volume": "Volume",
+    "Fullscreen": "Fullscreen",
+    "Your browser cannot play this video.": "Your browser cannot play this video.",
+    "This video could not be loaded.": "This video could not be loaded.",
+    "The right version could not be loaded. The left one still plays.": "The right version could not be loaded. The left one still plays."
 }

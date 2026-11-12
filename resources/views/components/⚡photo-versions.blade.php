@@ -33,6 +33,11 @@ new class extends Component
     /**
      * Build the current + historical version list used by the comparison UI.
      * Query work is skipped entirely when versioning is disabled or absent.
+     *
+     * Items describe both media types: images carry `image_url`/`thumbnail_url`
+     * for the zoom-and-pan comparison, videos carry `video_url` for the
+     * synchronized side-by-side player. Families never mix (a video version
+     * only exists for a video photo), so the stage picks one branch.
      */
     #[Computed]
     public function versions()
@@ -41,7 +46,10 @@ new class extends Component
             return collect();
         }
 
-        if ($this->photo->version_count <= 1 && ! $this->photo->current_version_id) {
+        // Gate on stored rows, not on `version_count`: the sequence counter
+        // stays high after versions are deleted, so it cannot tell whether
+        // there is anything left to compare.
+        if (! $this->photo->hasStoredVersions()) {
             return collect();
         }
 
@@ -57,7 +65,7 @@ new class extends Component
 
         $gallery = $this->photo->gallery;
         $formatDate = fn ($date) => $date?->translatedFormat('j M Y, H:i') ?? '';
-        $currentNumber = $this->photo->currentVersion?->version_number ?? $this->photo->version_count;
+        $currentNumber = $this->photo->currentVersionNumber();
         $currentUrls = PhotoUrlService::make($this->photo, $gallery);
 
         $items = collect([
@@ -67,6 +75,8 @@ new class extends Component
                 'source_name' => $this->photo->source_name ?: $this->photo->name,
                 'thumbnail_url' => $currentUrls->thumbnail(),
                 'image_url' => $currentUrls->original(),
+                'video_url' => $currentUrls->video(),
+                'is_video' => $this->photo->isVideo(),
                 'is_current' => true,
                 'uploaded_at_display' => $formatDate($this->photo->uploaded_at ?? $this->photo->created_at),
             ],
@@ -81,6 +91,8 @@ new class extends Component
                 'source_name' => $version->source_name ?: $version->name,
                 'thumbnail_url' => $urls->thumbnail(),
                 'image_url' => $urls->original(),
+                'video_url' => $urls->video(),
+                'is_video' => $version->isVideo(),
                 'download_url' => $this->manageable
                     ? route('galleries.photos.versions.download', ['gallery' => $gallery, 'photo' => $this->photo, 'version' => $version])
                     : null,
@@ -91,6 +103,16 @@ new class extends Component
         }
 
         return $items;
+    }
+
+    /**
+     * Whether this photo's version history is video, which swaps the image
+     * zoom comparison for the synchronized two-player stage.
+     */
+    #[Computed]
+    public function isVideo(): bool
+    {
+        return $this->photo->isVideo();
     }
 
     public function restoreVersion(int $versionId)
@@ -223,6 +245,18 @@ new class extends Component
                     startY: 0,
                     init() {
                         this.syncVersions();
+
+                        // The comparison stage is a nested Alpine component and
+                        // the modal is teleported to <body>, so DOM events from
+                        // the selects cannot bubble into it. Dispatching on
+                        // window keeps the synced players in step.
+                        this.$watch('left', () => this.refreshCompare())
+                        this.$watch('right', () => this.refreshCompare())
+                    },
+                    refreshCompare() {
+                        this.$nextTick(() => {
+                            window.dispatchEvent(new CustomEvent('video-compare-refresh'))
+                        })
                     },
                     syncVersions() {
                         this.versions = JSON.parse(this.$el.dataset.versions || '[]');
@@ -264,11 +298,20 @@ new class extends Component
                             :class="left === '{{ $version['id'] }}' ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-zinc-200 dark:border-zinc-700'"
                             @click="left = '{{ $version['id'] }}'; scale = 1; x = 0; y = 0"
                         >
-                            <img
-                                src="{{ $version['thumbnail_url'] }}"
-                                alt="{{ $version['label'] }}"
-                                class="h-20 w-20 rounded object-cover"
-                            />
+                            @if ($version['is_video'])
+                                {{-- Videos have no generated poster frame, so the
+                                     tile shows the media type instead of a broken
+                                     image request. --}}
+                                <span class="flex h-20 w-20 items-center justify-center rounded bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                                    <x-icon name="film" class="size-7" />
+                                </span>
+                            @else
+                                <img
+                                    src="{{ $version['thumbnail_url'] }}"
+                                    alt="{{ $version['label'] }}"
+                                    class="h-20 w-20 rounded object-cover"
+                                />
+                            @endif
                             <span class="mt-1 block max-w-20 truncate text-xs">{{ $version['label'] }}</span>
                             <span class="block max-w-20 truncate text-[10px] text-zinc-500">{{ $version['source_name'] }}</span>
                             <span class="block max-w-20 truncate text-[10px] text-zinc-500">{{ $version['uploaded_at_display'] }}</span>
@@ -289,27 +332,128 @@ new class extends Component
                     </x-ts-select>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <x-ts-button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</x-ts-button>
-                    <x-ts-button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</x-ts-button>
-                    <x-ts-button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</x-ts-button>
-                    <span class="text-sm text-zinc-500" x-text="Math.round(scale * 100) + '%'"></span>
-                </div>
+                @if ($this->isVideo)
+                    {{-- Video comparison: one control bar drives both players,
+                         so the same second of two cuts is on screen at once.
+                         The left side owns the audio; the right side is a
+                         muted visual reference. Nothing is fetched until the
+                         modal opens (see the modal-open listener below). --}}
+                    <div
+                        x-data="videoCompare({
+                            items: () => versions,
+                            left: () => left,
+                            right: () => right,
+                        })"
+                        x-on:modal:photo-versions-{{ $photo->id }}-open.window="open()"
+                        x-on:modal:photo-versions-{{ $photo->id }}-close.window="close()"
+                        data-video-compare
+                    >
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div class="relative overflow-hidden rounded-lg bg-black">
+                                <video
+                                    x-ref="leftVideo"
+                                    x-on:loadedmetadata="onPrimaryLoaded()"
+                                    x-on:timeupdate="onPrimaryTimeUpdate()"
+                                    x-on:ended="paused = true"
+                                    class="max-h-[64vh] w-full object-contain"
+                                    playsinline
+                                    preload="metadata"
+                                    data-video-compare-left
+                                ></video>
+                                <span class="absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white" x-text="leftItem?.label"></span>
+                            </div>
+                            <div class="relative overflow-hidden rounded-lg bg-black">
+                                <video
+                                    x-ref="rightVideo"
+                                    x-on:error="onSecondaryError()"
+                                    class="max-h-[64vh] w-full object-contain"
+                                    playsinline
+                                    preload="metadata"
+                                    data-video-compare-right
+                                ></video>
+                                <span class="absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white" x-text="rightItem?.label"></span>
+                            </div>
+                        </div>
 
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
-                        <img :src="activeImage(left)" :alt="leftLabel()" x-ref="leftImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
-                        @if ($showWatermark)
-                            <x-watermark :team="$photo->gallery->team" variant="versions" />
-                        @endif
+                        <div class="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-zinc-100 px-3 py-2 dark:bg-zinc-800" data-video-compare-controls>
+                            <button
+                                type="button"
+                                x-on:click="toggle()"
+                                class="bg-brand-green text-brand-cream hover:bg-brand-green-deep grid size-9 place-items-center rounded-full transition"
+                                x-bind:aria-label="paused ? @js(__('Play')) : @js(__('Pause'))"
+                                data-video-compare-toggle
+                            >
+                                <x-icon x-show="paused" name="play" variant="solid" class="size-5 translate-x-px" />
+                                <x-icon x-show="! paused" name="pause" variant="solid" class="size-5" x-cloak />
+                            </button>
+
+                            <input
+                                type="range"
+                                min="0"
+                                step="0.05"
+                                x-bind:max="duration || 1"
+                                x-bind:value="currentTime"
+                                x-on:change="commitDrag($event)"
+                                class="min-w-40 flex-1 cursor-pointer accent-brand-green"
+                                x-bind:aria-label="@js(__('Seek video'))"
+                                data-video-compare-seek
+                            />
+
+                            <span class="font-mono text-xs tabular-nums text-zinc-600 dark:text-zinc-300" data-video-compare-time>
+                                <span x-text="displayCurrentTime"></span>
+                                <span class="text-zinc-400">/</span>
+                                <span x-text="displayDuration"></span>
+                            </span>
+
+                            <button
+                                type="button"
+                                x-on:click="toggleMute()"
+                                class="grid size-8 place-items-center rounded-full text-zinc-600 transition hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-white/10"
+                                x-bind:aria-label="muted ? @js(__('Unmute')) : @js(__('Mute'))"
+                                data-video-compare-mute
+                            >
+                                <x-icon x-show="! muted" name="speaker-wave" class="size-4" />
+                                <x-icon x-show="muted" name="speaker-x-mark" class="size-4" x-cloak />
+                            </button>
+
+                            <button
+                                type="button"
+                                x-on:click="cycleRate()"
+                                class="min-w-11 rounded-full px-2 py-1 text-xs font-semibold tabular-nums text-zinc-600 transition hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-white/10"
+                                x-bind:aria-label="`@js(__('Playback speed')): ${rate}x`"
+                                data-video-compare-rate
+                                x-text="rate + 'x'"
+                            ></button>
+                        </div>
+
+                        <p class="mt-1 text-xs text-zinc-500" x-show="errored">
+                            {{ __('The right version could not be loaded. The left one still plays.') }}
+                        </p>
                     </div>
-                    <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
-                        <img :src="activeImage(right)" :alt="rightLabel()" x-ref="rightImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
-                        @if ($showWatermark)
-                            <x-watermark :team="$photo->gallery->team" variant="versions" />
-                        @endif
+                @else
+                    <div class="flex items-center gap-2">
+                        <x-ts-button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</x-ts-button>
+                        <x-ts-button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</x-ts-button>
+                        <x-ts-button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</x-ts-button>
+                        <span class="text-sm text-zinc-500" x-text="Math.round(scale * 100) + '%'"></span>
                     </div>
-                </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
+                            <img :src="activeImage(left)" :alt="leftLabel()" x-ref="leftImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
+                            @if ($showWatermark)
+                                <x-watermark :team="$photo->gallery->team" variant="versions" />
+                            @endif
+                        </div>
+                        <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">
+                            <img :src="activeImage(right)" :alt="rightLabel()" x-ref="rightImage" :style="`transform: translate(${x}px, ${y}px) scale(${scale}); transform-origin: center center;`" class="max-h-[64vh] w-full object-contain transition-transform" loading="lazy" decoding="async" draggable="false" />
+                            @if ($showWatermark)
+                                <x-watermark :team="$photo->gallery->team" variant="versions" />
+                            @endif
+                        </div>
+                    </div>
+
+                @endif
 
                 @if ($manageable)
                     <div class="space-y-2">
@@ -352,5 +496,13 @@ new class extends Component
             :message="__('This action cannot be undone.')"
             method="deletePendingVersion"
         />
+
+        @if ($this->isVideo)
+            @script
+                <script>
+                    @include('partials.video-player-script')
+                </script>
+            @endscript
+        @endif
     @endif
 </div>

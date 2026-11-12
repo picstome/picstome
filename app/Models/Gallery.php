@@ -271,7 +271,7 @@ class Gallery extends Model
     {
         $photos = $this->photos()
             ->whereKey($ids)
-            ->withCount('comments')
+            ->withCount('comments', 'versions')
             ->get()
             ->keyBy('id');
 
