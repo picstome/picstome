@@ -1448,5 +1448,12 @@
     "Fullscreen": "Fullscreen",
     "Your browser cannot play this video.": "Your browser cannot play this video.",
     "This video could not be loaded.": "This video could not be loaded.",
-    "The right version could not be loaded. The left one still plays.": "The right version could not be loaded. The left one still plays."
+    "The right version could not be loaded. The left one still plays.": "The right version could not be loaded. The left one still plays.",
+    "Event": "Event",
+    "Today": "Today",
+    "Due today": "Due today",
+    "Overdue": "Overdue",
+    "Turns :age": "Turns :age",
+    "Birthdays, shoots, invoices and galleries that need your attention.": "Birthdays, shoots, invoices and galleries that need your attention.",
+    ":count reminder|:count reminders": ":count reminder|:count reminders"
 }

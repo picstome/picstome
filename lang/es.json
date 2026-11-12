@@ -1579,5 +1579,11 @@
     "Fullscreen": "Pantalla completa",
     "Your browser cannot play this video.": "Tu navegador no puede reproducir este vídeo.",
     "This video could not be loaded.": "No se pudo cargar este vídeo.",
-    "The right version could not be loaded. The left one still plays.": "No se pudo cargar la versión derecha. La izquierda sigue reproduciéndose."
+    "The right version could not be loaded. The left one still plays.": "No se pudo cargar la versión derecha. La izquierda sigue reproduciéndose.",
+    "Event": "Evento",
+    "Due today": "Vence hoy",
+    "Overdue": "Vencida",
+    "Turns :age": "Cumple :age",
+    "Birthdays, shoots, invoices and galleries that need your attention.": "Cumpleaños, sesiones, facturas y galerías que necesitan tu atención.",
+    ":count reminder|:count reminders": ":count recordatorio|:count recordatorios"
 }

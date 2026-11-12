@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Invoice;
+use App\Traits\FormatsMoney;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
@@ -8,6 +10,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    use FormatsMoney;
+
     #[Computed]
     public function birthdaySoonCustomers()
     {
@@ -163,8 +167,38 @@ new class extends Component
     {
         return $this->team->photoshoots()
             ->where('date', '>=', now()->copy()->startOfDay())
+            ->with('customer')
             ->orderBy('date')
             ->get();
+    }
+
+    /**
+     * Issued invoices that still have money pending.
+     *
+     * An invoice counts as paid either when the team marks it as paid or when
+     * its linked payments settle the total, so the check runs in PHP over the
+     * eager-loaded payments. Rectified invoices and their replacements are
+     * skipped: the original is no longer collectable.
+     *
+     * The rows are fetched before the paid ones are dropped because the amount
+     * settled by the linked payments is not a column we can filter on; the
+     * query is bounded so a long-lived team cannot load an unbounded list.
+     */
+    #[Computed]
+    public function unpaidInvoices()
+    {
+        return $this->team->invoices()
+            ->where('status', Invoice::STATUS_ISSUED)
+            ->whereNull('paid_at')
+            ->whereNull('rectifies_invoice_id')
+            ->with(['customer', 'payments'])
+            ->orderByRaw('coalesce(due_date, issue_date) asc')
+            ->orderBy('id')
+            ->limit(200)
+            ->get()
+            ->reject(fn (Invoice $invoice) => $invoice->isPaid())
+            ->take(25)
+            ->values();
     }
 
     #[Computed]
@@ -221,43 +255,110 @@ new class extends Component
                 'type' => 'birthday',
                 'label' => $customer->name,
                 'date' => $birthday,
-                'link' => "/customers/{$customer->id}",
+                'link' => route('customers.show', $customer),
                 'is_today' => $isToday,
-                'age' => $age,
+                'icon' => 'cake',
+                'badge' => $isToday ? __('Birthday today') : __('Birthday soon'),
+                'badge_color' => $isToday ? 'green' : 'yellow',
+                'badge_icon' => 'cake',
+                'detail' => __('Turns :age', ['age' => $age]),
+                'today_color' => 'green',
             ]);
         }
 
         foreach ($this->upcomingPhotoshoots as $photoshoot) {
+            $isToday = $this->isToday($photoshoot->date);
+
             $events->push([
                 'type' => 'photoshoot',
                 'label' => $photoshoot->name,
                 'date' => $photoshoot->date,
-                'link' => "/photoshoots/{$photoshoot->id}",
-                'is_today' => $this->isToday($photoshoot->date),
+                'link' => route('photoshoots.show', ['photoshoot' => $photoshoot]),
+                'is_today' => $isToday,
+                'icon' => 'camera',
+                'badge' => $isToday ? __('Scheduled today') : __('Scheduled'),
+                'badge_color' => $isToday ? 'green' : 'blue',
+                'badge_icon' => 'camera',
+                'detail' => $photoshoot->customer?->name ?? $photoshoot->customer_name,
+                'today_color' => 'green',
+            ]);
+        }
+
+        foreach ($this->unpaidInvoices as $invoice) {
+            $isOverdue = $invoice->due_date !== null && $invoice->due_date->isBefore(now()->startOfDay());
+            $isToday = $invoice->due_date !== null && $this->isToday($invoice->due_date);
+
+            $status = match (true) {
+                $isOverdue => __('Overdue'),
+                $isToday => __('Due today'),
+                default => __('Payment pending'),
+            };
+
+            $events->push([
+                'type' => 'invoice',
+                'label' => $invoice->full_number ?? __('Invoice'),
+                'date' => $invoice->due_date ?? $invoice->issue_date,
+                'link' => route('invoices.show', $invoice),
+                'is_today' => $isToday,
+                'is_overdue' => $isOverdue,
+                'icon' => 'receipt-percent',
+                // The amount travels inside the badge: it only makes sense for
+                // invoices, so a dedicated column would sit empty on every other
+                // reminder.
+                'badge' => $status.' · '.$this->money($invoice->pendingAmount()).' '.$invoice->currency,
+                'badge_color' => match (true) {
+                    $isOverdue => 'red',
+                    $isToday => 'orange',
+                    default => 'yellow',
+                },
+                'badge_icon' => $isOverdue ? 'exclamation-triangle' : 'receipt-percent',
+                'detail' => $invoice->customer?->name,
+                'today_color' => 'orange',
             ]);
         }
 
         foreach ($this->expiringGalleries as $gallery) {
+            $isToday = $this->isToday($gallery->expiration_date);
+
             $events->push([
                 'type' => 'gallery',
                 'label' => $gallery->name,
                 'date' => $gallery->expiration_date,
-                'link' => "/galleries/{$gallery->id}",
-                'is_today' => $this->isToday($gallery->expiration_date),
+                'link' => route('galleries.show', ['gallery' => $gallery]),
+                'is_today' => $isToday,
+                'icon' => 'clock',
+                'badge' => $isToday ? __('Expiring today') : __('Expiring soon'),
+                'badge_color' => $isToday ? 'green' : 'red',
+                'badge_icon' => 'clock',
+                'detail' => null,
+                'today_color' => 'green',
             ]);
         }
 
         foreach ($this->upcomingContractsAwaitingSignature as $contract) {
+            $isToday = $this->isToday($contract->shooting_date);
+
             $events->push([
                 'type' => 'contract',
                 'label' => $contract->title ?? __('Contract'),
                 'date' => $contract->shooting_date,
-                'link' => "/contracts/{$contract->id}",
-                'is_today' => $this->isToday($contract->shooting_date),
+                'link' => route('contracts.show', ['contract' => $contract]),
+                'is_today' => $isToday,
+                'icon' => 'document-text',
+                'badge' => __('Awaiting signature'),
+                'badge_color' => 'orange',
+                'badge_icon' => 'document-text',
+                'detail' => $contract->location,
+                'today_color' => 'green',
             ]);
         }
 
-        return $events->sortBy('date')->values();
+        return $events
+            ->sortBy(fn (array $event) => [
+                ($event['is_overdue'] ?? false) ? 0 : 1,
+                $event['date']?->toDateString() ?? '9999-12-31',
+            ])
+            ->values();
     }
 
     public function hasUpcomingEventsOrReminders()
@@ -265,6 +366,7 @@ new class extends Component
         return
             $this->birthdaySoonCustomers?->isNotEmpty() ||
             $this->upcomingPhotoshoots?->isNotEmpty() ||
+            $this->unpaidInvoices?->isNotEmpty() ||
             $this->expiringGalleries?->isNotEmpty() ||
             $this->upcomingContractsAwaitingSignature?->isNotEmpty();
     }
@@ -540,73 +642,146 @@ new class extends Component
     </section>
 
     @if ($this->hasUpcomingEventsOrReminders())
-        <section class="mt-8 mb-8">
-            <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
-                {{ __('Upcoming Events & Reminders') }}
-            </x-ts-heading>
-            <x-ts-separator class="mt-3" />
-            <x-data-table>
-                <x-data-table.rows>
-                    @foreach ($this->getUpcomingEventsAndReminders() as $event)
-                        <x-data-table.row
-                            :class="! empty($event['is_today']) && $event['is_today'] ? 'bg-brand-sage/20 dark:bg-brand-sage/10' : ''"
-                        >
-                            <x-data-table.cell variant="strong" class="relative w-full">
-                                <a
-                                    href="{{ $event['link'] }}"
-                                    wire:navigate
-                                    class="absolute inset-0 focus:outline-hidden"
-                                ></a>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    {{ $event['label'] }}
+        @php
+            $events = $this->getUpcomingEventsAndReminders();
+        @endphp
 
-                                    @if ($event['type'] === 'birthday')
-                                        <x-ts-badge
-                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'yellow' }}"
-                                            inset="top bottom"
-                                            icon="cake"
-                                            size="sm"
+        <section class="mt-8 mb-8">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                        {{ __('Upcoming Events & Reminders') }}
+                    </x-ts-heading>
+                    <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-0.5 text-sm font-medium">
+                        {{ __('Birthdays, shoots, invoices and galleries that need your attention.') }}
+                    </x-ts-text>
+                </div>
+
+                <span
+                    class="bg-brand-sage/30 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium tabular-nums"
+                >
+                    {{ trans_choice(':count reminder|:count reminders', $events->count()) }}
+                </span>
+            </div>
+
+            <div
+                class="border-brand-green/10 mt-4 overflow-hidden rounded-2xl border bg-white shadow-xs [&_table]:table-auto [&_td:first-child]:pl-4 [&_td:last-child]:pr-4 [&_th:first-child]:pl-4 [&_th:last-child]:pr-4 dark:border-white/10 dark:bg-white/5"
+            >
+                <x-data-table>
+                    <x-data-table.columns
+                        class="border-brand-green/10 bg-brand-sage/15 border-b dark:border-white/10 dark:bg-white/5"
+                    >
+                        <x-data-table.column class="w-full">{{ __('Event') }}</x-data-table.column>
+                        <x-data-table.column class="hidden md:table-cell">{{ __('Status') }}</x-data-table.column>
+                        <x-data-table.column class="group/right-align">{{ __('Date') }}</x-data-table.column>
+                    </x-data-table.columns>
+
+                    <x-data-table.rows>
+                        @foreach ($events as $event)
+                            @php
+                                $isToday = ! empty($event['is_today']);
+                                $isOverdue = ! empty($event['is_overdue']);
+
+                                $iconTone = match ($event['type']) {
+                                    'birthday' => 'bg-brand-coral/15 text-brand-coral-deep dark:bg-brand-coral/10 dark:text-brand-coral',
+                                    'photoshoot' => 'bg-brand-sage/35 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage',
+                                    'invoice' => 'bg-brand-ink text-brand-cream',
+                                    'gallery' => 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300',
+                                    default => 'bg-brand-green/10 text-brand-green dark:bg-brand-sage/10 dark:text-brand-sage',
+                                };
+                            @endphp
+
+                            <x-data-table.row
+                                :class="implode(' ', array_filter([
+                                    'group relative transition hover:bg-brand-sage/10 dark:hover:bg-white/5',
+                                    $isToday ? 'bg-brand-sage/20 dark:bg-brand-sage/10' : null,
+                                    $isOverdue ? 'bg-brand-coral/5 dark:bg-brand-coral/5' : null,
+                                ]))"
+                            >
+                                <x-data-table.cell variant="strong" class="relative">
+                                    <a
+                                        href="{{ $event['link'] }}"
+                                        wire:navigate
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="{{ $iconTone }} flex size-9 shrink-0 items-center justify-center rounded-xl"
                                         >
-                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Birthday today') : __('Birthday soon') }}
-                                            ({{ $event['age'] }})
-                                        </x-ts-badge>
-                                    @elseif ($event['type'] === 'photoshoot')
+                                            <x-icon :name="$event['icon']" class="size-4" />
+                                        </span>
+
+                                        <div class="min-w-0">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="truncate">{{ $event['label'] }}</span>
+
+                                                <span class="md:hidden">
+                                                    <x-ts-badge
+                                                        :color="$event['badge_color']"
+                                                        :icon="$event['badge_icon']"
+                                                        inset="top bottom"
+                                                        size="sm"
+                                                    >
+                                                        {{ $event['badge'] }}
+                                                    </x-ts-badge>
+                                                </span>
+                                            </div>
+
+                                            @if (filled($event['detail']))
+                                                <x-ts-text class="mt-0.5 truncate text-xs font-medium">
+                                                    {{ $event['detail'] }}
+                                                </x-ts-text>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </x-data-table.cell>
+
+                                <x-data-table.cell class="relative hidden md:table-cell">
+                                    <a
+                                        href="{{ $event['link'] }}"
+                                        wire:navigate
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+
+                                    <x-ts-badge
+                                        :color="$event['badge_color']"
+                                        :icon="$event['badge_icon']"
+                                        inset="top bottom"
+                                        size="sm"
+                                    >
+                                        {{ $event['badge'] }}
+                                    </x-ts-badge>
+                                </x-data-table.cell>
+
+                                <x-data-table.cell class="relative text-end" variant="muted">
+                                    <a
+                                        href="{{ $event['link'] }}"
+                                        wire:navigate
+                                        class="absolute inset-0 focus:outline-hidden"
+                                    ></a>
+
+                                    @if ($isToday)
                                         <x-ts-badge
-                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'blue' }}"
-                                            inset="top bottom"
-                                            icon="camera"
+                                            :color="$event['today_color']"
                                             size="sm"
-                                        >
-                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Scheduled today') : __('Scheduled') }}
-                                        </x-ts-badge>
-                                    @elseif ($event['type'] === 'gallery')
-                                        <x-ts-badge
-                                            color="{{ ! empty($event['is_today']) && $event['is_today'] ? 'green' : 'red' }}"
                                             inset="top bottom"
-                                            icon="clock"
-                                            size="sm"
                                         >
-                                            {{ ! empty($event['is_today']) && $event['is_today'] ? __('Expiring today') : __('Expiring soon') }}
+                                            {{ __('Today') }}
                                         </x-ts-badge>
-                                    @elseif ($event['type'] === 'contract')
-                                        <x-ts-badge color="orange" inset="top bottom" icon="document" size="sm">
-                                            {{ __('Awaiting signature') }}
-                                        </x-ts-badge>
+                                    @elseif ($event['date'] !== null)
+                                        <span class="whitespace-nowrap tabular-nums">
+                                            {{ $this->formatEventDate($event['date']) }}
+                                        </span>
+                                    @else
+                                        <span class="text-brand-ink/30 dark:text-brand-sage/40">—</span>
                                     @endif
-                                </div>
-                            </x-data-table.cell>
-                            <x-data-table.cell class="text-brand-ink/70 dark:text-brand-sage/80 relative" align="end">
-                                <a
-                                    href="{{ $event['link'] }}"
-                                    wire:navigate
-                                    class="absolute inset-0 focus:outline-hidden"
-                                ></a>
-                                {{ $this->formatEventDate($event['date']) }}
-                            </x-data-table.cell>
-                        </x-data-table.row>
-                    @endforeach
-                </x-data-table.rows>
-            </x-data-table>
+                                </x-data-table.cell>
+                            </x-data-table.row>
+                        @endforeach
+                    </x-data-table.rows>
+                </x-data-table>
+            </div>
         </section>
     @endif
 </div>
