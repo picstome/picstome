@@ -854,3 +854,174 @@ test('the mobile dock opens the comments modal', function () {
     expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
         ->toBeTrue();
 });
+
+test('a guest can comment at a second of a shared video', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create(['version_count' => 1]);
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('setPendingTime', 12.5)
+        ->assertSet('pendingTimeSeconds', 12.5)
+        ->set('commentText', 'The client wants this shot trimmed')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->time_seconds)->toBe(12.5)
+        ->and($comment->x)->toBeNull()
+        ->and($comment->user_id)->toBeNull()
+        ->and($comment->annotated_version_number)->toBe(1);
+});
+
+test('a guest cannot comment at a second when comments are disabled', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => false,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('setPendingTime', 5.0)
+        ->assertStatus(403);
+});
+
+test('a guest cannot capture a time on a photo that is not a video', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->for($gallery)->create();
+
+    Livewire::test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->call('setPendingTime', 5.0)
+        ->assertStatus(404);
+});
+
+test('timestamped comment chips are clickable in the shared viewer', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    PhotoComment::factory()->for($photo)->atTime(95.0)->create(['comment' => 'Hold on this frame']);
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertSee('data-comment-time="01:35"', false)
+        ->assertSee('Hold on this frame')
+        ->assertSee('data-video-player', false);
+});
+
+test('the timestamped comment deep link seeks the shared video', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create();
+    $comment = PhotoComment::factory()->for($photo)->atTime(37.25)->create();
+
+    Livewire::withQueryParams(['comment' => $comment->id])
+        ->test('pages::shares.photos.show', ['gallery' => $gallery, 'photo' => $photo])
+        ->assertSet('seekToSeconds', 37.25)
+        ->assertDispatched('focus-comment', id: $comment->id);
+});
+
+/*
+ * Regression: a Blade directive (`@if`, `@unless`) inside an element tag makes
+ * the compiler emit `<!--[if BLOCK]-->` markers in the middle of the attribute
+ * list, which swallows every attribute after it. It silently broke the
+ * favourite shortcut and prevented Livewire components from compiling.
+ */
+test('no blade block markers are emitted inside the viewer tag', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $video = Photo::factory()->video()->for($gallery)->create();
+    $image = Photo::factory()->for($gallery)->create();
+
+    foreach ([$video, $image] as $photo) {
+        $html = get("/shares/0123ABC/photos/{$photo->id}")->getContent();
+
+        preg_match_all('/<[^>]*<!--\[if BLOCK\]>/', $html, $matches);
+
+        expect($matches[0])->toBeEmpty("Block markers inside a tag on photo {$photo->id}");
+    }
+});
+
+test('clicking a timestamp chip seeks the player and closes the composer', function () {
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'are_comments_enabled' => true,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    PhotoComment::factory()->for($photo)->atTime(30.0)->create(['comment' => 'Trim from here']);
+
+    $page = visit("/shares/0123ABC/photos/{$photo->id}");
+    $page->wait(0.5);
+
+    // The stored file is not fetchable in the test environment, so the player
+    // is given a fake duration: seeking is then observable on `currentTime`
+    // instead of on a decoded frame.
+    $page->script(<<<'JS'
+        (() => {
+            const video = document.querySelector('[data-video-player] video')
+
+            Object.defineProperty(video, 'duration', { value: 120, configurable: true })
+            video.dispatchEvent(new Event('loadedmetadata'))
+
+            return true
+        })()
+    JS);
+
+    $page->click('[data-photo-comments]');
+    $page->wait(0.3);
+    $page->click('[data-comment-time]');
+    $page->wait(0.3);
+
+    $state = $page->script(<<<'JS'
+        (() => {
+            const video = document.querySelector('[data-video-player] video')
+
+            return {
+                time: Math.round(video.currentTime),
+                modalHidden: getComputedStyle(document.querySelector('#add-comment')).display === 'none',
+            }
+        })()
+    JS);
+
+    expect($state['modalHidden'])->toBeTrue()
+        ->and($state['time'])->toBe(30);
+});
+
+test('the player resumes from the position remembered in this browser', function () {
+    $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    $page = visit("/shares/0123ABC/photos/{$photo->id}");
+    $page->wait(0.5);
+
+    $script = <<<JS
+        (() => {
+            const video = document.querySelector('[data-video-player] video')
+
+            // Seed the remembered position the way a previous visit would, then
+            // replay the metadata event the player listens to.
+            window.localStorage.setItem('picstome-video-position:{$photo->id}', '45')
+            Object.defineProperty(video, 'duration', { value: 120, configurable: true })
+            video.dispatchEvent(new Event('loadedmetadata'))
+
+            return { time: Math.round(video.currentTime) }
+        })()
+    JS;
+
+    $state = $page->script($script);
+
+    expect($state['time'])->toBe(45);
+});

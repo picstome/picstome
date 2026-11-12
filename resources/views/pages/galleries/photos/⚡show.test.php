@@ -1108,3 +1108,382 @@ test('the quick delete button is reachable at the bottom of the mobile viewer', 
 
     expect(Photo::find($photo->id))->not->toBeNull();
 });
+
+test('a comment on a video stores the playhead second', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create(['version_count' => 1]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setPendingTime', 42.37)
+        ->assertSet('pendingTimeSeconds', 42.37)
+        ->set('commentText', 'Cut here')
+        ->call('addComment')
+        ->assertHasNoErrors();
+
+    $comment = $photo->comments()->first();
+
+    expect($comment->time_seconds)->toBe(42.37)
+        ->and($comment->x)->toBeNull()
+        ->and($comment->annotated_version_number)->toBe(1)
+        ->and($comment->hasTimestamp())->toBeTrue()
+        ->and($comment->timecode())->toBe('00:42');
+});
+
+test('the playhead cannot be captured for a non-video photo', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setPendingTime', 12.0)
+        ->assertStatus(404);
+});
+
+test('cancelling the timestamp leaves the next comment unanchored', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setPendingTime', 30.0)
+        ->call('cancelPendingTime')
+        ->assertSet('pendingTimeSeconds', null)
+        ->set('commentText', 'No anchor')
+        ->call('addComment');
+
+    expect($photo->comments()->first()->time_seconds)->toBeNull();
+});
+
+test('the video player renders for video photos and not for images', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $video = Photo::factory()->video()->for($gallery)->create();
+
+    actingAs($this->user)
+        ->get("/galleries/{$gallery->id}/photos/{$video->id}")
+        ->assertOk()
+        ->assertSee('data-video-player', false)
+        ->assertSee('data-video-toggle', false);
+
+    $image = Photo::factory()->for($gallery)->create();
+
+    actingAs($this->user)
+        ->get("/galleries/{$gallery->id}/photos/{$image->id}")
+        ->assertOk()
+        ->assertDontSee('data-video-player', false);
+});
+
+test('timestamped comments render a seek chip and a marker', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    PhotoComment::factory()->for($photo)->atTime(83.0)->create(['comment' => 'Slow down here']);
+
+    actingAs($this->user)
+        ->get("/galleries/{$gallery->id}/photos/{$photo->id}")
+        ->assertOk()
+        ->assertSee('data-comment-time="01:23"', false)
+        ->assertSee('Slow down here');
+});
+
+test('a deep link to a timestamped comment starts the video at that second', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+    $comment = PhotoComment::factory()->for($photo)->atTime(61.5)->create();
+
+    Livewire::actingAs($this->user)
+        ->withQueryParams(['comment' => $comment->id])
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->assertSet('seekToSeconds', 61.5)
+        ->assertDispatched('focus-comment', id: $comment->id);
+});
+
+test('a video photo exposes its playable url', function () {
+    Storage::fake('s3');
+    config(['filesystems.disks.s3.url' => 'https://cdn.example.test/bucket']);
+
+    $photo = Photo::factory()->video()->for(Gallery::factory()->for($this->team))->create([
+        'disk' => 's3',
+        'path' => 'galleries/clip.mp4',
+    ]);
+
+    expect($photo->video_url)->toBe('https://cdn.example.test/bucket/galleries/clip.mp4')
+        ->and(Photo::factory()->for(Gallery::factory()->for($this->team))->create()->video_url)->toBeNull();
+});
+
+test('a video photo offers a synchronized comparison stage', function () {
+    Storage::fake('s3');
+    config(['filesystems.disks.s3.url' => 'https://cdn.example.test/bucket']);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create([
+        'version_count' => 2,
+        'path' => 'galleries/current.mp4',
+        'disk' => 's3',
+    ]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.mp4',
+        'source_name' => 'old.mp4',
+        'disk' => 's3',
+    ]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true]);
+
+    expect($component->instance()->isVideo)->toBeTrue()
+        ->and($component->instance()->versions->first()['is_video'])->toBeTrue()
+        ->and($component->instance()->versions->first()['video_url'])
+        ->toBe('https://cdn.example.test/bucket/galleries/current.mp4');
+
+    $component->assertSee('data-video-compare', false)
+        ->assertSee('data-video-compare-right', false)
+        ->assertSee('data-video-compare-toggle', false)
+        ->assertSee('Restore')
+        ->assertSee('Delete');
+});
+
+test('a video version can be restored', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('galleries/current.mp4', 'new');
+    Storage::disk('s3')->put('galleries/old.mp4', 'old');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create([
+        'version_count' => 2,
+        'path' => 'galleries/current.mp4',
+        'name' => 'current.mp4',
+        'disk' => 's3',
+    ]);
+
+    $old = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.mp4',
+        'name' => 'old.mp4',
+        'source_name' => 'old.mp4',
+        'disk' => 's3',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('restoreVersion', $old->id)
+        ->assertHasNoErrors();
+
+    expect($photo->fresh()->path)->toBe('galleries/old.mp4')
+        ->and($photo->fresh()->current_version_id)->toBe($old->id);
+});
+
+test('a superseded video version can be deleted', function () {
+    Storage::fake('s3');
+    Storage::disk('s3')->put('galleries/current.mp4', 'new');
+    Storage::disk('s3')->put('galleries/old.mp4', 'old');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create([
+        'version_count' => 3,
+        'path' => 'galleries/current.mp4',
+        'name' => 'current.mp4',
+        'disk' => 's3',
+    ]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/oldest.mp4',
+        'disk' => 's3',
+    ]);
+
+    $superseded = PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 2,
+        'path' => 'galleries/old.mp4',
+        'disk' => 's3',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->call('deleteVersion', $superseded->id)
+        ->assertHasNoErrors();
+
+    expect(PhotoVersion::find($superseded->id))->toBeNull();
+});
+
+test('a shared viewer compares video versions without restore or delete', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'is_share_versions_visible' => true,
+    ]);
+    $photo = Photo::factory()->video()->for($gallery)->create(['version_count' => 2]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.mp4',
+        'disk' => 's3',
+    ]);
+
+    get('/shares/0123ABC/photos/'.$photo->id)
+        ->assertOk()
+        ->assertSee('data-photo-versions', false);
+
+    $component = Livewire::test('photo-versions', ['photo' => $photo, 'manageable' => false])
+        ->assertSee('data-video-compare', false)
+        ->assertDontSee('wire:click="restoreVersion', false)
+        ->assertDontSee('wire:click="deleteVersion', false);
+});
+
+test('adding a timestamped comment pushes the new rail markers to the player', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('setPendingTime', 15.0)
+        ->set('commentText', 'Marker here')
+        ->call('addComment');
+
+    expect($component->instance()->videoMarkers)->toHaveCount(1)
+        ->and($component->instance()->videoMarkers[0]['label'])->toBe('00:15');
+
+    $component->assertDispatched('video-markers-updated', photoId: $photo->id);
+});
+
+test('deleting a timestamped comment refreshes the markers', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create();
+    $comment = PhotoComment::factory()->for($photo)->atTime(20.0)->create();
+
+    Livewire::actingAs($this->team->owner)
+        ->test('pages::galleries.photos.show', ['photo' => $photo])
+        ->call('deleteComment', $comment->id)
+        ->assertDispatched('video-markers-updated', photoId: $photo->id);
+});
+
+test('the video comparison opens with two players and one control bar', function () {
+    Storage::fake('s3');
+    config(['filesystems.disks.s3.url' => 'https://cdn.example.test/bucket']);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->video()->for($gallery)->create([
+        'version_count' => 2,
+        'path' => 'galleries/current.mp4',
+        'disk' => 's3',
+    ]);
+
+    PhotoVersion::factory()->for($photo)->create([
+        'version_number' => 1,
+        'path' => 'galleries/old.mp4',
+        'disk' => 's3',
+    ]);
+
+    $this->actingAs($this->user);
+
+    $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
+    $page->wait(0.5);
+
+    $page->click('[data-photo-versions]');
+    $page->wait(0.5);
+
+    $state = $page->script(<<<'JS'
+        (() => {
+            const stage = document.querySelector('[data-video-compare]')
+
+            if (! stage) {
+                return { stage: false }
+            }
+
+            return {
+                stage: true,
+                players: stage.querySelectorAll('video').length,
+                controls: stage.querySelectorAll('[data-video-compare-controls]').length,
+                leftSrc: stage.querySelector('[data-video-compare-left]').getAttribute('src'),
+                rightSrc: stage.querySelector('[data-video-compare-right]').getAttribute('src'),
+                rightMuted: stage.querySelector('[data-video-compare-right]').muted,
+            }
+        })()
+    JS);
+
+    expect($state)->toBe([
+        'stage' => true,
+        'players' => 2,
+        'controls' => 1,
+        'leftSrc' => 'https://cdn.example.test/bucket/galleries/current.mp4',
+        'rightSrc' => 'https://cdn.example.test/bucket/galleries/old.mp4',
+        'rightMuted' => true,
+    ]);
+});
+
+/*
+ * Regression: the version badge showed `version_count`, a monotonically
+ * growing sequence counter, so deleting every retained version still showed
+ * "2 versions" on the wall and in the viewer.
+ */
+test('the version badge counts stored versions, not the sequence counter', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'version_count' => 3,
+        'status' => 'processed',
+        'path' => 'galleries/current.jpg',
+    ]);
+
+    $first = PhotoVersion::factory()->for($photo)->create(['version_number' => 1, 'path' => 'galleries/v1.jpg']);
+    PhotoVersion::factory()->for($photo)->create(['version_number' => 2, 'path' => 'galleries/v2.jpg']);
+
+    expect($photo->fresh()->versionTotalCount())->toBe(3)
+        ->and($photo->fresh()->hasStoredVersions())->toBeTrue();
+
+    $first->delete();
+
+    expect($photo->fresh()->versionTotalCount())->toBe(2)
+        ->and($photo->fresh()->hasStoredVersions())->toBeTrue();
+});
+
+test('the wall hides the version badge once every version is deleted', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'version_count' => 2,
+        'status' => 'processed',
+        'path' => 'galleries/current.jpg',
+    ]);
+
+    $version = PhotoVersion::factory()->for($photo)->create(['version_number' => 1, 'path' => 'galleries/v1.jpg']);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $photo, 'manageable' => true])
+        ->assertSee('data-photo-versions', false);
+
+    $version->delete();
+
+    $fresh = $photo->fresh();
+
+    expect($fresh->hasStoredVersions())->toBeFalse()
+        ->and($fresh->versionTotalCount())->toBe(1);
+
+    Livewire::actingAs($this->user)
+        ->test('photo-versions', ['photo' => $fresh, 'manageable' => true])
+        ->assertDontSee('data-photo-versions', false);
+});
+
+test('deleting a version invalidates the cached gallery listing', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'version_count' => 2,
+        'status' => 'processed',
+        'path' => 'galleries/current.jpg',
+    ]);
+
+    $version = PhotoVersion::factory()->for($photo)->create(['version_number' => 1, 'path' => 'galleries/v1.jpg']);
+
+    // Warm the cache the wall reads its ordered ids from.
+    $before = Photo::galleryCacheVersion($gallery->id);
+
+    $version->delete();
+
+    expect(Photo::galleryCacheVersion($gallery->id))->toBeGreaterThan($before);
+});

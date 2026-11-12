@@ -98,6 +98,64 @@ versions or running `photos:collapse-versions` does not break the data:
 - `replaceCurrentVersion` keeps the version number, so an in-place replacement
   does not mark annotations as outdated.
 
+## Timestamped comments on video
+
+Video comments use the same table and the same version bookkeeping as image
+pins, with `photo_comments.time_seconds` as the anchor instead of `x`/`y`:
+
+- A comment is therefore plain, spatial (`x`/`y`) or temporal
+  (`time_seconds`). `PhotoComment::hasCoordinates()` still means "image pin";
+  `hasTimestamp()` and `isAnchored()` cover the temporal case, so the
+  annotation counters and the dock toggle keep their meaning.
+- The playhead is captured client-side when the comment composer opens; the
+  video pauses first, then `$wire.setPendingTime(seconds)` stores the value
+  with the comment. `annotated_version_number` is recorded the same way as a
+  pin, so a comment made on an older cut is flagged when the current version
+  changes.
+- The comment list renders a `mm:ss` chip. Clicking it dispatches
+  `video-seek`, which seeks the player and closes the composer. A deep link
+  with `?comment={id}` also seeks, and the deep link wins over the remembered
+  position.
+- Comments follow the gallery's `are_comments_enabled` flag. There is no
+  separate video-annotation toggle.
+
+## Video playback
+
+`resources/views/components/video-player.blade.php` is the single player for
+both viewers. It is a native `<video>` with a custom control bar (play/pause,
+rail with comment markers, time, volume, playback speed, fullscreen) instead of
+the `controls` attribute, so the app can draw timestamped markers and hand the
+playhead to Livewire.
+
+- The Alpine factories live in `partials/video-player-script.blade.php` and are
+  only included when a video is actually on screen. Image and PDF pages load
+  nothing.
+- The last played second is stored per photo in this browser under
+  `picstome-video-position:{photoId}`. It is written on a whole-second
+  boundary during playback plus on pause, `visibilitychange` and `pagehide`,
+  restored on `loadedmetadata`, skipped inside the last five seconds and
+  cleared on `ended`.
+- The file is muted and autoplays (muted playback is allowed by browsers, and
+  it matches the previous viewer behaviour). Opening a video through a
+  timestamped comment deep link starts paused at that second instead, because
+  the visitor asked to look at one frame.
+
+## Video versions
+
+`PhotoUrlService::video()` and `PhotoVersion::video_url` give videos a
+playable, non-CDN-resized URL. The versions modal (`⚡photo-versions`) renders
+two branches:
+
+- images keep the zoom/pan comparison;
+- videos get two `<video>` elements driven by one `videoCompare` control bar.
+  The left player owns the audio, the right one is muted and follows the
+  primary timeline, corrected past 0.25s of drift, so the same second of two
+  cuts is visible side by side.
+
+Version tiles for videos show a film icon instead of a broken `<img>`: no
+poster frames are generated. Restore and delete are unchanged and remain
+owner-only; shared visitors compare read-only.
+
 ## Feature flag and rollback
 
 `PICSTOME_FILE_VERSIONS_ENABLED=false` is the emergency deprecation mode. It:

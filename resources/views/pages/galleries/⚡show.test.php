@@ -569,6 +569,12 @@ describe('Rating filters and sorting', function () {
             'version_count' => 3,
         ]);
 
+        // The versions sort counts stored rows, not the `version_count`
+        // sequence, so the fixture needs real history for the order to mean
+        // anything.
+        PhotoVersion::factory()->for($newer)->create(['version_number' => 1]);
+        PhotoVersion::factory()->for($newer)->create(['version_number' => 2]);
+
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
             ->call('sortBy', 'date');
         expect($component->allPhotos->pluck('id')->all())->toBe([$newer->id, $older->id]);

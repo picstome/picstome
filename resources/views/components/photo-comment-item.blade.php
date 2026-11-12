@@ -8,6 +8,7 @@
 
 @php
     $isAnnotation = $comment->hasCoordinates();
+    $isTimestamp = $comment->hasTimestamp();
     $isOtherVersion = $comment->isFromOtherVersion($currentVersionNumber);
     $versionAvailable = in_array((int) $comment->annotated_version_number, $versionNumbers, true);
 @endphp
@@ -49,6 +50,26 @@
                 class="text-brand-green dark:text-brand-sage size-3.5 shrink-0"
                 :title="__('Photo annotation')"
             />
+        @endif
+
+        @if ($isTimestamp)
+            {{--
+                The chip is the way back into the video: clicking it seeks the
+                player to the exact second and closes the composer.
+            --}}
+            <button
+                type="button"
+                class="bg-brand-green text-brand-cream hover:bg-brand-green-deep inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold tabular-nums transition"
+                title="{{ __('Jump to :time', ['time' => $comment->timecode()]) }}"
+                x-on:click="
+                    $dispatch('video-seek', { seconds: {{ (float) $comment->time_seconds }} })
+                    $dispatch('modal:add-comment-close')
+                "
+                data-comment-time="{{ $comment->timecode() }}"
+            >
+                <x-icon name="play" variant="solid" class="size-2.5" />
+                {{ $comment->timecode() }}
+            </button>
         @endif
 
         @if ($isOtherVersion)

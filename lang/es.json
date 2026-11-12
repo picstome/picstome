@@ -1565,5 +1565,19 @@
     "Up to 1 TB storage": "Hasta 1 TB de almacenamiento",
     "Up to 1000× more space than the free plan.": "Hasta 1000 veces más espacio que el plan gratuito.",
     "What you unlock with Pro": "Lo que desbloqueas con Pro",
-    "Your studio, without limits": "Tu estudio, sin límites"
+    "Your studio, without limits": "Tu estudio, sin límites",
+    "Comment at :time": "Comentario en :time",
+    "Remove timestamp": "Quitar marca de tiempo",
+    "Jump to :time": "Ir a :time",
+    "Seek video": "Buscar en el vídeo",
+    "Playback speed": "Velocidad de reproducción",
+    "Play": "Reproducir",
+    "Pause": "Pausar",
+    "Mute": "Silenciar",
+    "Unmute": "Activar sonido",
+    "Volume": "Volumen",
+    "Fullscreen": "Pantalla completa",
+    "Your browser cannot play this video.": "Tu navegador no puede reproducir este vídeo.",
+    "This video could not be loaded.": "No se pudo cargar este vídeo.",
+    "The right version could not be loaded. The left one still plays.": "No se pudo cargar la versión derecha. La izquierda sigue reproduciéndose."
 }

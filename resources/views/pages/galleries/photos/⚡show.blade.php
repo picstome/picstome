@@ -26,6 +26,19 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
     public ?float $pendingPinY = null;
 
+    /**
+     * Playhead position captured when the comment composer opens on a video.
+     * Stored with the comment as `time_seconds`, the temporal counterpart of
+     * an image pin.
+     */
+    public ?float $pendingTimeSeconds = null;
+
+    /**
+     * Second the player should start at, set when a deep link points at a
+     * timestamped comment. A deep link wins over the remembered position.
+     */
+    public ?float $seekToSeconds = null;
+
     #[Url]
     public $navigateFavorites = false;
 
@@ -103,6 +116,10 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     /**
      * Deep link from the guest comment notification: open the comment list and
      * highlight the matching comment.
+     *
+     * For a timestamped comment on a video the player must land on that exact
+     * second, not on the remembered playback position, so the target is handed
+     * to the player as `startAt`.
      */
     protected function focusRequestedComment(): void
     {
@@ -120,6 +137,10 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
         $this->dispatch('focus-comment', id: $comment->id);
         $this->openModal('add-comment');
+
+        if ($comment->hasTimestamp()) {
+            $this->seekToSeconds = (float) $comment->time_seconds;
+        }
     }
 
     public function favorite()
@@ -323,6 +344,25 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         $this->pendingPinY = null;
     }
 
+    /**
+     * Anchor the comment about to be written to the current playhead. The
+     * browser pauses the video and sends its position when the comment
+     * composer opens; the value is only stored with the comment text.
+     */
+    public function setPendingTime(float $seconds): void
+    {
+        $this->authorize('view', $this->photo);
+
+        abort_unless($this->photo->isVideo(), 404);
+
+        $this->pendingTimeSeconds = round(max(0, $seconds), 2);
+    }
+
+    public function cancelPendingTime(): void
+    {
+        $this->pendingTimeSeconds = null;
+    }
+
     public function addComment()
     {
         $this->validate([
@@ -330,13 +370,15 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         ]);
 
         $hasPin = $this->pendingPinX !== null && $this->pendingPinY !== null && $this->photo->isImage();
+        $hasTimestamp = $this->pendingTimeSeconds !== null && $this->photo->isVideo();
 
         $this->photo->comments()->create([
             'user_id' => Auth::id(),
             'comment' => $this->commentText,
             'x' => $hasPin ? $this->pendingPinX : null,
             'y' => $hasPin ? $this->pendingPinY : null,
-            'annotated_version_number' => $hasPin ? $this->photo->currentVersionNumber() : null,
+            'time_seconds' => $hasTimestamp ? $this->pendingTimeSeconds : null,
+            'annotated_version_number' => $hasPin || $hasTimestamp ? $this->photo->currentVersionNumber() : null,
         ]);
 
         $this->commentText = '';
@@ -347,6 +389,14 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
 
             $this->closeModal('add-comment');
         }
+
+        if ($hasTimestamp) {
+            $this->pendingTimeSeconds = null;
+
+            $this->closeModal('add-comment');
+        }
+
+        $this->broadcastVideoMarkers();
     }
 
     public ?int $pendingCommentId = null;
@@ -365,6 +415,8 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         abort_unless($comment->photo->gallery->team->owner->is(Auth::user()), 403);
 
         $comment->delete();
+
+        $this->broadcastVideoMarkers();
     }
 
     public function removeAsCover()
@@ -421,6 +473,47 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     public function comments()
     {
         return $this->photo->comments()->latest()->with('user')->get();
+    }
+
+    /**
+     * The player draws markers from its initial render only; this pushes the
+     * new list after a comment is written or deleted.
+     */
+    protected function broadcastVideoMarkers(): void
+    {
+        if (! $this->photo->isVideo()) {
+            return;
+        }
+
+        unset($this->comments, $this->videoMarkers);
+
+        $this->dispatch(
+            'video-markers-updated',
+            photoId: $this->photo->id,
+            markers: $this->videoMarkers,
+        );
+    }
+
+    /**
+     * Markers for the video rail, keyed by comment. Rendered by the player on
+     * first paint and pushed on `video-markers-updated` after a comment write,
+     * because Alpine does not re-evaluate `x-data` on a Livewire morph.
+     *
+     * @return list<array{id: int, time: float, label: string, aria: string}>
+     */
+    #[Computed]
+    public function videoMarkers(): array
+    {
+        return $this->comments
+            ->filter(fn (PhotoComment $comment) => $comment->hasTimestamp())
+            ->map(fn (PhotoComment $comment) => [
+                'id' => $comment->id,
+                'time' => (float) $comment->time_seconds,
+                'label' => $comment->timecode(),
+                'aria' => __('Jump to :time', ['time' => $comment->timecode()]),
+            ])
+            ->values()
+            ->all();
     }
 
     #[Computed]
@@ -747,7 +840,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         },
     }"
     x-init="initPhotoViewer()"
-    data-full-image-url="{{ $photo->url }}"
+    data-full-image-url="{{ $photo->isImage() ? $photo->url : '' }}"
     @keyup.window.left="$refs.previous && Livewire.navigate($refs.previous.href)"
     @keyup.window.right="$refs.next && Livewire.navigate($refs.next.href)"
     @keyup.window.f="$wire.favorite()"
@@ -758,7 +851,7 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
     x-on:rating-saved.window="onRatingSaved($event.detail)"
     x-on:favorite-toggled.window="pulseHeart()"
     x-on:archive-saved.window="onArchiveSaved($event.detail)"
-    x-on:modal-close.document="if ($event.detail.name === 'add-comment') $wire.cancelPendingPin()"
+    x-on:modal-close.document="if ($event.detail.name === 'add-comment') { $wire.cancelPendingPin(); $wire.cancelPendingTime() }"
     style="height: 100vh; height: 100dvh;"
     class="flex flex-col"
 >
@@ -812,41 +905,12 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
                 :can-annotate="true"
             />
         @elseif ($photo->isVideo())
-            <video
-                x-data="{
-                    key: 'video-pos-{{ $photo->id }}',
-                    savePosition(e) {
-                        if (!e.target.seeking && !e.target.paused) {
-                            localStorage.setItem(this.key, e.target.currentTime);
-                        }
-                    },
-                    restorePosition(e) {
-                        const saved = localStorage.getItem(this.key);
-                        if (saved && !isNaN(saved) && saved > 0 && saved < e.target.duration - 2) {
-                            e.target.currentTime = parseFloat(saved);
-                        }
-                    },
-                    clearPosition() {
-                        localStorage.removeItem(this.key);
-                    }
-                }"
-                x-init="
-                    $el.addEventListener('loadedmetadata', restorePosition)
-                    $el.addEventListener('timeupdate', savePosition)
-                    $el.addEventListener('ended', clearPosition)
-                "
-                class="mx-auto h-full w-full max-w-full bg-black/60 object-contain dark:bg-white/60"
-                controls
-                autoplay
-                muted
-                playsinline
-            >
-                <source
-                    src="{{ $photo->url }}"
-                    type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}"
-                />
-                Your browser does not support the video tag.
-            </video>
+            <x-video-player
+                :$photo
+                :comments="$this->comments"
+                :markers="$this->videoMarkers"
+                :start-at="$this->seekToSeconds"
+            />
         @elseif ($photo->isPdf())
             <div class="flex h-full w-full flex-col items-center justify-center gap-4 px-8 text-center">
                 <x-icon name="document-text" class="size-16 text-zinc-400 dark:text-white/50" />
@@ -1010,11 +1074,17 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             @endif
 
             <x-ts-modal-trigger name="add-comment">
+                {{-- On a video the playhead is the anchor: pause and capture
+                     the current second before the composer opens. The event is
+                     always bound and the player ignores it when absent, because
+                     a Blade conditional inside a component tag stops Blade from
+                     compiling the tag and emits it as text. --}}
                 <x-dock-button
                     icon="chat-bubble-left-ellipsis"
                     :label="__('Comments (:count)', ['count' => $this->comments->count()])"
                     :tone="$this->comments->isEmpty() ? 'default' : 'ink'"
                     data-photo-comments
+                    x-on:click="$dispatch('video-capture-time')"
                 />
             </x-ts-modal-trigger>
 
@@ -1115,6 +1185,23 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
             @endif
 
             <form wire:submit="addComment" class="space-y-4 pt-2">
+                @if ($photo->isVideo() && $pendingTimeSeconds !== null)
+                    <div class="flex items-center gap-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-zinc-800">
+                        <x-icon name="clock" class="size-4 shrink-0 text-zinc-500" />
+                        <span>{{ __('Comment at :time', ['time' => \App\Models\PhotoComment::formatTimecode($pendingTimeSeconds)]) }}</span>
+                        <x-ts-spacer />
+                        <x-ts-button
+                            variant="subtle"
+                            size="xs"
+                            square
+                            icon="x-mark"
+                            wire:click="cancelPendingTime"
+                            :aria-label="__('Remove timestamp')"
+                            data-clear-comment-time
+                        />
+                    </div>
+                @endif
+
                 <x-ts-textarea wire:model.defer="commentText" :label="__('Add a comment')" rows="3" />
 
                 <div class="flex">
@@ -1147,6 +1234,14 @@ new #[Layout('layouts.app', ['fullScreen' => true])] class extends Component
         @include('partials.closeup-panel-script')
     </script>
 @endscript
+
+@if ($photo->isVideo())
+    @script
+        <script>
+            @include('partials.video-player-script')
+        </script>
+    @endscript
+@endif
 
 @push('head')
     @if ($photo->isImage())

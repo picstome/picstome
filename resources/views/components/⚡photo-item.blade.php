@@ -138,10 +138,11 @@ new class extends Component
         </div>
     @endif
 
-    @if (config('picstome.file_versions_enabled') && $photo->version_count > 1)
+    {{-- Current file + retained versions, never the sequence counter. --}}
+    @if (config('picstome.file_versions_enabled') && $photo->hasStoredVersions())
         <div class="absolute top-1.5 right-1.5 z-10 flex">
             <x-ts-badge icon="rectangle-stack" size="sm" color="zinc" variant="solid">
-                {{ $photo->version_count }}
+                {{ $photo->versionTotalCount() }}
             </x-ts-badge>
         </div>
     @endif

@@ -13,6 +13,10 @@ use Illuminate\Validation\ValidationException;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Invoice PDFs are written to the configured disk; without this the
+    // suite writes to the real S3 bucket.
+    Storage::fake(config('picstome.disk'));
+
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
     $this->team->update(['monthly_invoice_limit' => 10]);

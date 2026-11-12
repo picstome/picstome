@@ -278,6 +278,51 @@ class Photo extends Model
     }
 
     /**
+     * Memoised version row count for models that did not eager load it.
+     */
+    protected ?int $storedVersionCountCache = null;
+
+    /**
+     * How many historical rows are stored for this logical photo. The current
+     * file is not one of them, so a photo with one edit has one row here.
+     *
+     * This is not `version_count`: that column is a sequence counter that only
+     * grows, so the next upload always gets a fresh `version_number` even
+     * after older rows are deleted. Rewinding it would make two rows share a
+     * number.
+     *
+     * The count comes from `versions_count` when the query eager loaded it
+     * (`withCount('versions')`, one aggregate for the whole page) and is
+     * memoised per model otherwise, so a template that asks three times does
+     * not run three queries.
+     */
+    public function storedVersionCount(): int
+    {
+        if (isset($this->versions_count)) {
+            return (int) $this->versions_count;
+        }
+
+        return $this->storedVersionCountCache ??= $this->versions()->count();
+    }
+
+    /**
+     * Versions a visitor can see for this photo: the current file plus every
+     * retained historical row. This is the number the badge shows.
+     */
+    public function versionTotalCount(): int
+    {
+        return $this->storedVersionCount() + 1;
+    }
+
+    /**
+     * Whether there is at least one older version to compare against.
+     */
+    public function hasStoredVersions(): bool
+    {
+        return $this->storedVersionCount() > 0;
+    }
+
+    /**
      * Copy the current photo state into the version history.
      */
     public function snapshotAsVersion(?int $versionNumber = null): PhotoVersion
@@ -629,6 +674,15 @@ class Photo extends Model
     protected function thumbnailUrl(): Attribute
     {
         return Attribute::get(fn () => $this->isImage() ? PhotoUrlService::make($this)->thumbnail() : null);
+    }
+
+    /**
+     * Playable URL for a video, shared by the viewers and the version
+     * comparison so both read the exact same origin and cache-busting query.
+     */
+    protected function videoUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->isVideo() ? PhotoUrlService::make($this)->video() : null);
     }
 
     protected function largeThumbnailUrl(): Attribute

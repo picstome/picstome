@@ -23,4 +23,15 @@ class PhotoCommentFactory extends Factory
             'comment' => $this->faker->sentence(),
         ];
     }
+
+    /**
+     * A comment anchored to a second of a video.
+     */
+    public function atTime(float $seconds, ?int $versionNumber = 1): static
+    {
+        return $this->state(fn () => [
+            'time_seconds' => $seconds,
+            'annotated_version_number' => $versionNumber,
+        ]);
+    }
 }

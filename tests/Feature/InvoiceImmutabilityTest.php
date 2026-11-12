@@ -6,10 +6,15 @@ use App\Models\InvoiceSetting;
 use App\Models\User;
 use App\Services\InvoiceIssuanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Invoice PDFs are written to the configured disk; without this the
+    // suite writes to the real S3 bucket.
+    Storage::fake(config('picstome.disk'));
+
     $this->user = User::factory()->withPersonalTeam()->create();
     $this->team = $this->user->currentTeam;
     $this->settings = InvoiceSetting::factory()->for($this->team)->create();
