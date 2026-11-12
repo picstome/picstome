@@ -457,6 +457,15 @@ new class extends Component
                     <x-ts-description>{{ __('Set how many invoices this user can issue per month. Leave empty for unlimited.') }}</x-ts-description>
                 </x-ts-field>
 
+                <x-ts-field>
+                    <x-ts-label>{{ __('Payments per month') }}</x-ts-label>
+                    <x-ts-input-group>
+                        <x-ts-input wire:model="userForm.monthly_payment_limit" type="number" step="1" />
+                        <x-ts-input-group-suffix>/{{ __('month') }}</x-ts-input-group-suffix>
+                    </x-ts-input-group>
+                    <x-ts-description>{{ __('Set how many payments this user can receive per month. Leave empty for unlimited.') }}</x-ts-description>
+                </x-ts-field>
+
                 <div class="flex">
                     <x-ts-spacer />
                     <x-ts-button type="submit" variant="primary">{{ __('Save changes') }}</x-ts-button>

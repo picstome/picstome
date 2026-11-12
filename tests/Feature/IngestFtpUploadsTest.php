@@ -235,7 +235,7 @@ describe('ingest job', function () {
         expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 
-    it('leaves the file in the inbox when the team is out of storage', function () {
+    it('deletes the file when the team is out of storage and pauses the account', function () {
         $this->gallery->team->update(['custom_storage_limit' => 1]);
 
         $path = putUpload($this->account, 'DSC_0001.JPG');
@@ -243,7 +243,8 @@ describe('ingest job', function () {
         (new IngestFtpUpload($this->account->id, $path))->handle();
 
         expect($this->gallery->photos()->count())->toBe(0);
-        expect(Storage::disk('s3')->exists($path))->toBeTrue();
+        expect(Storage::disk('s3')->exists($path))->toBeFalse();
+        expect($this->account->fresh()->isQuotaPaused())->toBeTrue();
     });
 
     it('does not create a gallery when storage is full and nothing is routed', function () {
@@ -255,7 +256,7 @@ describe('ingest job', function () {
         (new IngestFtpUpload($this->account->id, $path))->handle();
 
         expect($this->account->team->galleries()->count())->toBe(0);
-        expect(Storage::disk('s3')->exists($path))->toBeTrue();
+        expect(Storage::disk('s3')->exists($path))->toBeFalse();
     });
 
     it('does nothing for inactive accounts', function () {

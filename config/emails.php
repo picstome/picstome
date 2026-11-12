@@ -1,6 +1,7 @@
 <?php
 
 use App\Notifications\BookingCreated;
+use App\Notifications\CameraUploadsPaused;
 use App\Notifications\ContractExecuted;
 use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
@@ -385,6 +386,39 @@ return [
             ['key' => 'You have used :percent% of your storage. When it fills up, you won\'t be able to upload more photos or videos.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'See plans', 'label' => 'Button', 'type' => 'text'],
             ['key' => 'Dismiss', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'camera_uploads_paused' => [
+        'notification' => CameraUploadsPaused::class,
+        'label' => [
+            'en' => 'Camera uploads paused',
+            'es' => 'Subidas de cámara en pausa',
+        ],
+        'description' => [
+            'en' => 'Tells the owner that shots sent from the camera are being discarded because the plan has no storage left.',
+            'es' => 'Avisa al dueño de que las fotos enviadas desde la cámara se descartan porque el plan se ha quedado sin espacio.',
+        ],
+        'trigger' => [
+            'en' => 'A camera upload arrives and the team has no storage left; sent once per pause.',
+            'es' => 'Llega una subida de cámara y el equipo no tiene espacio; una vez por pausa.',
+        ],
+        'when' => [
+            'en' => 'When the upload is rejected, queued',
+            'es' => 'Cuando se rechaza la subida, en cola',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'Camera uploads paused: no storage left', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello :name,', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Your studio has used all of its storage, so photos sent from the camera are being discarded.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Used: :used of :total.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Free up space or upgrade your plan to resume camera uploads.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'See plans', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
         ],
     ],
 

@@ -142,9 +142,8 @@ test('cannot create a gallery with an invalid expiration date', function () {
     expect($this->team->galleries()->count())->toBe(0);
 });
 
-test('subscribed users can start a live shoot', function () {
+test('free users can start a live shoot', function () {
     config(['picstome.ftp_uploads.sftpgo_url' => null]);
-    Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->call('startLiveShoot');
@@ -240,7 +239,9 @@ test('live shoot adopts the empty daily gallery created by FTP ingest', function
     expect($daily->fresh()->daily_shoot_date)->toBeNull();
 });
 
-test('starting a live shoot requires a subscription', function () {
+test('starting a live shoot requires available storage', function () {
+    $this->team->update(['custom_storage_limit' => 0]);
+
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
         ->call('startLiveShoot');
 

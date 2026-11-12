@@ -84,7 +84,7 @@ class GalleryForm extends Form
 
     private function getExpirationRules($team)
     {
-        $maxExpirationDate = now()->addYear()->format('Y-m-d');
+        $maxExpirationDate = $this->maxExpirationDate();
 
         if (isset($this->gallery) && $this->gallery->is_public) {
             return [
@@ -101,12 +101,31 @@ class GalleryForm extends Form
             'before_or_equal:'.$maxExpirationDate,
         ];
 
-        if (! $team?->subscribed()) {
+        if (! $team?->hasUnlimitedRetention()) {
             array_unshift($rules, 'required');
         } else {
             array_unshift($rules, 'nullable');
         }
 
         return $rules;
+    }
+
+    /**
+     * Latest expiration date allowed for this gallery.
+     *
+     * Free and lifetime teams are capped at one year from the gallery
+     * creation, so the limit cannot be pushed forward every time the form is
+     * saved. Galleries created before the rule existed may already expire
+     * later: their current date is kept as the ceiling instead of forcing a
+     * destructive edit.
+     */
+    private function maxExpirationDate(): string
+    {
+        if (! isset($this->gallery)) {
+            return now()->addYear()->format('Y-m-d');
+        }
+
+        return $this->gallery->retentionCap()?->format('Y-m-d')
+            ?? now()->addYear()->format('Y-m-d');
     }
 }

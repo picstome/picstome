@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\CameraUploadsPaused;
 use App\Services\SftpgoService;
 use Database\Factories\FtpAccountFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -24,6 +25,8 @@ class FtpAccount extends Model
             'password' => 'encrypted',
             'active' => 'boolean',
             'last_upload_at' => 'datetime',
+            'quota_paused_at' => 'datetime',
+            'quota_paused_notified_at' => 'datetime',
         ];
     }
 
@@ -35,6 +38,101 @@ class FtpAccount extends Model
     public function activeGallery()
     {
         return $this->belongsTo(Gallery::class, 'active_gallery_id');
+    }
+
+    /**
+     * Whether camera uploads are paused because the team ran out of storage.
+     */
+    public function isQuotaPaused(): bool
+    {
+        return $this->quota_paused_at !== null;
+    }
+
+    /**
+     * Pause the account after a rejected upload.
+     *
+     * Returns true only for the transition, so the caller can notify the
+     * photographer once per pause instead of once per discarded shot.
+     */
+    public function pauseForQuota(): bool
+    {
+        if ($this->isQuotaPaused()) {
+            return false;
+        }
+
+        $this->forceFill(['quota_paused_at' => now()])->save();
+
+        return true;
+    }
+
+    /**
+     * Resume camera uploads once there is space again. The notification flag
+     * is cleared too, so the next pause informs the photographer again.
+     */
+    public function resumeFromQuota(): void
+    {
+        if (! $this->isQuotaPaused()) {
+            return;
+        }
+
+        $this->forceFill([
+            'quota_paused_at' => null,
+            'quota_paused_notified_at' => null,
+        ])->save();
+    }
+
+    /**
+     * Mark that the "uploads paused" email was sent for the current pause.
+     */
+    public function markQuotaPauseNotified(): void
+    {
+        if ($this->quota_paused_notified_at !== null) {
+            return;
+        }
+
+        $this->forceFill(['quota_paused_notified_at' => now()])->save();
+    }
+
+    /**
+     * Delete every file still waiting in the inbox. Returns how many were
+     * removed.
+     *
+     * Called when the account is paused: files that arrived in the same burst
+     * as the rejected one would otherwise stay on S3 indefinitely.
+     */
+    public function purgeInbox(): int
+    {
+        $disk = static::disk();
+        $deleted = 0;
+
+        foreach ($disk->getDriver()->listContents($this->inboxPath(), true) as $item) {
+            if (! $item->isFile()) {
+                continue;
+            }
+
+            if ($disk->delete($item->path())) {
+                $deleted++;
+            }
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * Tell the photographer that camera uploads stopped because the team ran
+     * out of storage. Sent once per pause, with the number of discarded shots.
+     */
+    public function notifyOwnerOfQuotaPause(int $discardedFiles): void
+    {
+        $owner = $this->team?->owner;
+
+        if (! $owner) {
+            return;
+        }
+
+        $owner->notify(new CameraUploadsPaused($this, $discardedFiles));
+
+        $this->markQuotaPauseNotified();
     }
 
     /**

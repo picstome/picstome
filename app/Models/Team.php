@@ -549,6 +549,41 @@ class Team extends Model
     }
 
     /**
+     * Whether the team can still store at least one more byte. Unlimited
+     * storage (null limit) is always considered available.
+     *
+     * Reads fresh bytes instead of the cached display value: freeing space and
+     * immediately restarting a camera session must work.
+     */
+    public function hasStorageLeft(): bool
+    {
+        if ($this->storage_limit === null) {
+            return true;
+        }
+
+        return StorageUsageService::forTeamFresh($this) < $this->storage_limit;
+    }
+
+    /**
+     * Whether the team can keep galleries without an expiration date.
+     *
+     * Only an active subscription grants unlimited retention. Lifetime is
+     * deliberately excluded even though `subscribed()` returns true for it:
+     * the one-time plan keeps its privileges (unlimited invoices, contracts
+     * and payments) but its galleries expire one year after being created.
+     */
+    public function hasUnlimitedRetention(): bool
+    {
+        if ($this->lifetime_at !== null) {
+            return false;
+        }
+
+        $subscription = $this->subscription('default');
+
+        return $subscription !== null && $subscription->valid();
+    }
+
+    /**
      * Check if Stripe onboarding is complete for this team.
      */
     public function hasCompletedOnboarding(): bool

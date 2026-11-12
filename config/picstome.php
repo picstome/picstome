@@ -101,6 +101,13 @@ return [
     'personal_team_monthly_invoice_limit' => 1,
 
     /**
+     * Maximum number of payments a free team can receive per month.
+     * Only completed payments consume this limit, so an abandoned checkout
+     * does not use up the month.
+     */
+    'personal_team_monthly_payment_limit' => 1,
+
+    /**
      * Maximum allowed pixels for original size images (width * height).
      * This limit is set because wsrv.nl cannot process images larger than this.
      */

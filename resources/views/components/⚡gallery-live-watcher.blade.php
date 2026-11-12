@@ -37,6 +37,13 @@ new class extends Component
 
     public ?int $lastReadyPhotoId = null;
 
+    /**
+     * Whether camera uploads are paused because the team has no storage left.
+     * The owner page shows it as a banner; the client page hides the live
+     * indicator instead of leaking the photographer's billing state.
+     */
+    public bool $quotaPaused = false;
+
     public function mount(
         Gallery $gallery,
         bool $scanInbox = false,
@@ -47,6 +54,7 @@ new class extends Component
         $this->pollSeconds = max(1, (int) config('picstome.live_gallery_poll_seconds', 5));
         $this->lastPhotoId = $this->latestPhotoId();
         $this->lastReadyPhotoId = $this->latestReadyPhotoId();
+        $this->quotaPaused = $this->activeFtpAccount()?->isQuotaPaused() ?? false;
     }
 
     public function check(): void
@@ -54,11 +62,15 @@ new class extends Component
         $account = $this->activeFtpAccount();
         $remoteMode = $account !== null && (int) $account->active_gallery_id === (int) $this->gallery->id;
 
-        if ($this->stopWhenRemoteModeEnds && ! $remoteMode) {
+        // A paused account cannot receive more shots, so the client page must
+        // not keep showing a "live" session that will never deliver anything.
+        if ($this->stopWhenRemoteModeEnds && (! $remoteMode || $account?->isQuotaPaused())) {
             $this->dispatch('gallery-remote-mode-ended');
 
             return;
         }
+
+        $this->syncQuotaPause($account);
 
         if ($this->scanInbox && $remoteMode && $account) {
             $this->scanInboxNow($account);
@@ -101,6 +113,25 @@ new class extends Component
             ->where('active', true)
             ->whereNotNull('active_gallery_id')
             ->first();
+    }
+
+    /**
+     * Emit the pause event only on transitions, so the owner page does not
+     * re-render the same banner every poll tick.
+     */
+    protected function syncQuotaPause(?FtpAccount $account): void
+    {
+        $paused = $account?->isQuotaPaused() ?? false;
+
+        if ($paused === $this->quotaPaused) {
+            return;
+        }
+
+        $this->quotaPaused = $paused;
+
+        if ($paused) {
+            $this->dispatch('ftp-quota-paused');
+        }
     }
 
     protected function latestPhotoId(): ?int

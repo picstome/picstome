@@ -44,52 +44,42 @@ new class extends Component
 }; ?>
 
 @php
+    // Pro does not unlock features the free plan lacks: every feature is
+    // available on free. It only raises the limits, removes the expiration
+    // date and removes the Picstome branding, so the copy must not promise
+    // gated functionality.
+    //
+    // Each row carries the "from → to" numbers instead of repeating them in a
+    // separate summary: the old pills duplicated this list and overflowed the
+    // narrow hero column.
     $planBenefits = [
-        [
-            'icon' => 'document-text',
-            'title' => __('Unlimited invoices'),
-            'description' => __('Issue as many as you need.'),
-            'is_new' => true,
-        ],
-        [
-            'icon' => 'clipboard-document-list',
-            'title' => __('Unlimited contracts'),
-            'description' => __('Sign as many as you need.'),
-        ],
         [
             'icon' => 'cloud-arrow-up',
             'title' => __('Up to 1 TB storage'),
-            'description' => __('Up to 1000× more space than the free plan.'),
-        ],
-        [
-            'icon' => 'banknotes',
-            'title' => __('Stripe payments'),
-            'description' => __('Payment links and point of sale.'),
-        ],
-        [
-            'icon' => 'lock-closed',
-            'title' => __('Private galleries'),
-            'description' => __('Passwords, comments and photo annotations.'),
+            'description' => __('1000× more space than the free plan.'),
+            'from' => '1 GB',
+            'to' => '1 TB',
         ],
         [
             'icon' => 'clock',
-            'title' => __('Optional expiry'),
-            'description' => __('Choose when each gallery expires.'),
+            'title' => __('Galleries that never expire'),
+            'description' => __('Keep every gallery, and remove its expiration date.'),
+            'from' => __('1 year'),
+            'to' => __('Never'),
         ],
         [
-            'icon' => 'camera',
-            'title' => __('Camera upload'),
-            'description' => __('Shoot and upload over FTP/SFTP. Keep the original size.'),
+            'icon' => 'document-text',
+            'title' => __('No monthly limits'),
+            'description' => __('Unlimited invoices, contracts and payments.'),
+            'from' => '1',
+            'to' => __('Unlimited'),
         ],
         [
             'icon' => 'paint-brush',
             'title' => __('White label'),
-            'description' => __('No Picstome branding.'),
-        ],
-        [
-            'icon' => 'user-group',
-            'title' => __('Human support'),
-            'description' => __('Real people by email.'),
+            'description' => __('No Picstome branding on galleries and documents.'),
+            'from' => 'Picstome',
+            'to' => __('Your brand'),
         ],
     ];
 @endphp
@@ -100,10 +90,6 @@ new class extends Component
             <div
                 class="bg-brand-sage/30 dark:bg-brand-green/20 pointer-events-none absolute -right-16 -bottom-20 size-52 rounded-full blur-3xl"
             ></div>
-            <x-icon
-                name="sparkles"
-                class="text-brand-green/10 dark:text-brand-sage/10 pointer-events-none absolute right-4 bottom-3 size-24"
-            />
 
             <div class="relative">
                 <span
@@ -114,42 +100,14 @@ new class extends Component
                 </span>
 
                 <h1 class="text-brand-green dark:text-brand-cream mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-                    {{ __('Your studio, without limits') }}
+                    {{ __('Take your Picstome to the next level') }}
                 </h1>
 
                 <p class="text-brand-ink/70 dark:text-brand-sage/75 mt-2 text-sm font-medium">
-                    {{ __('The free plan includes 1 invoice, 1 contract and 1 GB of storage. With Pro you invoice, contract and charge without limits.') }}
+                    {{ __('The free plan includes 1 GB of storage, 1 invoice, 1 contract and 1 payment per month. With Pro you get more space, galleries that never expire, no monthly limits and white label branding.') }}
                 </p>
             </div>
 
-            <dl class="border-brand-green/10 relative mt-4 grid grid-cols-3 gap-2 border-t pt-3 dark:border-white/10">
-                <div class="bg-brand-sage-soft/70 dark:bg-brand-green/15 rounded-xl px-2.5 py-2">
-                    <dt class="text-brand-green/70 dark:text-brand-sage/70 text-[10px] font-semibold tracking-wide uppercase">
-                        {{ __('Invoices') }}
-                    </dt>
-                    <dd class="text-brand-ink dark:text-brand-cream mt-0.5 text-sm font-semibold whitespace-nowrap">
-                        1 → <span class="text-brand-green dark:text-brand-sage">{{ __('Unlimited') }}</span>
-                    </dd>
-                </div>
-
-                <div class="bg-brand-sage-soft/70 dark:bg-brand-green/15 rounded-xl px-2.5 py-2">
-                    <dt class="text-brand-green/70 dark:text-brand-sage/70 text-[10px] font-semibold tracking-wide uppercase">
-                        {{ __('Contracts') }}
-                    </dt>
-                    <dd class="text-brand-ink dark:text-brand-cream mt-0.5 text-sm font-semibold whitespace-nowrap">
-                        1 → <span class="text-brand-green dark:text-brand-sage">{{ __('Unlimited') }}</span>
-                    </dd>
-                </div>
-
-                <div class="bg-brand-sage-soft/70 dark:bg-brand-green/15 rounded-xl px-2.5 py-2">
-                    <dt class="text-brand-green/70 dark:text-brand-sage/70 text-[10px] font-semibold tracking-wide uppercase">
-                        {{ __('Storage') }}
-                    </dt>
-                    <dd class="text-brand-ink dark:text-brand-cream mt-0.5 text-sm font-semibold whitespace-nowrap">
-                        1 GB → <span class="text-brand-green dark:text-brand-sage">1 TB</span>
-                    </dd>
-                </div>
-            </dl>
         </header>
 
         <section
@@ -157,44 +115,45 @@ new class extends Component
         >
             <div class="flex items-center justify-between gap-3">
                 <h2 class="text-brand-ink dark:text-brand-cream text-base font-semibold">
-                    {{ __('What you unlock with Pro') }}
+                    {{ __('What changes with Pro') }}
                 </h2>
 
                 <x-ts-badge color="green" size="sm" variant="pill">{{ __('All included') }}</x-ts-badge>
             </div>
 
-            <ul class="mt-3 grid flex-1 grid-cols-2 content-start gap-2 sm:grid-cols-3">
+            <ul class="mt-3 grid flex-1 grid-cols-1 content-start gap-2 sm:grid-cols-2">
                 @foreach ($planBenefits as $benefit)
                     <li
-                        class="border-brand-green/10 bg-brand-paper/80 dark:border-white/10 dark:bg-white/5 flex flex-col gap-1 rounded-2xl border p-2.5"
+                        class="border-brand-green/10 bg-brand-paper/80 dark:border-white/10 dark:bg-white/5 flex flex-col gap-2 rounded-2xl border p-3"
                     >
-                        <span class="text-brand-ink dark:text-brand-cream flex items-start gap-2 text-sm leading-tight font-semibold">
-                            <x-icon :name="$benefit['icon']" class="text-brand-green dark:text-brand-sage mt-0.5 size-4 shrink-0" />
+                        <span class="flex items-start gap-2.5">
+                            <span
+                                class="text-brand-green dark:text-brand-sage bg-brand-sage-soft/70 dark:bg-brand-green/15 flex size-8 shrink-0 items-center justify-center rounded-lg"
+                            >
+                                <x-icon :name="$benefit['icon']" class="size-4" />
+                            </span>
 
                             <span class="min-w-0">
-                                {{ $benefit['title'] }}
+                                <span class="text-brand-ink dark:text-brand-cream block text-sm leading-tight font-semibold">
+                                    {{ $benefit['title'] }}
+                                </span>
 
-                                @if ($benefit['is_new'] ?? false)
-                                    <span
-                                        class="bg-brand-coral/10 text-brand-coral-deep dark:bg-brand-coral/15 dark:text-brand-coral ms-1 inline-flex rounded-full px-1.5 py-0.5 align-middle text-[10px] font-semibold tracking-wide uppercase"
-                                    >
-                                        {{ __('New') }}
-                                    </span>
-                                @endif
+                                <span class="text-brand-ink/60 dark:text-brand-sage/65 mt-0.5 block text-xs leading-snug">
+                                    {{ $benefit['description'] }}
+                                </span>
                             </span>
                         </span>
 
-                        <p class="text-brand-ink/60 dark:text-brand-sage/65 ps-6 text-xs leading-snug [@media(max-height:800px)]:hidden">
-                            {{ $benefit['description'] }}
-                        </p>
+                        <span
+                            class="bg-brand-sage-soft/70 dark:bg-brand-green/15 mt-auto flex flex-wrap items-center gap-x-1.5 gap-y-0.5 rounded-lg px-2 py-1 text-xs font-semibold"
+                        >
+                            <span class="text-brand-ink/40 dark:text-brand-sage/45 font-medium">{{ $benefit['from'] }}</span>
+                            <span aria-hidden="true" class="text-brand-green/40 dark:text-brand-sage/40">&rarr;</span>
+                            <span class="text-brand-green dark:text-brand-sage">{{ $benefit['to'] }}</span>
+                        </span>
                     </li>
                 @endforeach
             </ul>
-
-            <p class="text-brand-ink/50 dark:text-brand-sage/50 mt-2 flex items-center gap-1.5 text-xs font-medium">
-                <x-icon name="check-circle" class="text-brand-green dark:text-brand-sage size-3.5" />
-                {{ __('Everything in the free plan stays included.') }}
-            </p>
         </section>
     </div>
 

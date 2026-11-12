@@ -25,6 +25,7 @@ class FtpInboxIngestor
 
         FtpAccount::query()
             ->where('active', true)
+            ->whereNull('quota_paused_at')
             ->with('team')
             ->get()
             ->each(function (FtpAccount $account) use ($stabilitySeconds, &$dispatched): void {
@@ -44,6 +45,12 @@ class FtpInboxIngestor
      */
     public function dispatchStableUploads(FtpAccount $account, int $stabilitySeconds): int
     {
+        // A paused account has no storage left: scanning its inbox would only
+        // queue jobs that immediately discard the files again.
+        if ($account->isQuotaPaused()) {
+            return 0;
+        }
+
         return (int) Cache::lock("ftp-account:{$account->id}:scan", 30)
             ->get(function () use ($account, $stabilitySeconds): int {
                 $disk = FtpAccount::disk();

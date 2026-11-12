@@ -1139,7 +1139,7 @@ describe('Gallery Sharing', function () {
             ->assertSet('shareForm.annotationsEnabled', false);
     });
 
-    it('forces photo annotations off when the team is not subscribed', function () {
+    it('keeps photo annotations enabled for free teams', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
@@ -1147,7 +1147,7 @@ describe('Gallery Sharing', function () {
             ->set('shareForm.annotationsEnabled', true)
             ->call('share');
 
-        expect($gallery->fresh()->are_annotations_enabled)->toBeFalse();
+        expect($gallery->fresh()->are_annotations_enabled)->toBeTrue();
     });
 
     it('can be shared with a description', function () {
@@ -2124,16 +2124,31 @@ describe('Live Camera Upload', function () {
             ->assertSee('Camera setup');
     });
 
-    it('shows the upsell to unsubscribed teams', function () {
+    it('offers camera upload to free teams too', function () {
         config(['picstome.ftp_uploads.host' => 'upload.picstome.com']);
 
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->assertSee('Unlock camera upload');
+            ->assertDontSee('Unlock camera upload')
+            ->assertSee('Camera upload');
     });
 
-    it('does not create an ftp account when the team is not subscribed', function () {
+    it('provisions a camera account for a free team', function () {
+        config(['picstome.ftp_uploads.sftpgo_url' => null]);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('toggleFtpUploads');
+
+        expect(FtpAccount::first())->not->toBeNull()
+            ->and(FtpAccount::first()->routesTo($gallery))->toBeTrue();
+    });
+
+    it('does not create an ftp account when the team has no storage left', function () {
+        $this->team->update(['custom_storage_limit' => 0]);
+
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])

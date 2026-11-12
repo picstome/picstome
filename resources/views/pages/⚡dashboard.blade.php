@@ -442,7 +442,7 @@ new class extends Component
                             {{ __('Get More With Picstome Pro') }}
                         </x-ts-heading>
                         <x-ts-text class="text-brand-ink/80 dark:text-brand-sage/85 mt-2 font-medium">
-                            {{ __('Unlock 1000GB storage, payments, gallery expiry dates, unlimited contracts, and white label branding. Upgrade to Pro and power up your business.') }}
+                            {{ __('Unlock 1000GB storage, galleries that never expire, unlimited contracts, invoices and payments, and white label branding. Upgrade to Pro and power up your business.') }}
                         </x-ts-text>
                     </div>
                 </div>

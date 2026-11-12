@@ -10,6 +10,7 @@ use App\Services\GalleryArchiveService;
 use App\Services\PhotoIdentityService;
 use App\Services\StorageUsageService;
 use App\Traits\FormatsFileSize;
+use Carbon\CarbonInterface;
 use Database\Factories\GalleryFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -89,6 +90,20 @@ class Gallery extends Model
             } catch (Throwable $exception) {
                 report($exception);
             }
+        });
+
+        // Editing the expiration date must re-arm the reminder email: otherwise
+        // moving the date hides it and the owner is never warned again.
+        static::updated(function (Gallery $gallery) {
+            if (! $gallery->wasChanged('expiration_date')) {
+                return;
+            }
+
+            if ($gallery->expiration_date === null || $gallery->reminder_sent_at === null) {
+                return;
+            }
+
+            $gallery->forceFill(['reminder_sent_at' => null])->saveQuietly();
         });
 
         // The gallery header shows its own total; moving galleries between
@@ -910,11 +925,54 @@ class Gallery extends Model
 
     public function makePrivate()
     {
+        // A gallery may not outlive one year from its creation unless the team
+        // has an active subscription, so turning a public gallery private
+        // cannot be used to reset the clock indefinitely.
+        $cap = $this->retentionCap();
+        $expiration = now()->addMonth();
+
+        if ($cap !== null && $expiration->gt($cap)) {
+            $expiration = $cap;
+        }
+
         $this->update([
             'is_public' => false,
             'portfolio_order' => null,
-            'expiration_date' => now()->addMonth(),
+            'expiration_date' => $expiration,
         ]);
+    }
+
+    /**
+     * Latest date this gallery may expire, or null when the team keeps
+     * galleries forever.
+     *
+     * Free and lifetime galleries are capped at one year from creation. A
+     * gallery that already passed its cap keeps its current date, and one with
+     * no date gets a month of grace, so enabling the rule never deletes
+     * something the owner did not choose.
+     */
+    public function retentionCap(): ?CarbonInterface
+    {
+        if ($this->team?->hasUnlimitedRetention()) {
+            return null;
+        }
+
+        $cap = $this->created_at->copy()->addYear();
+
+        // Galleries created before the retention rule may already be past it.
+        if ($cap->isPast()) {
+            $current = $this->expiration_date;
+
+            return $current?->isFuture() ? $current->copy() : now()->addMonth();
+        }
+
+        $current = $this->expiration_date;
+
+        if ($current?->gt($cap)) {
+            return $current->copy();
+        }
+
+        return $cap;
     }
 
     public function reorder(int $newOrder): void

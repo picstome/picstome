@@ -1,13 +1,14 @@
 <?php
-use TallStackUi\Traits\Interactions;
 use App\Livewire\Forms\PosSettingsForm;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
     use Interactions;
+
     public PosSettingsForm $form;
 
     public $stripeCurrencies = [];
@@ -62,20 +63,7 @@ new class extends Component
                 {{ __('Configure your payment settings, including default currency for payments.') }}
             </x-ts-subheading>
 
-            @if (! (Auth::user()->currentTeam?->subscribed() ?? false))
-                <x-ts-callout icon="credit-card" variant="secondary" class="mt-5 max-w-prose">
-                    <x-ts-callout-heading>{{ __('Subscribe to enable payments') }}</x-ts-callout-heading>
-                    <x-ts-callout-text>
-                        {{ __('The payments feature is available for subscribed users only. Please subscribe to unlock payment links and payment management.') }}
-                    </x-ts-callout-text>
-                    <x-slot name="actions">
-                        <x-ts-button :href="route('subscribe')" variant="primary">
-                            {{ __('Subscribe') }}
-                        </x-ts-button>
-                    </x-slot>
-                </x-ts-callout>
-            @else
-                <div class="mt-5 w-full max-w-lg">
+            <div class="mt-5 w-full max-w-lg">
                     <form wire:submit="save" class="space-y-6">
                         <x-ts-field>
                             <x-ts-checkbox
@@ -125,7 +113,6 @@ new class extends Component
                         </div>
                     @endif
                 </div>
-            @endif
         </div>
     </div>
 

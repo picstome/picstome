@@ -46,7 +46,11 @@ new class extends Component
     {
         $this->authorize('create', Gallery::class);
 
-        if (! $this->team->subscribed()) {
+        if (! $this->team->hasStorageLeft()) {
+            $this->toast()
+                ->error(__('Camera uploads are paused: no storage left.'))
+                ->send();
+
             return;
         }
 
@@ -131,18 +135,16 @@ new class extends Component
             <x-ts-subheading>{{ __('View, create, and manage your galleries.') }}</x-ts-subheading>
         </div>
         <div class="flex gap-4">
-            @if ($this->team?->subscribed())
-                <x-ts-button
-                    icon="camera"
-                    wire:click="startLiveShoot"
-                    wire:loading.attr="disabled"
-                    wire:target="startLiveShoot"
-                    variant="primary"
-                    class="btn-ink"
-                >
-                    {{ __('Connect camera') }}
-                </x-ts-button>
-            @endif
+            <x-ts-button
+                icon="camera"
+                wire:click="startLiveShoot"
+                wire:loading.attr="disabled"
+                wire:target="startLiveShoot"
+                variant="primary"
+                class="btn-ink"
+            >
+                {{ __('Connect camera') }}
+            </x-ts-button>
 
             <x-ts-modal-trigger :name="auth()->check() ? 'create-gallery' : 'login'">
                 <x-ts-button variant="primary">{{ __('Create gallery') }}</x-ts-button>
@@ -266,16 +268,16 @@ new class extends Component
             <x-ts-input
                 wire:model="form.expirationDate"
                 :label="__('Expiration date')"
-                :badge="$this->team?->subscribed() ? __('Optional') : null"
+                :badge="$this->team?->hasUnlimitedRetention() ? __('Optional') : null"
                 type="date"
-                :clearable="$this->team?->subscribed()"
+                :clearable="$this->team?->hasUnlimitedRetention()"
             />
 
-            @if (! $this->team?->subscribed())
+            @unless ($this->team?->hasUnlimitedRetention())
                 <x-ts-callout icon="bolt" variant="secondary">
-                    <x-ts-callout-heading>{{ __('Subscribe for optional expiration') }}</x-ts-callout-heading>
+                    <x-ts-callout-heading>{{ __('Gallery retention') }}</x-ts-callout-heading>
                     <x-ts-callout-text>
-                        {{ __('Subscribe to make gallery expiration dates optional and clearable.') }}
+                        {{ __('Your plan keeps galleries for one year from creation and sends a reminder before they expire. Subscribe to keep them forever.') }}
                     </x-ts-callout-text>
                     <x-slot name="actions">
                         <x-ts-button :href="route('subscribe')" variant="primary">
@@ -283,7 +285,7 @@ new class extends Component
                         </x-ts-button>
                     </x-slot>
                 </x-ts-callout>
-            @endif
+            @endunless
 
             <x-ts-switch
                 wire:model="form.keepOriginalSize"
