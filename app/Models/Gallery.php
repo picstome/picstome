@@ -660,11 +660,10 @@ class Gallery extends Model
     protected function deleteUnreferencedPath(Photo $photo, ?string $path, ?string $rawPath, string $disk): void
     {
         foreach (array_filter([$path, $rawPath]) as $candidate) {
-            $referenced = $photo->versions()
-                ->where(function ($query) use ($candidate) {
-                    $query->where('path', $candidate)->orWhere('raw_path', $candidate);
-                })
-                ->exists();
+            // Split by column instead of `where(...)->orWhere(...)`: MySQL
+            // cannot use an index across an OR of different columns.
+            $referenced = $photo->versions()->where('path', $candidate)->exists()
+                || $photo->versions()->where('raw_path', $candidate)->exists();
 
             if (! $referenced) {
                 DeleteFromDisk::dispatch($candidate, $disk);
