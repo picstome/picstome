@@ -51,6 +51,27 @@ decides when it reaches `main`. Report the state of the work and wait.
 
 ## Migrations
 
+### Always verify against MySQL, never only SQLite
+
+CI and the test suite run on SQLite (`phpunit.xml` uses `:memory:`). SQLite
+accepts DDL that MySQL rejects, so a migration can pass every check and still
+fail on deploy. This actually happened: `#341` created `index(['disk','path'])`
+on `varchar(2048)` columns, passed CI, and failed on the server with
+`1071 Specified key was too long; max key length is 3072 bytes`.
+
+- Any migration with a driver branch (`$driver === 'mysql'`) **must** be run
+  against a real MySQL/MariaDB before merging. `migrate --pretend` and the Pest
+  suite only exercise the SQLite branch and prove nothing about MySQL.
+- InnoDB's index limit is 3072 bytes. In `utf8mb4` that is 768 characters, so
+  `string(2048)` (8192 bytes) always needs a prefix index:
+  `rawIndex("`path`(191)")`.
+- **Composite indexes need a prefix on every long column**, not just the first.
+- SQLite has no prefix syntax: `rawIndex('`path`(191)')` throws
+  `no such function: path`. The two drivers genuinely need different DDL.
+- Validate by running `up()` **and** `down()` against real column types, then
+  check `SHOW INDEX` reports `sub_part = 191` and `EXPLAIN` reports
+  `type: ref` instead of a full scan.
+
 - Prefer one consolidated migration per feature before merge.
 - All schema changes must be additive unless there is a reviewed data plan.
 - Backfills must be idempotent and safe to run on existing data.
