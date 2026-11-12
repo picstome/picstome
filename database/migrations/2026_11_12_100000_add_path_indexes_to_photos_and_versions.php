@@ -49,8 +49,14 @@ return new class extends Migration
 
                 // The lookup always constrains on disk, so pair it with the
                 // most common path column to give the optimizer a covering
-                // starting point.
-                $blueprint->index(['disk', 'path'], "{$table}_disk_path_index");
+                // starting point. The path column needs the same prefix as
+                // above: `disk` (50 chars) + `path` (2048 chars) is 8392 bytes
+                // in utf8mb4, which MySQL rejects with error 1071.
+                if ($driver === 'mysql') {
+                    $blueprint->rawIndex('`disk`, `path`(191)', "{$table}_disk_path_index");
+                } else {
+                    $blueprint->index(['disk', 'path'], "{$table}_disk_path_index");
+                }
             });
         }
     }
