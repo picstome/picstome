@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Contract;
+use App\Models\ContractTemplate;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
@@ -57,6 +58,85 @@ describe('Viewing contracts', function () {
             ->assertSee(route('contracts.download', $executed), false)
             ->assertDontSee(route('contracts.download', $pending), false);
     });
+});
+
+describe('Contract templates', function () {
+    it('lists team templates before Picstome templates in the picker', function () {
+        ContractTemplate::factory()->for($this->team)->create(['title' => 'My release']);
+        ContractTemplate::factory()->create([
+            'team_id' => null,
+            'locale' => 'en',
+            'title' => 'Picstome release',
+        ]);
+        ContractTemplate::factory()->create([
+            'team_id' => null,
+            'locale' => 'es',
+            'title' => 'Plantilla en español',
+        ]);
+
+        Livewire::actingAs($this->user)->test('pages::contracts')
+            ->assertSeeInOrder([
+                __('My templates'),
+                'My release',
+                __('Picstome contract templates'),
+                'Picstome release',
+            ])
+            ->assertDontSee('Plantilla en español')
+            ->assertSee(__('Choose a template to start from.'));
+    });
+
+    it('fills the contract body from a Picstome template and shows the warning', function () {
+        $template = ContractTemplate::factory()->create([
+            'team_id' => null,
+            'locale' => 'en',
+            'markdown_body' => '### Shared body',
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::contracts')
+            ->call('useTemplate', $template->id)
+            ->assertSet('usingPublicTemplate', true)
+            ->assertSee(__('You are using a Picstome template. Review and adapt it before saving. It is not legal advice.'));
+
+        expect($component->form->body)->toContain('<h3>Shared body</h3>');
+    });
+
+    it('does not show the warning after using a team template', function () {
+        $template = ContractTemplate::factory()->for($this->team)->create();
+
+        Livewire::actingAs($this->user)->test('pages::contracts')
+            ->call('useTemplate', $template->id)
+            ->assertSet('usingPublicTemplate', false)
+            ->assertDontSee(__('You are using a Picstome template. Review and adapt it before saving. It is not legal advice.'));
+    });
+
+    it('does not use a private template from another team', function () {
+        $template = ContractTemplate::factory()->for(Team::factory())->create();
+
+        Livewire::actingAs($this->user)->test('pages::contracts')
+            ->call('useTemplate', $template->id)
+            ->assertStatus(403);
+    });
+
+    test('shows the Picstome warning after picking a public template', function () {
+        ContractTemplate::factory()->create([
+            'team_id' => null,
+            'locale' => 'en',
+            'title' => 'Picstome release',
+            'markdown_body' => '### Picstome body',
+        ]);
+
+        $this->actingAs($this->user);
+
+        $page = visit('/contracts');
+
+        $page->click('Create contract')
+            ->click('Use template')
+            ->select('[x-model="template"]', 'Picstome release')
+            ->assertSee('This template is a starting point, not legal advice.')
+            ->click('[data-template-picker-submit]')
+            ->assertSee('You are using a Picstome template. Review and adapt it before saving. It is not legal advice.')
+            ->assertNoJavaScriptErrors();
+    })->group('browser');
 });
 
 describe('Creating contracts', function () {

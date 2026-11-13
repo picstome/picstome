@@ -1,9 +1,9 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractForm;
 use App\Models\Contract;
 use App\Models\ContractTemplate;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -15,6 +15,8 @@ new class extends Component
     use WithPagination;
 
     public ContractForm $form;
+
+    public bool $usingPublicTemplate = false;
 
     public function save()
     {
@@ -30,6 +32,7 @@ new class extends Component
         $this->authorize('view', $template);
 
         $this->form->body = $template->formatted_markdown_body;
+        $this->usingPublicTemplate = $template->isPublic();
 
         $this->closeModal('templates');
 
@@ -48,8 +51,14 @@ new class extends Component
     #[Computed]
     public function templates()
     {
-        return Auth::user()?->currentTeam
-            ->contractTemplates()
+        $team = Auth::user()?->currentTeam;
+
+        if (! $team) {
+            return ContractTemplate::query()->whereRaw('1 = 0')->get();
+        }
+
+        return ContractTemplate::query()
+            ->availableTo($team)
             ->orderBy('title')
             ->get();
     }
@@ -216,6 +225,14 @@ new class extends Component
                     </x-ts-modal-trigger>
                 </div>
 
+                @if ($this->usingPublicTemplate)
+                    <x-ts-callout variant="warning" icon="exclamation-triangle" class="mt-3">
+                        <x-ts-callout-text>
+                            {{ __('You are using a Picstome template. Review and adapt it before saving. It is not legal advice.') }}
+                        </x-ts-callout-text>
+                    </x-ts-callout>
+                @endif
+
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                     x-on:trix-change="$wire.form.body = $event.target.value"
@@ -248,32 +265,7 @@ new class extends Component
     </x-ts-modal>
 
     <x-ts-modal name="templates" class="w-full sm:max-w-lg">
-        <form
-            x-data="{ template: '' }"
-            x-on:submit.prevent="if (template) $wire.useTemplate(template)"
-            class="space-y-6"
-        >
-            <div>
-                <x-ts-heading size="lg">{{ __('Select template') }}</x-ts-heading>
-                <x-ts-subheading>
-                    {{ __('Select a template to complete the contract terms.') }}
-                </x-ts-subheading>
-            </div>
-
-            <x-ts-select x-model="template" :label="__('Template')" :placeholder="__('Select a template')">
-                @if ($this->templates?->isNotEmpty())
-                    @foreach ($this->templates as $template)
-                        <option value="{{ $template->id }}">{{ $template->title }}</option>
-                    @endforeach
-                @endif
-            </x-ts-select>
-
-            <div class="flex">
-                <x-ts-spacer />
-
-                <x-ts-button type="submit" variant="primary">{{ __('Use template') }}</x-ts-button>
-            </div>
-        </form>
+        <x-contract-template-picker :templates="$this->templates" />
     </x-ts-modal>
 </div>
 @assets

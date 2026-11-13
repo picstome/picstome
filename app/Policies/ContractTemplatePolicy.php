@@ -20,6 +20,10 @@ class ContractTemplatePolicy
      */
     public function view(User $user, ContractTemplate $contractTemplate): bool
     {
+        if ($contractTemplate->isPublic()) {
+            return true;
+        }
+
         return $contractTemplate->team->is($user->currentTeam);
     }
 
@@ -32,11 +36,16 @@ class ContractTemplatePolicy
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Team members can edit their own templates. Picstome templates are
+     * global, so only admins may change them.
      */
     public function update(User $user, ContractTemplate $contractTemplate): bool
     {
-        return false;
+        if ($contractTemplate->isPublic()) {
+            return (bool) $user->is_admin;
+        }
+
+        return $contractTemplate->team->is($user->currentTeam);
     }
 
     /**
@@ -44,7 +53,11 @@ class ContractTemplatePolicy
      */
     public function delete(User $user, ContractTemplate $contractTemplate): bool
     {
-        return false;
+        if ($contractTemplate->isPublic()) {
+            return (bool) $user->is_admin;
+        }
+
+        return $contractTemplate->team->is($user->currentTeam);
     }
 
     /**

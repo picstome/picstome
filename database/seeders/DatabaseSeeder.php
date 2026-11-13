@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $this->call(ContractTemplateSeeder::class);
+
         $this->createUserWithHandle('Test User', 'test@example.com', 'testuser');
         $this->createUserWithHandle('Oliver', 'oliver@example.com', 'oliver');
         $this->createUserWithHandle('Chema', 'chema@example.com', 'chema');
