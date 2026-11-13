@@ -202,4 +202,4 @@ it('focuses the search input when the modal opens', function () {
     $page->wait(0.3);
 
     expect($page->script("document.activeElement?.tagName === 'INPUT' && document.activeElement?.getAttribute('placeholder') === 'Search...'"))->toBeTrue();
-});
+})->group('browser');

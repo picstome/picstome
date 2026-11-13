@@ -327,4 +327,4 @@ it('switches to text mode and saves the watermark in the browser', function () {
     expect($team->brand_watermark_type)->toBe('text')
         ->and($team->brand_watermark_text)->toBe('Acme Studio')
         ->and($team->brand_watermark_size)->toBe('xl');
-});
+})->group('browser');

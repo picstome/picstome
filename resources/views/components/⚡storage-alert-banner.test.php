@@ -90,7 +90,7 @@ it('shows and dismisses the banner on the dashboard', function () {
         ->click('[data-test="storage-alert-dismiss"]')
         ->assertDontSee('Your storage is almost full')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('shows a decimal percentage instead of rounding up to 100', function () {
     [$owner] = storageBannerFixture(1000, 997);

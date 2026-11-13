@@ -138,4 +138,4 @@ it('scrolls to the top after changing photoshoot pages', function () {
 
     expect($page->script('window.scrollY'))->toBeLessThan(2)
         ->and($page->script("document.querySelector('[data-photoshoot-card]')?.__staleCard ?? null"))->toBeNull();
-});
+})->group('browser');

@@ -146,7 +146,7 @@ it('does not scroll horizontally', function (int $width) {
         ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
         ->assertScript("(() => { const el = document.querySelector('ui-table-scroll-area'); return el === null || el.scrollWidth <= el.clientWidth + 1; })()", true)
         ->assertNoJavascriptErrors();
-})->with([1024, 1280, 1440, 1920]);
+})->with([1024, 1280, 1440, 1920])->group('browser');
 
 it('opens the editor from the browser', function () {
     $this->actingAs($this->admin);
@@ -160,4 +160,4 @@ it('opens the editor from the browser', function () {
         ->assertVisible('[data-test="translation-editor"]')
         ->assertSee('Edit translation')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');

@@ -362,7 +362,7 @@ test('rates from the dock popover and advances to the next photo', function () {
     expect($first->fresh()->rating)->toBe(4);
 
     $page->assertPathIs("/galleries/{$gallery->id}/photos/{$second->id}");
-});
+})->group('browser');
 
 test('archiving dispatches the confirmation and the next photo url', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -689,7 +689,7 @@ test('the annotation overlay stays hidden until annotate mode is enabled', funct
 
     expect($page->script("getComputedStyle(document.querySelector('.cursor-crosshair')).display"))
         ->toBe('none');
-});
+})->group('browser');
 
 test('annotations from an older version are flagged in the comment list', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -954,7 +954,7 @@ test('pinch uses the full image and disables swipe until zoom is left', function
     $page->wait(1);
 
     expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id);
-});
+})->group('browser');
 
 test('the hidden annotations state is kept while moving between photos', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -1016,7 +1016,7 @@ test('the hidden annotations state is kept while moving between photos', functio
             return show ? show.offsetParent !== null : false
         })()
     JS))->toBeTrue();
-});
+})->group('browser');
 
 test('the photo viewer offers a quick delete action with a confirmation', function () {
     Photo::factory()->for(Gallery::factory()->for($this->team))->create();
@@ -1049,7 +1049,7 @@ test('pressing delete asks for confirmation before removing the photo', function
     JS))->toBeTrue();
 
     expect(Photo::find($photo->id))->not->toBeNull();
-});
+})->group('browser');
 
 test('the quick delete button asks for confirmation before removing the photo', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -1069,7 +1069,7 @@ test('the quick delete button asks for confirmation before removing the photo', 
     JS))->toBeTrue();
 
     expect(Photo::find($photo->id))->not->toBeNull();
-});
+})->group('browser');
 
 test('the quick delete button is reachable at the bottom of the mobile viewer', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -1107,7 +1107,7 @@ test('the quick delete button is reachable at the bottom of the mobile viewer', 
     JS))->toBeTrue();
 
     expect(Photo::find($photo->id))->not->toBeNull();
-});
+})->group('browser');
 
 test('a comment on a video stores the playhead second', function () {
     $gallery = Gallery::factory()->for($this->team)->create();

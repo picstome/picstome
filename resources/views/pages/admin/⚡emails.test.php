@@ -51,7 +51,7 @@ it('opens the filtered translations for an email', function () {
         ->assertSee('Filtered by email')
         ->assertSee('Your storage is almost full')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('does not scroll horizontally', function (int $width) {
     $this->actingAs($this->admin);
@@ -61,4 +61,4 @@ it('does not scroll horizontally', function (int $width) {
         ->assertSee('Emails')
         ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
         ->assertNoJavascriptErrors();
-})->with([1024, 1280, 1440]);
+})->with([1024, 1280, 1440])->group('browser');

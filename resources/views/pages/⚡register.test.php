@@ -60,7 +60,7 @@ it('aligns the terms checkbox with its label', function () {
             }
         })
     JS))->toBeTrue();
-});
+})->group('browser');
 
 it('allows guests to register with valid data', function () {
     $component = Livewire::test('pages::register')
