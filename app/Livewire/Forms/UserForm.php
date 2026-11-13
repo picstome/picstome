@@ -19,6 +19,13 @@ class UserForm extends Form
 
     public bool $lifetime = false;
 
+    /**
+     * Admin-editable email verification state. It maps to
+     * `users.email_verified_at` and lets an admin mark an address as verified
+     * without sending the confirmation email.
+     */
+    public bool $emailVerified = false;
+
     public function setUser(User $user)
     {
         $this->user = $user;
@@ -33,6 +40,7 @@ class UserForm extends Form
         $this->monthly_invoice_limit = $team?->monthly_invoice_limit;
         $this->monthly_payment_limit = $team?->monthly_payment_limit;
         $this->lifetime = $team?->lifetime_at !== null;
+        $this->emailVerified = $user->hasVerifiedEmail();
     }
 
     public function update()
@@ -42,7 +50,15 @@ class UserForm extends Form
             'monthly_contract_limit' => 'nullable|integer|min:0',
             'monthly_invoice_limit' => 'nullable|integer|min:0',
             'monthly_payment_limit' => 'nullable|integer|min:0',
+            'emailVerified' => 'boolean',
         ]);
+
+        // The verification flag is saved even when the account has no team.
+        $this->user->forceFill([
+            'email_verified_at' => $this->emailVerified
+                ? ($this->user->email_verified_at ?? now())
+                : null,
+        ])->save();
 
         if (! $team = $this->user->personalTeam()) {
             return;
