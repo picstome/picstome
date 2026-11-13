@@ -15,7 +15,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     environment: Testing
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -78,5 +78,13 @@ jobs:
           php artisan migrate:rollback --step=1 --force
           php artisan migrate --force
 
+      # Browser tests boot a real page per test and do not behave well inside
+      # parallel workers: they hang instead of failing, which used to eat the
+      # whole job timeout with no output. They are tagged `browser` and run in
+      # their own sequential step, so a stuck page fails fast and cannot leave a
+      # parallel worker waiting forever.
       - name: Run Tests
-        run: ./vendor/bin/pest --parallel --compact --default-time-limit=60
+        run: ./vendor/bin/pest --parallel --compact --exclude-group=browser --default-time-limit=60
+
+      - name: Run Browser Tests
+        run: ./vendor/bin/pest --compact --group=browser --default-time-limit=120

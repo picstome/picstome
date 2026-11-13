@@ -56,7 +56,7 @@ it('does not overflow on mobile and keeps photos in a masonry wall', function ()
             );
         })()
     JS))->toBeTrue();
-});
+})->group('browser');
 
 it('limits the portfolio grid and loads more photos on demand', function () {
     $gallery = Gallery::factory()->public()->for($this->team)->create();

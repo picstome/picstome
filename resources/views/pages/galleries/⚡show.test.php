@@ -2297,7 +2297,7 @@ test('going back from a photo beyond the first page scrolls to it', function () 
         ->and($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65)
         ->and($page->script("(() => { const el = document.querySelector('#photo-{$target->id}'); if (! el) return false; const rect = el.getBoundingClientRect(); return rect.top >= 0 && rect.top < window.innerHeight; })()"))->toBeTrue()
         ->and($page->script('window.scrollY'))->toBeGreaterThan(0);
-});
+})->group('browser');
 
 it('returns the uploaded photo id and status so the modal can follow processing', function () {
     Storage::fake('s3');
@@ -2344,7 +2344,7 @@ test('owner gallery loads the next batch automatically near the bottom', functio
     $page->wait(4);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
-});
+})->group('browser');
 
 test('owner can switch between photos and download tabs', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
@@ -2364,7 +2364,7 @@ test('owner can switch between photos and download tabs', function () {
     $page->wait(0.5);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
-});
+})->group('browser');
 
 it('enables comments when annotations are enabled in the share modal', function () {
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
@@ -2380,7 +2380,7 @@ it('enables comments when annotations are enabled in the share modal', function 
         ->assertChecked('@share-comments-toggle')
         ->assertChecked('@share-annotations-toggle')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 test('the owner can open their own password-protected shared gallery', function () {
     $gallery = Gallery::factory()->shared()->protected()->for($this->team)->create();
@@ -2418,4 +2418,4 @@ it('rejects a file in the modal without uploading it when the team has no storag
         ->assertNoJavascriptErrors();
 
     expect($gallery->fresh()->photos()->count())->toBe(0);
-});
+})->group('browser');

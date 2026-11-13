@@ -74,7 +74,7 @@ it('opens the monthly chart modal when a metric card is clicked', function () {
         ->assertVisible('@usage-chart-content')
         ->assertSee('Last 12 months, including the current month.')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('shows the chart tooltip over the bottom of the latest bar', function () {
     $admin = User::factory()->withPersonalTeam()->create([
@@ -118,7 +118,7 @@ it('shows the chart tooltip over the bottom of the latest bar', function () {
 
     expect($tooltip['active'])->toBeTrue()
         ->and($tooltip['text'])->toContain('Photos');
-});
+})->group('browser');
 
 it('switches periods and refreshes the cached stats', function () {
     $admin = User::factory()->withPersonalTeam()->create([

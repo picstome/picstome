@@ -61,7 +61,7 @@ test('shared gallery tabs switch without javascript errors', function () {
         ->toContain('Favorites');
 
     $page->assertNoJavaScriptErrors();
-});
+})->group('browser');
 
 test('shared gallery opens the requested tab from the url', function () {
     $gallery = Gallery::factory()->shared()->selectable()->for($this->team)->create([
@@ -79,7 +79,7 @@ test('shared gallery opens the requested tab from the url', function () {
 
     expect($page->script("Array.from(document.querySelectorAll('[data-gallery-panel]')).map(e => getComputedStyle(e).display).join('|')"))
         ->toBe('none|block|none');
-});
+})->group('browser');
 
 test('shared gallery applies the team brand color', function () {
     $this->team->update(['brand_color' => 'violet']);
@@ -434,7 +434,7 @@ test('shared gallery does not overflow on mobile', function () {
                 && getComputedStyle(wall).columnCount === '1';
         })()
     JS))->toBeTrue();
-});
+})->group('browser');
 
 test('shared gallery only watches for new photos in remote mode', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create(['ulid' => 'REMOTE1']);
@@ -482,7 +482,7 @@ test('shared gallery shows a photo that arrives after the page loads', function 
     $page->wait(3);
 
     expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
-});
+})->group('browser');
 
 test('shared gallery renders a bounded page and loads more photos on demand', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create();
@@ -622,7 +622,7 @@ test('shared gallery appends more photos below the existing masonry columns', fu
     expect($newTiles)->toHaveCount(5)
         ->and($movedTiles)->toBeEmpty()
         ->and($overlaps)->toBeEmpty();
-});
+})->group('browser');
 
 test('shared gallery reveals the photo referenced by the viewer back link', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create();
@@ -661,7 +661,7 @@ test('going back from a shared photo beyond the first page scrolls to it', funct
         ->and($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65)
         ->and($page->script("(() => { const el = document.querySelector('#photo-{$target->id}'); if (! el) return false; const rect = el.getBoundingClientRect(); return rect.top >= 0 && rect.top < window.innerHeight; })()"))->toBeTrue()
         ->and($page->script('window.scrollY'))->toBeGreaterThan(0);
-});
+})->group('browser');
 
 test('shared gallery hides photos that are still processing', function () {
     $gallery = Gallery::factory()->shared()->for($this->team)->create();

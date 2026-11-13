@@ -293,4 +293,4 @@ test('scrolls to the top after changing gallery pages', function () {
 
     expect($page->script('window.scrollY'))->toBeLessThan(2)
         ->and($page->script("document.querySelector('[data-gallery-card]')?.__staleCard ?? null"))->toBeNull();
-});
+})->group('browser');

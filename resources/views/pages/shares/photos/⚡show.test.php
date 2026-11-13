@@ -164,7 +164,7 @@ test('favorite photo via browser on watermarked gallery', function () {
     $page->wait(0.3);
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
-});
+})->group('browser');
 
 test('comment is required when adding a comment to a shared photo', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
@@ -501,7 +501,7 @@ test('annotation pins are positioned after the image loads', function () {
         ->toBeTrue();
 
     $page->assertNoJavaScriptErrors();
-});
+})->group('browser');
 
 test('the shared comment list flags annotations made on an older version', function () {
     $gallery = Gallery::factory()->shared()->create([
@@ -562,7 +562,7 @@ test('annotation mode can be toggled from the toolbar in the browser', function 
     expect($state)->toBe(['label' => 'Exit annotation mode', 'visible' => true]);
 
     $page->assertSee('Click on the photo to mark a spot');
-});
+})->group('browser');
 
 test('a guest can create an annotation from the browser', function () {
     $gallery = Gallery::factory()->shared()->create([
@@ -697,7 +697,7 @@ test('a guest can create an annotation from the browser', function () {
     // one the photographer last chose (here: visible again).
     expect($page->script("localStorage.getItem('picstome-annotations-visible')"))
         ->toBe('1');
-});
+})->group('browser');
 
 test('the hidden annotations state is kept while moving between photos', function () {
     $gallery = Gallery::factory()->shared()->create([
@@ -747,7 +747,7 @@ test('the hidden annotations state is kept while moving between photos', functio
             return show ? show.offsetParent !== null : false
         })()
     JS))->toBeTrue();
-});
+})->group('browser');
 
 test('the annotations toggle appears only when the photo has annotations', function () {
     $gallery = Gallery::factory()->shared()->create([
@@ -853,7 +853,7 @@ test('the mobile dock opens the comments modal', function () {
 
     expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
         ->toBeTrue();
-});
+})->group('browser');
 
 test('a guest can comment at a second of a shared video', function () {
     $gallery = Gallery::factory()->shared()->create([
@@ -998,7 +998,7 @@ test('clicking a timestamp chip seeks the player and closes the composer', funct
 
     expect($state['modalHidden'])->toBeTrue()
         ->and($state['time'])->toBe(30);
-});
+})->group('browser');
 
 test('the player resumes from the position remembered in this browser', function () {
     $gallery = Gallery::factory()->shared()->create(['ulid' => '0123ABC']);
@@ -1024,4 +1024,4 @@ test('the player resumes from the position remembered in this browser', function
     $state = $page->script($script);
 
     expect($state['time'])->toBe(45);
-});
+})->group('browser');

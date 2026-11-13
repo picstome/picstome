@@ -404,7 +404,7 @@ it('renders the queue manager in the browser', function () {
         ->assertSee('Scheduled tasks')
         ->assertSee('galleries:delete-expired')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('switches between queue tabs in the browser', function () {
     queueManagerFailedJob();
@@ -425,7 +425,7 @@ it('switches between queue tabs in the browser', function () {
     JS);
 
     expect($tabCount)->toBe(1);
-});
+})->group('browser');
 
 it('opens failed job details in the browser', function () {
     queueManagerFailedJob();
@@ -438,7 +438,7 @@ it('opens failed job details in the browser', function () {
         ->assertSee('Payload')
         ->assertSee('UUID')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('opens the failed job retry confirmation in the browser', function () {
     queueManagerFailedJob();
@@ -451,7 +451,7 @@ it('opens the failed job retry confirmation in the browser', function () {
         ->assertSee('Retry failed job?')
         ->assertSee('The job will be pushed back onto the queue')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('opens the delete-all-failed confirmation in the browser', function () {
     queueManagerFailedJob();
@@ -465,7 +465,7 @@ it('opens the delete-all-failed confirmation in the browser', function () {
         ->assertSee('Delete all failed jobs?')
         ->assertSee('This permanently deletes all 2 failed jobs')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
 
 it('opens scheduled task details in the browser', function () {
     ScheduledTask::query()->create([
@@ -487,4 +487,4 @@ it('opens scheduled task details in the browser', function () {
         ->assertSee('Scheduled cleanup failed')
         ->assertSee('Last error')
         ->assertNoJavascriptErrors();
-});
+})->group('browser');
