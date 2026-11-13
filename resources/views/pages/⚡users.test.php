@@ -274,43 +274,86 @@ describe('Users Page', function () {
             ->assertHasNoErrors();
     });
 
-    it('lists and revokes a user app token from the edit modal', function () {
+    it('does not expose connected apps or token revocation in the edit flyout', function () {
         $admin = User::factory()->withPersonalTeam()->create([
             'email' => 'admin@example.com',
         ]);
         $user = User::factory()->withPersonalTeam()->create();
         $token = $user->createToken('picstome-sync-abc123', ['sync'], now()->addDays(365));
 
-        $component = Livewire::actingAs($admin)
+        Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->assertSee('Connected apps')
-            ->assertSee('picstome-sync-abc123')
-            ->assertSee('Active');
+            ->assertDontSee('Connected apps')
+            ->assertDontSee('picstome-sync-abc123')
+            ->assertDontSee('Revoke');
 
-        $component->call('revokeUserToken', $token->accessToken->id)
-            ->assertSee('This user has no app tokens.');
-
-        $this->assertDatabaseMissing('personal_access_tokens', [
+        $this->assertDatabaseHas('personal_access_tokens', [
             'id' => $token->accessToken->id,
         ]);
     });
 
-    it('does not revoke tokens from another user while editing a user', function () {
+    it('offers account deletion from the edit flyout', function () {
         $admin = User::factory()->withPersonalTeam()->create([
             'email' => 'admin@example.com',
         ]);
-        $user = User::factory()->withPersonalTeam()->create();
-        $otherUser = User::factory()->withPersonalTeam()->create();
-        $otherToken = $otherUser->createToken('picstome-sync-other', ['sync'], now()->addDays(365));
+        $user = User::factory()->withPersonalTeam()->create(['email' => 'target@example.com']);
 
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->call('revokeUserToken', $otherToken->accessToken->id);
+            ->assertSee('Danger zone')
+            ->assertSee('Delete account');
+    });
 
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $otherToken->accessToken->id,
+    it('closes the flyout when the account is deleted', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
         ]);
+        $user = User::factory()->withPersonalTeam()->create(['email' => 'target@example.com']);
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->dispatch('user-deleted', userId: $user->id)
+            ->assertDispatched('modal:edit-user-close');
     });
 });
+
+it('shows the delete account flow in the flyout without the connected apps block', function () {
+    config(['picstome.admin_emails' => ['admin@example.com']]);
+
+    $admin = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
+    $user = User::factory()->withPersonalTeam()->create(['email' => 'target@example.com']);
+
+    actingAs($admin);
+
+    $page = visit('/users');
+
+    $page->assertSee('Users');
+
+    // Open the target's row. Self-deletion is not offered from the user
+    // administration screen, so the acting admin's own row has no danger zone.
+    $submit = 'editUser('.$user->id.')';
+
+    $page->script(
+        "[...document.querySelectorAll('form')]"
+        .".find(f => f.getAttribute('wire:submit') === ".json_encode($submit).')'
+        .'?.requestSubmit()'
+    );
+
+    $page->wait(1);
+
+    $page->assertSee('Danger zone')
+        ->assertSee('Delete account')
+        ->assertDontSee('Connected apps');
+
+    $page->click('Delete account');
+
+    $page->wait(1);
+
+    $page->assertSee('Type the account email to confirm')
+        ->assertDontSee('Your current password');
+
+    $page->screenshot(fullPage: true);
+})->group('browser');

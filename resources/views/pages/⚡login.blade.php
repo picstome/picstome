@@ -29,7 +29,9 @@ new #[Layout('layouts.guest')] class extends Component
         </div>
 
         @if(session('status'))
-            <x-ts-text variant="strong" class="text-center font-medium">{{ session('status') }}</x-ts-text>
+            <div class="rounded-lg border border-zinc-200 p-3 text-center text-sm dark:border-white/10" data-test="login-status">
+                {{ session('status') }}
+            </div>
         @endif
 
         <x-ts-input wire:model="form.email" :label="__('Email')" type="email" placeholder="email@example.com" />

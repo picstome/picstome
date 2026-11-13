@@ -162,7 +162,7 @@ Route::livewire('/signatures/{signature:ulid}/sign', 'pages::signatures.sign')->
 
 Route::livewire('/settings/appearance', 'pages::settings.appearance')->name('settings.appearance')->middleware('auth');
 
-Route::livewire('/settings/apps', 'pages::settings.apps')->name('settings.apps')->middleware('auth');
+Route::redirect('/settings/apps', '/settings/password')->name('settings.apps')->middleware('auth');
 
 Route::livewire('/settings/password', 'pages::settings.password')->name('settings.password')->middleware('auth');
 

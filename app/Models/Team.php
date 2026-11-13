@@ -693,13 +693,19 @@ class Team extends Model
     }
 
     /**
-     * Delete all contracts for this team including PDFs and signatures.
+     * Delete this team's contracts and their signatures.
+     *
+     * `deleteAllResources()` removes the whole `teams/{id}` storage prefix, so
+     * the PDFs and signature images go with it. Bulk row deletes avoid queueing
+     * one `DeleteFromDisk` job per file for a team that is about to disappear.
      */
     public function deleteContracts(): void
     {
-        $this->contracts()->cursor()->each(
-            fn (Contract $contract) => $contract->deleteSignatures()->deleteFromDisk()->delete()
-        );
+        Signature::query()
+            ->whereIn('contract_id', $this->contracts()->select('id'))
+            ->delete();
+
+        $this->contracts()->delete();
     }
 
     /**
@@ -711,23 +717,72 @@ class Team extends Model
     }
 
     /**
-     * Delete all resources for this team including storage directory.
+     * Delete every resource owned by the team, including its storage directory.
+     *
+     * This is the account-closure path, so it is deliberately aggressive:
+     *
+     * - Photos and their versions are removed with mass deletes (the version
+     *   rows go through the foreign-key cascade) instead of one deletion job
+     *   per file. The whole `teams/{id}` prefix is wiped afterwards, so
+     *   dispatching a job per object would only add hundreds of thousands of
+     *   pointless storage requests for a large library.
+     * - Invoices are removed with mass deletes too: the model guards issued
+     *   invoices as immutable, and the account owner has been warned that
+     *   closing the account destroys its fiscal records.
+     * - The FTP account row is removed by `AccountDeletionService` after it
+     *   revokes the SFTPGo user.
      */
     public function deleteAllResources(): void
     {
         $this->deleteBrandAssets();
         $this->deleteContracts();
         $this->deleteContractTemplates();
+        $this->deleteInvoicingData();
 
-        $this->photoshoots()->cursor()->each(
-            fn (Photoshoot $photoshoot) => $photoshoot->deleteGalleries()->delete()
-        );
+        // Remove archive rows before the galleries: `Gallery::deleting` queues
+        // one DeleteGalleryArchive job per archive, and those objects are
+        // removed with the storage prefix below anyway.
+        GalleryArchive::query()->where('team_id', $this->id)->delete();
 
-        $this->galleries()->cursor()->each(
-            fn (Gallery $gallery) => $gallery->deletePhotos()->delete()
-        );
+        // chunkById instead of cursor(): rows are deleted while iterating, and
+        // an unbuffered cursor over the same table can skip rows on MySQL.
+        $this->galleries()->chunkById(200, function ($galleries): void {
+            foreach ($galleries as $gallery) {
+                $gallery->photos()->delete();
+                $gallery->delete();
+            }
+        });
 
-        $disk = Storage::disk(config('picstome.disk'));
-        $disk->deleteDirectory($this->storage_path);
+        $this->photoshoots()->delete();
+        $this->bioLinks()->delete();
+        $this->calculatorState()->delete();
+
+        Storage::disk(config('picstome.disk'))->deleteDirectory($this->storage_path);
+    }
+
+    /**
+     * Delete invoices, their audit trail, invoice settings, customers and
+     * payments.
+     *
+     * Mass deletes are required here: `Invoice` and `InvoiceEvent` throw a
+     * `LogicException` when deleted through the model to protect the fiscal
+     * chain. Bulk queries bypass the model events on purpose.
+     */
+    public function deleteInvoicingData(): void
+    {
+        // `rectifies_invoice_id` points at the same table. Null it first so a
+        // single DELETE statement never has to resolve a self-referencing
+        // ON DELETE SET NULL, which MySQL checks row by row.
+        Invoice::query()
+            ->where('team_id', $this->id)
+            ->whereNotNull('rectifies_invoice_id')
+            ->update(['rectifies_invoice_id' => null]);
+
+        InvoiceEvent::query()->where('team_id', $this->id)->delete();
+        Payment::query()->where('team_id', $this->id)->delete();
+        Invoice::query()->where('team_id', $this->id)->delete();
+
+        $this->invoiceSetting()->delete();
+        $this->customers()->delete();
     }
 }
