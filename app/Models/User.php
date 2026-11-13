@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\HasAvatar;
 use App\Notifications\VerifyEmail;
+use App\Services\AccountDeletionService;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -153,15 +154,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Delete the user account and all associated data.
+     *
+     * Delegates to `AccountDeletionService`, which also revokes Stripe
+     * subscriptions, the SFTPGo user and the Acumbamail subscriptions. The
+     * account removal is irreversible.
      */
     public function deleteAccount(): void
     {
-        $this->deleteAvatar();
-
-        $this->ownedTeams->each(
-            fn (Team $team) => $team->deleteAllResources()
-        );
-
-        $this->delete();
+        app(AccountDeletionService::class)->purge($this);
     }
 }

@@ -302,7 +302,10 @@ rows. The recorded events are `created`, `updated`, `issued`, `rectified`,
 
 The invoices and their PDFs are kept as long as the team account is active.
 Deleting the account is a destructive operation: it removes the invoices, the
-audit trail and the stored PDFs, so the app warns before doing it.
+audit trail and the stored PDFs, so the app warns before doing it. The
+confirmation modal reports how many invoices are issued and shows the fiscal
+retention warning; the purge itself is described in
+[`account-deletion.md`](account-deletion.md).
 
 Spanish law requires keeping the invoices for at least four years, and the
 VeriFactu and SII deadlines reach six years. Teams that need to keep their

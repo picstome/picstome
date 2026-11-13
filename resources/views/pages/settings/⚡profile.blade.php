@@ -157,5 +157,15 @@ new class extends Component
                 </x-action-message>
             </div>
         </form>
+
+        <div class="mt-10 flex justify-end border-t border-zinc-200 pt-6 dark:border-white/10" data-test="profile-delete-account">
+            <x-ts-modal-trigger name="delete-account">
+                <x-ts-button variant="primary" class="btn-coral" icon="trash">
+                    {{ __('Delete account') }}
+                </x-ts-button>
+            </x-ts-modal-trigger>
+        </div>
     </x-settings.layout>
+
+    <livewire:delete-account-modal />
 </section>
