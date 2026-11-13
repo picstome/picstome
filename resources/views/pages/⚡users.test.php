@@ -334,26 +334,16 @@ it('shows the delete account flow in the flyout without the connected apps block
 
     // Open the target's row. Self-deletion is not offered from the user
     // administration screen, so the acting admin's own row has no danger zone.
-    $submit = 'editUser('.$user->id.')';
-
-    $page->script(
-        "[...document.querySelectorAll('form')]"
-        .".find(f => f.getAttribute('wire:submit') === ".json_encode($submit).')'
-        .'?.requestSubmit()'
-    );
-
-    $page->wait(1);
+    $page->click('@edit-user-'.$user->id);
 
     $page->assertSee('Danger zone')
         ->assertSee('Delete account')
         ->assertDontSee('Connected apps');
 
-    $page->click('Delete account');
-
-    $page->wait(1);
+    // Explicit selector: the modal is also in the DOM (hidden), so clicking by
+    // text could target the hidden confirm button instead of this trigger.
+    $page->click('[data-test=admin-danger-zone] button');
 
     $page->assertSee('Type the account email to confirm')
         ->assertDontSee('Your current password');
-
-    $page->screenshot(fullPage: true);
 })->group('browser');

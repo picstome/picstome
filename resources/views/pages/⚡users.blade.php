@@ -376,6 +376,7 @@ new class extends Component
                                     size="sm"
                                     icon="ellipsis-horizontal"
                                     inset="top bottom"
+                                    data-test="edit-user-{{ $user->id }}"
                                 ></x-ts-button>
                             </form>
                         </x-data-table.cell>
