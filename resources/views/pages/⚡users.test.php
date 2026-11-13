@@ -70,6 +70,40 @@ describe('Users Page', function () {
         expect($user->personalTeam()->monthly_invoice_limit)->toBe(10);
     });
 
+    it('lets an admin update a user\'s monthly payment limit', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->set('userForm.monthly_payment_limit', 3)
+            ->call('saveUser')
+            ->assertHasNoErrors();
+
+        expect($user->personalTeam()->monthly_payment_limit)->toBe(3);
+    });
+
+    it('marks payments as unlimited when the monthly payment limit is empty', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+        $user = User::factory()->withPersonalTeam()->create();
+        $team = $user->personalTeam();
+        $team->update(['monthly_payment_limit' => 3]);
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->call('editUser', $user->id)
+            ->set('userForm.monthly_payment_limit', null)
+            ->call('saveUser')
+            ->assertHasNoErrors();
+
+        expect($team->fresh()->monthly_payment_limit)->toBeNull();
+    });
+
     it('marks invoices as unlimited when the monthly invoice limit is empty', function () {
         $admin = User::factory()->withPersonalTeam()->create([
             'email' => 'admin@example.com',

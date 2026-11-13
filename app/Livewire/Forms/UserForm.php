@@ -15,6 +15,8 @@ class UserForm extends Form
 
     public ?int $monthly_invoice_limit = null;
 
+    public ?int $monthly_payment_limit = null;
+
     public bool $lifetime = false;
 
     public function setUser(User $user)
@@ -29,6 +31,7 @@ class UserForm extends Form
 
         $this->monthly_contract_limit = $team?->monthly_contract_limit;
         $this->monthly_invoice_limit = $team?->monthly_invoice_limit;
+        $this->monthly_payment_limit = $team?->monthly_payment_limit;
         $this->lifetime = $team?->lifetime_at !== null;
     }
 
@@ -38,6 +41,7 @@ class UserForm extends Form
             'custom_storage_limit' => 'nullable|numeric|min:0',
             'monthly_contract_limit' => 'nullable|integer|min:0',
             'monthly_invoice_limit' => 'nullable|integer|min:0',
+            'monthly_payment_limit' => 'nullable|integer|min:0',
         ]);
 
         if (! $team = $this->user->personalTeam()) {
@@ -52,6 +56,7 @@ class UserForm extends Form
             'custom_storage_limit' => $bytes,
             'monthly_contract_limit' => $this->monthly_contract_limit,
             'monthly_invoice_limit' => $this->monthly_invoice_limit,
+            'monthly_payment_limit' => $this->monthly_payment_limit,
             'lifetime_at' => $this->lifetime ? now() : null,
         ]);
     }

@@ -2,15 +2,19 @@
 
 use App\Models\Team;
 use App\Services\FakePaymentService;
+use App\Services\PaymentPlanLimitService;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new
 #[Layout('layouts.guest')]
 class extends Component
 {
+    use Interactions;
+
     public Team $team;
 
     /**
@@ -25,6 +29,13 @@ class extends Component
 
     public $description;
 
+    /**
+     * The photographer used up the monthly payment quota. The public profile
+     * hides the pay button instead of letting the client start a checkout
+     * that cannot be completed.
+     */
+    public bool $paymentsAvailable = true;
+
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', strtolower($handle))->firstOrFail();
@@ -32,6 +43,7 @@ class extends Component
         abort_if(! $this->team, 404);
 
         $this->hasPublicGalleries = $this->team->galleries()->public()->exists();
+        $this->paymentsAvailable = app(PaymentPlanLimitService::class)->canReceive($this->team);
     }
 
     public function rendering(View $view): void
@@ -41,6 +53,14 @@ class extends Component
 
     public function checkout()
     {
+        if (! $this->paymentsAvailable) {
+            $this->toast()
+                ->error(__('Payments are not available at the moment. Please contact us.'))
+                ->send();
+
+            return;
+        }
+
         $this->validate([
             'amount' => 'required|integer|min:1',
             'description' => 'required|string|max:255',
@@ -144,7 +164,7 @@ class extends Component
         @endsubscribed
     </div>
 
-    @if($team->hasCompletedOnboarding() && $team->show_pay_button)
+    @if($team->hasCompletedOnboarding() && $team->show_pay_button && $paymentsAvailable)
         <x-ts-modal
             name="generate-payment-link"
             x-init="if (new URL(window.location.href).searchParams.get('pay') === '1') { $nextTick(() => $tsui.open.modal('generate-payment-link')) }"

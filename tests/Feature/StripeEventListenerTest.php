@@ -343,6 +343,9 @@ it('resets storage limit to 1GB when subscription is deleted', function () {
     expect($team->fresh()->monthly_invoice_limit)->toBe(
         config('picstome.personal_team_monthly_invoice_limit')
     );
+    expect($team->fresh()->monthly_payment_limit)->toBe(
+        config('picstome.personal_team_monthly_payment_limit')
+    );
 });
 
 it('does not reset lifetime flag when subscription is deleted', function () {

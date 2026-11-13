@@ -3,7 +3,9 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Photoshoot;
+use App\Services\PaymentPlanLimitService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -42,6 +44,14 @@ class PaymentLinkForm extends Form
     public function generatePaymentLink()
     {
         $this->validate();
+
+        $team = Auth::user()->currentTeam;
+
+        if (! app(PaymentPlanLimitService::class)->canReceive($team)) {
+            throw ValidationException::withMessages([
+                'amount' => __('You have reached the monthly payment limit. Upgrade your plan to receive more payments.'),
+            ]);
+        }
 
         $relativePath = route('handle.pay', [
             'handle' => Auth::user()->currentTeam->handle,

@@ -33,6 +33,7 @@ class StripeEventListener
                 'custom_storage_limit' => $this->storageLimitFromPayload($event->payload),
                 'monthly_contract_limit' => null, // Unlimited contracts
                 'monthly_invoice_limit' => null, // Back to the plan default
+                'monthly_payment_limit' => null, // Unlimited payments
             ]);
         }
     }
@@ -49,24 +50,46 @@ class StripeEventListener
                 'custom_storage_limit' => $this->storageLimitFromPayload($event->payload),
                 'monthly_contract_limit' => null, // Unlimited contracts
                 'monthly_invoice_limit' => null, // Back to the plan default
+                'monthly_payment_limit' => null, // Unlimited payments
             ]);
         }
     }
 
     /**
      * Handle subscription termination.
+     *
+     * Galleries without an expiration date were only allowed while the
+     * subscription was active. They get a year from their creation (or a
+     * month from now for older galleries, so nothing is deleted overnight),
+     * which is the same retention rule free and lifetime plans follow.
      */
     protected function handleSubscriptionDeleted(WebhookReceived $event): void
     {
         $team = $this->findTeamByStripeCustomer($event->payload['data']['object']['customer']);
 
-        if ($team) {
-            $team->update([
-                'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
-                'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
-                'monthly_invoice_limit' => config('picstome.personal_team_monthly_invoice_limit'),
-            ]);
+        if (! $team) {
+            return;
         }
+
+        $team->update([
+            'custom_storage_limit' => config('picstome.personal_team_storage_limit'),
+            'monthly_contract_limit' => config('picstome.personal_team_monthly_contract_limit'),
+            'monthly_invoice_limit' => config('picstome.personal_team_monthly_invoice_limit'),
+            'monthly_payment_limit' => config('picstome.personal_team_monthly_payment_limit'),
+        ]);
+
+        $team->galleries()
+            ->whereNull('expiration_date')
+            ->where('is_public', false)
+            ->chunkById(100, function ($galleries): void {
+                foreach ($galleries as $gallery) {
+                    $cap = $gallery->created_at->copy()->addYear();
+
+                    $gallery->update([
+                        'expiration_date' => $cap->isPast() ? now()->addMonth() : $cap,
+                    ]);
+                }
+            });
     }
 
     /**

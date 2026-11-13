@@ -347,13 +347,6 @@ new class extends Component
     {
         $this->shareForm->gallery->is_shared = true;
 
-        if (! $this->team->subscribed()) {
-            $this->shareForm->passwordProtected = false;
-            $this->shareForm->descriptionEnabled = false;
-            $this->shareForm->commentsEnabled = false;
-            $this->shareForm->annotationsEnabled = false;
-        }
-
         $this->shareForm->update();
 
         $this->closeModal('share');
@@ -913,6 +906,23 @@ new class extends Component
         $this->gallery->load(['coverPhoto', 'team']);
     }
 
+    /**
+     * The live watcher detected that camera uploads were paused because the
+     * team ran out of storage. Refresh the storage figures and surface the
+     * banner so the photographer knows before the next shot.
+     */
+    #[On('ftp-quota-paused')]
+    public function handleQuotaPaused(): void
+    {
+        $team = $this->gallery->team;
+
+        $this->remainingStorageBytes = $team->storage_limit === null
+            ? null
+            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
+
+        unset($this->ftpAccount);
+    }
+
     #[Computed]
     public function team()
     {
@@ -946,7 +956,13 @@ new class extends Component
     {
         $this->authorize('update', $this->gallery);
 
-        if (! $this->team->subscribed()) {
+        // Camera upload is available on every plan, but a team with no space
+        // left has nothing to route to: the ingestor would discard the shots.
+        if (! $this->gallery->team->hasStorageLeft()) {
+            $this->toast()
+                ->error(__('Camera uploads are paused: no storage left.'))
+                ->send();
+
             return;
         }
 
@@ -1006,6 +1022,20 @@ new class extends Component
             {{ __('Galleries') }}
         </x-ts-button>
     </div>
+
+    @if ($this->remainingStorageBytes !== null && $this->remainingStorageBytes <= 0)
+        <x-ts-callout icon="bolt" variant="warning" class="mt-4">
+            <x-ts-callout-heading>{{ __('Camera uploads are paused: no storage left') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
+                {{ __('Photos sent from the camera are discarded until you free up space or upgrade your plan.') }}
+            </x-ts-callout-text>
+            <x-slot name="actions">
+                <x-ts-button :href="route('subscribe')" variant="primary">
+                    {{ __('Upgrade') }}
+                </x-ts-button>
+            </x-slot>
+        </x-ts-callout>
+    @endif
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4 lg:mt-8">
         <div class="max-sm:w-full min-w-0 sm:flex-1">
@@ -1588,24 +1618,9 @@ new class extends Component
                 <x-ts-input wire:model="shareForm.selectionLimit" :label="__('Limit photo selection')" type="number" />
             </div>
 
-            @if (! $this->team->subscribed())
-                <x-ts-callout icon="bolt" variant="secondary" class="mb-4">
-                    <x-ts-callout-heading>{{ __('Unlock more sharing features') }}</x-ts-callout-heading>
-                    <x-ts-callout-text>
-                        {{ __('Subscribe to enable password protection, gallery descriptions, photo comments and annotations for shared galleries.') }}
-                    </x-ts-callout-text>
-                    <x-slot name="actions">
-                        <x-ts-button :href="route('subscribe')" variant="primary">
-                            {{ __('Subscribe') }}
-                        </x-ts-button>
-                    </x-slot>
-                </x-ts-callout>
-            @endif
-
             <x-ts-switch
                 wire:model="shareForm.passwordProtected"
                 :label="__('Protect with a password')"
-                :disabled="!$this->team->subscribed()"
             />
 
             <div x-show="$wire.shareForm.passwordProtected">
@@ -1613,20 +1628,17 @@ new class extends Component
                     wire:model="shareForm.password"
                     type="password"
                     :label="__('Password')"
-                    :disabled="!$this->team->subscribed()"
                 />
             </div>
 
             <x-ts-switch
                 wire:model="shareForm.descriptionEnabled"
                 :label="__('Add description')"
-                :disabled="!$this->team->subscribed()"
             />
 
             <x-ts-switch
                 wire:model="shareForm.commentsEnabled"
                 :label="__('Enable photo comments')"
-                :disabled="!$this->team->subscribed()"
                 data-test="share-comments-toggle"
                 x-on:change="if (! $event.target.checked) $wire.set('shareForm.annotationsEnabled', false)"
             />
@@ -1635,7 +1647,6 @@ new class extends Component
                 wire:model="shareForm.annotationsEnabled"
                 :label="__('Enable photo annotations')"
                 :description="__('Visitors can pin a comment to a spot on the photo. Enabling this also enables photo comments.')"
-                :disabled="!$this->team->subscribed()"
                 data-test="share-annotations-toggle"
                 x-on:change="if ($event.target.checked) $wire.set('shareForm.commentsEnabled', true)"
             />
@@ -1680,15 +1691,15 @@ new class extends Component
                 </x-ts-subheading>
             </div>
 
-            @if (! $this->team->subscribed())
-                <x-ts-callout icon="bolt" variant="secondary">
-                    <x-ts-callout-heading>{{ __('Unlock camera upload') }}</x-ts-callout-heading>
+            @if ($this->remainingStorageBytes !== null && $this->remainingStorageBytes <= 0)
+                <x-ts-callout icon="bolt" variant="warning">
+                    <x-ts-callout-heading>{{ __('Camera uploads are paused') }}</x-ts-callout-heading>
                     <x-ts-callout-text>
-                        {{ __('Subscribe to connect your camera: it uploads photos straight to this gallery over FTP/SFTP while you shoot.') }}
+                        {{ __('You have no storage left, so new shots cannot be imported. Free up space or upgrade your plan to keep shooting.') }}
                     </x-ts-callout-text>
                     <x-slot name="actions">
                         <x-ts-button :href="route('subscribe')" variant="primary">
-                            {{ __('Subscribe') }}
+                            {{ __('Upgrade') }}
                         </x-ts-button>
                     </x-slot>
                 </x-ts-callout>
@@ -1706,7 +1717,7 @@ new class extends Component
                 wire:click="toggleFtpUploads"
                 :checked="$this->ftpAccount?->routesTo($gallery)"
                 :label="__('Receive photos in this gallery')"
-                :disabled="!$this->team->subscribed()"
+                :disabled="$this->remainingStorageBytes !== null && $this->remainingStorageBytes <= 0"
             />
 
             <x-ts-switch
@@ -1829,11 +1840,19 @@ new class extends Component
             <x-ts-input
                 wire:model="form.expirationDate"
                 :label="__('Expiration date')"
-                :badge="$this->team?->subscribed() ? __('Optional') : null"
+                :badge="$this->team?->hasUnlimitedRetention() ? __('Optional') : null"
                 type="date"
-                clearable
+                :clearable="$this->team?->hasUnlimitedRetention()"
                 :disabled="$gallery->is_public"
             />
+
+            @unless ($this->team?->hasUnlimitedRetention())
+                <x-ts-callout variant="secondary" icon="information-circle">
+                    <x-ts-callout-text>
+                        {{ __('This gallery will be deleted on :date. Your plan keeps galleries for one year from creation; subscribe to remove the expiration date.', ['date' => $gallery->created_at->copy()->addYear()->isoFormat('LL')]) }}
+                    </x-ts-callout-text>
+                </x-ts-callout>
+            @endunless
 
 
 

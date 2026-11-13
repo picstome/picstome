@@ -71,10 +71,27 @@ class IngestFtpUpload implements ShouldBeUnique, ShouldQueue
         $size = (int) $disk->size($this->path);
 
         if (! $account->team->canStoreFile($size)) {
-            Log::warning("FTP upload {$this->path} skipped: team {$account->team_id} does not have enough storage. File left in inbox.");
+            // Rejected shots must not stay in the inbox: they would sit on S3
+            // forever without being billed or shown. Pausing stops the
+            // ingestor from listing the inbox again until there is space.
+            $disk->delete($this->path);
+
+            Log::warning("FTP upload {$this->path} deleted: team {$account->team_id} does not have enough storage.");
+
+            if (! $account->isQuotaPaused()) {
+                $account->pauseForQuota();
+
+                // Purge whatever arrived during the same burst so the inbox
+                // holds no unbilled files while the account is paused.
+                $discarded = 1 + $account->purgeInbox();
+
+                $account->notifyOwnerOfQuotaPause($discarded);
+            }
 
             return;
         }
+
+        $account->resumeFromQuota();
 
         // Lazy: the receiving gallery is resolved (or created) only after
         // the file is known to be a supported photo that fits the quota, so

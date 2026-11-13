@@ -42,6 +42,10 @@ class ScheduledTasks
             ->everyMinute()
             ->name('ingest:ftp-uploads');
 
+        $schedule->command('ftp:cleanup-inbox --force')
+            ->dailyAt('00:35')
+            ->name('ftp:cleanup-inbox');
+
         $schedule->command('gallery-archives:prune --force')
             ->dailyAt('00:30')
             ->name('gallery-archives:prune');

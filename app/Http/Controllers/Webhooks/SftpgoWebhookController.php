@@ -49,6 +49,18 @@ class SftpgoWebhookController
             return response()->noContent();
         }
 
+        // Paused accounts have no storage left: discard the incoming object
+        // instead of letting it accumulate in the inbox.
+        if ($account->isQuotaPaused()) {
+            $path = $account->inboxPathFor($path);
+
+            if (FtpAccount::disk()->exists($path)) {
+                FtpAccount::disk()->delete($path);
+            }
+
+            return response()->noContent();
+        }
+
         IngestFtpUpload::dispatch($account->id, $account->inboxPathFor($path));
 
         return response()->noContent();

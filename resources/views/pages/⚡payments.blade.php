@@ -1,18 +1,21 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\PaymentForm;
 use App\Livewire\Forms\PaymentLinkForm;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\InvoiceFromPaymentService;
+use App\Services\PaymentPlanLimitService;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
+    use Interactions;
     use InteractsWithTallStackModals;
     use WithPagination;
 
@@ -84,6 +87,30 @@ new class extends Component
             ->paginate(25);
     }
 
+    /**
+     * Free teams can only receive a limited number of payments per month.
+     * Null means unlimited and the callout is hidden.
+     */
+    #[Computed]
+    public function remainingPayments(): ?int
+    {
+        if (! $this->team) {
+            return null;
+        }
+
+        return app(PaymentPlanLimitService::class)->remainingThisMonth($this->team);
+    }
+
+    #[Computed]
+    public function canReceivePayment(): bool
+    {
+        if (! $this->team) {
+            return false;
+        }
+
+        return app(PaymentPlanLimitService::class)->canReceive($this->team);
+    }
+
     public function mount()
     {
         $this->onboardingComplete = $this->team ? $this->team->hasCompletedOnboarding() : false;
@@ -97,6 +124,14 @@ new class extends Component
 
     public function generatePaymentLink()
     {
+        if (! $this->canReceivePayment) {
+            $this->toast()
+                ->error(__('You have reached the monthly payment limit. Upgrade your plan to receive more payments.'))
+                ->send();
+
+            return;
+        }
+
         $this->paymentLink = $this->linkForm->generatePaymentLink();
 
         $this->closeModal('generate-payment-link');
@@ -132,37 +167,50 @@ new class extends Component
 } ?>
 
 <div>
-    @if (! $this->team?->subscribed())
-        <x-ts-callout icon="credit-card" variant="secondary" class="mx-auto mt-8 max-w-prose">
-            <x-ts-callout-heading>{{ __('Subscribe to enable payments') }}</x-ts-callout-heading>
+    @if ($this->remainingPayments !== null)
+        <x-ts-callout
+            icon="calendar-days"
+            :variant="$this->canReceivePayment ? 'secondary' : 'warning'"
+            class="mx-auto mt-8 max-w-prose"
+        >
+            <x-ts-callout-heading>
+                {{ __('Monthly payment limit') }}
+            </x-ts-callout-heading>
             <x-ts-callout-text>
-                {{ __('The payments feature is available for subscribed users only. Please subscribe to unlock payment links and payment management.') }}
-            </x-ts-callout-text>
-            <x-slot name="actions">
-                <x-ts-button :href="route('subscribe')" variant="primary">
-                    {{ __('Subscribe') }}
-                </x-ts-button>
-            </x-slot>
-        </x-ts-callout>
-    @else
-        <div class="flex flex-wrap items-end justify-between gap-4">
-            <div class="max-sm:w-full sm:flex-1">
-                <x-ts-heading level="1" size="xl">{{ __('Payments') }}</x-ts-heading>
-                <x-ts-subheading>{{ __('Generate payment links and manage payments.') }}</x-ts-subheading>
-            </div>
-            <div class="flex gap-2">
-                <x-ts-button :href="route('branding.payments')" variant="primary" class="btn-ink">
-                    {{ __('Settings') }}
-                </x-ts-button>
-                @if ($this->onboardingComplete)
-                    <x-ts-modal-trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
-                        <x-ts-button variant="primary">{{ __('Generate Payment Link') }}</x-ts-button>
-                    </x-ts-modal-trigger>
+                @if ($this->canReceivePayment)
+                    {{ __('Your free plan includes :limit payment per month. You can still receive one more this month.', ['limit' => $this->team->monthly_payment_limit]) }}
+                @else
+                    {{ __('You have reached the :limit payment per month included in the free plan. Upgrade to receive payments without limits.', ['limit' => $this->team->monthly_payment_limit]) }}
                 @endif
-            </div>
-        </div>
+            </x-ts-callout-text>
+            @unless ($this->canReceivePayment)
+                <x-slot name="actions">
+                    <x-ts-button :href="route('subscribe')" variant="primary">
+                        {{ __('Upgrade') }}
+                    </x-ts-button>
+                </x-slot>
+            @endunless
+        </x-ts-callout>
+    @endif
 
-        @if ($this->onboardingComplete)
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="max-sm:w-full sm:flex-1">
+            <x-ts-heading level="1" size="xl">{{ __('Payments') }}</x-ts-heading>
+            <x-ts-subheading>{{ __('Generate payment links and manage payments.') }}</x-ts-subheading>
+        </div>
+        <div class="flex gap-2">
+            <x-ts-button :href="route('branding.payments')" variant="primary" class="btn-ink">
+                {{ __('Settings') }}
+            </x-ts-button>
+            @if ($this->onboardingComplete && $this->canReceivePayment)
+                <x-ts-modal-trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
+                    <x-ts-button variant="primary">{{ __('Generate Payment Link') }}</x-ts-button>
+                </x-ts-modal-trigger>
+            @endif
+        </div>
+    </div>
+
+    @if ($this->onboardingComplete)
             @if ($this->payments?->count())
                 <x-data-table id="table" class="mt-8">
                     <x-data-table.columns>
@@ -380,7 +428,6 @@ new class extends Component
                 </x-slot>
             </x-ts-callout>
         @endif
-    @endif
 
     <x-confirm-modal
         name="delete-payment"

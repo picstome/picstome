@@ -79,11 +79,44 @@ it('shows the pro benefits and the paid plan badge', function () {
         ->get('/subscribe')
         ->assertOk()
         ->assertSee('Paid plan')
-        ->assertSee('Unlimited invoices')
-        ->assertSee('Unlimited contracts')
+        ->assertSee('Take your Picstome to the next level')
         ->assertSee('Up to 1 TB storage')
-        ->assertSee('Secure payment with Stripe')
-        ->assertSee('Everything in the free plan stays included.');
+        ->assertSee('Galleries that never expire')
+        ->assertSee('No monthly limits')
+        ->assertSee('White label')
+        ->assertSee('Secure payment with Stripe');
+});
+
+it('does not promise gated features the free plan already has', function () {
+    fakeStripeHttpClient();
+
+    $user = subscribePageUser();
+
+    actingAs($user)
+        ->get('/subscribe')
+        ->assertOk()
+        // These were listed as Pro benefits, but free teams already get them.
+        ->assertDontSee('Human support')
+        ->assertDontSee('Private galleries')
+        ->assertDontSee('Camera upload')
+        ->assertDontSee('Optional expiry')
+        // Stale "new" badges: nothing here is a new feature, only a new split.
+        ->assertDontSee('New');
+});
+
+it('translates every benefit text in spanish', function () {
+    fakeStripeHttpClient();
+
+    $user = subscribePageUser();
+    $user->update(['language' => 'es']);
+
+    actingAs($user->fresh())
+        ->get('/subscribe')
+        ->assertOk()
+        ->assertSee('Pasa al siguiente nivel de Picstome')
+        ->assertSee('Sin la marca de Picstome en tus galerías y documentos.')
+        ->assertSee('1000 veces más espacio que el plan gratuito.')
+        ->assertDontSee('No Picstome branding on galleries and documents.');
 });
 
 it('uses the pricing table for the current locale', function () {
@@ -95,7 +128,7 @@ it('uses the pricing table for the current locale', function () {
     actingAs($user)
         ->get('/subscribe')
         ->assertOk()
-        ->assertSee('Facturas ilimitadas')
+        ->assertSee('Galerías que no caducan')
         ->assertSee('prctbl_test_es')
         ->assertDontSee('prctbl_test_en');
 });
