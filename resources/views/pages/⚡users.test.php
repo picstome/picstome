@@ -347,3 +347,24 @@ it('shows the delete account flow in the flyout without the connected apps block
     $page->assertSee('Type the account email to confirm')
         ->assertDontSee('Your current password');
 })->group('browser');
+
+it('shows the email verification state in the browser', function () {
+    config(['picstome.admin_emails' => ['admin@example.com']]);
+
+    $admin = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
+    $user = User::factory()->withPersonalTeam()->unverified()->create([
+        'email' => 'pending@example.com',
+    ]);
+
+    actingAs($admin);
+
+    $page = visit('/users');
+
+    $page->assertSee('Email status')
+        ->assertSee('Unverified');
+
+    $page->click('@edit-user-'.$user->id);
+
+    $page->assertSee('Email verified')
+        ->assertSee('Mark the address as verified without sending the confirmation email.');
+})->group('browser');
