@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\User;
+use App\Services\SubscriptionCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -183,4 +185,20 @@ it('shows regular prices when the campaign is over', function () {
         ->assertOk()
         ->assertDontSee('Black Friday 2026')
         ->assertSee('60,00', false);
+});
+
+it('shows a toast instead of a server error when checkout fails', function () {
+    app()->setLocale('es');
+
+    $user = pricingPageUser();
+
+    $this->mock(SubscriptionCheckoutService::class, function ($mock) {
+        $mock->shouldReceive('checkout')->andThrow(new RuntimeException('Stripe unavailable'));
+    });
+
+    Livewire::actingAs($user->fresh())
+        ->test('pages::subscribe')
+        ->call('checkout', '100gb', 'monthly')
+        ->assertSet('statusType', 'error')
+        ->assertSet('statusMessage', 'No hemos podido iniciar el pago. Inténtalo de nuevo.');
 });
