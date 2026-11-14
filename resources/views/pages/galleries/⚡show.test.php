@@ -75,10 +75,12 @@ describe('Gallery Viewing', function () {
 
         $page = visit("/galleries/{$gallery->id}");
         $page->hover('[x-tooltip]');
-        $page->wait(0.3);
 
-        expect($page->script("document.querySelector('[data-tsui-tooltip]')?.innerText.trim()"))
-            ->toContain('This gallery is public and visible in your portfolio section.');
+        $tooltip = waitForBrowserValue($page, <<<'JS'
+            return document.querySelector('[data-tsui-tooltip]')?.innerText.trim() ?? null;
+        JS);
+
+        expect($tooltip)->toContain('This gallery is public and visible in your portfolio section.');
     })->group('browser');
 
     it('shows the download tab on the owner gallery page', function () {
@@ -378,9 +380,12 @@ describe('Gallery Viewing', function () {
 
         $page = visit("/galleries/{$gallery->id}");
         $page->click('[data-favorites-tab]');
-        $page->wait(0.4);
 
-        expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1)
+        $photoCount = waitForBrowserValue($page, <<<'JS'
+            return document.querySelectorAll('[data-photo-card]').length === 1 ? 1 : null;
+        JS);
+
+        expect($photoCount)->toBe(1)
             ->and($page->script("new URL(location.href).searchParams.get('favorites')"))->toBe('true');
     })->group('browser');
 

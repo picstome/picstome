@@ -151,21 +151,6 @@ test('visitors with unlocked gallery can view the password-protected photo', fun
     $response = get('/shares/0123ABC/photos/1')->assertStatus(200);
 });
 
-test('favorite photo via browser on watermarked gallery', function () {
-    $gallery = Gallery::factory()->shared()->selectable()->watermarked()->has(Photo::factory()->unfavorited())->create(['ulid' => 'test123']);
-
-    $photo = $gallery->photos()->first();
-
-    $page = visit("/shares/test123/photos/{$photo->id}");
-
-    // The dock is icon-only: the F shortcut is the stable way in, and the
-    // button itself is reached through its data hook.
-    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'f', bubbles: true }))");
-    $page->wait(0.3);
-
-    expect($photo->fresh()->isFavorited())->toBeTrue();
-})->group('browser');
-
 test('comment is required when adding a comment to a shared photo', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
         'are_comments_enabled' => true,

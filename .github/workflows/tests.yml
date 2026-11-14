@@ -84,13 +84,16 @@ jobs:
       # their own sequential step, so a stuck page fails fast and cannot leave a
       # parallel worker waiting forever.
       - name: Run Tests
-        run: ./vendor/bin/pest --parallel --compact --exclude-group=browser --default-time-limit=60
+        run: composer test:unit
 
       - name: Run Browser Tests
         run: |
           # The Playwright driver occasionally hangs instead of failing, and a
           # few page tests are timing-sensitive under CI load. Bound each
-          # attempt and retry once so a transient failure does not cost a
+          # attempt and retry so a transient failure does not cost a
           # 30-minute job timeout.
-          timeout 420 ./vendor/bin/pest --compact --group=browser --default-time-limit=120 ||
-          timeout 420 ./vendor/bin/pest --compact --group=browser --default-time-limit=120
+          for attempt in 1 2 3; do
+            echo "Browser tests attempt ${attempt}"
+            timeout 300 composer test:browser && exit 0
+          done
+          exit 1

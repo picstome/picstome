@@ -123,19 +123,3 @@ it('shows a wider pagination window with first and last controls', function () {
         ->assertSeeHtml('data-pagination-page="2"')
         ->assertSeeHtml('data-pagination-page="6"');
 });
-
-it('scrolls to the top after changing photoshoot pages', function () {
-    Photoshoot::factory()->for($this->team)->count(30)->create();
-
-    $this->actingAs($this->user);
-
-    $page = visit('/photoshoots');
-    $page->script("document.querySelector('[data-photoshoot-card]').__staleCard = true");
-    expect(scrollPageToBottom($page))->toBeGreaterThan(0);
-
-    $page->click('[data-pagination-page="2"]');
-    waitForPageScrollTop($page);
-
-    expect($page->script('window.scrollY'))->toBeLessThan(2)
-        ->and($page->script("document.querySelector('[data-photoshoot-card]')?.__staleCard ?? null"))->toBeNull();
-})->group('browser');

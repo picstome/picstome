@@ -53,12 +53,15 @@ it('opens the filtered translations for an email', function () {
         ->assertNoJavascriptErrors();
 })->group('browser');
 
-it('does not scroll horizontally', function (int $width) {
+it('does not scroll horizontally', function () {
     $this->actingAs($this->admin);
 
-    visit('/admin/emails')
-        ->resize($width, 900)
-        ->assertSee('Emails')
-        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
-        ->assertNoJavascriptErrors();
-})->with([1024, 1280, 1440])->group('browser');
+    $page = visit('/admin/emails');
+
+    foreach ([1024, 1280, 1440] as $width) {
+        $page->resize($width, 900)
+            ->assertSee('Emails')
+            ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
+            ->assertNoJavascriptErrors();
+    }
+})->group('browser');

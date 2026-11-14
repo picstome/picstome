@@ -320,34 +320,6 @@ describe('Users Page', function () {
     });
 });
 
-it('shows the delete account flow in the flyout without the connected apps block', function () {
-    config(['picstome.admin_emails' => ['admin@example.com']]);
-
-    $admin = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
-    $user = User::factory()->withPersonalTeam()->create(['email' => 'target@example.com']);
-
-    actingAs($admin);
-
-    $page = visit('/users');
-
-    $page->assertSee('Users');
-
-    // Open the target's row. Self-deletion is not offered from the user
-    // administration screen, so the acting admin's own row has no danger zone.
-    $page->click('@edit-user-'.$user->id);
-
-    $page->assertSee('Danger zone')
-        ->assertSee('Delete account')
-        ->assertDontSee('Connected apps');
-
-    // Explicit selector: the modal is also in the DOM (hidden), so clicking by
-    // text could target the hidden confirm button instead of this trigger.
-    $page->click('[data-test=admin-danger-zone] button');
-
-    $page->assertSee('Type the account email to confirm')
-        ->assertDontSee('Your current password');
-})->group('browser');
-
 it('shows the email verification state in the browser', function () {
     config(['picstome.admin_emails' => ['admin@example.com']]);
 

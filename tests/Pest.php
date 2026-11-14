@@ -278,27 +278,39 @@ function waitForPhotoCardCount(Webpage|PendingAwaitablePage $page, int $expected
  */
 function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs = 3000): void
 {
-    $page->script(<<<JS
-        new Promise((resolve, reject) => {
-            const startedAt = performance.now();
+    $deadline = microtime(true) + ($timeoutMs / 1000);
 
-            const check = () => {
-                if (window.scrollY < 2) {
-                    resolve(true);
+    do {
+        if ($page->script('window.scrollY') < 2) {
+            return;
+        }
 
-                    return;
-                }
+        usleep(50_000);
+    } while (microtime(true) < $deadline);
 
-                if (performance.now() - startedAt > {$timeoutMs}) {
-                    reject(new Error('The page did not scroll to the top within {$timeoutMs} ms.'));
+    throw new RuntimeException("The page did not scroll to the top within {$timeoutMs} ms.");
+}
 
-                    return;
-                }
+/**
+ * Poll a browser-side script until it returns a truthy value.
+ *
+ * Livewire, Alpine and Morph render asynchronously, so fixed waits are flaky
+ * under CI load. The script must return a value; the helper resolves as soon
+ * as that value is truthy and fails after the timeout otherwise.
+ */
+function waitForBrowserValue(Webpage|PendingAwaitablePage $page, string $script, int $timeoutMs = 5000): mixed
+{
+    $deadline = microtime(true) + ($timeoutMs / 1000);
 
-                setTimeout(check, 50);
-            };
+    do {
+        $value = $page->script("(function () {\n{$script}\n})()");
 
-            check();
-        });
-    JS);
+        if ($value) {
+            return $value;
+        }
+
+        usleep(100_000);
+    } while (microtime(true) < $deadline);
+
+    throw new RuntimeException("The browser value was not available within {$timeoutMs} ms.");
 }
