@@ -9,6 +9,7 @@ use App\Services\ScheduledPlanChangeService;
 use App\Services\SubscriptionCheckoutService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use TallStackUi\Traits\Interactions;
 use Throwable;
 
 /**
@@ -17,6 +18,8 @@ use Throwable;
  */
 trait HandlesPricingPage
 {
+    use Interactions;
+
     public string $interval = 'monthly';
 
     public ?string $upgradeTier = null;
