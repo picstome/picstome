@@ -335,6 +335,10 @@
                         <livewire:profile-dropdown :with-name="false" />
                     </header>
 
+                    @auth
+                        <livewire:black-friday-banner />
+                    @endauth
+
                     <main @class([
                         'min-w-0 flex-1',
                         'mx-auto w-full max-w-7xl p-6 lg:p-8' => ! ($isTool ?? false),

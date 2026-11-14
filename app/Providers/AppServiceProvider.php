@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Listeners\ScheduledTaskEventSubscriber;
+use App\Models\Subscription;
 use App\Models\Team;
 use App\Services\QueueMonitorService;
 use Illuminate\Queue\Events\JobFailed;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         app('translation.loader')->addPath(config('translation_overrides.path'));
 
         Cashier::useCustomerModel(Team::class);
+        Cashier::useSubscriptionModel(Subscription::class);
 
         // TallStackUI registers its Alpine components from module scripts in
         // the head. Defer Livewire so those modules run before Alpine boots.
