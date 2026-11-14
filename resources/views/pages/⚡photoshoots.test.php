@@ -123,4 +123,3 @@ it('shows a wider pagination window with first and last controls', function () {
         ->assertSeeHtml('data-pagination-page="2"')
         ->assertSeeHtml('data-pagination-page="6"');
 });
-
