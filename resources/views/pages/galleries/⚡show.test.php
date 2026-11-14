@@ -79,7 +79,7 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("document.querySelector('[data-tsui-tooltip]')?.innerText.trim()"))
             ->toContain('This gallery is public and visible in your portfolio section.');
-    });
+    })->group('browser');
 
     it('shows the download tab on the owner gallery page', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -261,7 +261,7 @@ describe('Gallery Viewing', function () {
         $page->wait(0.3);
 
         expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
-    });
+    })->group('browser');
 
     it('keeps only cover, delete and favorite actions on the photo tile', function () {
         Storage::fake('s3');
@@ -287,7 +287,7 @@ describe('Gallery Viewing', function () {
                 }
             })()
         JS))->toBe(['cover' => 1, 'delete' => 1, 'favorite' => 1, 'download' => 0, 'more' => 0]);
-    });
+    })->group('browser');
 
     it('centres the tile actions dock at the bottom of the thumbnail', function () {
         Storage::fake('s3');
@@ -317,7 +317,7 @@ describe('Gallery Viewing', function () {
                 }
             })()
         JS))->toBe(['centred' => true, 'nearBottom' => 6, 'radius' => true]);
-    });
+    })->group('browser');
 
     it('opens the favorite list from the actions menu', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -340,7 +340,7 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("document.getElementById('finder-textarea').value"))
             ->not->toBeEmpty();
-    });
+    })->group('browser');
 
     it('opens the favorite list from the export icon in the tab bar', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -354,7 +354,7 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("getComputedStyle(document.querySelector('#favorite-list')).display"))
             ->not->toBe('none');
-    });
+    })->group('browser');
 
     it('opens the favorites tab from the url', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -367,7 +367,7 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("document.querySelector('[role=tablist] [data-current=true]')?.textContent.trim()"))
             ->toContain('Favorites');
-    });
+    })->group('browser');
 
     it('applies the favorites filter from the favorites tab', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -382,7 +382,7 @@ describe('Gallery Viewing', function () {
 
         expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1)
             ->and($page->script("new URL(location.href).searchParams.get('favorites')"))->toBe('true');
-    });
+    })->group('browser');
 
     it('does not overflow horizontally on small mobile screens', function () {
         $user = User::factory()->withPersonalTeam()->create(['language' => 'es']);
@@ -403,7 +403,7 @@ describe('Gallery Viewing', function () {
             expect($page->script('document.documentElement.scrollWidth <= document.documentElement.clientWidth'))
                 ->toBeTrue();
         }
-    });
+    })->group('browser');
 
     it('accepts files dropped anywhere while the add media modal is open', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
@@ -447,7 +447,7 @@ describe('Gallery Viewing', function () {
 
         $page->wait(0.3);
         $page->assertSee('outside-drop.exe');
-    });
+    })->group('browser');
 
     it('prevents guests from viewing any galleries', function () {
         Gallery::factory()->for($this->team)->create();

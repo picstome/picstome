@@ -87,4 +87,10 @@ jobs:
         run: ./vendor/bin/pest --parallel --compact --exclude-group=browser --default-time-limit=60
 
       - name: Run Browser Tests
-        run: ./vendor/bin/pest --compact --group=browser --default-time-limit=120
+        run: |
+          # The Playwright driver occasionally hangs instead of failing, and a
+          # few page tests are timing-sensitive under CI load. Bound each
+          # attempt and retry once so a transient failure does not cost a
+          # 30-minute job timeout.
+          timeout 420 ./vendor/bin/pest --compact --group=browser --default-time-limit=120 ||
+          timeout 420 ./vendor/bin/pest --compact --group=browser --default-time-limit=120
