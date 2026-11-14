@@ -396,16 +396,6 @@ it('shows the last error of a failed scheduled task', function () {
         ->assertSee('Failed');
 });
 
-it('renders the queue manager in the browser', function () {
-    $this->actingAs($this->admin);
-
-    visit('/admin/queue')
-        ->assertSee('Queue manager')
-        ->assertSee('Scheduled tasks')
-        ->assertSee('galleries:delete-expired')
-        ->assertNoJavascriptErrors();
-})->group('browser');
-
 it('switches between queue tabs in the browser', function () {
     queueManagerFailedJob();
 

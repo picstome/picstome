@@ -278,29 +278,17 @@ function waitForPhotoCardCount(Webpage|PendingAwaitablePage $page, int $expected
  */
 function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs = 3000): void
 {
-    $page->script(<<<JS
-        new Promise((resolve, reject) => {
-            const startedAt = performance.now();
+    $deadline = microtime(true) + ($timeoutMs / 1000);
 
-            const check = () => {
-                if (window.scrollY < 2) {
-                    resolve(true);
+    do {
+        if ($page->script('window.scrollY') < 2) {
+            return;
+        }
 
-                    return;
-                }
+        usleep(50_000);
+    } while (microtime(true) < $deadline);
 
-                if (performance.now() - startedAt > {$timeoutMs}) {
-                    reject(new Error('The page did not scroll to the top within {$timeoutMs} ms.'));
-
-                    return;
-                }
-
-                setTimeout(check, 50);
-            };
-
-            check();
-        });
-    JS);
+    throw new RuntimeException("The page did not scroll to the top within {$timeoutMs} ms.");
 }
 
 /**
@@ -312,39 +300,17 @@ function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs
  */
 function waitForBrowserValue(Webpage|PendingAwaitablePage $page, string $script, int $timeoutMs = 5000): mixed
 {
-    return $page->script(<<<JS
-        new Promise((resolve, reject) => {
-            const startedAt = performance.now();
+    $deadline = microtime(true) + ($timeoutMs / 1000);
 
-            const check = () => {
-                let value;
+    do {
+        $value = $page->script("(function () {\n{$script}\n})()");
 
-                try {
-                    value = (function () {
-                        {$script}
-                    })();
-                } catch (error) {
-                    reject(error);
+        if ($value) {
+            return $value;
+        }
 
-                    return;
-                }
+        usleep(100_000);
+    } while (microtime(true) < $deadline);
 
-                if (value) {
-                    resolve(value);
-
-                    return;
-                }
-
-                if (performance.now() - startedAt > {$timeoutMs}) {
-                    reject(new Error('The browser value was not available within {$timeoutMs} ms.'));
-
-                    return;
-                }
-
-                setTimeout(check, 50);
-            };
-
-            check();
-        });
-    JS);
+    throw new RuntimeException("The browser value was not available within {$timeoutMs} ms.");
 }

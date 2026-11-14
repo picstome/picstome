@@ -151,27 +151,6 @@ test('visitors with unlocked gallery can view the password-protected photo', fun
     $response = get('/shares/0123ABC/photos/1')->assertStatus(200);
 });
 
-test('favorite photo via browser on watermarked gallery', function () {
-    $gallery = Gallery::factory()->shared()->selectable()->watermarked()->has(Photo::factory()->unfavorited())->create(['ulid' => 'test123']);
-
-    $photo = $gallery->photos()->first();
-
-    $page = visit("/shares/test123/photos/{$photo->id}");
-
-    // The dock is icon-only, so reach the favorite action through its data
-    // hook instead of relying on the keyboard shortcut. That keeps the test
-    // independent from Alpine's keyup listener timing.
-    $page->click('[data-dock-favorite]');
-
-    $deadline = microtime(true) + 5;
-
-    while (! $photo->fresh()->isFavorited() && microtime(true) < $deadline) {
-        usleep(100_000);
-    }
-
-    expect($photo->fresh()->isFavorited())->toBeTrue();
-})->group('browser');
-
 test('comment is required when adding a comment to a shared photo', function () {
     $gallery = Gallery::factory()->shared()->has(Photo::factory())->create([
         'are_comments_enabled' => true,

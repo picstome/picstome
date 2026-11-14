@@ -137,16 +137,19 @@ it('filters translations to a list of keys', function () {
         ->assertDontSee('Verify Email Address');
 });
 
-it('does not scroll horizontally', function (int $width) {
+it('does not scroll horizontally', function () {
     $this->actingAs($this->admin);
 
-    visit('/admin/translations')
-        ->resize($width, 900)
-        ->assertSee('Translations')
-        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
-        ->assertScript("(() => { const el = document.querySelector('ui-table-scroll-area'); return el === null || el.scrollWidth <= el.clientWidth + 1; })()", true)
-        ->assertNoJavascriptErrors();
-})->with([1024, 1280, 1440, 1920])->group('browser');
+    $page = visit('/admin/translations');
+
+    foreach ([1024, 1280, 1440, 1920] as $width) {
+        $page->resize($width, 900)
+            ->assertSee('Translations')
+            ->assertScript('document.documentElement.scrollWidth <= window.innerWidth + 1', true)
+            ->assertScript("(() => { const el = document.querySelector('ui-table-scroll-area'); return el === null || el.scrollWidth <= el.clientWidth + 1; })()", true)
+            ->assertNoJavascriptErrors();
+    }
+})->group('browser');
 
 it('opens the editor from the browser', function () {
     $this->actingAs($this->admin);
