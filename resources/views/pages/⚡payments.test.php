@@ -139,6 +139,60 @@ it('fails validation if description is too long', function () {
         ->assertHasErrors(['linkForm.description' => 'max']);
 });
 
+it('generates a booking payment link with 24-hour times', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
+        ->set('linkForm.amount', 213)
+        ->set('linkForm.description', 'Sesión Bea')
+        ->set('linkForm.booking', true)
+        ->set('linkForm.booking_date', '2026-11-20')
+        ->set('linkForm.booking_start_time', '10:32')
+        ->set('linkForm.booking_end_time', '12:00')
+        ->set('linkForm.timezone', 'Europe/Madrid')
+        ->call('generatePaymentLink')
+        ->assertHasNoErrors();
+
+    $link = urldecode((string) $component->paymentLink);
+
+    expect($link)
+        ->toContain('booking=1')
+        ->toContain('booking_date=2026-11-20')
+        ->toContain('booking_start_time=10:32')
+        ->toContain('booking_end_time=12:00')
+        ->toContain('timezone=Europe/Madrid');
+});
+
+it('normalizes 12-hour booking times received from the time picker', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::payments')
+        ->set('linkForm.amount', 213)
+        ->set('linkForm.description', 'Sesión Bea')
+        ->set('linkForm.booking', true)
+        ->set('linkForm.booking_date', '2026-11-20')
+        ->set('linkForm.booking_start_time', '10:32 AM')
+        ->set('linkForm.booking_end_time', '02:15 PM')
+        ->set('linkForm.timezone', 'Europe/Madrid')
+        ->call('generatePaymentLink')
+        ->assertHasNoErrors();
+
+    $link = urldecode((string) $component->paymentLink);
+
+    expect($link)
+        ->toContain('booking_start_time=10:32')
+        ->toContain('booking_end_time=14:15');
+});
+
+it('still rejects invalid booking times', function () {
+    Livewire::actingAs($this->user)->test('pages::payments')
+        ->set('linkForm.amount', 213)
+        ->set('linkForm.description', 'Sesión Bea')
+        ->set('linkForm.booking', true)
+        ->set('linkForm.booking_date', '2026-11-20')
+        ->set('linkForm.booking_start_time', '25:99')
+        ->set('linkForm.booking_end_time', '12:00')
+        ->set('linkForm.timezone', 'Europe/Madrid')
+        ->call('generatePaymentLink')
+        ->assertHasErrors(['linkForm.booking_start_time' => 'date_format']);
+});
+
 it('can delete a payment', function () {
     $payment = Payment::factory()->for($this->team)->create();
 

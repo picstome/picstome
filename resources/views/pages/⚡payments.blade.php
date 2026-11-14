@@ -334,8 +334,16 @@ new class extends Component
                         <div>
                             <x-date wire:model="linkForm.booking_date" :label="__('Date')" />
                             <div class="mt-4 grid grid-cols-2 gap-4">
-                                <x-time wire:model="linkForm.booking_start_time" :label="__('Start Time')" />
-                                <x-time wire:model="linkForm.booking_end_time" :label="__('End Time')" />
+                                <x-time
+                                    wire:model="linkForm.booking_start_time"
+                                    :label="__('Start Time')"
+                                    format="24"
+                                />
+                                <x-time
+                                    wire:model="linkForm.booking_end_time"
+                                    :label="__('End Time')"
+                                    format="24"
+                                />
                             </div>
                         </div>
                     @endif
