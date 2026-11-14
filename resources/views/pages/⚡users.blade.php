@@ -95,6 +95,9 @@ new class extends Component
     public function saveUser()
     {
         $this->userForm->update();
+
+        unset($this->users);
+
         $this->closeModal('edit-user');
     }
 
@@ -133,7 +136,7 @@ new class extends Component
 
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
-                'ID', 'Name', 'Email', 'Created At', 'Lifetime', 'Subscribed', 'Subscribed Since', 'Storage Used (GB)', 'Storage Limit (GB)',
+                'ID', 'Name', 'Email', 'Email Verified', 'Created At', 'Lifetime', 'Subscribed', 'Subscribed Since', 'Storage Used (GB)', 'Storage Limit (GB)',
             ]);
             foreach ($users as $user) {
                 $team = $user->personalTeam();
@@ -147,6 +150,7 @@ new class extends Component
                     $user->id,
                     $user->name,
                     $user->email,
+                    $user->hasVerifiedEmail() ? 'Yes' : 'No',
                     $user->created_at,
                     $team?->lifetime_at ? 'Yes' : 'No',
                     $team?->subscribed() ? 'Yes' : 'No',
@@ -199,6 +203,8 @@ new class extends Component
                 $q->where('personal_team', true)
                     ->whereNotNull('lifetime_at');
             }),
+            'verified' => $query->whereNotNull('email_verified_at'),
+            'unverified' => $query->whereNull('email_verified_at'),
             default => null,
         };
 
@@ -236,6 +242,8 @@ new class extends Component
                 <x-ts-select-option value="subscribed">{{ __('Subscribed') }}</x-ts-select-option>
                 <x-ts-select-option value="not_subscribed">{{ __('Not Subscribed') }}</x-ts-select-option>
                 <x-ts-select-option value="lifetime">{{ __('Lifetime') }}</x-ts-select-option>
+                <x-ts-select-option value="verified">{{ __('Verified email') }}</x-ts-select-option>
+                <x-ts-select-option value="unverified">{{ __('Unverified email') }}</x-ts-select-option>
             </x-ts-select>
         </div>
         <div class="w-full md:w-48">
@@ -270,6 +278,7 @@ new class extends Component
         <x-data-table id="table" class="mt-6">
             <x-data-table.columns>
                 <x-data-table.column>{{ __('User') }}</x-data-table.column>
+                <x-data-table.column>{{ __('Email status') }}</x-data-table.column>
                 <x-data-table.column class="max-sm:hidden">{{ __('Referral Code') }}</x-data-table.column>
                 <x-data-table.column
                     sortable
@@ -313,6 +322,14 @@ new class extends Component
                                     <x-ts-text class="max-sm:hidden">{{ $user->email }}</x-ts-text>
                                 </div>
                             </div>
+                        </x-data-table.cell>
+
+                        <x-data-table.cell class="whitespace-nowrap">
+                            @if ($user->hasVerifiedEmail())
+                                <x-ts-badge color="lime" size="sm">{{ __('Verified') }}</x-ts-badge>
+                            @else
+                                <x-ts-badge color="amber" size="sm">{{ __('Unverified') }}</x-ts-badge>
+                            @endif
                         </x-data-table.cell>
 
                         <x-data-table.cell class="whitespace-nowrap max-sm:hidden">
@@ -399,6 +416,15 @@ new class extends Component
                 <x-ts-input :value="$userForm->user->name" :label="__('Name')" readonly />
 
                 <x-ts-input :value="$userForm->user->email" :label="__('Email')" readonly />
+
+                <div class="space-y-4 rounded-lg border border-zinc-200 p-4 dark:border-white/10">
+                    <x-ts-switch
+                        wire:model="userForm.emailVerified"
+                        :label="__('Email verified')"
+                        :description="__('Mark the address as verified without sending the confirmation email.')"
+                    />
+                    <x-ts-error name="userForm.emailVerified" />
+                </div>
 
                 @if ($userForm->user->referral_code)
                     <x-ts-input :value="$userForm->user->referral_code" :label="__('Referral Code')" readonly />
