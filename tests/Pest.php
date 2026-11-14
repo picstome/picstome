@@ -302,3 +302,49 @@ function waitForPageScrollTop(Webpage|PendingAwaitablePage $page, int $timeoutMs
         });
     JS);
 }
+
+/**
+ * Poll a browser-side script until it returns a truthy value.
+ *
+ * Livewire, Alpine and Morph render asynchronously, so fixed waits are flaky
+ * under CI load. The script must return a value; the helper resolves as soon
+ * as that value is truthy and fails after the timeout otherwise.
+ */
+function waitForBrowserValue(Webpage|PendingAwaitablePage $page, string $script, int $timeoutMs = 5000): mixed
+{
+    return $page->script(<<<JS
+        new Promise((resolve, reject) => {
+            const startedAt = performance.now();
+
+            const check = () => {
+                let value;
+
+                try {
+                    value = (function () {
+                        {$script}
+                    })();
+                } catch (error) {
+                    reject(error);
+
+                    return;
+                }
+
+                if (value) {
+                    resolve(value);
+
+                    return;
+                }
+
+                if (performance.now() - startedAt > {$timeoutMs}) {
+                    reject(new Error('The browser value was not available within {$timeoutMs} ms.'));
+
+                    return;
+                }
+
+                setTimeout(check, 50);
+            };
+
+            check();
+        });
+    JS);
+}

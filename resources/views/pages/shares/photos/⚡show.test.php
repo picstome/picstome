@@ -158,10 +158,16 @@ test('favorite photo via browser on watermarked gallery', function () {
 
     $page = visit("/shares/test123/photos/{$photo->id}");
 
-    // The dock is icon-only: the F shortcut is the stable way in, and the
-    // button itself is reached through its data hook.
-    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'f', bubbles: true }))");
-    $page->wait(0.3);
+    // The dock is icon-only, so reach the favorite action through its data
+    // hook instead of relying on the keyboard shortcut. That keeps the test
+    // independent from Alpine's keyup listener timing.
+    $page->click('[data-dock-favorite]');
+
+    $deadline = microtime(true) + 5;
+
+    while (! $photo->fresh()->isFavorited() && microtime(true) < $deadline) {
+        usleep(100_000);
+    }
 
     expect($photo->fresh()->isFavorited())->toBeTrue();
 })->group('browser');

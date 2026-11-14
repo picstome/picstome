@@ -985,19 +985,24 @@ test('the hidden annotations state is kept while moving between photos', functio
 
     // Filled state, same rule as the comments button: one toggle, green when
     // the pins are visible.
-    expect($page->script(<<<'JS'
-        (() => {
-            const toggle = document.querySelector('[data-annotations-hide], [data-annotations-show]')
+    $toggle = waitForBrowserValue($page, <<<'JS'
+        const toggle = document.querySelector('[data-annotations-hide], [data-annotations-show]')
 
-            return toggle ? [
-                toggle.getAttribute('aria-label'),
-                getComputedStyle(toggle).backgroundColor,
-            ] : null
-        })()
-    JS))->toBe(['Hide annotations', 'rgb(49, 109, 97)']);
+        return toggle ? [
+            toggle.getAttribute('aria-label'),
+            getComputedStyle(toggle).backgroundColor,
+        ] : null;
+    JS);
+
+    expect($toggle)->toBe(['Hide annotations', 'rgb(49, 109, 97)']);
 
     $page->script("document.querySelector('[data-annotations-hide]')?.click()");
-    $page->wait(0.2);
+
+    waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('#photo button[title="Photo annotation"]')
+
+        return pin && pin.offsetParent === null ? true : null;
+    JS);
 
     expect($pinIsVisible())->toBeFalse()
         ->and($page->script("localStorage.getItem('picstome-annotations-visible')"))->toBe('0');
