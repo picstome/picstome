@@ -221,7 +221,8 @@ Route::livewire('/payments', 'pages::payments')->name('payments')->middleware(['
 Route::livewire('/portfolio', 'pages::portfolio')->name('portfolio')->middleware(['auth', 'verified']);
 Route::livewire('/public-profile', 'pages::public-profile')->name('public-profile')->middleware('auth');
 Route::livewire('/register', 'pages::register')->name('register')->middleware('guest');
-Route::livewire('/subscribe', 'pages::subscribe')->name('subscribe')->middleware(['auth', 'verified']);
+Route::livewire('/subscribe', 'pages::subscribe')->name('subscribe');
+Route::redirect('/black-friday', '/subscribe')->name('black-friday');
 Route::livewire('/users', 'pages::users')->name('users')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/admin/stats', 'pages::admin.stats')->name('admin.stats')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);
 Route::livewire('/admin/translations', 'pages::admin.translations')->name('admin.translations')->middleware(['auth', 'verified', EnsureUserIsAdmin::class]);

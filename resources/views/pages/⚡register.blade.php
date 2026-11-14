@@ -22,9 +22,23 @@ new #[Layout('layouts.guest')] class extends Component
 
     public $referral_code = '';
 
+    public string $redirect = '';
+
     public function mount()
     {
         $this->referral_code = request()->get('referral', '');
+        $this->redirect = $this->safeRedirect(request()->get('redirect', ''));
+    }
+
+    private function safeRedirect(?string $redirect): string
+    {
+        if (! is_string($redirect) || $redirect === '') {
+            return '';
+        }
+
+        return str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')
+            ? $redirect
+            : '';
     }
 
     public function register()
@@ -57,6 +71,10 @@ new #[Layout('layouts.guest')] class extends Component
         ]);
 
         Auth::login($user);
+
+        if ($this->redirect !== '') {
+            return redirect()->to($this->redirect);
+        }
 
         $this->redirectIntended(route('galleries', absolute: false), navigate: true);
     }

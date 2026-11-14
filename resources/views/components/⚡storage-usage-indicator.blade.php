@@ -1,72 +1,57 @@
 <?php
 
+use App\Services\AccountSummaryService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 new class extends Component
 {
-    public $used = 0;
-
-    public $total = 0;
-
-    public $usage = null;
-
-    public bool $hasUnlimitedStorage = false;
+    /** @var array<string, mixed> */
+    public array $summary = [];
 
     public function mount(): void
     {
-        $team = Auth::user()->currentTeam;
-
-        $this->used = $team->storage_used_gb;
-        $this->total = $team->storage_limit_gb;
-        $this->usage = $team->storage_used_percent;
-        $this->hasUnlimitedStorage = $team->hasUnlimitedStorage;
+        $this->summary = app(AccountSummaryService::class)->forTeam(Auth::user()->currentTeam);
     }
 }; ?>
 
 <div>
     <div
         class="border-brand-green/15 mx-2 rounded-xl border bg-white p-3 shadow-xs dark:border-white/10 dark:bg-white/5"
+        data-test="account-summary"
     >
-        <div class="mb-2 flex items-center gap-2">
-            <x-icon name="server" class="text-brand-green dark:text-brand-sage size-4" />
-            <x-ts-text class="text-brand-green-deep dark:text-brand-sage text-xs font-medium">
-                {{ __('Storage') }}
-            </x-ts-text>
+        <div class="flex items-start gap-2">
+            <x-icon name="credit-card" class="text-brand-green dark:text-brand-sage mt-0.5 size-4 shrink-0" />
+
+            <p class="text-brand-ink dark:text-brand-cream min-w-0 truncate text-xs font-semibold">
+                {{ __('Plan :plan', ['plan' => $summary['plan_label']]) }}
+            </p>
         </div>
 
-        <div class="space-y-1">
-            <div class="flex justify-between text-xs">
-                <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Used') }}</span>
-                <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $used }}</span>
+        <p class="text-brand-ink/65 dark:text-brand-sage/75 mt-2 text-[11px] font-medium">
+            {{ $summary['storage_used'] }} / {{ $summary['storage_total'] }}
+            @unless ($summary['has_unlimited_storage'])
+                · {{ $summary['storage_percent'] }}%
+            @endunless
+        </p>
+
+        @unless ($summary['has_unlimited_storage'])
+            <div class="bg-brand-sage/30 mt-2 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10">
+                <div
+                    class="{{ (float) $summary['storage_percent'] > 90 ? 'bg-brand-coral' : ((float) $summary['storage_percent'] > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
+                    style="width: {{ min((float) $summary['storage_percent'], 100) }}%"
+                ></div>
             </div>
+        @endunless
 
-            @unless ($hasUnlimitedStorage)
-                <div class="flex justify-between text-xs">
-                    <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Total') }}</span>
-                    <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $total }}</span>
-                </div>
-            @else
-                <div class="flex justify-between text-xs">
-                    <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Total') }}</span>
-                    <span class="text-brand-ink dark:text-brand-cream font-mono">{{ __('Unlimited') }}</span>
-                </div>
-            @endunless
+        @if ($summary['renews_at_label'])
+            <p class="text-brand-ink/50 dark:text-brand-sage/60 mt-2 text-[11px]">
+                {{ $summary['renews_at_label'] }}
+            </p>
+        @endif
 
-            @unless ($hasUnlimitedStorage)
-                <div class="mt-2">
-                    <div class="mb-1 flex justify-between text-xs">
-                        <span class="text-brand-ink/70 dark:text-brand-sage/80 font-medium">{{ __('Usage') }}</span>
-                        <span class="text-brand-ink dark:text-brand-cream font-mono">{{ $usage }}%</span>
-                    </div>
-                    <div class="bg-brand-sage/30 h-1.5 w-full overflow-hidden rounded-full dark:bg-white/10">
-                        <div
-                            class="{{ $usage > 90 ? 'bg-brand-coral' : ($usage > 75 ? 'bg-amber-400' : 'bg-brand-green dark:bg-brand-sage') }} h-full rounded-full transition-all duration-300"
-                            style="width: {{ min($usage, 100) }}%"
-                        ></div>
-                    </div>
-                </div>
-            @endunless
-        </div>
+        <x-ts-button :href="$summary['subscription_url']" size="sm" variant="primary" class="mt-3 w-full">
+            {{ __('Subscription') }}
+        </x-ts-button>
     </div>
 </div>

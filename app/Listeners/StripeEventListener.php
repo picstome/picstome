@@ -132,7 +132,14 @@ class StripeEventListener
      */
     protected function storageLimitFromPayload(array $payload): int
     {
-        $priceId = $payload['data']['object']['items']['data'][0]['price']['id'] ?? null;
+        $price = $payload['data']['object']['items']['data'][0]['price'] ?? [];
+        $storageLimit = $price['metadata']['storage_limit'] ?? null;
+
+        if (is_numeric($storageLimit)) {
+            return (int) $storageLimit;
+        }
+
+        $priceId = $price['id'] ?? null;
 
         return $this->storageLimitForPrice($priceId);
     }
