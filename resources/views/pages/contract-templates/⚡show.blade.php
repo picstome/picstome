@@ -1,13 +1,14 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\ContractTemplateForm;
 use App\Models\ContractTemplate;
+use App\Traits\InteractsWithTallStackModals;
 use Livewire\Component;
 
 new class extends Component
 {
     use InteractsWithTallStackModals;
+
     public ContractTemplate $contractTemplate;
 
     public ContractTemplateForm $form;
@@ -23,6 +24,8 @@ new class extends Component
 
     public function save()
     {
+        $this->authorize('update', $this->contractTemplate);
+
         $this->form->update();
 
         $this->contractTemplate = $this->contractTemplate->fresh();
@@ -32,6 +35,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->contractTemplate);
+
         $this->contractTemplate->delete();
 
         return $this->redirect(route('contract-templates'));
@@ -49,22 +54,40 @@ new class extends Component
         <div class="max-sm:w-full sm:flex-1">
             <div class="flex items-center gap-4">
                 <x-ts-heading level="1" size="xl">{{ $contractTemplate->title }}</x-ts-heading>
+
+                @if ($contractTemplate->isPublic())
+                    <x-ts-badge size="sm">Picstome</x-ts-badge>
+                    <x-ts-badge size="sm">{{ strtoupper($contractTemplate->locale ?? '') }}</x-ts-badge>
+                @endif
             </div>
         </div>
         <div class="flex gap-4">
-            <x-ts-modal-trigger name="delete-contract-template">
-                <x-ts-button variant="subtle">
-                    {{ __('Delete') }}
-                </x-ts-button>
-            </x-ts-modal-trigger>
+            @can('delete', $contractTemplate)
+                <x-ts-modal-trigger name="delete-contract-template">
+                    <x-ts-button variant="subtle">
+                        {{ __('Delete') }}
+                    </x-ts-button>
+                </x-ts-modal-trigger>
+            @endcan
 
-            <x-ts-modal-trigger name="edit">
-                <x-ts-button>{{ __('Edit') }}</x-ts-button>
-            </x-ts-modal-trigger>
+            @can('update', $contractTemplate)
+                <x-ts-modal-trigger name="edit">
+                    <x-ts-button>{{ __('Edit') }}</x-ts-button>
+                </x-ts-modal-trigger>
+            @endcan
         </div>
     </div>
 
     <x-ts-separator class="mt-6 mb-10" />
+
+    @if ($contractTemplate->isPublic())
+        <x-ts-callout variant="warning" icon="exclamation-triangle" class="mb-6">
+            <x-ts-callout-heading>{{ __('Picstome contract template') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
+                {{ __('This template is a starting point, not legal advice. We are not lawyers and are not responsible for the contract content. Every country has different laws, so please review and adapt it before use.') }}
+            </x-ts-callout-text>
+        </x-ts-callout>
+    @endif
 
     <div
         class="prose prose-sm dark:prose-invert lg:mx-auto lg:flex lg:min-h-[1123px] lg:min-w-[794px] lg:flex-col lg:items-stretch lg:justify-start lg:overflow-auto lg:border lg:border-zinc-200 lg:p-6 lg:shadow-sm lg:dark:border-zinc-700"
@@ -80,6 +103,21 @@ new class extends Component
             </div>
 
             <x-ts-input wire:model="form.title" :label="__('Title')" type="text" />
+
+            @if (auth()->user()?->is_admin)
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-ts-checkbox
+                        wire:model="form.isPublic"
+                        :label="__('Public template')"
+                        :description="__('Visible to all users.')"
+                    />
+
+                    <x-ts-select wire:model="form.locale" :label="__('Template language')">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </x-ts-select>
+                </div>
+            @endif
 
             <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"

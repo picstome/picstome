@@ -2,6 +2,7 @@
 
 use App\Livewire\Forms\ContractTemplateForm;
 use App\Models\ContractTemplate;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -9,9 +10,17 @@ use Livewire\WithPagination;
 
 new class extends Component
 {
+    use InteractsWithTallStackModals;
     use WithPagination;
 
     public ContractTemplateForm $form;
+
+    public function mount(): void
+    {
+        $this->form->locale = in_array(app()->getLocale(), config('translation_overrides.locales', ['en', 'es']), true)
+            ? app()->getLocale()
+            : 'en';
+    }
 
     public function save()
     {
@@ -22,11 +31,58 @@ new class extends Component
         });
     }
 
+    public function useTemplate(ContractTemplate $template)
+    {
+        $this->authorize('view', $template);
+
+        $this->form->body = $template->formatted_markdown_body;
+
+        $this->closeModal('templates');
+
+        $this->dispatch('template-selected');
+    }
+
+    /**
+     * Everything a user can start a template from: their own templates and
+     * the Picstome templates for their current language.
+     */
+    #[Computed]
+    public function availableTemplates()
+    {
+        $team = Auth::user()?->currentTeam;
+
+        if (! $team) {
+            return ContractTemplate::query()->whereRaw('1 = 0')->get();
+        }
+
+        return ContractTemplate::query()
+            ->availableTo($team)
+            ->orderBy('title')
+            ->get();
+    }
+
+    /**
+     * The list shows only the team's templates. Admins also see the global
+     * Picstome templates so they can maintain them.
+     */
     #[Computed]
     public function templates()
     {
-        return Auth::user()?->currentTeam
-            ->contractTemplates()
+        $user = Auth::user();
+        $team = $user?->currentTeam;
+
+        if (! $team) {
+            return ContractTemplate::query()->whereRaw('1 = 0')->paginate(25);
+        }
+
+        return ContractTemplate::query()
+            ->where(function ($query) use ($user, $team) {
+                $query->where('team_id', $team->id);
+
+                if ($user->is_admin) {
+                    $query->orWhereNull('team_id');
+                }
+            })
             ->orderBy('title')
             ->paginate(25);
     }
@@ -60,7 +116,14 @@ new class extends Component
                                 href="{{ route('contract-templates.show', ['contractTemplate' => $template]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
-                            {{ $template->title }}
+                            <div class="flex items-end gap-2">
+                                {{ $template->title }}
+
+                                @if ($template->isPublic())
+                                    <x-ts-badge size="sm">Picstome</x-ts-badge>
+                                    <x-ts-badge size="sm">{{ strtoupper($template->locale ?? '') }}</x-ts-badge>
+                                @endif
+                            </div>
                         </x-data-table.cell>
 
                         <x-data-table.cell class="relative">
@@ -115,14 +178,39 @@ new class extends Component
 
             <x-ts-input wire:model="form.title" :label="__('Title')" type="text" />
 
+            @if (auth()->user()?->is_admin)
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-ts-checkbox
+                        wire:model="form.isPublic"
+                        :label="__('Public template')"
+                        :description="__('Visible to all users.')"
+                    />
+
+                    <x-ts-select wire:model="form.locale" :label="__('Template language')">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                    </x-ts-select>
+                </div>
+            @endif
+
             <x-ts-field
                 class="dark:**:[.trix-button]:bg-white! **:[.trix-button-group--file-tools]:!hidden **:[.trix-button-group--history-tools]:!hidden dark:**:[trix-editor]:border-white/10! dark:**:[trix-editor]:bg-white/10! **:[trix-toolbar]:sticky **:[trix-toolbar]:top-0 **:[trix-toolbar]:z-10 **:[trix-toolbar]:bg-white dark:**:[trix-toolbar]:bg-zinc-800"
             >
-                <x-ts-label>{{ __('Terms') }}</x-ts-label>
+                <div class="flex items-center justify-between">
+                    <x-ts-label>{{ __('Terms') }}</x-ts-label>
+
+                    <x-ts-modal-trigger name="templates">
+                        <x-ts-button size="sm" variant="primary" class="btn-ink">{{ __('Use template') }}</x-ts-button>
+                    </x-ts-modal-trigger>
+                </div>
 
                 <trix-editor
                     class="prose prose-sm dark:prose-invert mt-2 min-h-96! min-w-full"
                     x-on:trix-change="$wire.form.body = $event.target.value"
+                    x-on:template-selected.window="
+                        element = document.querySelector('trix-editor')
+                        element.editor.insertHTML($wire.form.body)
+                    "
                 ></trix-editor>
 
                 <x-ts-error name="form.body" />
@@ -137,6 +225,10 @@ new class extends Component
                 </div>
             </div>
         </form>
+    </x-ts-modal>
+
+    <x-ts-modal name="templates" class="w-full sm:max-w-lg">
+        <x-contract-template-picker :templates="$this->availableTemplates" />
     </x-ts-modal>
 </div>
 

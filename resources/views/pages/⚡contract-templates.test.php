@@ -30,6 +30,77 @@ test('users can view their team contract templates', function () {
     expect($component->templates->contains($templateC))->toBeTrue();
 });
 
+test('regular users do not see Picstome templates in their template list', function () {
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'en',
+        'title' => 'Picstome release',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates');
+
+    expect($component->templates->contains($template))->toBeFalse();
+    expect($component->availableTemplates->contains($template))->toBeTrue();
+});
+
+test('admins see Picstome templates in their template list', function () {
+    config(['picstome.admin_emails' => [$this->user->email]]);
+
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'en',
+        'title' => 'Picstome release',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates');
+
+    expect($component->templates->contains($template))->toBeTrue();
+});
+
+test('admins can publish a template in a chosen language', function () {
+    config(['picstome.admin_emails' => [$this->user->email]]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
+        ->set('form.title', 'Licencia de marca')
+        ->set('form.body', '<h3>Cuerpo en HTML</h3>')
+        ->set('form.isPublic', true)
+        ->set('form.locale', 'es')
+        ->call('save');
+
+    $component->assertRedirect('/contract-templates/1');
+
+    tap(ContractTemplate::first(), function (ContractTemplate $template) {
+        expect($template->team_id)->toBeNull();
+        expect($template->locale)->toBe('es');
+        expect($template->title)->toBe('Licencia de marca');
+        expect($template->markdown_body)->toBe('### Cuerpo en HTML');
+    });
+});
+
+test('regular users cannot publish a template', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
+        ->set('form.title', 'Sneaky public template')
+        ->set('form.body', '<h3>Body</h3>')
+        ->set('form.isPublic', true)
+        ->call('save');
+
+    $component->assertStatus(403);
+    expect(ContractTemplate::count())->toBe(0);
+});
+
+test('users can start a new template from a Picstome template', function () {
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'en',
+        'markdown_body' => '### Picstome body',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
+        ->call('useTemplate', $template->id);
+
+    expect($component->form->body)->toContain('<h3>Picstome body</h3>');
+});
+
 test('can add new contract', function () {
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
         ->set('form.title', 'A contract title')

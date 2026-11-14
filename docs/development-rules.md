@@ -165,6 +165,9 @@ migration before restarting queue workers.
 6. Run `php artisan migrate --force`.
 7. Run feature-specific reconciliation commands, for example:
    `php artisan storage:recalculate --dry-run` then the real command.
+   When deploying global Picstome contract templates, run
+   `php artisan db:seed --class=ContractTemplateSeeder --force` (idempotent:
+   it never overwrites templates an admin has edited).
 8. Run `npm ci && npm run build` when assets changed.
 9. Clear/rebuild caches as appropriate.
 10. Restart queue workers after job-code changes.

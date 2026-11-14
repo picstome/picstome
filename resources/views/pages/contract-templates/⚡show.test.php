@@ -44,6 +44,62 @@ test('users cannot view the team templates of others', function () {
     $response->assertStatus(403);
 });
 
+test('any user can view a Picstome template', function () {
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'en',
+        'title' => 'Picstome release',
+    ]);
+
+    actingAs($this->user)
+        ->get('/contract-templates/'.$template->id)
+        ->assertOk()
+        ->assertSee('Picstome release')
+        ->assertSee(__('Picstome contract template'));
+});
+
+test('regular users cannot update or delete a Picstome template', function () {
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'en',
+        'title' => 'Picstome release',
+    ]);
+
+    $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
+        ->set('form.title', 'Changed by a user')
+        ->call('save');
+
+    $component->assertStatus(403);
+
+    Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
+        ->call('delete')
+        ->assertStatus(403);
+
+    expect($template->fresh()->title)->toBe('Picstome release');
+});
+
+test('admins can update a Picstome template', function () {
+    config(['picstome.admin_emails' => [$this->user->email]]);
+
+    $template = ContractTemplate::factory()->create([
+        'team_id' => null,
+        'locale' => 'es',
+        'title' => 'Título original',
+    ]);
+
+    Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
+        ->set('form.title', 'Título actualizado')
+        ->set('form.body', '<h3>Nuevo cuerpo</h3>')
+        ->call('save');
+
+    tap($template->fresh(), function (ContractTemplate $template) {
+        expect($template->title)->toBe('Título actualizado');
+        expect($template->markdown_body)->toBe('### Nuevo cuerpo');
+        expect($template->team_id)->toBeNull();
+        expect($template->locale)->toBe('es');
+    });
+});
+
 test('user can edit a template', function () {
     $template = ContractTemplate::factory()->for($this->team)->create();
 
