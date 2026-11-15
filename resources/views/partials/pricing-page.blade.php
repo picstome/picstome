@@ -16,14 +16,6 @@
     $displayInterval = $isMonthly ? 'annual' : $this->interval;
 @endphp
 
-<script>
-    window.picstomeTrack = function (name, params) {
-        if (typeof window.gtag === 'function') {
-            window.gtag('event', name, params || {});
-        }
-    };
-</script>
-
 <div @class(['mx-auto flex w-full max-w-6xl flex-col gap-6', 'py-4 lg:py-8' => $isPublic])>
     @if ($isPublic)
         <header class="flex flex-wrap items-center justify-between gap-3">
@@ -411,17 +403,6 @@
                                     :href="route('register', ['redirect' => route('subscribe', ['interval' => $displayInterval, 'plan' => $plan['key']], absolute: false)])"
                                     variant="primary"
                                     class="w-full"
-                                    x-on:click='window.picstomeTrack("begin_checkout", @js([
-                                        "currency" => config("plans.currency", "EUR"),
-                                        "value" => ($plan["prices"][$displayInterval] ?? 0) / 100,
-                                        "items" => [[
-                                            "item_id" => $plan["key"],
-                                            "item_name" => $plan["name"],
-                                            "item_variant" => $displayInterval,
-                                            "price" => ($plan["prices"][$displayInterval] ?? 0) / 100,
-                                            "quantity" => 1,
-                                        ]],
-                                    ]))'
                                 >
                                     {{ __('Start now') }}
                                 </x-ts-button>
@@ -432,17 +413,6 @@
                                     variant="primary"
                                     class="w-full"
                                     data-test="checkout-lifetime-{{ $plan['key'] }}"
-                                    x-on:click='window.picstomeTrack("begin_checkout", @js([
-                                        "currency" => config("plans.currency", "EUR"),
-                                        "value" => ($plan["prices"]["lifetime"] ?? 0) / 100,
-                                        "items" => [[
-                                            "item_id" => $plan["key"],
-                                            "item_name" => $plan["name"],
-                                            "item_variant" => "lifetime",
-                                            "price" => ($plan["prices"]["lifetime"] ?? 0) / 100,
-                                            "quantity" => 1,
-                                        ]],
-                                    ]))'
                                 >
                                     {{ __('Buy') }}
                                 </x-ts-button>
@@ -462,17 +432,6 @@
                                     variant="primary"
                                     class="w-full"
                                     data-test="checkout-{{ $plan['key'] }}-{{ $displayInterval }}"
-                                    x-on:click='window.picstomeTrack("begin_checkout", @js([
-                                        "currency" => config("plans.currency", "EUR"),
-                                        "value" => ($plan["prices"][$displayInterval] ?? 0) / 100,
-                                        "items" => [[
-                                            "item_id" => $plan["key"],
-                                            "item_name" => $plan["name"],
-                                            "item_variant" => $displayInterval,
-                                            "price" => ($plan["prices"][$displayInterval] ?? 0) / 100,
-                                            "quantity" => 1,
-                                        ]],
-                                    ]))'
                                 >
                                     {{ $isAnnualView ? __('Subscribe annually') : __('Subscribe monthly') }}
                                 </x-ts-button>

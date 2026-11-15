@@ -224,6 +224,8 @@ trait HandlesPricingPage
 
     public function checkout(string $tier, string $interval): mixed
     {
+        $this->trackBeginCheckout($tier, $interval);
+
         $team = $this->team();
 
         if (! $team) {
@@ -255,6 +257,8 @@ trait HandlesPricingPage
 
     public function checkoutLifetime(string $tier): mixed
     {
+        $this->trackBeginCheckout($tier, 'lifetime');
+
         $team = $this->team();
 
         if (! $team) {
@@ -302,6 +306,27 @@ trait HandlesPricingPage
     public function manageBillingUrl(): string
     {
         return route('billing-portal');
+    }
+
+    /**
+     * Fire begin_checkout before the Stripe redirect. Served from the Livewire
+     * action instead of an Alpine attribute so the pricing markup stays clean.
+     */
+    private function trackBeginCheckout(string $tier, string $interval): void
+    {
+        $price = ((int) config("plans.tiers.{$tier}.prices.{$interval}", 0)) / 100;
+
+        $this->dispatch('analytics:event', name: 'begin_checkout', params: [
+            'currency' => (string) config('plans.currency', 'EUR'),
+            'value' => $price,
+            'items' => [[
+                'item_id' => $tier,
+                'item_name' => (string) config("plans.tiers.{$tier}.name", $tier),
+                'item_variant' => $interval,
+                'price' => $price,
+                'quantity' => 1,
+            ]],
+        ]);
     }
 
     private function formatDate(?Carbon $date): ?string
