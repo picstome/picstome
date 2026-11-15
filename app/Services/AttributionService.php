@@ -278,38 +278,46 @@ class AttributionService
             $host = substr($host, 4);
         }
 
-        $search = [
-            'google.' => 'google',
+        if ($host === 'google' || str_starts_with($host, 'google.')) {
+            return ['google', 'organic'];
+        }
+
+        if (str_starts_with($host, 'yahoo.')) {
+            return ['yahoo', 'organic'];
+        }
+
+        $organic = [
             'bing.com' => 'bing',
             'duckduckgo.com' => 'duckduckgo',
-            'yahoo.' => 'yahoo',
             'ecosia.org' => 'ecosia',
             'startpage.com' => 'startpage',
         ];
 
-        foreach ($search as $needle => $name) {
-            if (str_contains($host, $needle)) {
+        foreach ($organic as $domain => $name) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
                 return [$name, 'organic'];
             }
         }
 
+        if (str_starts_with($host, 'pinterest.')) {
+            return ['pinterest', 'social'];
+        }
+
         $social = [
             'facebook.com' => 'facebook',
-            'l.facebook.com' => 'facebook',
             'instagram.com' => 'instagram',
-            'l.instagram.com' => 'instagram',
             'linkedin.com' => 'linkedin',
             'lnkd.in' => 'linkedin',
             'twitter.com' => 'twitter',
             'x.com' => 'twitter',
             't.co' => 'twitter',
-            'pinterest.' => 'pinterest',
             'youtube.com' => 'youtube',
+            'youtu.be' => 'youtube',
             'reddit.com' => 'reddit',
         ];
 
-        foreach ($social as $needle => $name) {
-            if (str_contains($host, $needle)) {
+        foreach ($social as $domain => $name) {
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
                 return [$name, 'social'];
             }
         }

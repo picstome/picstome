@@ -107,6 +107,20 @@ it('treats referrers from picstome as direct', function () {
     expect($attribution)->toBeNull();
 });
 
+it('classifies social and referral hosts without false positives', function () {
+    $facebook = app(AttributionService::class)->capture(
+        attributionRequest(server: ['HTTP_REFERER' => 'https://l.facebook.com/l.php'])
+    );
+    $netflix = app(AttributionService::class)->capture(
+        attributionRequest(server: ['HTTP_REFERER' => 'https://www.netflix.com/browse'])
+    );
+
+    expect($facebook['source'])->toBe('facebook')
+        ->and($facebook['medium'])->toBe('social')
+        ->and($netflix['source'])->toBe('netflix.com')
+        ->and($netflix['medium'])->toBe('referral');
+});
+
 it('classifies click ids without utms', function () {
     $google = app(AttributionService::class)->capture(attributionRequest(query: ['gclid' => 'abc']));
     $meta = app(AttributionService::class)->capture(attributionRequest(query: ['fbclid' => 'abc']));
