@@ -120,7 +120,7 @@ function b64url(value) {
   document.cookie = 'ps_attr=' + encodeURIComponent(JSON.stringify(attr)) +
     '; domain=.picstome.com; path=/; max-age=' + (60 * 60 * 24 * 90) + '; Secure; SameSite=Lax';
 
-  var source = attr.last || attr.first || {};
+  var source = attr.first || attr.last || {};
   var aid = {};
   Object.keys(SHORT).forEach(function (key) {
     var short = SHORT[key];
