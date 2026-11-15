@@ -62,9 +62,6 @@ class extends Component
 <x-slot name="fullScreen">{{ true }}</x-slot>
 
 <x-slot name="head">
-    @if(app()->environment('production'))
-        @include('partials.google-analytics')
-    @endif
 </x-slot>
 
 <div class="min-h-screen bg-white py-6 dark:bg-zinc-900">

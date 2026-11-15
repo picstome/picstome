@@ -1635,4 +1635,14 @@
     ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.": ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.",
     "Monthly subscription": "Monthly subscription",
     "Annual subscription": "Annual subscription"
+,
+    "Acquisition": "Acquisition",
+    "Where new accounts come from and how many end up paying.": "Where new accounts come from and how many end up paying.",
+    "Only accounts created after attribution was enabled.": "Only accounts created after attribution was enabled.",
+    "No attribution data yet.": "No attribution data yet.",
+    "Source": "Source",
+    "Traffic medium": "Traffic medium",
+    "Signups": "Signups",
+    "Converted": "Converted",
+    "Conversion": "Conversion"
 }

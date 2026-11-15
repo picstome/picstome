@@ -110,9 +110,6 @@ class extends Component
     <meta property="og:title" content="{{ $team->name }}" />
     <meta property="og:description" content="{{ $team->bio ?: $team->name }}" />
     <meta property="og:image" content="{{ $team->brand_logo_icon_url ? $team->brand_logo_icon_url . '&w=300&h=300' : '' }}" />
-    @if(app()->environment('production'))
-        @include('partials.google-analytics')
-    @endif
 </x-slot>
 
 <div class="flex min-h-screen items-center justify-center px-4">

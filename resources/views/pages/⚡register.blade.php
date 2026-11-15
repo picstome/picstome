@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\AttributionService;
 use App\Services\HandleGenerationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,8 @@ new #[Layout('layouts.guest')] class extends Component
     {
         $this->referral_code = request()->get('referral', '');
         $this->redirect = $this->safeRedirect(request()->get('redirect', ''));
+
+        app(AttributionService::class)->remember(request());
     }
 
     private function safeRedirect(?string $redirect): string
@@ -56,7 +59,11 @@ new #[Layout('layouts.guest')] class extends Component
             $validated['referral_code'] = strtoupper($this->referral_code);
         }
 
-        event(new Registered($user = User::create($validated)));
+        $user = User::create($validated);
+
+        app(AttributionService::class)->persist($user, request());
+
+        event(new Registered($user));
 
         $handleGenerator = new HandleGenerationService;
 
@@ -71,6 +78,12 @@ new #[Layout('layouts.guest')] class extends Component
         ]);
 
         Auth::login($user);
+
+        $this->dispatch('analytics:event', name: 'sign_up', params: array_filter([
+            'method' => 'email',
+            'signup_channel' => $user->attr_source,
+            'signup_campaign' => $user->attr_campaign,
+        ]));
 
         if ($this->redirect !== '') {
             return redirect()->to($this->redirect);
