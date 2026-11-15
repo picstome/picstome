@@ -1,17 +1,22 @@
 <?php
 
+use App\Jobs\PurgeUserAccount;
 use App\Livewire\Forms\UserForm;
 use App\Models\User;
+use App\Services\AccountDeletionService;
 use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
+    use Interactions;
     use InteractsWithTallStackModals;
     use WithPagination;
 
@@ -102,6 +107,83 @@ new class extends Component
     }
 
     /**
+     * Empty accounts created more than seven days ago whose email is still
+     * unverified. The acting admin and the configured admin emails are never
+     * included, even if their own address has not been verified.
+     */
+    #[Computed]
+    public function staleUnverifiedCount(): int
+    {
+        if ($this->filter !== 'unverified') {
+            return 0;
+        }
+
+        return $this->staleUnverifiedUsersQuery()->count();
+    }
+
+    /**
+     * Unverified accounts that also own galleries, contracts, invoices,
+     * customers, payments, subscriptions or lifetime access. They are left
+     * untouched so they can be reviewed individually.
+     */
+    #[Computed]
+    public function staleUnverifiedWithDataCount(): int
+    {
+        if ($this->filter !== 'unverified') {
+            return 0;
+        }
+
+        return $this->staleUnverifiedBaseQuery()
+            ->whereHas('ownedTeams', $this->accountActivityScope())
+            ->count();
+    }
+
+    public function openDeleteUnverifiedModal(): void
+    {
+        $this->ensureAdmin();
+
+        $this->openModal('delete-unverified');
+    }
+
+    /**
+     * Revoke access immediately and queue the heavy purge for each account.
+     *
+     * The purge deletes galleries, photos, contracts, invoices and Stripe
+     * subscriptions in the background, so the request only walks the matching
+     * ids and dispatches one job per user.
+     */
+    public function deleteUnverifiedUsers(AccountDeletionService $deletion): void
+    {
+        $this->ensureAdmin();
+
+        $deleted = 0;
+
+        $this->staleUnverifiedUsersQuery()
+            ->select('id')
+            ->chunkById(100, function ($users) use ($deletion, &$deleted): void {
+                foreach ($users as $user) {
+                    $deletion->revokeAccess($user);
+                    PurgeUserAccount::dispatch($user->id);
+                    $deleted++;
+                }
+            });
+
+        unset($this->users, $this->staleUnverifiedCount);
+
+        $this->closeModal('delete-unverified');
+
+        if ($deleted === 0) {
+            $this->toast()->warning(__('No accounts were deleted.'))->send();
+
+            return;
+        }
+
+        $this->toast()->success(trans_choice(':count account is being deleted.|:count accounts are being deleted.', $deleted, [
+            'count' => number_format($deleted),
+        ]))->send();
+    }
+
+    /**
      * Close the flyout after the shared delete modal removed the account.
      *
      * Without this the flyout would keep rendering the deleted user's form and
@@ -163,6 +245,82 @@ new class extends Component
         }, $filename, $headers);
     }
 
+    /**
+     * @return Builder<User>
+     */
+    private function staleUnverifiedBaseQuery(): Builder
+    {
+        $adminEmails = config('picstome.admin_emails', []);
+
+        return User::query()
+            ->whereNull('email_verified_at')
+            ->where('created_at', '<', now()->subDays(7))
+            ->whereKeyNot(auth()->id())
+            ->when($adminEmails !== [], fn (Builder $query) => $query->whereNotIn('email', $adminEmails));
+    }
+
+    /**
+     * Only accounts with nothing to lose: no galleries, business records,
+     * billing history or lifetime access.
+     *
+     * @return Builder<User>
+     */
+    private function staleUnverifiedUsersQuery(): Builder
+    {
+        return $this->staleUnverifiedBaseQuery()
+            ->whereDoesntHave('ownedTeams', $this->accountActivityScope());
+    }
+
+    /**
+     * Matches a team that holds content, business records, billing history or
+     * lifetime access.
+     */
+    private function accountActivityScope(): \Closure
+    {
+        return function (Builder $query): void {
+            $query->where(function (Builder $query): void {
+                $query->whereNotNull('lifetime_at')
+                    ->orWhereHas('galleries')
+                    ->orWhereHas('contracts')
+                    ->orWhereHas('invoices')
+                    ->orWhereHas('customers')
+                    ->orWhereHas('payments')
+                    ->orWhereHas('subscriptions');
+            });
+        };
+    }
+
+    private function ensureAdmin(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+    }
+
+    private function whereHasActiveSubscription(Builder $query, ?string $interval = null): Builder
+    {
+        return $query->where('personal_team', true)
+            ->whereHas('subscriptions', fn (Builder $subscription) => $this->whereActiveSubscription($subscription, $interval));
+    }
+
+    private function whereDoesntHaveActiveSubscription(Builder $query, ?string $interval = null): Builder
+    {
+        return $query->where('personal_team', true)
+            ->whereDoesntHave('subscriptions', fn (Builder $subscription) => $this->whereActiveSubscription($subscription, $interval));
+    }
+
+    private function whereActiveSubscription(Builder $query, ?string $interval = null): Builder
+    {
+        $query->where('stripe_status', 'active')
+            ->where(function (Builder $query) {
+                $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+            });
+
+        if ($interval !== null) {
+            $query->where('billing_interval', $interval);
+        }
+
+        return $query;
+    }
+
     private function usersQuery()
     {
         $query = User::query()->with('ownedTeams.subscriptions');
@@ -179,26 +337,10 @@ new class extends Component
         }
 
         match ($this->filter) {
-            'subscribed' => $query->whereHas('ownedTeams', function ($q) {
-                $q->where('personal_team', true)
-                    ->whereHas('subscriptions', function ($q2) {
-                        $q2->where('stripe_status', 'active')
-                            ->where(function ($q3) {
-                                $q3->whereNull('ends_at')
-                                    ->orWhere('ends_at', '>', now());
-                            });
-                    });
-            }),
-            'not_subscribed' => $query->whereHas('ownedTeams', function ($q) {
-                $q->where('personal_team', true)
-                    ->whereDoesntHave('subscriptions', function ($q2) {
-                        $q2->where('stripe_status', 'active')
-                            ->where(function ($q3) {
-                                $q3->whereNull('ends_at')
-                                    ->orWhere('ends_at', '>', now());
-                            });
-                    });
-            }),
+            'subscribed' => $query->whereHas('ownedTeams', fn (Builder $team) => $this->whereHasActiveSubscription($team)),
+            'not_subscribed' => $query->whereHas('ownedTeams', fn (Builder $team) => $this->whereDoesntHaveActiveSubscription($team)),
+            'monthly' => $query->whereHas('ownedTeams', fn (Builder $team) => $this->whereHasActiveSubscription($team, 'month')),
+            'annual' => $query->whereHas('ownedTeams', fn (Builder $team) => $this->whereHasActiveSubscription($team, 'year')),
             'lifetime' => $query->whereHas('ownedTeams', function ($q) {
                 $q->where('personal_team', true)
                     ->whereNotNull('lifetime_at');
@@ -240,8 +382,10 @@ new class extends Component
             <x-ts-select wire:model.live="filter" label="{{ __('Filter') }}" placeholder="{{ __('All') }}">
                 <x-ts-select-option value="all">{{ __('All') }}</x-ts-select-option>
                 <x-ts-select-option value="subscribed">{{ __('Subscribed') }}</x-ts-select-option>
-                <x-ts-select-option value="not_subscribed">{{ __('Not Subscribed') }}</x-ts-select-option>
+                <x-ts-select-option value="monthly">{{ __('Monthly subscription') }}</x-ts-select-option>
+                <x-ts-select-option value="annual">{{ __('Annual subscription') }}</x-ts-select-option>
                 <x-ts-select-option value="lifetime">{{ __('Lifetime') }}</x-ts-select-option>
+                <x-ts-select-option value="not_subscribed">{{ __('Not Subscribed') }}</x-ts-select-option>
                 <x-ts-select-option value="verified">{{ __('Verified email') }}</x-ts-select-option>
                 <x-ts-select-option value="unverified">{{ __('Unverified email') }}</x-ts-select-option>
             </x-ts-select>
@@ -259,6 +403,19 @@ new class extends Component
                 {{ __('Export CSV') }}
             </x-ts-button>
         </div>
+        @if ($filter === 'unverified')
+            <div>
+                <x-ts-button
+                    wire:click="openDeleteUnverifiedModal"
+                    icon="trash"
+                    variant="primary"
+                    class="btn-coral"
+                    data-test="delete-unverified-button"
+                >
+                    {{ __('Delete unverified') }}
+                </x-ts-button>
+            </div>
+        @endif
     </div>
 
     <div
@@ -404,6 +561,71 @@ new class extends Component
 
         <x-ts-pagination :paginator="$this->users" />
     </div>
+
+    <x-ts-modal name="delete-unverified" class="w-full max-w-lg">
+        <div class="space-y-5">
+            <div class="flex items-start gap-3">
+                <span
+                    class="bg-brand-coral/10 text-brand-coral dark:bg-brand-coral/15 flex size-9 shrink-0 items-center justify-center rounded-full"
+                >
+                    <x-icon name="exclamation-triangle" class="size-5" />
+                </span>
+
+                <div>
+                    <x-ts-heading size="lg">{{ __('Delete unverified accounts') }}</x-ts-heading>
+
+                    <div class="mt-1" data-test="delete-unverified-count">
+                        <x-ts-text>
+                            @if ($this->staleUnverifiedCount > 0)
+                                {{
+                                    trans_choice(
+                                        'This permanently deletes :count empty unverified account created more than 7 days ago. This cannot be undone.|This permanently deletes :count empty unverified accounts created more than 7 days ago. This cannot be undone.',
+                                        $this->staleUnverifiedCount,
+                                        ['count' => number_format($this->staleUnverifiedCount)],
+                                    )
+                                }}
+                            @else
+                                {{ __('There are no empty unverified accounts older than 7 days.') }}
+                            @endif
+                        </x-ts-text>
+                    </div>
+
+                    @if ($this->staleUnverifiedWithDataCount > 0)
+                        <div
+                            class="mt-3 rounded-lg border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-200"
+                            data-test="delete-unverified-with-data"
+                        >
+                            {{
+                                trans_choice(
+                                    ':count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.',
+                                    $this->staleUnverifiedWithDataCount,
+                                    ['count' => number_format($this->staleUnverifiedWithDataCount)],
+                                )
+                            }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <x-ts-button wire:click="closeModal('delete-unverified')" variant="ghost">
+                    {{ __('Cancel') }}
+                </x-ts-button>
+
+                @if ($this->staleUnverifiedCount > 0)
+                    <x-ts-button
+                        wire:click="deleteUnverifiedUsers"
+                        icon="trash"
+                        variant="primary"
+                        class="btn-coral"
+                        data-test="confirm-delete-unverified"
+                    >
+                        {{ trans_choice('Delete :count account|Delete :count accounts', $this->staleUnverifiedCount, ['count' => number_format($this->staleUnverifiedCount)]) }}
+                    </x-ts-button>
+                @endif
+            </div>
+        </div>
+    </x-ts-modal>
 
     <x-ts-modal name="edit-user" variant="flyout">
         @if ($userForm->user)

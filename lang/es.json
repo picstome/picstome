@@ -1754,5 +1754,15 @@
     "Manage account": "Gestionar cuenta",
     "No subscription": "Sin suscripción",
     "Subscription": "Suscripción",
-    "Renews :date": "Renueva el :date"
+    "Renews :date": "Renueva el :date",
+    "Delete unverified": "Borrar sin verificar",
+    "Delete unverified accounts": "Borrar cuentas sin verificar",
+    "No accounts were deleted.": "No se borró ninguna cuenta.",
+    ":count account is being deleted.|:count accounts are being deleted.": ":count cuenta se está borrando.|:count cuentas se están borrando.",
+    "Delete :count account|Delete :count accounts": "Borrar :count cuenta|Borrar :count cuentas",
+    "This permanently deletes :count empty unverified account created more than 7 days ago. This cannot be undone.|This permanently deletes :count empty unverified accounts created more than 7 days ago. This cannot be undone.": "Esto elimina permanentemente :count cuenta vacía sin verificar creada hace más de 7 días. No se puede deshacer.|Esto elimina permanentemente :count cuentas vacías sin verificar creadas hace más de 7 días. No se puede deshacer.",
+    "There are no empty unverified accounts older than 7 days.": "No hay cuentas vacías sin verificar con más de 7 días.",
+    ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.": ":count cuenta sin verificar tiene galerías o datos de facturación y no se borrará. Revísala individualmente.|:count cuentas sin verificar tienen galerías o datos de facturación y no se borrarán. Revísalas individualmente.",
+    "Monthly subscription": "Suscripción mensual",
+    "Annual subscription": "Suscripción anual"
 }
