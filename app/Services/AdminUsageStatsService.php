@@ -11,6 +11,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -131,6 +132,36 @@ class AdminUsageStatsService
     public function forgetRange(?CarbonInterface $from, CarbonInterface $to): void
     {
         $this->forget($this->rangeCacheKey($from, $to));
+    }
+
+    /**
+     * Signups and paid conversions grouped by the first-touch source.
+     *
+     * Only accounts created after attribution was enabled are included;
+     * older users have no campaign data and would distort the percentages.
+     *
+     * @return list<array{
+     *     source: string,
+     *     medium: string|null,
+     *     signups: int,
+     *     paid: int,
+     *     conversion: float
+     * }>
+     */
+    public function attribution(?CarbonInterface $from, CarbonInterface $to): array
+    {
+        $key = self::CACHE_PREFIX.':attribution:'.($from?->toDateString() ?? 'all').':'.$to->toDateString();
+
+        return Cache::flexible(
+            $key,
+            [900, 86400],
+            fn (): array => $this->buildAttribution($from, $to),
+        );
+    }
+
+    public function forgetAttribution(?CarbonInterface $from, CarbonInterface $to): void
+    {
+        $this->forget(self::CACHE_PREFIX.':attribution:'.($from?->toDateString() ?? 'all').':'.$to->toDateString());
     }
 
     /**
@@ -326,6 +357,48 @@ class AdminUsageStatsService
             ->selectRaw('count(distinct teams.user_id) as total')
             ->groupBy('month')
             ->pluck('total', 'month')
+            ->all();
+    }
+
+    /**
+     * @return list<array{
+     *     source: string,
+     *     medium: string|null,
+     *     signups: int,
+     *     paid: int,
+     *     conversion: float
+     * }>
+     */
+    private function buildAttribution(?CarbonInterface $from, CarbonInterface $to): array
+    {
+        return User::query()
+            ->leftJoin('teams', function (JoinClause $join): void {
+                $join->on('teams.user_id', '=', 'users.id')
+                    ->where('teams.personal_team', true);
+            })
+            ->leftJoin('subscriptions', function (JoinClause $join): void {
+                $join->on('subscriptions.team_id', '=', 'teams.id')
+                    ->where('subscriptions.type', 'default');
+            })
+            ->whereNotNull('users.attr_source')
+            ->when($from, fn (Builder $query) => $query->where('users.created_at', '>=', $from))
+            ->where('users.created_at', '<=', $to)
+            ->selectRaw('users.attr_source as source')
+            ->selectRaw('users.attr_medium as medium')
+            ->selectRaw('count(distinct users.id) as signups')
+            ->selectRaw('count(distinct case when teams.lifetime_at is not null or subscriptions.id is not null then users.id end) as paid')
+            ->groupBy('users.attr_source', 'users.attr_medium')
+            ->orderByDesc('signups')
+            ->get()
+            ->map(fn ($row): array => [
+                'source' => (string) $row->source,
+                'medium' => $row->medium !== null ? (string) $row->medium : null,
+                'signups' => (int) $row->signups,
+                'paid' => (int) $row->paid,
+                'conversion' => (int) $row->signups > 0
+                    ? round(((int) $row->paid / (int) $row->signups) * 100, 1)
+                    : 0.0,
+            ])
             ->all();
     }
 

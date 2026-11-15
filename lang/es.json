@@ -1765,4 +1765,14 @@
     ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.": ":count cuenta sin verificar tiene galerías o datos de facturación y no se borrará. Revísala individualmente.|:count cuentas sin verificar tienen galerías o datos de facturación y no se borrarán. Revísalas individualmente.",
     "Monthly subscription": "Suscripción mensual",
     "Annual subscription": "Suscripción anual"
+,
+    "Acquisition": "Adquisición",
+    "Where new accounts come from and how many end up paying.": "De dónde vienen las cuentas nuevas y cuántas acaban pagando.",
+    "Only accounts created after attribution was enabled.": "Solo cuentas creadas después de activar la atribución.",
+    "No attribution data yet.": "Todavía no hay datos de atribución.",
+    "Source": "Fuente",
+    "Traffic medium": "Medio de tráfico",
+    "Signups": "Registros",
+    "Converted": "Convertidos",
+    "Conversion": "Conversión"
 }

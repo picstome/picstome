@@ -296,7 +296,11 @@ Minimum checklist:
 - **Browser tests: only before opening the PR.** While iterating run the
   affected test with `--filter=`; the Playwright suite boots a real page per
   test and would stall development.
-- Migrations need a working `down()` and fresh + rollback verification.
+- **Run `php artisan migrate --no-interaction` on the devel database after
+  adding or changing a migration**, before reporting the task as ready. The
+  maintainer tests the branch at `devel.picstome.com` against this database;
+  green tests alone are not enough. Migrations need a working `down()` and
+  fresh + rollback verification.
 - Destructive data operations require dry-run and explicit `--force`.
 - Update `docs/` for operational, migration or rollback requirements.
 

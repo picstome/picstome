@@ -93,19 +93,28 @@ class StripeEventListener
     }
 
     /**
-     * Handle one-time payment (lifetime purchase) completions.
+     * Handle one-time payment (lifetime) completions and queue the GA4
+     * purchase backup for both subscription and lifetime checkouts.
      */
     protected function handleCheckoutSessionCompleted(WebhookReceived $event): void
     {
         $session = $event->payload['data']['object'];
 
-        if (($session['mode'] ?? '') !== 'payment' || ($session['payment_status'] ?? '') !== 'paid') {
+        $status = $session['payment_status'] ?? null;
+
+        if (! in_array($status, ['paid', 'no_payment_required'], true)) {
             return;
         }
 
-        $team = $this->findTeamByStripeCustomer($session['customer']);
+        $team = $this->findTeamByStripeCustomer($session['customer'] ?? '');
 
         if (! $team) {
+            return;
+        }
+
+        $this->queueGa4Purchase($session, $team);
+
+        if (($session['mode'] ?? '') !== 'payment') {
             return;
         }
 
@@ -114,6 +123,48 @@ class StripeEventListener
         $team->update([
             'lifetime_at' => now(),
             'custom_storage_limit' => $this->storageLimitForPrice($priceId),
+        ]);
+    }
+
+    /**
+     * Send the purchase to GA4 through Measurement Protocol. The client-side
+     * event uses the same transaction id, so GA4 keeps only one purchase.
+     *
+     * @param  array<string, mixed>  $session
+     */
+    protected function queueGa4Purchase(array $session, Team $team): void
+    {
+        if (! config('analytics.enabled')) {
+            return;
+        }
+
+        $user = $team->user;
+        $clientId = $user?->attr_json['ga_client_id'] ?? null;
+
+        if (! $clientId) {
+            return;
+        }
+
+        $value = round(((int) ($session['amount_total'] ?? 0)) / 100, 2);
+        $tier = (string) ($session['metadata']['tier'] ?? '');
+        $interval = (string) ($session['metadata']['interval'] ?? '');
+
+        SendGa4Purchase::dispatch([
+            'client_id' => (string) $clientId,
+            'user_id' => $user ? (string) $user->id : null,
+            'transaction_id' => (string) ($session['id'] ?? ''),
+            'value' => $value,
+            'currency' => strtoupper((string) ($session['currency'] ?? 'eur')),
+            'items' => [[
+                'item_id' => $tier !== '' ? $tier : 'plan',
+                'item_name' => $tier !== ''
+                    ? (string) config("plans.tiers.{$tier}.name", $tier)
+                    : 'Picstome',
+                'item_variant' => $interval !== '' ? $interval : null,
+                'price' => $value,
+                'quantity' => 1,
+            ]],
+            'coupon' => $session['metadata']['coupon'] ?? null,
         ]);
     }
 

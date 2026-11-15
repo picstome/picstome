@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', SetLocale::class);
 
+        // Written by the WordPress marketing site on .picstome.com. They are
+        // read-only for the app, so they must not be encrypted by Laravel.
+        $middleware->encryptCookies(except: ['ps_attr', 'ps_consent']);
+
         $middleware->validateCsrfTokens(except: [
             'stripe/*',
             'webhooks/sftpgo',

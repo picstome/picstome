@@ -3,6 +3,7 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Team;
+use App\Services\AttributionService;
 use App\Services\BlackFridayPromotion;
 use App\Services\PlanCatalog;
 use App\Services\ScheduledPlanChangeService;
@@ -30,8 +31,17 @@ trait HandlesPricingPage
 
     public string $statusType = 'success';
 
+    /**
+     * Purchase payload for the GA4 event fired on the success page.
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $purchase = null;
+
     public function mountPricingPage(): void
     {
+        app(AttributionService::class)->remember(request());
+
         $offer = $this->promotion()->offerFor($this->team());
         $requestedInterval = request()->string('interval')->toString();
 
@@ -44,6 +54,7 @@ trait HandlesPricingPage
         if (request()->string('checkout')->toString() === 'success') {
             $this->statusMessage = __('Your subscription is being activated. This usually takes a few seconds.');
             $this->statusType = 'success';
+            $this->purchase = $this->purchaseFromCheckout();
         }
 
         if (request()->string('checkout')->toString() === 'cancelled') {
@@ -55,6 +66,24 @@ trait HandlesPricingPage
     public function team(): ?Team
     {
         return Auth::user()?->currentTeam;
+    }
+
+    /**
+     * Verify the Stripe session before telling GA4 that a purchase happened.
+     * Anyone can open the success URL; only the real session may count.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function purchaseFromCheckout(): ?array
+    {
+        $team = $this->team();
+        $sessionId = request()->string('session_id')->toString();
+
+        if (! $team || $sessionId === '') {
+            return null;
+        }
+
+        return app(SubscriptionCheckoutService::class)->receipt($team, $sessionId);
     }
 
     public function catalog(): PlanCatalog

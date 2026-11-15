@@ -1,17 +1,17 @@
 <?php
 
-use TallStackUi\Traits\Interactions;
 use App\Services\AdminUsageStatsService;
 use App\Traits\FormatsFileSize;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use Interactions;
     use FormatsFileSize;
+    use Interactions;
 
     #[Url]
     public string $preset = 'current_month';
@@ -28,12 +28,12 @@ new class extends Component
 
     public function updatedPreset(): void
     {
-        unset($this->rangeStats);
+        unset($this->rangeStats, $this->attribution);
     }
 
     public function updatedCustomRange(): void
     {
-        unset($this->rangeStats);
+        unset($this->rangeStats, $this->attribution);
     }
 
     #[Computed]
@@ -48,6 +48,17 @@ new class extends Component
         [$from, $to] = $this->period();
 
         return app(AdminUsageStatsService::class)->range($from, $to);
+    }
+
+    /**
+     * @return list<array{source: string, medium: string|null, signups: int, paid: int, conversion: float}>
+     */
+    #[Computed]
+    public function attribution(): array
+    {
+        [$from, $to] = $this->period();
+
+        return app(AdminUsageStatsService::class)->attribution($from, $to);
     }
 
     #[Computed]
@@ -106,8 +117,9 @@ new class extends Component
         $service = app(AdminUsageStatsService::class);
         $service->forgetSnapshot();
         $service->forgetRange($from, $to);
+        $service->forgetAttribution($from, $to);
 
-        unset($this->snapshot, $this->rangeStats, $this->updatedLabel);
+        unset($this->snapshot, $this->rangeStats, $this->attribution, $this->updatedLabel);
 
         $this->toast()->success(__('Usage stats refreshed.'))->send();
     }
@@ -284,6 +296,82 @@ new class extends Component
                     />
                 </x-stat-group>
             </div>
+        </x-ts-card>
+    </section>
+
+    <section class="mt-8" aria-labelledby="attribution-heading">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <div class="flex items-center gap-2">
+                    <x-icon name="megaphone" class="text-brand-coral size-5" />
+
+                    <x-ts-heading
+                        id="attribution-heading"
+                        size="lg"
+                        class="text-brand-green dark:text-brand-cream font-semibold"
+                    >
+                        {{ __('Acquisition') }}
+                    </x-ts-heading>
+                </div>
+
+                <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-1">
+                    {{ __('Where new accounts come from and how many end up paying.') }}
+                </x-ts-text>
+            </div>
+
+            <x-ts-text class="text-brand-ink/55 dark:text-brand-sage/70 text-xs font-medium">
+                {{ __('Only accounts created after attribution was enabled.') }}
+            </x-ts-text>
+        </div>
+
+        <x-ts-card class="mt-4 overflow-hidden p-0!">
+            @php($attribution = collect($this->attribution))
+
+            @if ($attribution->isEmpty())
+                <div class="p-6">
+                    <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80">
+                        {{ __('No attribution data yet.') }}
+                    </x-ts-text>
+                </div>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-brand-ink/60 dark:text-brand-sage/70 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold">{{ __('Source') }}</th>
+                                <th class="px-4 py-3 font-semibold">{{ __('Traffic medium') }}</th>
+                                <th class="px-4 py-3 text-right font-semibold">{{ __('Signups') }}</th>
+                                <th class="px-4 py-3 text-right font-semibold">{{ __('Converted') }}</th>
+                                <th class="px-4 py-3 text-right font-semibold">{{ __('Conversion') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-brand-green/10 dark:divide-white/10 divide-y">
+                            @foreach ($attribution as $row)
+                                <tr data-test="attribution-row">
+                                    <td class="px-4 py-3 font-medium">{{ $row['source'] }}</td>
+                                    <td class="text-brand-ink/70 dark:text-brand-sage/80 px-4 py-3">
+                                        {{ $row['medium'] ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-3 text-right">{{ number_format($row['signups']) }}</td>
+                                    <td class="px-4 py-3 text-right">{{ number_format($row['paid']) }}</td>
+                                    <td class="px-4 py-3 text-right">{{ number_format($row['conversion'], 1) }}%</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="border-brand-green/10 dark:border-white/10 border-t">
+                            <tr class="font-semibold">
+                                <td class="px-4 py-3">{{ __('Total') }}</td>
+                                <td class="px-4 py-3"></td>
+                                <td class="px-4 py-3 text-right">{{ number_format($attribution->sum('signups')) }}</td>
+                                <td class="px-4 py-3 text-right">{{ number_format($attribution->sum('paid')) }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    {{ number_format($attribution->sum('signups') > 0 ? ($attribution->sum('paid') / $attribution->sum('signups')) * 100 : 0, 1) }}%
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @endif
         </x-ts-card>
     </section>
 

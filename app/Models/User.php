@@ -52,6 +52,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'gallery_preferences' => 'array',
+            'attr_at' => 'datetime',
+            'attr_json' => 'array',
         ];
     }
 

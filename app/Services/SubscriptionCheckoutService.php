@@ -81,6 +81,51 @@ class SubscriptionCheckoutService
     }
 
     /**
+     * Verify a Stripe Checkout session and build the GA4 purchase payload.
+     *
+     * The success URL is public, so we only trust sessions that belong to the
+     * current team and have been paid. Returns null when there is nothing
+     * safe to report.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function receipt(Team $team, string $sessionId): ?array
+    {
+        try {
+            $session = $team->stripe()->checkout->sessions->retrieve($sessionId, []);
+        } catch (Throwable) {
+            return null;
+        }
+
+        if ((string) ($session->client_reference_id ?? '') !== (string) $team->id) {
+            return null;
+        }
+
+        if (! in_array($session->payment_status ?? null, ['paid', 'no_payment_required'], true)) {
+            return null;
+        }
+
+        $value = round(((int) ($session->amount_total ?? 0)) / 100, 2);
+        $tier = (string) ($session->metadata['tier'] ?? '');
+        $interval = (string) ($session->metadata['interval'] ?? '');
+
+        return [
+            'transaction_id' => (string) $session->id,
+            'value' => $value,
+            'currency' => strtoupper((string) ($session->currency ?? 'eur')),
+            'items' => [[
+                'item_id' => $tier !== '' ? $tier : 'plan',
+                'item_name' => $tier !== ''
+                    ? (string) config("plans.tiers.{$tier}.name", $tier)
+                    : 'Picstome',
+                'item_variant' => $interval !== '' ? $interval : null,
+                'price' => $value,
+                'quantity' => 1,
+            ]],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function sessionOptions(Team $team, string $tier, string $interval, ?string $coupon): array
@@ -90,7 +135,7 @@ class SubscriptionCheckoutService
             : __('Secure payment with Stripe. Cancel anytime.');
 
         return [
-            'success_url' => route('subscribe', ['checkout' => 'success']),
+            'success_url' => route('subscribe').'?checkout=success&session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('subscribe', ['checkout' => 'cancelled']),
             'locale' => app()->getLocale(),
             'client_reference_id' => (string) $team->id,

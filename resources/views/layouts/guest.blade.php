@@ -37,6 +37,7 @@
 
         <tallstackui:script />
         @vite('resources/css/app.css')
+        @include('partials.analytics.ga4')
 
         @php
             $accentColor = trim((string) ($color ?? ''));
