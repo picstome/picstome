@@ -202,3 +202,16 @@ it('shows a toast instead of a server error when checkout fails', function () {
         ->assertSet('statusType', 'error')
         ->assertSet('statusMessage', 'No hemos podido iniciar el pago. Inténtalo de nuevo.');
 });
+
+it('renders the plan buttons without leaking analytics attributes', function () {
+    get('/subscribe')
+        ->assertOk()
+        ->assertDontSee('plans.currency')
+        ->assertDontSee('picstomeTrack');
+});
+
+it('tracks the start of a checkout', function () {
+    Livewire::test('pages::subscribe')
+        ->call('checkout', '100gb', 'monthly')
+        ->assertDispatched('analytics:event');
+});
