@@ -3,6 +3,28 @@
 These rules are mandatory for every change. `AGENTS.md` contains the short
 version for coding agents; this document is the source of truth.
 
+## Start of every development
+
+Run this before touching any file for a new task:
+
+1. **Update the repository.** `git fetch origin --prune`, switch to `main` and
+   fast-forward it (`git pull --ff-only`). Never start work from a stale copy of
+   `main`.
+2. **Create one unique branch for that development**, from the updated `main`:
+   `feat/<issue>-<short-slug>`, `fix/<issue>-<short-slug>` or
+   `chore/<short-slug>`. One branch per task and one task per branch. Work in
+   the main working copy (`/root/projects/picstome`); do **not** create a git
+   worktree for it unless the maintainer asks for one.
+3. **Point the test environment at `devel.picstome.com`.** Confirm `.env` has
+   `APP_URL=https://devel.picstome.com` and
+   `ASSET_URL=https://devel.picstome.com`, and that the local web server is
+   serving this working copy (not a worktree or another branch), so the
+   maintainer can test the current branch at <https://devel.picstome.com>.
+   Rebuild assets (`npm run build` or `npm run dev`) when the change touches the
+   frontend.
+4. Keep the branch local until the maintainer authorizes a commit or push (see
+   below).
+
 ## Branches and pull requests
 
 - Work on a feature/fix branch. Never commit directly to `main`.

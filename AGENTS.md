@@ -279,6 +279,13 @@ protected function isAccessible(User $user, ?string $path = null): bool
 The canonical project rules live in `docs/development-rules.md`. Follow them for every change.
 
 Minimum checklist:
+- Before a new task, update `main` (`git fetch origin --prune` +
+  `git pull --ff-only`) and create one unique branch from it
+  (`feat/…`, `fix/…` or `chore/…`). Work in this working copy, never in a git
+  worktree unless the maintainer asks for one.
+- Make sure `.env` points to `https://devel.picstome.com` (`APP_URL` and
+  `ASSET_URL`) and that the local web server serves this working copy, so the
+  maintainer can test the branch there.
 - Work on a feature/fix branch and open a PR; never commit directly to `main`.
 - **Never commit, push, open a PR, merge or deploy without asking the maintainer first.** Green checks are a requirement to publish, not a permission to publish.
 - Link the related issue and include UI evidence when relevant.
