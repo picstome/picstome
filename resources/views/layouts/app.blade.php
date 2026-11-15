@@ -307,12 +307,6 @@
                     <div class="mt-auto space-y-3 border-t border-brand-green/10 px-4 py-3 dark:border-white/10">
                         <livewire:storage-usage-indicator />
 
-                        @unless (auth()->user()->currentTeam->subscribed())
-                            <x-ts-button :href="route('subscribe')" variant="primary" size="sm" class="w-full">
-                                {{ __('Subscribe') }}
-                            </x-ts-button>
-                        @endunless
-
                         <livewire:profile-dropdown />
                     </div>
                 </aside>
