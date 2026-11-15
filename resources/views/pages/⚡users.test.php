@@ -1,9 +1,12 @@
 <?php
 
+use App\Jobs\PurgeUserAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -317,6 +320,187 @@ describe('Users Page', function () {
             ->call('editUser', $user->id)
             ->dispatch('user-deleted', userId: $user->id)
             ->assertDispatched('modal:edit-user-close');
+    });
+
+    it('shows the delete unverified action only in the unverified filter', function () {
+        app()->setLocale('es');
+
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        User::factory()->unverified()->create(['created_at' => now()->subDays(8)]);
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->assertDontSee('Borrar sin verificar')
+            ->set('filter', 'unverified')
+            ->assertSee('Borrar sin verificar');
+    });
+
+    it('shows how many stale unverified accounts will be deleted', function () {
+        app()->setLocale('es');
+
+        config(['picstome.admin_emails' => ['admin@example.com', 'other-admin@example.com']]);
+
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        User::factory()->unverified()->create(['created_at' => now()->subDays(8)]);
+        User::factory()->unverified()->create(['created_at' => now()->subDays(2)]);
+        User::factory()->unverified()->create([
+            'email' => 'other-admin@example.com',
+            'created_at' => now()->subDays(8),
+        ]);
+        User::factory()->create(['created_at' => now()->subDays(30)]);
+
+        $withGallery = User::factory()->unverified()->withPersonalTeam()->create([
+            'created_at' => now()->subDays(10),
+        ]);
+        Gallery::factory()->for($withGallery->personalTeam())->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->set('filter', 'unverified')
+            ->call('openDeleteUnverifiedModal')
+            ->assertSee('Esto elimina permanentemente 1 cuenta vacía sin verificar creada hace más de 7 días.')
+            ->assertSee('1 cuenta sin verificar tiene galerías o datos de facturación y no se borrará.')
+            ->assertSee('Borrar 1 cuenta')
+            ->assertDispatched('modal:delete-unverified-open');
+    });
+
+    it('queues a purge for stale unverified accounts and revokes their access', function () {
+        Queue::fake();
+
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        $eligible = User::factory()->unverified()->create(['created_at' => now()->subDays(8)]);
+        $eligible->createToken('test-token')->plainTextToken;
+
+        $recent = User::factory()->unverified()->create(['created_at' => now()->subDays(2)]);
+        $verified = User::factory()->create(['created_at' => now()->subDays(30)]);
+
+        $withGallery = User::factory()->unverified()->withPersonalTeam()->create([
+            'created_at' => now()->subDays(10),
+        ]);
+        Gallery::factory()->for($withGallery->personalTeam())->create();
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->set('filter', 'unverified')
+            ->call('deleteUnverifiedUsers');
+
+        Queue::assertPushed(PurgeUserAccount::class, 1);
+        Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $eligible->id);
+
+        expect($eligible->tokens()->count())->toBe(0)
+            ->and(User::find($eligible->id))->not->toBeNull()
+            ->and(User::find($recent->id))->not->toBeNull()
+            ->and(User::find($verified->id))->not->toBeNull()
+            ->and(User::find($withGallery->id))->not->toBeNull();
+    });
+
+    it('forbids bulk deletion to non-admins', function () {
+        config(['picstome.admin_emails' => []]);
+
+        $user = User::factory()->withPersonalTeam()->create();
+
+        expect($user->is_admin)->toBeFalse();
+
+        Livewire::actingAs($user)
+            ->test('pages::users')
+            ->call('deleteUnverifiedUsers')
+            ->assertStatus(403);
+    });
+
+    it('filters monthly and annual paying users separately', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        $monthly = User::factory()->withPersonalTeam()->create(['name' => 'Monthly Payer']);
+        $annual = User::factory()->withPersonalTeam()->create(['name' => 'Annual Payer']);
+        $lifetime = User::factory()->withPersonalTeam()->create(['name' => 'Lifetime Payer']);
+        $lifetime->personalTeam()->update(['lifetime_at' => now()->subDay()]);
+        $canceled = User::factory()->withPersonalTeam()->create(['name' => 'Canceled Payer']);
+
+        foreach ([[$monthly, 'month', 'active'], [$annual, 'year', 'active'], [$canceled, 'month', 'canceled']] as [$user, $interval, $status]) {
+            DB::table('subscriptions')->insert([
+                'team_id' => $user->personalTeam()->id,
+                'type' => 'default',
+                'stripe_id' => 'sub_'.uniqid(),
+                'stripe_status' => $status,
+                'stripe_price' => 'price_'.$interval,
+                'quantity' => 1,
+                'billing_interval' => $interval,
+                'ends_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->set('filter', 'monthly')
+            ->assertSee('Monthly Payer')
+            ->assertDontSee('Annual Payer')
+            ->assertDontSee('Lifetime Payer')
+            ->assertDontSee('Canceled Payer');
+
+        Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->set('filter', 'annual')
+            ->assertSee('Annual Payer')
+            ->assertDontSee('Monthly Payer')
+            ->assertDontSee('Lifetime Payer')
+            ->assertDontSee('Canceled Payer');
+    });
+
+    it('exports only the filtered users', function () {
+        $admin = User::factory()->withPersonalTeam()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        $monthly = User::factory()->withPersonalTeam()->create([
+            'name' => 'Monthly Export',
+            'email' => 'monthly-export@example.com',
+        ]);
+        $annual = User::factory()->withPersonalTeam()->create([
+            'name' => 'Annual Export',
+            'email' => 'annual-export@example.com',
+        ]);
+
+        foreach ([[$monthly, 'month'], [$annual, 'year']] as [$user, $interval]) {
+            DB::table('subscriptions')->insert([
+                'team_id' => $user->personalTeam()->id,
+                'type' => 'default',
+                'stripe_id' => 'sub_'.uniqid(),
+                'stripe_status' => 'active',
+                'stripe_price' => 'price_'.$interval,
+                'quantity' => 1,
+                'billing_interval' => $interval,
+                'ends_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $component = Livewire::actingAs($admin)
+            ->test('pages::users')
+            ->set('filter', 'monthly');
+
+        $response = $component->instance()->exportCsv();
+
+        ob_start();
+        $response->sendContent();
+        $csv = (string) ob_get_clean();
+
+        expect($csv)
+            ->toContain('monthly-export@example.com')
+            ->not->toContain('annual-export@example.com');
     });
 });
 

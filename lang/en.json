@@ -1624,5 +1624,15 @@
     "Manage account": "Manage account",
     "No subscription": "No subscription",
     "Subscription": "Subscription",
-    "Renews :date": "Renews :date"
+    "Renews :date": "Renews :date",
+    "Delete unverified": "Delete unverified",
+    "Delete unverified accounts": "Delete unverified accounts",
+    "No accounts were deleted.": "No accounts were deleted.",
+    ":count account is being deleted.|:count accounts are being deleted.": ":count account is being deleted.|:count accounts are being deleted.",
+    "Delete :count account|Delete :count accounts": "Delete :count account|Delete :count accounts",
+    "This permanently deletes :count empty unverified account created more than 7 days ago. This cannot be undone.|This permanently deletes :count empty unverified accounts created more than 7 days ago. This cannot be undone.": "This permanently deletes :count empty unverified account created more than 7 days ago. This cannot be undone.|This permanently deletes :count empty unverified accounts created more than 7 days ago. This cannot be undone.",
+    "There are no empty unverified accounts older than 7 days.": "There are no empty unverified accounts older than 7 days.",
+    ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.": ":count unverified account has galleries or billing data and will not be deleted. Review it individually.|:count unverified accounts have galleries or billing data and will not be deleted. Review them individually.",
+    "Monthly subscription": "Monthly subscription",
+    "Annual subscription": "Annual subscription"
 }
