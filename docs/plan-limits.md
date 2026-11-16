@@ -21,6 +21,21 @@ Limits live on the team row (`monthly_contract_limit`,
 unlimited; the defaults come from `config/picstome.php` at registration and
 are reset/cleared by the Stripe webhook when a subscription starts or ends.
 
+## Plan changes and storage
+
+A team cannot move to a plan with less storage than it is already using.
+Downgrades are allowed only when the current usage fits the target plan.
+
+- `PlanEligibilityService` compares fresh billable bytes (photos, retained
+  versions and invoice PDFs) with the target tier's `storage_limit`.
+- The pricing page disables the plan and shows the used amount plus the target
+  limit, so the reason is visible before clicking.
+- `checkout()`, `checkoutLifetime()` and `ScheduledPlanChangeService::schedule()`
+  repeat the check server-side; a stale page or a forged Livewire call cannot
+  bypass it.
+- Upgrades are subject to the same rule: if a team is over its current quota,
+  it cannot move to a plan that is still smaller than what it stores.
+
 ## Retention
 
 Free and lifetime galleries expire `created_at + 1 year`. The cap is anchored

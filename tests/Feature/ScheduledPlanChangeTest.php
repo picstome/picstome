@@ -1,14 +1,26 @@
 <?php
 
+use App\Exceptions\InsufficientStorageException;
+use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ScheduledPlanChangeService;
+use App\Services\StorageUsageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Stripe\ApiRequestor;
 use Stripe\HttpClient\ClientInterface;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    StorageUsageService::flushRequestMemo();
+});
+
+afterEach(function () {
+    StorageUsageService::flushRequestMemo();
+});
 
 beforeEach(function () {
     config([
@@ -132,4 +144,19 @@ it('clears the scheduled change when it is cancelled', function () {
         ->and($subscription->scheduled_tier)->toBeNull()
         ->and($subscription->scheduled_price_id)->toBeNull()
         ->and($subscription->scheduled_change_at)->toBeNull();
+});
+
+it('does not schedule an annual plan that does not fit the used storage', function () {
+    $client = fakeScheduleStripe();
+    $team = scheduledTeam();
+    $gallery = Gallery::factory()->for($team)->create();
+    Photo::factory()->for($gallery)->create(['stored_size' => 150 * 1024 ** 3]);
+    StorageUsageService::flushRequestMemo();
+
+    expect(fn () => app(ScheduledPlanChangeService::class)->schedule($team, '100gb'))
+        ->toThrow(InsufficientStorageException::class);
+
+    expect(collect($client->requests)->first(
+        fn (array $request): bool => str_contains($request['url'], '/v1/subscription_schedules')
+    ))->toBeNull();
 });

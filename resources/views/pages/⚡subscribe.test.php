@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Gallery;
+use App\Models\Photo;
 use App\Models\User;
+use App\Services\StorageUsageService;
 use App\Services\SubscriptionCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -214,4 +217,42 @@ it('tracks the start of a checkout', function () {
     Livewire::test('pages::subscribe')
         ->call('checkout', '100gb', 'monthly')
         ->assertDispatched('analytics:event');
+});
+
+it('disables a smaller plan that does not fit the used storage', function () {
+    app()->setLocale('es');
+
+    $user = pricingPageUser(['custom_storage_limit' => 268435456000]);
+    $user->update(['language' => 'es']);
+    pricingPageSubscription($user, ['billing_interval' => 'month']);
+
+    $gallery = Gallery::factory()->for($user->currentTeam)->create();
+    Photo::factory()->for($gallery)->create(['stored_size' => 150 * 1024 ** 3]);
+    StorageUsageService::flushRequestMemo();
+
+    actingAs($user->fresh())
+        ->get('/subscribe')
+        ->assertOk()
+        ->assertSee('Espacio insuficiente')
+        ->assertSee('150 GB')
+        ->assertDontSee('data-test="upgrade-100gb"', false)
+        ->assertSee('data-test="upgrade-250gb"', false);
+});
+
+it('blocks checkout when the used storage does not fit the plan', function () {
+    app()->setLocale('es');
+
+    $user = pricingPageUser(['custom_storage_limit' => 268435456000]);
+    $user->update(['language' => 'es']);
+    pricingPageSubscription($user, ['billing_interval' => 'month']);
+
+    $gallery = Gallery::factory()->for($user->currentTeam)->create();
+    Photo::factory()->for($gallery)->create(['stored_size' => 150 * 1024 ** 3]);
+    StorageUsageService::flushRequestMemo();
+
+    Livewire::actingAs($user->fresh())
+        ->test('pages::subscribe')
+        ->call('checkout', '100gb', 'monthly')
+        ->assertSet('statusType', 'warning')
+        ->assertSee('150 GB');
 });
