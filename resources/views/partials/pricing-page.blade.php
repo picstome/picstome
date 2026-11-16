@@ -26,15 +26,9 @@
 
             <div class="flex items-center gap-2">
                 @auth
-                    @if (in_array($this->state(), ['monthly', 'annual'], true))
-                        <x-ts-button :href="$this->manageBillingUrl()" variant="primary" size="sm">
-                            {{ __('Manage subscription') }}
-                        </x-ts-button>
-                    @else
-                        <x-ts-button :href="route('dashboard')" variant="primary" size="sm">
-                            {{ __('Dashboard') }}
-                        </x-ts-button>
-                    @endif
+                    <x-ts-button :href="route('dashboard')" variant="primary" size="sm">
+                        {{ __('Back to panel') }}
+                    </x-ts-button>
                 @else
                     <x-ts-button
                         :href="route('login', ['redirect' => route('subscribe', ['interval' => $this->interval], absolute: false)])"
