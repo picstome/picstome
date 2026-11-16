@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\MagicLoginLink;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,18 +28,25 @@ new class extends Component
      */
     public function updatePassword(): void
     {
+        $user = Auth::user();
+
+        $rules = [
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
+        ];
+
+        if ($user->hasPassword()) {
+            $rules['current_password'] = ['required', 'string', 'current_password'];
+        }
+
         try {
-            $validated = $this->validate([
-                'current_password' => ['required', 'string', 'current_password'],
-                'password' => ['required', 'string', Password::defaults(), 'confirmed'],
-            ]);
+            $validated = $this->validate($rules);
         } catch (ValidationException $e) {
             $this->reset('current_password', 'password', 'password_confirmation');
 
             throw $e;
         }
 
-        Auth::user()->forceFill([
+        $user->forceFill([
             'password' => Hash::make($validated['password']),
             'remember_token' => Str::random(60),
         ])->save();
@@ -47,6 +55,8 @@ new class extends Component
             ->where('user_id', Auth::id())
             ->where('id', '!=', session()->getId())
             ->delete();
+
+        app(MagicLoginLink::class)->revokeFor($user);
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
@@ -103,19 +113,23 @@ new class extends Component
     @include('partials.settings-heading')
 
     <x-settings.layout
-        heading="{{ __('Update password') }}"
-        subheading="{{ __('Ensure your account is using a long, random password to stay secure') }}"
+        :heading="auth()->user()->hasPassword() ? __('Update password') : __('Create password')"
+        :subheading="auth()->user()->hasPassword()
+            ? __('Ensure your account is using a long, random password to stay secure')
+            : __('Set a password if you prefer not to wait for an email login link.')"
     >
         <form wire:submit="updatePassword" class="mt-6 space-y-6">
-            <x-ts-input
-                wire:model="current_password"
-                id="update_password_current_passwordpassword"
-                label="{{ __('Current password') }}"
-                type="password"
-                name="current_password"
-                required
-                autocomplete="current-password"
-            />
+            @if (auth()->user()->hasPassword())
+                <x-ts-input
+                    wire:model="current_password"
+                    id="update_password_current_passwordpassword"
+                    label="{{ __('Current password') }}"
+                    type="password"
+                    name="current_password"
+                    required
+                    autocomplete="current-password"
+                />
+            @endif
             <x-ts-input
                 wire:model="password"
                 id="update_password_password"

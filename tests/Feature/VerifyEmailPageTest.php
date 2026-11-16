@@ -17,12 +17,13 @@ use function Pest\Laravel\actingAs;
 uses(RefreshDatabase::class);
 
 describe('Email Verification', function () {
-    it('shows the verification screen to unverified users', function () {
-        $user = User::factory()->unverified()->create();
+    it('shows the verification screen with the destination email', function () {
+        $user = User::factory()->unverified()->create(['email' => 'verify-page@example.com']);
 
         actingAs($user)
             ->get('/verify-email')
-            ->assertStatus(200);
+            ->assertStatus(200)
+            ->assertSee('verify-page@example.com');
     });
 
     it('verifies the email when visiting a valid signed URL', function () {
@@ -136,8 +137,6 @@ it('includes the return URL in the verification email', function () {
         ->test('pages::register')
         ->set('name', 'Return URL')
         ->set('email', 'return-url@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 

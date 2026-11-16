@@ -4,13 +4,14 @@ namespace App\Notifications;
 
 use App\Models\Photo;
 use App\Models\PhotoComment;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class GuestPhotoCommented extends Notification
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     /**
      * Create a new notification instance.
@@ -32,7 +33,7 @@ class GuestPhotoCommented extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('New comment on your photo'))
             ->greeting(__('Hello!'))
             ->line(__('A new comment has been left on a photo in your gallery:'))
@@ -45,6 +46,12 @@ class GuestPhotoCommented extends Notification
                 'comment' => $this->comment->id,
             ]))
             ->line(__('You are receiving this because someone commented on your shared gallery.'));
+
+        return $this->addMagicLoginLink($mail, $notifiable, route('galleries.photos.show', [
+            'gallery' => $this->photo->gallery_id,
+            'photo' => $this->photo->id,
+            'comment' => $this->comment->id,
+        ], absolute: false));
     }
 
     /**

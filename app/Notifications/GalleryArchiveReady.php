@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\GalleryArchive;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notification;
 
 class GalleryArchiveReady extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     public function __construct(public GalleryArchive $archive) {}
 
@@ -23,7 +24,7 @@ class GalleryArchiveReady extends Notification implements ShouldQueue
     {
         $gallery = $this->archive->gallery;
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('Your gallery ZIP is ready: :name', ['name' => $gallery->name]))
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('The ZIP archive for the gallery ":name" is ready to download.', ['name' => $gallery->name]))
@@ -34,6 +35,11 @@ class GalleryArchiveReady extends Notification implements ShouldQueue
                 'activeTab' => 'download',
             ]))
             ->salutation(__('Best regards, Picstome Team'));
+
+        return $this->addMagicLoginLink($mail, $notifiable, route('galleries.show', [
+            'gallery' => $gallery,
+            'activeTab' => 'download',
+        ], absolute: false));
     }
 
     public function toArray(object $notifiable): array

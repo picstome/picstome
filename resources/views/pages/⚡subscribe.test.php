@@ -3,6 +3,7 @@
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\User;
+use App\Services\BlackFridayPromotion;
 use App\Services\StorageUsageService;
 use App\Services\SubscriptionCheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,6 +71,13 @@ it('shows the pricing page to guests', function () {
 
 it('redirects the old Black Friday landing to subscribe', function () {
     get('/black-friday')->assertRedirect('/subscribe');
+});
+
+it('shows the last useful day of the black friday campaign', function () {
+    app()->setLocale('es');
+
+    expect(app(BlackFridayPromotion::class)->offerEndsAtLabel())
+        ->toBe('30 de noviembre de 2026');
 });
 
 it('shows the Black Friday offer to a free team', function () {

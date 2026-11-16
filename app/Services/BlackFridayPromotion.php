@@ -185,7 +185,10 @@ class BlackFridayPromotion
 
     public function offerEndsAtLabel(): string
     {
+        // The campaign ends at the configured instant (usually midnight), so
+        // the last useful day is the one that contains its final second.
         return $this->endsAt()
+            ->subSecond()
             ->timezone(config('promotions.black_friday.timezone', config('app.timezone', 'UTC')))
             ->isoFormat('LL');
     }

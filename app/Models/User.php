@@ -131,6 +131,22 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new VerifyEmail(session('verification.redirect')));
     }
 
+    /**
+     * Passwordless accounts have no password until the user sets one.
+     */
+    public function hasPassword(): bool
+    {
+        return filled($this->password);
+    }
+
+    /**
+     * Keep the guard's remember-me hash working when the password is null.
+     */
+    public function getAuthPassword()
+    {
+        return (string) $this->password;
+    }
+
     protected function isAdmin(): Attribute
     {
         return Attribute::get(function () {

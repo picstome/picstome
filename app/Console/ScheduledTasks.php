@@ -60,6 +60,10 @@ class ScheduledTasks
             ->dailyAt('00:50')
             ->name('sanctum:prune-expired');
 
+        $schedule->command('magic-login-tokens:prune')
+            ->dailyAt('00:55')
+            ->name('magic-login-tokens:prune');
+
         $schedule->call(function (): void {
             Cache::put(
                 self::HEARTBEAT_CACHE_KEY,

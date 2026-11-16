@@ -7,6 +7,7 @@ use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\GuestPhotoCommented;
+use App\Notifications\LoginLink;
 use App\Notifications\SelectionLimitReached;
 use App\Notifications\StorageAlmostFull;
 use App\Notifications\SubscriptionExpiredWarning;
@@ -419,6 +420,39 @@ return [
             ['key' => 'Free up space or upgrade your plan to resume camera uploads.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'See plans', 'label' => 'Button', 'type' => 'text'],
             ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
+        ],
+    ],
+
+    'login_link' => [
+        'notification' => LoginLink::class,
+        'label' => [
+            'en' => 'Passwordless login link',
+            'es' => 'Enlace de acceso sin contraseña',
+        ],
+        'description' => [
+            'en' => 'Sends the single-use link used to log in without a password. Transactional emails also include a login link.',
+            'es' => 'Envía el enlace de un solo uso para entrar sin contraseña. Los emails transaccionales también incluyen un enlace de acceso.',
+        ],
+        'trigger' => [
+            'en' => 'The login screen requests an email access link.',
+            'es' => 'La pantalla de login solicita un enlace de acceso por email.',
+        ],
+        'when' => [
+            'en' => 'Immediately, queued',
+            'es' => 'Inmediato, en cola',
+        ],
+        'recipients' => [
+            'en' => 'The user',
+            'es' => 'El usuario',
+        ],
+        'fields' => [
+            ['key' => 'Your Picstome login link', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello :name,', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Click the button below to log in to your Picstome account.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Log in', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'This link expires in 15 minutes. If you did not request it, you can ignore this email.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
+            ['key' => 'You can also [log in directly](:url) without a password.', 'label' => 'Body', 'type' => 'textarea'],
         ],
     ],
 

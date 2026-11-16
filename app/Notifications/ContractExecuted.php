@@ -3,13 +3,14 @@
 namespace App\Notifications;
 
 use App\Models\Contract;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class ContractExecuted extends Notification
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     /**
      * Create a new notification instance.
@@ -44,7 +45,9 @@ class ContractExecuted extends Notification
             $mail->salutation($this->contract->team->name);
         }
 
-        return $mail;
+        return $this->addMagicLoginLink($mail, $notifiable, route('contracts.show', [
+            'contract' => $this->contract,
+        ], absolute: false));
     }
 
     /**

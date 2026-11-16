@@ -2,13 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class SubscriptionExpiredWarning extends Notification
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     public function __construct(
         public int $daysLeft
@@ -21,10 +22,12 @@ class SubscriptionExpiredWarning extends Notification
 
     public function toMail($notifiable)
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('Your subscription has expired'))
             ->line(__('Your subscription has expired.'))
             ->action(__('Renew Subscription'), route('billing-portal'))
             ->line(__('Your data will be deleted in :days days if not renewed.', ['days' => $this->daysLeft]));
+
+        return $this->addMagicLoginLink($mail, $notifiable, route('payments', absolute: false));
     }
 }

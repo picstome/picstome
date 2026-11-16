@@ -50,6 +50,10 @@ new #[Layout('layouts.guest')] class extends Component
             <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
         </div>
 
+        <x-ts-text variant="strong" size="lg" class="text-center font-medium">
+            {{ __('We sent a verification link to :email.', ['email' => auth()->user()->email]) }}
+        </x-ts-text>
+
         <x-ts-text class="text-center">
             {{ __('Please verify your email address by clicking on the link we just emailed to you.') }}
         </x-ts-text>

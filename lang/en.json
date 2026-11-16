@@ -1650,5 +1650,21 @@
     "You are using :used of storage. Free up space before switching to :plan (:limit).": "You are using :used of storage. Free up space before switching to :plan (:limit).",
     "Back to panel": "Back to panel",
     "Wrong email address?": "Wrong email address?",
-    "Update it in your profile": "Update it in your profile"
+    "Update it in your profile": "Update it in your profile",
+    "Back to login": "Back to login",
+    "Check your email": "Check your email",
+    "Click the button below to log in to your Picstome account.": "Click the button below to log in to your Picstome account.",
+    "Continue as :name (:email).": "Continue as :name (:email).",
+    "Create password": "Create password",
+    "If you do not see it, check your spam folder.": "If you do not see it, check your spam folder.",
+    "Log in with password": "Log in with password",
+    "Set a password if you prefer not to wait for an email login link.": "Set a password if you prefer not to wait for an email login link.",
+    "That login link is invalid or has expired. Request a new one.": "That login link is invalid or has expired. Request a new one.",
+    "This link expires in 15 minutes. If you did not request it, you can ignore this email.": "This link expires in 15 minutes. If you did not request it, you can ignore this email.",
+    "Too many attempts. Please try again shortly.": "Too many attempts. Please try again shortly.",
+    "Use a login link instead": "Use a login link instead",
+    "We sent a login link to :email.": "We sent a login link to :email.",
+    "We sent a verification link to :email.": "We sent a verification link to :email.",
+    "You can also [log in directly](:url) without a password.": "You can also [log in directly](:url) without a password.",
+    "Your Picstome login link": "Your Picstome login link"
 }

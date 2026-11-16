@@ -351,11 +351,6 @@
             @include('partials.black-screen')
         @endauth
 
-        @guest
-            <livewire:login-modal />
-            <livewire:register-modal />
-        @endguest
-
         <x-toast />
     </body>
 </html>

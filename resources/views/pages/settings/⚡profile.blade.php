@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\MagicLoginLink;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
@@ -56,6 +57,8 @@ new class extends Component
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
+
+            app(MagicLoginLink::class)->revokeFor($user);
         }
 
         $user->save();

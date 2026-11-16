@@ -1782,5 +1782,21 @@
     "You are using :used of storage. Free up space before switching to :plan (:limit).": "Estás usando :used de almacenamiento. Libera espacio antes de cambiar a :plan (:limit).",
     "Back to panel": "Volver al panel",
     "Wrong email address?": "¿Email incorrecto?",
-    "Update it in your profile": "Actualízalo en tu perfil"
+    "Update it in your profile": "Actualízalo en tu perfil",
+    "Back to login": "Volver al inicio de sesión",
+    "Check your email": "Revisa tu correo",
+    "Click the button below to log in to your Picstome account.": "Haz clic en el botón de abajo para entrar en tu cuenta de Picstome.",
+    "Continue as :name (:email).": "Continuar como :name (:email).",
+    "Create password": "Crear contraseña",
+    "If you do not see it, check your spam folder.": "Si no lo ves, revisa la carpeta de spam.",
+    "Log in with password": "Iniciar sesión con contraseña",
+    "Set a password if you prefer not to wait for an email login link.": "Crea una contraseña si prefieres no esperar a un enlace de acceso por email.",
+    "That login link is invalid or has expired. Request a new one.": "Ese enlace de acceso no es válido o ha caducado. Solicita uno nuevo.",
+    "This link expires in 15 minutes. If you did not request it, you can ignore this email.": "Este enlace caduca en 15 minutos. Si no lo has solicitado, puedes ignorar este correo.",
+    "Too many attempts. Please try again shortly.": "Demasiados intentos. Inténtalo de nuevo en un momento.",
+    "Use a login link instead": "Usar un enlace de acceso",
+    "We sent a login link to :email.": "Hemos enviado un enlace de acceso a :email.",
+    "We sent a verification link to :email.": "Hemos enviado un enlace de verificación a :email.",
+    "You can also [log in directly](:url) without a password.": "También puedes [iniciar sesión directamente](:url) sin contraseña.",
+    "Your Picstome login link": "Tu enlace de acceso a Picstome"
 }

@@ -5,7 +5,6 @@ use App\Services\AttributionService;
 use App\Services\HandleGenerationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -14,10 +13,6 @@ new #[Layout('layouts.guest')] class extends Component
     public $name = '';
 
     public $email = '';
-
-    public $password = '';
-
-    public $password_confirmation = '';
 
     public $terms = false;
 
@@ -49,11 +44,8 @@ new #[Layout('layouts.guest')] class extends Component
         $validated = $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
             'terms' => 'accepted',
         ]);
-
-        $validated['password'] = Hash::make($validated['password']);
 
         if (! empty($this->referral_code)) {
             $validated['referral_code'] = strtoupper($this->referral_code);
@@ -112,20 +104,6 @@ new #[Layout('layouts.guest')] class extends Component
         <x-ts-input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />
 
         <x-ts-input wire:model="email" :label="__('Email')" type="email" placeholder="email@example.com" />
-
-        <x-ts-input
-            wire:model="password"
-            type="password"
-            :label="__('Password')"
-            :placeholder="__('Your password')"
-        />
-
-        <x-ts-input
-            wire:model="password_confirmation"
-            type="password"
-            :label="__('Confirm Password')"
-            :placeholder="__('Confirm your password')"
-        />
 
         <x-checkbox wire:model="terms">
             <x-slot:label>
