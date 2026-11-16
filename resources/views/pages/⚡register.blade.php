@@ -63,6 +63,10 @@ new #[Layout('layouts.guest')] class extends Component
 
         app(AttributionService::class)->persist($user, request());
 
+        if ($this->redirect !== '') {
+            session()->put('verification.redirect', $this->redirect);
+        }
+
         event(new Registered($user));
 
         $handleGenerator = new HandleGenerationService;
@@ -85,19 +89,24 @@ new #[Layout('layouts.guest')] class extends Component
             'signup_campaign' => $user->attr_campaign,
         ]));
 
-        if ($this->redirect !== '') {
-            return redirect()->to($this->redirect);
-        }
-
-        $this->redirectIntended(route('galleries', absolute: false), navigate: true);
+        return redirect()->route('verification.notice');
     }
 }; ?>
 
 <div class="flex min-h-full items-center">
     <form wire:submit="register" class="mx-auto w-80 max-w-80 space-y-6">
-        <div class="mb-10 flex justify-center">
-            <img src="/app-logo.png" class="h-26 dark:hidden" alt="Picstome" />
-            <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
+        <div class="mb-10 space-y-3">
+            <div class="flex justify-center">
+                <img src="/app-logo.png" class="h-26 dark:hidden" alt="Picstome" />
+                <img src="/app-logo-dark.png" class="hidden h-26 dark:block" alt="Picstome" />
+            </div>
+
+            <x-ts-text variant="strong" size="lg" class="text-center">
+                {{ __('Already have an account?') }}
+                <x-ts-link :href="route('login', $this->redirect !== '' ? ['redirect' => $this->redirect] : [])" variant="subtle" wire:navigate>
+                    {{ __('Log in') }}
+                </x-ts-link>
+            </x-ts-text>
         </div>
 
         <x-ts-input wire:model="name" :label="__('Name')" type="text" placeholder="Your name" />

@@ -77,6 +77,7 @@
     "All time": "Todo el tiempo",
     "All your galleries are already in your portfolio.": "Todas tus galerías ya están en tu porfolio.",
     "Already exists": "Ya existe",
+    "Already have an account?": "¿Ya tienes una cuenta?",
     "Always": "Siempre",
     "Amber": "Ámbar",
     "Amount": "Importe",
@@ -1779,5 +1780,7 @@
     "Get help": "Obtén ayuda",
     "Not enough space": "Espacio insuficiente",
     "You are using :used of storage. Free up space before switching to :plan (:limit).": "Estás usando :used de almacenamiento. Libera espacio antes de cambiar a :plan (:limit).",
-    "Back to panel": "Volver al panel"
+    "Back to panel": "Volver al panel",
+    "Wrong email address?": "¿Email incorrecto?",
+    "Update it in your profile": "Actualízalo en tu perfil"
 }

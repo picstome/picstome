@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Middleware\SetLocale;
+use App\Support\SafeRedirect;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -39,6 +42,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     'errors' => (object) [],
                     'code' => 'unauthenticated',
                 ], 401);
+            }
+
+            // Guests opening the verification email must log in first. Keep
+            // the signed link for after login and show the return URL on the
+            // login screen so campaign/tracking parameters are not lost.
+            if ($request->routeIs('verification.verify')) {
+                session()->put('verification.url', $request->fullUrl());
+
+                return redirect()->route('login', array_filter([
+                    'redirect' => SafeRedirect::sanitize($request->string('redirect')->toString()),
+                ]));
             }
         });
 

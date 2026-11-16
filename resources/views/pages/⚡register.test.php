@@ -14,6 +14,50 @@ it('allows guests to view the registration page', function () {
     get(route('register'))->assertStatus(200);
 });
 
+it('requires email verification after registering and keeps the return URL', function () {
+    Livewire::withQueryParams(['redirect' => '/subscribe?plan=pro&ps_from=bf2026'])
+        ->test('pages::register')
+        ->set('name', 'Verify First')
+        ->set('email', 'verify-first@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register')
+        ->assertRedirect(route('verification.notice'));
+
+    expect(session('verification.redirect'))->toBe('/subscribe?plan=pro&ps_from=bf2026');
+});
+
+it('keeps the redirect when switching from register to login', function () {
+    $redirect = '/subscribe?plan=pro&storage=250gb&billing=monthly&ps_aid=eyJzIjoidGVzdCJ9%3D%3D&ps_from=bf2026';
+
+    $html = get('/register?redirect='.urlencode($redirect))->assertOk()->getContent();
+
+    preg_match('/href="([^"]*\/login\?redirect=[^"]*)"/', $html, $matches);
+
+    expect($matches[1] ?? null)->not->toBeNull();
+
+    parse_str((string) parse_url(html_entity_decode($matches[1]), PHP_URL_QUERY), $query);
+
+    expect($query['redirect'] ?? null)->toBe($redirect);
+});
+
+it('returns to the subscribe page with its tracking parameters after logging in from register', function () {
+    $redirect = '/subscribe?plan=pro&storage=250gb&billing=monthly&ps_aid=eyJzIjoidGVzdCJ9%3D%3D&ps_from=bf2026';
+
+    User::factory()->withPersonalTeam()->create([
+        'email' => 'login-from-register@example.com',
+        'password' => Hash::make('password'),
+    ]);
+
+    Livewire::withQueryParams(['redirect' => $redirect])
+        ->test('pages::login')
+        ->set('form.email', 'login-from-register@example.com')
+        ->set('form.password', 'password')
+        ->call('login')
+        ->assertRedirect($redirect);
+});
+
 it('aligns the terms checkbox with its label', function () {
     $page = visit('/register');
 

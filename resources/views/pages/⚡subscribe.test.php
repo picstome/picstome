@@ -257,6 +257,58 @@ it('blocks checkout when the used storage does not fit the plan', function () {
         ->assertSee('150 GB');
 });
 
+it('keeps the query parameters when a guest goes to login from the pricing page', function () {
+    $original = '/subscribe?plan=pro&storage=250gb&billing=monthly&ps_aid=eyJzIjoidGVzdCJ9&ps_from=bf2026';
+
+    $html = get($original)->assertOk()->getContent();
+
+    preg_match('/href="([^"]*\/login\?redirect=[^"]*)"/', $html, $matches);
+
+    expect($matches[1] ?? null)->not->toBeNull();
+
+    parse_str((string) parse_url(html_entity_decode($matches[1]), PHP_URL_QUERY), $query);
+
+    expect($query['redirect'] ?? null)->toBe($original.'&interval=monthly');
+});
+
+it('keeps the query parameters when a guest starts a plan', function () {
+    $html = get('/subscribe?storage=250gb&billing=monthly&ps_from=bf2026')->assertOk()->getContent();
+
+    preg_match_all('/href="([^"]*\/register\?redirect=[^"]*)"/', $html, $matches);
+
+    $redirects = collect($matches[1])
+        ->map(function (string $href): string {
+            parse_str((string) parse_url(html_entity_decode($href), PHP_URL_QUERY), $query);
+
+            return (string) ($query['redirect'] ?? '');
+        });
+
+    expect($redirects->first(fn (string $url): bool => str_contains($url, 'plan=100gb')))
+        ->toContain('storage=250gb')
+        ->toContain('billing=monthly')
+        ->toContain('ps_from=bf2026')
+        ->toContain('interval=monthly');
+
+    expect($redirects->first(fn (string $url): bool => ! str_contains($url, 'plan=')))
+        ->toContain('storage=250gb')
+        ->toContain('billing=monthly')
+        ->toContain('ps_from=bf2026')
+        ->toContain('interval=monthly');
+});
+
+it('keeps the query parameters when a guest starts a checkout', function () {
+    Livewire::withQueryParams([
+        'storage' => '250gb',
+        'billing' => 'monthly',
+        'ps_from' => 'bf2026',
+    ])
+        ->test('pages::subscribe')
+        ->call('checkout', '100gb', 'monthly')
+        ->assertRedirect(route('register', [
+            'redirect' => '/subscribe?storage=250gb&billing=monthly&ps_from=bf2026&plan=100gb&interval=monthly',
+        ], absolute: false));
+});
+
 it('shows a single manage subscription button and a panel link', function () {
     $user = pricingPageUser();
     $user->update(['language' => 'es']);

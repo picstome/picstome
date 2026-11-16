@@ -2,13 +2,29 @@
 
 namespace App\Notifications;
 
+use App\Support\SafeRedirect;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Mail\Mailable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class VerifyEmail extends Notification
+class VerifyEmail extends Notification implements ShouldQueue
 {
+    use Queueable;
+
+    /**
+     * Local path to return to after the email is verified, so campaign and
+     * tracking parameters survive the login/verification detour.
+     */
+    public ?string $redirect;
+
+    public function __construct(?string $redirect = null)
+    {
+        $this->redirect = SafeRedirect::sanitize($redirect);
+    }
+
     /**
      * The callback that should be used to create the verify email URL.
      *
@@ -78,10 +94,11 @@ class VerifyEmail extends Notification
             return call_user_func(static::$createUrlCallback, $notifiable);
         }
 
-        return URL::signedRoute('verification.verify', [
+        return URL::signedRoute('verification.verify', array_filter([
             'id' => $notifiable->getKey(),
             'hash' => sha1($notifiable->getEmailForVerification()),
-        ]);
+            'redirect' => $this->redirect,
+        ]));
     }
 
     /**

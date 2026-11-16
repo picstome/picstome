@@ -31,14 +31,18 @@
                     </x-ts-button>
                 @else
                     <x-ts-button
-                        :href="route('login', ['redirect' => route('subscribe', ['interval' => $this->interval], absolute: false)])"
+                        :href="route('login', ['redirect' => $this->subscribeUrl(['interval' => $this->interval])])"
                         variant="subtle"
                         size="sm"
                     >
                         {{ __('Log in') }}
                     </x-ts-button>
 
-                    <x-ts-button :href="route('register')" variant="primary" size="sm">
+                    <x-ts-button
+                        :href="route('register', ['redirect' => $this->subscribeUrl(['interval' => $this->interval])])"
+                        variant="primary"
+                        size="sm"
+                    >
                         {{ __('Start free') }}
                     </x-ts-button>
                 @endauth
@@ -403,7 +407,7 @@
                                 </p>
                             @elseif ($isGuest)
                                 <x-ts-button
-                                    :href="route('register', ['redirect' => route('subscribe', ['interval' => $displayInterval, 'plan' => $plan['key']], absolute: false)])"
+                                    :href="route('register', ['redirect' => $this->subscribeUrl(['interval' => $displayInterval, 'plan' => $plan['key']])])"
                                     variant="primary"
                                     class="w-full"
                                 >
