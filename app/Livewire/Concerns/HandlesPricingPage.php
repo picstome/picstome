@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Concerns;
 
+use App\Exceptions\InsufficientStorageException;
 use App\Models\Team;
 use App\Services\AttributionService;
 use App\Services\BlackFridayPromotion;
 use App\Services\PlanCatalog;
+use App\Services\PlanEligibilityService;
 use App\Services\ScheduledPlanChangeService;
 use App\Services\SubscriptionCheckoutService;
 use Carbon\Carbon;
@@ -121,7 +123,20 @@ trait HandlesPricingPage
      */
     public function plans(): array
     {
-        return $this->catalog()->displayTiers();
+        $team = $this->team();
+        $eligibility = app(PlanEligibilityService::class);
+        $usedBytes = $team ? $eligibility->usedBytes($team) : 0;
+
+        return collect($this->catalog()->displayTiers())
+            ->map(function (array $plan) use ($team, $eligibility, $usedBytes): array {
+                $plan['fits'] = $team === null || $eligibility->fitsBytes($usedBytes, $plan['key']);
+                $plan['storage_message'] = $plan['fits']
+                    ? null
+                    : $eligibility->message($usedBytes, $plan['key']);
+
+                return $plan;
+            })
+            ->all();
     }
 
     public function currentTier(): ?string
@@ -173,6 +188,15 @@ trait HandlesPricingPage
             return;
         }
 
+        $eligibility = app(PlanEligibilityService::class);
+        $usedBytes = $eligibility->usedBytes($team);
+
+        if (! $eligibility->fitsBytes($usedBytes, $tier)) {
+            $this->toast()->error($eligibility->message($usedBytes, $tier))->send();
+
+            return;
+        }
+
         $this->upgradeTier = $tier;
 
         try {
@@ -199,6 +223,8 @@ trait HandlesPricingPage
             $this->toast()->success(__('Your annual upgrade has been scheduled.'))->send();
             $this->upgradeTier = null;
             $this->upgradeDate = null;
+        } catch (InsufficientStorageException $exception) {
+            $this->toast()->error($exception->getMessage())->send();
         } catch (Throwable $exception) {
             report($exception);
             $this->toast()->error(__('We could not schedule the upgrade. Please try again.'))->send();
@@ -234,6 +260,16 @@ trait HandlesPricingPage
             ]);
         }
 
+        try {
+            app(PlanEligibilityService::class)->assertFits($team, $tier);
+        } catch (InsufficientStorageException $exception) {
+            $this->statusMessage = $exception->getMessage();
+            $this->statusType = 'warning';
+            $this->toast()->error($exception->getMessage())->send();
+
+            return null;
+        }
+
         if ($this->state() === 'monthly' && $interval === 'annual') {
             $this->openUpgrade($tier);
 
@@ -251,9 +287,11 @@ trait HandlesPricingPage
             return redirect($checkout->url);
         } catch (Throwable $exception) {
             report($exception);
-            $message = __('We could not start the checkout. Please try again.');
+            $message = $exception instanceof InsufficientStorageException
+                ? $exception->getMessage()
+                : __('We could not start the checkout. Please try again.');
             $this->statusMessage = $message;
-            $this->statusType = 'error';
+            $this->statusType = $exception instanceof InsufficientStorageException ? 'warning' : 'error';
             $this->toast()->error($message)->send();
 
             return null;
@@ -273,6 +311,16 @@ trait HandlesPricingPage
         }
 
         try {
+            app(PlanEligibilityService::class)->assertFits($team, $tier);
+        } catch (InsufficientStorageException $exception) {
+            $this->statusMessage = $exception->getMessage();
+            $this->statusType = 'warning';
+            $this->toast()->error($exception->getMessage())->send();
+
+            return null;
+        }
+
+        try {
             $checkout = app(SubscriptionCheckoutService::class)->checkoutLifetime(
                 $team,
                 $tier,
@@ -282,9 +330,11 @@ trait HandlesPricingPage
             return redirect($checkout->url);
         } catch (Throwable $exception) {
             report($exception);
-            $message = __('We could not start the checkout. Please try again.');
+            $message = $exception instanceof InsufficientStorageException
+                ? $exception->getMessage()
+                : __('We could not start the checkout. Please try again.');
             $this->statusMessage = $message;
-            $this->statusType = 'error';
+            $this->statusType = $exception instanceof InsufficientStorageException ? 'warning' : 'error';
             $this->toast()->error($message)->send();
 
             return null;

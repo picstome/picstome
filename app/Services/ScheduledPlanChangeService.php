@@ -45,6 +45,8 @@ class ScheduledPlanChangeService
             throw new InvalidArgumentException('The annual upgrade is not available for this subscription.');
         }
 
+        app(PlanEligibilityService::class)->assertFits($team, $tier);
+
         $subscription = $team->subscription('default');
         $coupon = $this->promotion->annualCoupon();
 

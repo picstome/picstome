@@ -176,6 +176,7 @@ class PlanCatalog
                 'key' => $key,
                 'name' => $tier['name'],
                 'photos' => $tier['photos'],
+                'storage_limit' => (int) ($tier['storage_limit'] ?? 0),
                 'highlighted' => (bool) ($tier['highlighted'] ?? false),
                 'monthly' => $this->priceDisplay($key, 'monthly'),
                 'annual' => $this->priceDisplay($key, 'annual'),

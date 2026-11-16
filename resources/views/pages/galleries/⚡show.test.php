@@ -78,7 +78,7 @@ describe('Gallery Viewing', function () {
 
         $tooltip = waitForBrowserValue($page, <<<'JS'
             return document.querySelector('[data-tsui-tooltip]')?.innerText.trim() ?? null;
-        JS);
+        JS, 10000);
 
         expect($tooltip)->toContain('This gallery is public and visible in your portfolio section.');
     })->group('browser');
@@ -365,10 +365,12 @@ describe('Gallery Viewing', function () {
         $this->actingAs($this->user);
 
         $page = visit("/galleries/{$gallery->id}?activeTab=favorited");
-        $page->wait(0.2);
 
-        expect($page->script("document.querySelector('[role=tablist] [data-current=true]')?.textContent.trim()"))
-            ->toContain('Favorites');
+        $activeTab = waitForBrowserValue($page, <<<'JS'
+            return document.querySelector('[role=tablist] [data-current=true]')?.textContent.trim() ?? null;
+        JS, 10000);
+
+        expect($activeTab)->toContain('Favorites');
     })->group('browser');
 
     it('applies the favorites filter from the favorites tab', function () {

@@ -212,6 +212,7 @@
                     @php
                         $isLifetimeView = $displayInterval === 'lifetime';
                         $isAnnualView = $displayInterval === 'annual';
+                        $planFits = $plan['fits'] ?? true;
                         $price = $isLifetimeView ? $plan['lifetime'] : ($isAnnualView ? $plan['annual'] : $plan['monthly']);
                         $promoPrice = null;
                         $promoLabel = null;
@@ -392,7 +393,15 @@
                         </ul>
 
                         <div class="mt-5">
-                            @if ($isGuest)
+                            @if (! $planFits)
+                                <x-ts-button disabled variant="subtle" class="w-full cursor-not-allowed" aria-disabled="true">
+                                    {{ __('Not enough space') }}
+                                </x-ts-button>
+
+                                <p class="text-brand-coral/80 mt-2 text-xs leading-relaxed">
+                                    {{ $plan['storage_message'] }}
+                                </p>
+                            @elseif ($isGuest)
                                 <x-ts-button
                                     :href="route('register', ['redirect' => route('subscribe', ['interval' => $displayInterval, 'plan' => $plan['key']], absolute: false)])"
                                     variant="primary"
