@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\AccountSummaryService;
+use App\Support\Help\HelpLink;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
@@ -9,12 +10,19 @@ new class extends Component
 {
     public $withName = true;
 
+    public ?string $helpRoute = null;
+
     /**
      * @return array<string, mixed>
      */
     public function accountSummary(): array
     {
         return app(AccountSummaryService::class)->forTeam(Auth::user()->currentTeam);
+    }
+
+    public function helpUrl(): string
+    {
+        return app(HelpLink::class)->url($this->helpRoute);
     }
 
     public function logout()
@@ -67,6 +75,13 @@ new class extends Component
         <x-dropdown.items :text="__('Profile')" :href="route('settings.profile')" navigate />
         <x-dropdown.items :text="__('Invoice settings')" :href="route('invoices.settings')" navigate />
         <x-dropdown.items :text="__('Branding')" :href="route('branding')" navigate />
+        <x-dropdown.items
+            :text="__('Help')"
+            icon="question-mark-circle"
+            :href="$this->helpUrl()"
+            target="_blank"
+            rel="noopener noreferrer"
+        />
         <x-dropdown.items
             :text="__('Subscription (:plan)', ['plan' => $summary['plan_label']])"
             :href="$summary['manage_url']"

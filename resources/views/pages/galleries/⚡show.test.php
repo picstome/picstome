@@ -74,7 +74,7 @@ describe('Gallery Viewing', function () {
         $this->actingAs($user);
 
         $page = visit("/galleries/{$gallery->id}");
-        $page->hover('[x-tooltip]');
+        $page->hover('[x-tooltip*="This gallery is public"]');
 
         $tooltip = waitForBrowserValue($page, <<<'JS'
             return document.querySelector('[data-tsui-tooltip]')?.innerText.trim() ?? null;
