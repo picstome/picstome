@@ -241,7 +241,12 @@ trait HandlesPricingPage
         }
 
         try {
-            $checkout = app(SubscriptionCheckoutService::class)->checkout($team, $tier, $interval);
+            $checkout = app(SubscriptionCheckoutService::class)->checkout(
+                $team,
+                $tier,
+                $interval,
+                app(AttributionService::class)->capture(request()),
+            );
 
             return redirect($checkout->url);
         } catch (Throwable $exception) {
@@ -268,7 +273,11 @@ trait HandlesPricingPage
         }
 
         try {
-            $checkout = app(SubscriptionCheckoutService::class)->checkoutLifetime($team, $tier);
+            $checkout = app(SubscriptionCheckoutService::class)->checkoutLifetime(
+                $team,
+                $tier,
+                app(AttributionService::class)->capture(request()),
+            );
 
             return redirect($checkout->url);
         } catch (Throwable $exception) {

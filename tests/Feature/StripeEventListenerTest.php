@@ -414,3 +414,50 @@ it('ignores unknown webhook events', function () {
 
     expect($team->fresh()->custom_storage_limit)->toBe(12345);
 });
+
+it('stamps attribution metadata on subscription invoice payments', function () {
+    $team = Team::factory()->create(['stripe_id' => 'cus_meta']);
+
+    $listener = Mockery::mock(StripeEventListener::class)->makePartial()->shouldAllowMockingProtectedMethods();
+    $listener->shouldReceive('subscriptionAttributionMetadata')
+        ->once()
+        ->andReturn(['ps_source' => 'qa', 'ps_medium' => 'test']);
+    $listener->shouldReceive('stampPaymentIntentMetadata')
+        ->once()
+        ->withArgs(fn ($teamArg, $paymentIntentId, $metadata): bool => $teamArg->is($team)
+            && $paymentIntentId === 'pi_123'
+            && $metadata === ['ps_source' => 'qa', 'ps_medium' => 'test']);
+
+    $listener->handle(new WebhookReceived([
+        'type' => 'invoice.paid',
+        'data' => [
+            'object' => [
+                'customer' => 'cus_meta',
+                'subscription' => 'sub_123',
+                'payment_intent' => 'pi_123',
+            ],
+        ],
+    ]));
+
+    expect(true)->toBeTrue();
+});
+
+it('ignores invoice payments without a payment intent', function () {
+    Team::factory()->create(['stripe_id' => 'cus_meta']);
+
+    $listener = Mockery::mock(StripeEventListener::class)->makePartial()->shouldAllowMockingProtectedMethods();
+    $listener->shouldNotReceive('stampPaymentIntentMetadata');
+
+    $listener->handle(new WebhookReceived([
+        'type' => 'invoice.paid',
+        'data' => [
+            'object' => [
+                'customer' => 'cus_meta',
+                'subscription' => 'sub_123',
+                'payment_intent' => null,
+            ],
+        ],
+    ]));
+
+    expect(true)->toBeTrue();
+});

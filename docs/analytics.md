@@ -19,6 +19,31 @@ paid plan** with GA4 only. Meta and Google Ads are out of scope for now.
   as a backup; GA4 deduplicates by `transaction_id`.
 - The admin report is at **Admin → Usage stats → Acquisition**.
 
+## Stripe metadata
+
+Every checkout carries the acquisition data so a payment can be traced back
+without joining tables by hand:
+
+- **Checkout Session** metadata: `ps_source`, `ps_medium`, `ps_campaign`,
+  `ps_content`, `ps_at`, `ps_touch`, `ps_user_id` (plus the existing `tier`,
+  `interval`, `coupon` and `promotion`).
+- **Subscription** metadata: the same fields, via Cashier `withMetadata()`.
+- **Payment** metadata:
+  - lifetime purchases receive it through `payment_intent_data`;
+  - subscription payments (first invoice and renewals) are stamped by the
+    `invoice.paid` webhook handler.
+
+`client_reference_id` stays as the **team id**, because the success page uses
+it to verify the session. `ps_user_id` is included in the metadata for direct
+user lookup.
+
+Enable the `invoice.paid` event on the Stripe webhook endpoint. Without it,
+subscription payments keep the subscription metadata but the payment itself
+will not show the `ps_*` fields.
+
+No names or emails are written to Stripe metadata; only these pseudonymous
+campaign fields.
+
 ## Environment
 
 Keep tracking off everywhere except production:
