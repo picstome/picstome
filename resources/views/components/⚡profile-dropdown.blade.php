@@ -1,7 +1,5 @@
 <?php
 
-use App\Services\AccountSummaryService;
-use App\Support\Help\HelpLink;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
@@ -9,21 +7,6 @@ use Livewire\Component;
 new class extends Component
 {
     public $withName = true;
-
-    public ?string $helpRoute = null;
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function accountSummary(): array
-    {
-        return app(AccountSummaryService::class)->forTeam(Auth::user()->currentTeam);
-    }
-
-    public function helpUrl(): string
-    {
-        return app(HelpLink::class)->url($this->helpRoute);
-    }
 
     public function logout()
     {
@@ -62,10 +45,6 @@ new class extends Component
     </x-slot>
 
     @auth
-        @php
-            $summary = $this->accountSummary();
-        @endphp
-
         <x-slot:header>
             <div class="px-2 py-1 text-sm font-normal text-zinc-500">
                 {{ __('Account') }}
@@ -75,17 +54,6 @@ new class extends Component
         <x-dropdown.items :text="__('Profile')" :href="route('settings.profile')" navigate />
         <x-dropdown.items :text="__('Invoice settings')" :href="route('invoices.settings')" navigate />
         <x-dropdown.items :text="__('Branding')" :href="route('branding')" navigate />
-        <x-dropdown.items
-            :text="__('Help')"
-            icon="question-mark-circle"
-            :href="$this->helpUrl()"
-            target="_blank"
-            rel="noopener noreferrer"
-        />
-        <x-dropdown.items
-            :text="__('Subscription (:plan)', ['plan' => $summary['plan_label']])"
-            :href="$summary['manage_url']"
-        />
         <x-dropdown.items :text="__('Logout')" wire:click="logout" separator />
     @else
         <x-dropdown.items :text="__('Login')" x-on:click="$tsui.open.modal('login')" />
