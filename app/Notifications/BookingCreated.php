@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Payment;
 use App\Models\Photoshoot;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -11,7 +12,7 @@ use Illuminate\Notifications\Notification;
 
 class BookingCreated extends Notification
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     public function __construct(
         public Photoshoot $photoshoot,
@@ -53,7 +54,9 @@ class BookingCreated extends Notification
             $mail->salutation($this->photoshoot->team->name);
         }
 
-        return $mail;
+        return $this->addMagicLoginLink($mail, $notifiable, route('photoshoots.show', [
+            'photoshoot' => $this->photoshoot,
+        ], absolute: false));
     }
 
     private function googleCalendarUrl($customer, $name): string

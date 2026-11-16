@@ -104,15 +104,19 @@ new class extends Component
     }
 
     /**
-     * The owner must prove they know the password and type their own email,
-     * so a stolen session alone cannot destroy the account.
+     * The owner types their own email and, when the account has a password,
+     * proves they know it, so a stolen session alone cannot destroy it.
+     * Passwordless accounts fall back to the typed email only.
      */
     protected function deleteOwnAccount(User $target, AccountDeletionService $deletion): void
     {
-        $this->validate([
-            'password' => ['required', 'string', 'current_password'],
-            'confirmation' => ['required', 'string'],
-        ]);
+        $rules = ['confirmation' => ['required', 'string']];
+
+        if ($target->hasPassword()) {
+            $rules['password'] = ['required', 'string', 'current_password'];
+        }
+
+        $this->validate($rules);
 
         $this->ensureEmailMatches($target);
 
@@ -175,9 +179,10 @@ new class extends Component
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
 
-            // The admin modal has no password field; attach the error to the
-            // confirmation input so the message is visible.
-            $field = $target->is($this->actor()) ? 'password' : 'confirmation';
+            // Attach the error to the password only when that field exists.
+            $field = $target->is($this->actor()) && $target->hasPassword()
+                ? 'password'
+                : 'confirmation';
 
             throw ValidationException::withMessages([
                 $field => __('Too many attempts. Try again in :seconds seconds.', ['seconds' => $seconds]),
@@ -286,12 +291,14 @@ new class extends Component
                 autocomplete="off"
             />
         @else
-            <x-ts-input
-                wire:model="password"
-                :label="__('Your current password')"
-                type="password"
-                autocomplete="current-password"
-            />
+            @if (auth()->user()->hasPassword())
+                <x-ts-input
+                    wire:model="password"
+                    :label="__('Your current password')"
+                    type="password"
+                    autocomplete="current-password"
+                />
+            @endif
 
             <x-ts-input
                 wire:model="confirmation"

@@ -381,11 +381,12 @@ describe('Gallery Viewing', function () {
         $this->actingAs($this->user);
 
         $page = visit("/galleries/{$gallery->id}");
+        waitForAlpine($page, '[role=tablist] button');
         $page->click('[data-favorites-tab]');
 
         $photoCount = waitForBrowserValue($page, <<<'JS'
             return document.querySelectorAll('[data-photo-card]').length === 1 ? 1 : null;
-        JS);
+        JS, 15000);
 
         expect($photoCount)->toBe(1)
             ->and($page->script("new URL(location.href).searchParams.get('favorites')"))->toBe('true');
@@ -2356,16 +2357,23 @@ test('owner gallery loads the next batch automatically near the bottom', functio
     $this->actingAs($this->user);
 
     $page = visit('/galleries/'.$gallery->id);
-    $page->wait(0.5);
+    waitForAlpine($page, '[role=tablist] button');
 
     $page->assertNoJavaScriptErrors();
 
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(60);
+    $initial = waitForBrowserValue($page, <<<'JS'
+        return document.querySelectorAll('[data-photo-card]').length === 60 ? 1 : null;
+    JS, 15000);
+
+    expect($initial)->toBe(1);
 
     $page->script('window.scrollTo(0, document.body.scrollHeight)');
-    $page->wait(4);
 
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(65);
+    $loaded = waitForBrowserValue($page, <<<'JS'
+        return document.querySelectorAll('[data-photo-card]').length === 65 ? 1 : null;
+    JS, 20000);
+
+    expect($loaded)->toBe(1);
 })->group('browser');
 
 test('owner can switch between photos and download tabs', function () {
@@ -2375,17 +2383,23 @@ test('owner can switch between photos and download tabs', function () {
     $this->actingAs($this->user);
 
     $page = visit('/galleries/'.$gallery->id);
-    $page->wait(0.5);
+    waitForAlpine($page, '[role=tablist] button');
 
     $page->click('[role=tablist] button[aria-label="Download"]');
-    $page->wait(0.5);
 
-    $page->assertSee('Download gallery');
+    $downloaded = waitForBrowserValue($page, <<<'JS'
+        return document.body.innerText.includes('Download gallery') ? 1 : null;
+    JS, 15000);
+
+    expect($downloaded)->toBe(1);
 
     $page->click('[role=tablist] button[aria-label="Photos"]');
-    $page->wait(0.5);
 
-    expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
+    $photos = waitForBrowserValue($page, <<<'JS'
+        return document.querySelectorAll('[data-photo-card]').length === 1 ? 1 : null;
+    JS, 15000);
+
+    expect($photos)->toBe(1);
 })->group('browser');
 
 it('enables comments when annotations are enabled in the share modal', function () {

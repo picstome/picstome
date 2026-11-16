@@ -314,3 +314,22 @@ function waitForBrowserValue(Webpage|PendingAwaitablePage $page, string $script,
 
     throw new RuntimeException("The browser value was not available within {$timeoutMs} ms.");
 }
+
+/**
+ * Wait until Alpine has bound an element that uses `x-bind:data-current`.
+ *
+ * The bound attribute only becomes `data-current` once Alpine has initialised
+ * the element, so it is a reliable signal that the click handlers are
+ * attached. Clicking before that point silently does nothing and used to make
+ * the browser suite flaky under CI load.
+ */
+function waitForAlpine(Webpage|PendingAwaitablePage $page, string $selector, int $timeoutMs = 15000): void
+{
+    $selector = json_encode($selector);
+
+    waitForBrowserValue(
+        $page,
+        "return document.querySelector({$selector})?.hasAttribute('data-current') ? 1 : null;",
+        $timeoutMs,
+    );
+}

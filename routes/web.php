@@ -4,6 +4,7 @@ use App\Http\Controllers\ContractPdfController;
 use App\Http\Controllers\ExternalAuthorizationController;
 use App\Http\Controllers\GalleryDownloadController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\SharedGalleryDownloadController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
@@ -11,10 +12,10 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\NoIndex;
 use App\Http\Middleware\PasswordProtectGallery;
 use App\Http\Middleware\RedirectToCanonicalSharedGallerySlug;
-use App\Jobs\AddToAcumbamailList;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
+use App\Services\EmailVerificationService;
 use App\Services\PhotoDownloadService;
 use App\Support\SafeRedirect;
 use Facades\App\Services\StripeConnectService;
@@ -190,19 +191,7 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
     $fallback = route('galleries', absolute: false).'?verified=1';
     $redirect = SafeRedirect::sanitize($request->string('redirect')->toString());
 
-    if ($request->user()->hasVerifiedEmail()) {
-        return $redirect !== null
-            ? redirect($redirect)
-            : redirect()->intended($fallback);
-    }
-
-    $request->fulfill();
-
-    $listId = app()->getLocale() === 'es'
-        ? config('services.acumbamail.list_id_es')
-        : config('services.acumbamail.list_id');
-
-    AddToAcumbamailList::dispatch($request->user()->email, $request->user()->name, $listId);
+    app(EmailVerificationService::class)->markVerified($request->user());
 
     session()->forget(['verification.redirect', 'verification.url']);
 
@@ -214,6 +203,7 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
 Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard')->middleware(['auth', 'verified']);
 Route::livewire('/forgot-password', 'pages::forgot-password')->name('password.request')->middleware('guest');
 Route::livewire('/login', 'pages::login')->name('login')->middleware('guest');
+Route::get('/auth/magic/{token}', MagicLoginController::class)->name('login.magic')->middleware('throttle:20,1');
 
 Route::get('/authorize', [ExternalAuthorizationController::class, 'show'])
     ->name('external.authorize')

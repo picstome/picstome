@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\FtpAccount;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use App\Traits\FormatsFileSize;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,7 +20,7 @@ use Illuminate\Notifications\Notification;
  */
 class CameraUploadsPaused extends Notification implements ShouldQueue
 {
-    use FormatsFileSize, Queueable;
+    use FormatsFileSize, IncludesMagicLoginLink, Queueable;
 
     public function __construct(
         public FtpAccount $account,
@@ -59,9 +60,10 @@ class CameraUploadsPaused extends Notification implements ShouldQueue
                 ['count' => $this->discardedFiles],
             ))
             ->line(__('Free up space or upgrade your plan to resume camera uploads.'))
-            ->action(__('See plans'), $team->storageUpgradeUrl());
+            ->action(__('See plans'), $team->storageUpgradeUrl())
+            ->salutation(__('Best regards, Picstome Team'));
 
-        return $mail->salutation(__('Best regards, Picstome Team'));
+        return $this->addMagicLoginLink($mail, $notifiable, route('subscribe', absolute: false));
     }
 
     /**

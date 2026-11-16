@@ -175,8 +175,6 @@ it('captures the attribution during registration', function () {
     Livewire::test('pages::register')
         ->set('name', 'Wired User')
         ->set('email', 'wired@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register')
         ->assertDispatched('analytics:event');
@@ -186,8 +184,6 @@ it('falls back to direct when there is no attribution', function () {
     Livewire::test('pages::register')
         ->set('name', 'Direct User')
         ->set('email', 'direct@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 

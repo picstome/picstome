@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\MagicLoginToken;
 use App\Models\User;
+use App\Services\MagicLoginLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -27,6 +29,44 @@ test('password can be updated', function () {
     $response->assertHasNoErrors();
 
     expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+});
+
+test('passwordless users can create their first password', function () {
+    $user = User::factory()->create([
+        'password' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::settings.password')
+        ->assertSee('Create password')
+        ->assertDontSee('Current password')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword')
+        ->assertHasNoErrors();
+
+    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+    expect($user->refresh()->hasPassword())->toBeTrue();
+});
+
+test('changing the password revokes pending login links', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+    ]);
+
+    app(MagicLoginLink::class)->for($user);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::settings.password')
+        ->set('current_password', 'password')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword')
+        ->assertHasNoErrors();
+
+    expect(MagicLoginToken::query()->where('user_id', $user->id)->count())->toBe(0);
 });
 
 test('correct password must be provided to update password', function () {

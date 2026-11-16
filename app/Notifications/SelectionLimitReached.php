@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Gallery;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -10,7 +11,7 @@ use Illuminate\Notifications\Notification;
 
 class SelectionLimitReached extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     public function __construct(
         public Gallery $gallery
@@ -23,7 +24,7 @@ class SelectionLimitReached extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('Selection Limit Reached for Gallery: :name', ['name' => $this->gallery->name]))
             ->greeting(__('Hello :name,', ['name' => $notifiable->name]))
             ->line(__('Your customer has reached the selection limit of :limit photos for the gallery ":name".', [
@@ -34,6 +35,10 @@ class SelectionLimitReached extends Notification implements ShouldQueue
             ->line(__('Please note that the customer may have changed pictures in the meantime, so be sure to confirm with the customer before starting.'))
             ->action(__('View Gallery'), route('galleries.show', ['gallery' => $this->gallery]))
             ->salutation(__('Best regards, Picstome Team'));
+
+        return $this->addMagicLoginLink($mail, $notifiable, route('galleries.show', [
+            'gallery' => $this->gallery,
+        ], absolute: false));
     }
 
     public function toArray(object $notifiable): array

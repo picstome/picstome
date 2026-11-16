@@ -3,13 +3,14 @@
 namespace App\Notifications;
 
 use App\Models\Gallery;
+use App\Notifications\Concerns\IncludesMagicLoginLink;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class GalleryExpirationReminder extends Notification
 {
-    use Queueable;
+    use IncludesMagicLoginLink, Queueable;
 
     /**
      * Create a new notification instance.
@@ -31,7 +32,7 @@ class GalleryExpirationReminder extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__('Gallery Expiration Reminder'))
             ->line(__('Your gallery ":name" will expire on :date.', [
                 'name' => $this->gallery->name,
@@ -39,6 +40,9 @@ class GalleryExpirationReminder extends Notification
             ]))
             ->action(__('View Gallery'), route('galleries.show', ['gallery' => $this->gallery]));
 
+        return $this->addMagicLoginLink($mail, $notifiable, route('galleries.show', [
+            'gallery' => $this->gallery,
+        ], absolute: false));
     }
 
     /**

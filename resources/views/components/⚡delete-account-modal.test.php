@@ -72,6 +72,23 @@ it('requires the current password', function () {
     Queue::assertNothingPushed();
 });
 
+it('lets passwordless users delete their account with the typed email', function () {
+    Queue::fake();
+
+    $user = User::factory()->withPersonalTeam()->create([
+        'email' => 'passwordless@example.com',
+        'password' => null,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('delete-account-modal')
+        ->set('confirmation', 'passwordless@example.com')
+        ->call('delete')
+        ->assertRedirect(route('login'));
+
+    Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $user->id);
+});
+
 it('requires typing the account email', function () {
     Queue::fake();
 

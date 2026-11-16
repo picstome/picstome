@@ -19,8 +19,6 @@ it('requires email verification after registering and keeps the return URL', fun
         ->test('pages::register')
         ->set('name', 'Verify First')
         ->set('email', 'verify-first@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register')
         ->assertRedirect(route('verification.notice'));
@@ -106,12 +104,22 @@ it('aligns the terms checkbox with its label', function () {
     JS))->toBeTrue();
 })->group('browser');
 
+it('creates passwordless accounts by default', function () {
+    Livewire::test('pages::register')
+        ->set('name', 'No Password')
+        ->set('email', 'nopassword@example.com')
+        ->set('terms', true)
+        ->call('register');
+
+    $user = User::where('email', 'nopassword@example.com')->first();
+
+    expect($user->password)->toBeNull();
+});
+
 it('allows guests to register with valid data', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
-        ->set('password', 'password')
-        ->set('password_confirmation', 'password')
         ->set('terms', true)
         ->call('register');
 
@@ -122,8 +130,6 @@ it('authenticates the user after successful registration', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Auth User')
         ->set('email', 'authuser@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -142,8 +148,6 @@ it('creates a personal team for the user upon registration', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Team User')
         ->set('email', 'teamuser@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -159,8 +163,6 @@ it('gives the personal team 1GB of storage upon creation', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Storage User')
         ->set('email', 'storageuser@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -173,8 +175,6 @@ it('creates a personal team with a handle upon registration', function () {
     $component = Livewire::test('pages::register')
         ->set('name', 'Handle User')
         ->set('email', 'handleuser@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -189,16 +189,12 @@ it('generates unique handles when registering users with similar names', functio
     Livewire::test('pages::register')
         ->set('name', 'Test User')
         ->set('email', 'testuser1@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
     Livewire::test('pages::register')
         ->set('name', 'Test User')
         ->set('email', 'testuser2@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -213,8 +209,6 @@ it('stores referral code when provided during registration', function () {
     Livewire::test('pages::register')
         ->set('name', 'Referral User')
         ->set('email', 'referral@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
@@ -228,8 +222,6 @@ it('stores referral code from query parameter', function () {
         ->set('referral_code', 'CHEMA')
         ->set('name', 'Referral User 2')
         ->set('email', 'referral2@example.com')
-        ->set('password', 'password123')
-        ->set('password_confirmation', 'password123')
         ->set('terms', true)
         ->call('register');
 
