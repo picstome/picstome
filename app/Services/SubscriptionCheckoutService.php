@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Team;
 use InvalidArgumentException;
 use Laravel\Cashier\Checkout;
+use Throwable;
 
 /**
  * Creates Stripe Checkout sessions for subscription and lifetime purchases.
@@ -18,9 +19,13 @@ class SubscriptionCheckoutService
     public function __construct(
         private readonly PlanCatalog $catalog,
         private readonly BlackFridayPromotion $promotion,
+        private readonly StripeAttributionMetadata $attribution,
     ) {}
 
-    public function checkout(Team $team, string $tier, string $interval): Checkout
+    /**
+     * @param  array<string, mixed>|null  $attribution  Last-touch fallback for users without stored attribution.
+     */
+    public function checkout(Team $team, string $tier, string $interval, ?array $attribution = null): Checkout
     {
         if (! $this->promotion->canCheckout($team, $tier, $interval)) {
             throw new InvalidArgumentException('This subscription offer is not available for the current team.');
@@ -39,18 +44,17 @@ class SubscriptionCheckoutService
             $builder->withCoupon($coupon);
         }
 
+        $metadata = $this->checkoutMetadata($team, $tier, $interval, $coupon, $offer ?? 'regular', $attribution);
+
         return $builder
-            ->withMetadata(array_filter([
-                'tier' => $tier,
-                'interval' => $interval,
-                'offer' => $offer ?? 'regular',
-                'coupon' => $coupon,
-                'promotion' => $this->promotion->isActive() ? 'black_friday_2026' : null,
-            ], fn ($value) => $value !== null))
-            ->checkout($this->sessionOptions($team, $tier, $interval, $coupon));
+            ->withMetadata($metadata)
+            ->checkout($this->sessionOptions($team, $tier, $interval, $coupon, $metadata));
     }
 
-    public function checkoutLifetime(Team $team, string $tier): Checkout
+    /**
+     * @param  array<string, mixed>|null  $attribution
+     */
+    public function checkoutLifetime(Team $team, string $tier, ?array $attribution = null): Checkout
     {
         if ($this->promotion->stateFor($team) !== 'free') {
             throw new InvalidArgumentException('This lifetime offer is not available for the current team.');
@@ -66,17 +70,13 @@ class SubscriptionCheckoutService
 
         $billable = $coupon ? $team->withCoupon($coupon) : $team;
 
+        $metadata = $this->checkoutMetadata($team, $tier, 'lifetime', $coupon, 'regular', $attribution);
+
         return $billable->checkout([
             $this->catalog->priceId($tier, 'lifetime') => 1,
         ], [
-            ...$this->sessionOptions($team, $tier, 'lifetime', $coupon),
-            'metadata' => array_filter([
-                'tier' => $tier,
-                'interval' => 'lifetime',
-                'offer' => 'regular',
-                'coupon' => $coupon,
-                'promotion' => $this->promotion->isActive() ? 'black_friday_2026' : null,
-            ], fn ($value) => $value !== null),
+            ...$this->sessionOptions($team, $tier, 'lifetime', $coupon, $metadata),
+            'payment_intent_data' => ['metadata' => $metadata],
         ]);
     }
 
@@ -126,9 +126,10 @@ class SubscriptionCheckoutService
     }
 
     /**
+     * @param  array<string, string>  $metadata
      * @return array<string, mixed>
      */
-    private function sessionOptions(Team $team, string $tier, string $interval, ?string $coupon): array
+    private function sessionOptions(Team $team, string $tier, string $interval, ?string $coupon, array $metadata): array
     {
         $promoMessage = $this->promotion->isActive()
             ? __('Your Black Friday offer is applied automatically.')
@@ -138,16 +139,36 @@ class SubscriptionCheckoutService
             'success_url' => route('subscribe').'?checkout=success&session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('subscribe', ['checkout' => 'cancelled']),
             'locale' => app()->getLocale(),
+            // The receipt page verifies the session against the team that paid.
             'client_reference_id' => (string) $team->id,
             'custom_text' => [
                 'submit' => ['message' => $promoMessage],
             ],
-            'metadata' => array_filter([
-                'tier' => $tier,
-                'interval' => $interval,
-                'coupon' => $coupon,
-                'promotion' => $this->promotion->isActive() ? 'black_friday_2026' : null,
-            ], fn ($value) => $value !== null),
+            'metadata' => $metadata,
         ];
+    }
+
+    /**
+     * Session, subscription and payment metadata. Campaign fields stay for the
+     * billing screens; ps_* fields carry the acquisition channel.
+     *
+     * @param  array<string, mixed>|null  $attribution
+     * @return array<string, string>
+     */
+    private function checkoutMetadata(
+        Team $team,
+        string $tier,
+        string $interval,
+        ?string $coupon,
+        string $offer,
+        ?array $attribution,
+    ): array {
+        return array_filter(array_merge([
+            'tier' => $tier,
+            'interval' => $interval,
+            'offer' => $offer,
+            'coupon' => $coupon,
+            'promotion' => $this->promotion->isActive() ? 'black_friday_2026' : null,
+        ], $this->attribution->forTeam($team, $attribution)), fn ($value): bool => $value !== null && $value !== '');
     }
 }

@@ -14,6 +14,7 @@ class StripeEventListener
     {
         match ($event->payload['type']) {
             'checkout.session.completed' => $this->handleCheckoutSessionCompleted($event),
+            'invoice.paid' => $this->handleInvoicePaid($event),
             'customer.subscription.created' => $this->handleSubscriptionCreated($event),
             'customer.subscription.updated' => $this->handleSubscriptionUpdated($event),
             'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event),
@@ -93,6 +94,74 @@ class StripeEventListener
     }
 
     /**
+     * Stamp the attribution metadata on every subscription payment.
+     *
+     * Checkout only allows payment_intent_data in one-time mode, so the first
+     * invoice and every renewal are stamped here instead. The subscription
+     * metadata is preferred; old subscriptions fall back to the user.
+     */
+    protected function handleInvoicePaid(WebhookReceived $event): void
+    {
+        $invoice = $event->payload['data']['object'];
+        $team = $this->findTeamByStripeCustomer($invoice['customer'] ?? '');
+
+        if (! $team) {
+            return;
+        }
+
+        $paymentIntentId = $invoice['payment_intent'] ?? null;
+
+        if (! is_string($paymentIntentId) || $paymentIntentId === '') {
+            return;
+        }
+
+        $metadata = $this->subscriptionAttributionMetadata($invoice, $team);
+
+        if ($metadata === []) {
+            return;
+        }
+
+        $this->stampPaymentIntentMetadata($team, $paymentIntentId, $metadata);
+    }
+
+    /**
+     * @param  array<string, mixed>  $invoice
+     * @return array<string, string>
+     */
+    protected function subscriptionAttributionMetadata(array $invoice, Team $team): array
+    {
+        $subscriptionId = $invoice['subscription'] ?? null;
+        $attribution = app(StripeAttributionMetadata::class);
+
+        if (is_string($subscriptionId) && $subscriptionId !== '') {
+            try {
+                $subscription = $team->stripe()->subscriptions->retrieve($subscriptionId);
+                $metadata = $attribution->fromMetadata($subscription->metadata);
+
+                if ($metadata !== []) {
+                    return $metadata;
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return $attribution->forTeam($team);
+    }
+
+    /**
+     * @param  array<string, string>  $metadata
+     */
+    protected function stampPaymentIntentMetadata(Team $team, string $paymentIntentId, array $metadata): void
+    {
+        try {
+            $team->stripe()->paymentIntents->update($paymentIntentId, ['metadata' => $metadata]);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    /**
      * Handle one-time payment (lifetime) completions and queue the GA4
      * purchase backup for both subscription and lifetime checkouts.
      */
@@ -138,7 +207,7 @@ class StripeEventListener
             return;
         }
 
-        $user = $team->user;
+        $user = $team->owner;
         $clientId = $user?->attr_json['ga_client_id'] ?? null;
 
         if (! $clientId) {
