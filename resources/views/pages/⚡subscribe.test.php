@@ -81,7 +81,7 @@ it('shows the Black Friday offer to a free team', function () {
         ->assertSee('1,00', false)
         ->assertSee('5,00', false)
         ->assertSee('IVA incluido')
-        ->assertSee('Panel')
+        ->assertSee('Volver al panel')
         ->assertDontSee('Gestionar suscripción')
         ->assertSeeInOrder(['Elige tu plan', 'Qué cambia con Pro'], false)
         ->assertDontSee('stripe-pricing-table');
@@ -214,4 +214,18 @@ it('tracks the start of a checkout', function () {
     Livewire::test('pages::subscribe')
         ->call('checkout', '100gb', 'monthly')
         ->assertDispatched('analytics:event');
+});
+
+it('shows a single manage subscription button and a panel link', function () {
+    $user = pricingPageUser();
+    $user->update(['language' => 'es']);
+    pricingPageSubscription($user);
+
+    $response = actingAs($user->fresh())->get('/subscribe');
+
+    $response->assertOk()
+        ->assertSee('Volver al panel')
+        ->assertSee('Gestionar suscripción');
+
+    expect(substr_count($response->getContent(), 'Gestionar suscripción'))->toBe(1);
 });

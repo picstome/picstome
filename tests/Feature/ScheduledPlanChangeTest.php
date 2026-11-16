@@ -116,6 +116,8 @@ it('schedules an annual phase at the end of the current period', function () {
         ->first(fn (array $request) => str_contains($request['url'], '/v1/subscription_schedules/sub_sched_test'));
 
     expect($update['params']['phases'][1]['items'][0]['price'])->toBe('price_100_annual')
+        ->and($update['params']['phases'][1]['iterations'])->toBe(1)
+        ->and($update['params']['phases'][1])->not->toHaveKey('duration')
         ->and($update['params']['phases'][1]['discounts'])->toBe([['coupon' => 'coupon_annual_20']]);
 });
 
