@@ -93,10 +93,7 @@ class ScheduledPlanChangeService
                             ['price' => $annualPriceId, 'quantity' => 1],
                         ],
                         'start_date' => $periodEnd,
-                        'duration' => [
-                            'interval' => 'year',
-                            'interval_count' => 1,
-                        ],
+                        'iterations' => 1,
                         'proration_behavior' => 'none',
                         'discounts' => [
                             ['coupon' => $coupon],

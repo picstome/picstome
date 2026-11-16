@@ -308,7 +308,7 @@
                         <livewire:storage-usage-indicator />
 
                         <div class="flex items-center justify-between gap-2">
-                            <livewire:profile-dropdown :help-route="request()->route()?->getName()" />
+                            <livewire:profile-dropdown />
                             <x-help-link />
                         </div>
                     </div>
@@ -329,7 +329,7 @@
 
                         <x-ts-spacer />
 
-                        <livewire:profile-dropdown :with-name="false" :help-route="request()->route()?->getName()" />
+                        <livewire:profile-dropdown :with-name="false" />
                     </header>
 
                     @auth

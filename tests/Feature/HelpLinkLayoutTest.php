@@ -26,5 +26,5 @@ it('renders the Spanish documentation link for a Spanish user', function () {
         ->get(route('galleries'))
         ->assertOk()
         ->assertSee('https://docs.picstome.com/es/start/first-gallery/', false)
-        ->assertSee('Ayuda');
+        ->assertSee('Obtén ayuda');
 });
