@@ -16,6 +16,7 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
 use App\Services\PhotoDownloadService;
+use App\Support\SafeRedirect;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -186,8 +187,13 @@ Route::get('/stripe-connect/refresh', function () {
 Route::livewire('/reset-password/{token}', 'pages::reset-password.token')->name('password.reset')->middleware('guest');
 
 Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $fallback = route('galleries', absolute: false).'?verified=1';
+    $redirect = SafeRedirect::sanitize($request->string('redirect')->toString());
+
     if ($request->user()->hasVerifiedEmail()) {
-        return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+        return $redirect !== null
+            ? redirect($redirect)
+            : redirect()->intended($fallback);
     }
 
     $request->fulfill();
@@ -198,7 +204,11 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
 
     AddToAcumbamailList::dispatch($request->user()->email, $request->user()->name, $listId);
 
-    return redirect()->intended(route('galleries', absolute: false).'?verified=1');
+    session()->forget(['verification.redirect', 'verification.url']);
+
+    return $redirect !== null
+        ? redirect($redirect)
+        : redirect()->intended($fallback);
 })->name('verification.verify')->middleware(['auth', 'signed', 'throttle:6,1']);
 
 Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard')->middleware(['auth', 'verified']);

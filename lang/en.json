@@ -70,6 +70,7 @@
     "All time": "All time",
     "All your galleries are already in your portfolio.": "All your galleries are already in your portfolio.",
     "Already exists": "Already exists",
+    "Already have an account?": "Already have an account?",
     "Always": "Always",
     "Amber": "Amber",
     "Amount": "Amount",
@@ -1647,5 +1648,7 @@
     "Conversion": "Conversion",
     "Not enough space": "Not enough space",
     "You are using :used of storage. Free up space before switching to :plan (:limit).": "You are using :used of storage. Free up space before switching to :plan (:limit).",
-    "Back to panel": "Back to panel"
+    "Back to panel": "Back to panel",
+    "Wrong email address?": "Wrong email address?",
+    "Update it in your profile": "Update it in your profile"
 }

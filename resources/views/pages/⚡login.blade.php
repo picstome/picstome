@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Forms\LoginForm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -34,6 +35,24 @@ new #[Layout('layouts.guest')] class extends Component
         $this->form->authenticate();
 
         Session::regenerate();
+
+        // A guest opened the verification email: complete it now and let the
+        // verification route send them to the return URL carried by the link.
+        $verificationUrl = session()->pull('verification.url');
+
+        if (is_string($verificationUrl) && $verificationUrl !== '') {
+            return redirect()->to($verificationUrl);
+        }
+
+        // Verification is mandatory: bring the return URL along so the
+        // verification email can send them back to the page they wanted.
+        if (! Auth::user()->hasVerifiedEmail()) {
+            if ($this->redirect !== '') {
+                session()->put('verification.redirect', $this->redirect);
+            }
+
+            return redirect()->route('verification.notice');
+        }
 
         if ($this->redirect !== '') {
             return redirect()->to($this->redirect);
@@ -79,7 +98,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         <x-ts-text class="text-center">
             {{ __('Don\'t have an account?') }}
-            <x-ts-link href="{{ route('register') }}" wire:navigate>
+            <x-ts-link :href="route('register', $this->redirect !== '' ? ['redirect' => $this->redirect] : [])" wire:navigate>
                 {{ __('Register') }}
             </x-ts-link>
         </x-ts-text>

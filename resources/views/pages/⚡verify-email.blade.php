@@ -69,6 +69,13 @@ new #[Layout('layouts.guest')] class extends Component
                 </x-ts-button>
             </form>
 
+            <x-ts-text class="text-center">
+                {{ __('Wrong email address?') }}
+                <x-ts-link :href="route('settings.profile')" wire:navigate>
+                    {{ __('Update it in your profile') }}
+                </x-ts-link>
+            </x-ts-text>
+
             <x-ts-link class="cursor-pointer text-sm" wire:click="logout">
                 {{ __('Log out') }}
             </x-ts-link>

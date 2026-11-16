@@ -25,6 +25,16 @@ trait HandlesPricingPage
 
     public string $interval = 'monthly';
 
+    /**
+     * Query string of the page load that opened the pricing page, minus the
+     * parameters owned by the pricing UI. Appended to the login/register
+     * return URLs so GA4 and Tag Manager keep the campaign and attribution
+     * signals.
+     *
+     * @var array<string, string>
+     */
+    public array $returnQuery = [];
+
     public ?string $upgradeTier = null;
 
     public ?string $upgradeDate = null;
@@ -43,6 +53,8 @@ trait HandlesPricingPage
     public function mountPricingPage(): void
     {
         app(AttributionService::class)->remember(request());
+
+        $this->returnQuery = $this->trackingQuery();
 
         $offer = $this->promotion()->offerFor($this->team());
         $requestedInterval = request()->string('interval')->toString();
@@ -63,6 +75,32 @@ trait HandlesPricingPage
             $this->statusMessage = __('The payment was cancelled. You can try again whenever you want.');
             $this->statusType = 'warning';
         }
+    }
+
+    /**
+     * Build a relative /subscribe URL that keeps the tracking parameters of
+     * the current visit and overrides the plan selection.
+     *
+     * @param  array<string, string>  $overrides
+     */
+    public function subscribeUrl(array $overrides = []): string
+    {
+        return route('subscribe', array_merge($this->returnQuery, $overrides), absolute: false);
+    }
+
+    /**
+     * Query parameters worth carrying through the auth redirects. Plan
+     * selection and checkout state are owned by this page, so they are
+     * rebuilt instead of replayed.
+     *
+     * @return array<string, string>
+     */
+    private function trackingQuery(): array
+    {
+        return collect(request()->query())
+            ->except(['interval', 'checkout', 'session_id'])
+            ->filter(fn (mixed $value): bool => is_string($value) && trim($value) !== '')
+            ->all();
     }
 
     public function team(): ?Team
@@ -256,7 +294,7 @@ trait HandlesPricingPage
 
         if (! $team) {
             return redirect()->route('register', [
-                'redirect' => route('subscribe', ['plan' => $tier, 'interval' => $interval], absolute: false),
+                'redirect' => $this->subscribeUrl(['plan' => $tier, 'interval' => $interval]),
             ]);
         }
 
@@ -306,7 +344,7 @@ trait HandlesPricingPage
 
         if (! $team) {
             return redirect()->route('register', [
-                'redirect' => route('subscribe', ['plan' => $tier], absolute: false),
+                'redirect' => $this->subscribeUrl(['plan' => $tier]),
             ]);
         }
 

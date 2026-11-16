@@ -2,11 +2,15 @@
 
 use App\Jobs\AddToAcumbamailList;
 use App\Models\User;
+use App\Notifications\VerifyEmail as VerifyEmailNotification;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\URL;
+use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
@@ -51,6 +55,108 @@ describe('Email Verification', function () {
 
         expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
     });
+
+    it('redirects to the return URL after verifying the email', function () {
+        $user = User::factory()->unverified()->create();
+        $redirect = '/subscribe?plan=pro&storage=250gb&billing=monthly&ps_aid=eyJzIjoidGVzdCJ9%3D%3D&ps_from=bf2026';
+
+        $verificationUrl = URL::signedRoute('verification.verify', [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+            'redirect' => $redirect,
+        ]);
+
+        actingAs($user)->get($verificationUrl)->assertRedirect($redirect);
+
+        expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+    });
+
+    it('ignores an external return URL when verifying the email', function () {
+        $user = User::factory()->unverified()->create();
+
+        $verificationUrl = URL::signedRoute('verification.verify', [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+            'redirect' => 'https://evil.example.com/subscribe',
+        ]);
+
+        actingAs($user)
+            ->get($verificationUrl)
+            ->assertRedirect(route('galleries', absolute: false).'?verified=1');
+    });
+
+    it('sends guests who open the verification email to login with the return URL', function () {
+        $user = User::factory()->unverified()->create();
+        $redirect = '/subscribe?plan=pro&storage=250gb&ps_from=bf2026';
+
+        $verificationUrl = URL::signedRoute('verification.verify', [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+            'redirect' => $redirect,
+        ]);
+
+        $this->get($verificationUrl)
+            ->assertRedirect(route('login', ['redirect' => $redirect], absolute: false));
+
+        expect(session('verification.url'))->toContain('/verify-email/'.$user->id);
+    });
+
+    it('completes the verification and returns to the subscribe URL after logging in', function () {
+        $user = User::factory()->unverified()->create([
+            'email' => 'verify-after-login@example.com',
+            'password' => Hash::make('password'),
+        ]);
+        $redirect = '/subscribe?plan=pro&storage=250gb&billing=monthly&ps_from=bf2026';
+
+        $verificationUrl = URL::signedRoute('verification.verify', [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+            'redirect' => $redirect,
+        ]);
+
+        $this->get($verificationUrl)
+            ->assertRedirect(route('login', ['redirect' => $redirect], absolute: false));
+
+        Livewire::test('pages::login')
+            ->set('form.email', 'verify-after-login@example.com')
+            ->set('form.password', 'password')
+            ->call('login')
+            ->assertRedirect($verificationUrl);
+
+        $this->get($verificationUrl)->assertRedirect($redirect);
+
+        expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+    });
+});
+
+it('includes the return URL in the verification email', function () {
+    Notification::fake();
+
+    Livewire::withQueryParams(['redirect' => '/subscribe?plan=pro&ps_from=bf2026'])
+        ->test('pages::register')
+        ->set('name', 'Return URL')
+        ->set('email', 'return-url@example.com')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('terms', true)
+        ->call('register');
+
+    $user = User::where('email', 'return-url@example.com')->firstOrFail();
+
+    Notification::assertSentTo(
+        $user,
+        VerifyEmailNotification::class,
+        function (VerifyEmailNotification $notification) use ($user): bool {
+            $actionUrl = $notification->toMail($user)->actionUrl;
+
+            return is_string($actionUrl) && str_contains($actionUrl, http_build_query(
+                ['redirect' => '/subscribe?plan=pro&ps_from=bf2026'],
+                '',
+                '&',
+                PHP_QUERY_RFC3986,
+            ));
+        },
+    );
 });
 
 it('adds new user to Acumbamail mailing list upon registration', function () {
