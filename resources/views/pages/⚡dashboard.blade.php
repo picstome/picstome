@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Invoice;
+use App\Services\RevenueService;
 use App\Traits\FormatsMoney;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Cashier\Cashier;
 use Livewire\Attributes\Computed;
@@ -62,12 +62,16 @@ new class extends Component
             ->reject(fn ($step) => in_array($step['key'], $dismissed));
     }
 
+    /**
+     * Money collected in the last 30 days, from Stripe payments and from the
+     * invoices the team marked as paid by hand.
+     */
     #[Computed]
-    public function revenue30Days()
+    public function revenue30Days(): string
     {
-        $start = Carbon::now()->subDays(30);
+        $amount = app(RevenueService::class)->lastDays($this->team, 30);
 
-        return Cashier::formatAmount($this->team->payments()->where('completed_at', '>=', $start)->sum('amount'), $this->team->stripe_currency);
+        return Cashier::formatAmount((int) round($amount * 100), $this->team->stripe_currency);
     }
 
     /**
