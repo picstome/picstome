@@ -583,7 +583,10 @@ class Gallery extends Model
     {
         $sourceSize = (int) @filesize($photo->getRealPath());
 
-        if (FileUploadConfiguration::isUsingS3()) {
+        // Only Livewire temporary files that already live on the S3 temp disk
+        // can be moved within S3. Regular HTTP uploads use a local PHP temp
+        // file even when Livewire's temp disk is configured as S3.
+        if ($photo instanceof TemporaryUploadedFile && FileUploadConfiguration::isUsingS3()) {
             $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
 
             if (! $moved) {
@@ -641,7 +644,11 @@ class Gallery extends Model
     {
         $sourceSize = (int) @filesize($photo->getRealPath());
 
-        if (FileUploadConfiguration::isUsingS3()) {
+        // Only Livewire temporary files that already live on the S3 temp disk
+        // can be moved within S3. Regular HTTP uploads (the background upload
+        // endpoint and the external API) use a local PHP temp file, which must
+        // be uploaded normally even when the Livewire temp disk is S3.
+        if ($photo instanceof TemporaryUploadedFile && FileUploadConfiguration::isUsingS3()) {
             $path = $this->storage_path.'/'.Str::ulid().'-'.$sourceName;
 
             // Laravel's move() returns false when the S3 transfer fails instead

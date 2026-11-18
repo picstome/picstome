@@ -10,6 +10,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 
 uses(RefreshDatabase::class);
 
@@ -192,4 +193,46 @@ it('renders the dock on the dashboard', function () {
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('data-test="upload-dock"', false);
+});
+
+it('stores a regular HTTP upload when Livewire uses an S3 temporary disk', function () {
+    Storage::fake('s3');
+    config(['livewire.temporary_file_upload.disk' => 's3']);
+
+    expect(FileUploadConfiguration::isUsingS3())->toBeTrue();
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $this->actingAs($this->user)->post(
+        route('galleries.uploads.store', $gallery),
+        ['file' => UploadedFile::fake()->image('photo1.jpg')],
+        ['Accept' => 'application/json'],
+    )->assertOk();
+
+    $photo = $gallery->photos()->sole();
+
+    expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+});
+
+it('replaces a version from a regular HTTP upload when Livewire uses an S3 temporary disk', function () {
+    Storage::fake('s3');
+    config(['livewire.temporary_file_upload.disk' => 's3']);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create([
+        'name' => 'photo1.jpg',
+        'source_name' => 'photo1.jpg',
+        'path' => 'old/current.jpg',
+        'size' => 1024,
+        'version_count' => 1,
+    ]);
+
+    $this->actingAs($this->user)->post(
+        route('galleries.uploads.store', $gallery),
+        ['file' => UploadedFile::fake()->image('photo1.jpg'), 'action' => 'replace'],
+        ['Accept' => 'application/json'],
+    )->assertOk();
+
+    expect($photo->fresh()->path)->toBe('old/current.jpg')
+        ->and(Storage::disk('s3')->exists('old/current.jpg'))->toBeTrue();
 });
