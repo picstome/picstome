@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContractPdfController;
 use App\Http\Controllers\ExternalAuthorizationController;
 use App\Http\Controllers\GalleryDownloadController;
+use App\Http\Controllers\GalleryUploadController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PublicInvoicePdfController;
@@ -137,6 +138,17 @@ Route::get('/i/{token}/pdf', PublicInvoicePdfController::class)
 
 Route::livewire('/galleries', 'pages::galleries')->name('galleries')->middleware(['auth', 'verified']);
 Route::livewire('/galleries/{gallery}', 'pages::galleries.show')->name('galleries.show')->middleware(['auth', 'verified']);
+
+Route::post('/galleries/{gallery}/uploads/check', [GalleryUploadController::class, 'check'])
+    ->name('galleries.uploads.check')
+    ->middleware(['auth', 'verified']);
+Route::post('/galleries/{gallery}/uploads', [GalleryUploadController::class, 'store'])
+    ->name('galleries.uploads.store')
+    ->middleware(['auth', 'verified', 'throttle:300,1']);
+Route::get('/galleries/{gallery}/uploads/status', [GalleryUploadController::class, 'statuses'])
+    ->name('galleries.uploads.status')
+    ->middleware(['auth', 'verified']);
+
 Route::get('/galleries/{gallery}/download', GalleryDownloadController::class)
     ->name('galleries.download')
     ->middleware(['auth', 'verified', 'can:view,gallery']);

@@ -973,6 +973,12 @@ test('the hidden annotations state is kept while moving between photos', functio
 
     $page = visit("/galleries/{$gallery->id}/photos/{$first->id}");
 
+    // The closeup remembers the last visibility in localStorage. Reset it so
+    // this test starts from the visible state regardless of the previous test.
+    $page->script("localStorage.setItem('picstome-annotations-visible', '1')");
+    $page->script('window.location.reload()');
+    $page->wait(1);
+
     $pinIsVisible = fn (): bool => (bool) $page->script(<<<'JS'
         (() => {
             const pin = document.querySelector('#photo button[title="Photo annotation"]')
@@ -981,7 +987,11 @@ test('the hidden annotations state is kept while moving between photos', functio
         })()
     JS);
 
-    expect($pinIsVisible())->toBeTrue();
+    expect(waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('#photo button[title="Photo annotation"]')
+
+        return pin && pin.offsetParent !== null ? true : null;
+    JS))->toBeTrue();
 
     // Filled state, same rule as the comments button: one toggle, green when
     // the pins are visible.

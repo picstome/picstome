@@ -26,7 +26,20 @@ Alpine.data('photoMasonry', () => ({
 
         this.$el.style.position = 'relative';
 
-        this.resizeObserver = new ResizeObserver(() => this.schedule());        this.resizeObserver.observe(this.$el);
+        // Only a width change can change the column count/width. Reacting to
+        // the height too would make the layout run on the height it just wrote.
+        this.containerWidth = this.$el.clientWidth;
+        this.resizeObserver = new ResizeObserver((entries) => {
+            const width = entries[0]?.contentRect.width ?? 0;
+
+            if (Math.abs(width - this.containerWidth) < 0.5) {
+                return;
+            }
+
+            this.containerWidth = width;
+            this.schedule();
+        });
+        this.resizeObserver.observe(this.$el);
 
         this.tileObserver = new ResizeObserver(() => this.schedule());
 
@@ -192,6 +205,32 @@ const preserveMasonryHeight = () => {
             toEl.style.height = height;
             toEl.style.minHeight = height;
         }
+    });
+
+    // Absolute positions are written by the masonry. A Livewire re-render (for
+    // example while an upload is being processed) must not drop them, or the
+    // tile briefly re-enters the normal flow and the whole wall jumps.
+    Livewire.hook('morph.updating', ({ el, toEl }) => {
+        if (! el?.hasAttribute?.('data-photo-card') || ! toEl?.style) {
+            return;
+        }
+
+        ['position', 'width', 'left', 'top', 'margin'].forEach((property) => {
+            if (el.style[property]) {
+                toEl.style[property] = el.style[property];
+            }
+        });
+    });
+
+    // A re-rendered video starts at its default placeholder ratio until its
+    // metadata loads again. Keep the ratio Alpine already measured so the tile
+    // does not resize (and the wall does not jump) on every Livewire morph.
+    Livewire.hook('morph.updating', ({ el, toEl }) => {
+        if (! el?.hasAttribute?.('data-photo-video') || ! toEl?.style) {
+            return;
+        }
+
+        toEl.style.cssText = el.style.cssText;
     });
 
     Livewire.hook('morph.updated', ({ el }) => {

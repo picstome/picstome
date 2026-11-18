@@ -44,6 +44,35 @@ it('renders the public portfolio gallery as a masonry wall', function () {
         ->assertSee('columns-1 sm:columns-2 md:columns-3 lg:columns-4 2xl:columns-5', false);
 });
 
+it('reserves a stable scrollbar gutter for the masonry wall', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    Photo::factory()->count(12)->for($gallery)->create(['status' => 'processed']);
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    expect($page->script('getComputedStyle(document.documentElement).scrollbarGutter'))->toBe('stable');
+
+    $widths = $page->script(<<<'JS'
+        (() => {
+            const before = document.documentElement.clientWidth;
+            const previous = document.body.style.minHeight;
+
+            document.body.style.minHeight = '200vh';
+            const after = document.documentElement.clientWidth;
+
+            document.body.style.minHeight = previous;
+
+            return [before, after];
+        })()
+    JS);
+
+    expect($widths[0])->toBe($widths[1]);
+
+    $page->assertNoJavascriptErrors();
+})->group('browser');
+
 it('renders photo thumbnails at their natural aspect ratio', function () {
     $gallery = Gallery::factory()->for($this->team)->create();
     $photo = Photo::factory()->for($gallery)->create(['status' => 'processed']);
@@ -59,4 +88,19 @@ it('renders photo thumbnails at their natural aspect ratio', function () {
         ->toContain('h-auto w-full')
         ->not->toContain('aspect-square')
         ->not->toContain('object-cover');
+});
+
+it('reserves a stable aspect ratio for video tiles', function () {
+    $gallery = Gallery::factory()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->video()->create(['status' => 'processed']);
+
+    $html = Blade::render('<x-photo-tile :photo="$photo" :gallery="$gallery" />', [
+        'photo' => $photo,
+        'gallery' => $gallery,
+    ]);
+
+    expect($html)
+        ->toContain('data-photo-video')
+        ->toContain('preload="metadata"')
+        ->toContain('aspect-ratio: 16 / 9');
 });

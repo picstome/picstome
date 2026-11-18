@@ -1,18 +1,18 @@
 <?php
 
-use App\Events\PhotoAdded;
+use App\Exceptions\GalleryUploadException;
 use App\Livewire\Forms\GalleryForm;
 use App\Livewire\Forms\ShareGalleryForm;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Services\GalleryPhotoQuery;
+use App\Services\GalleryUploadService;
 use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
 use App\Traits\RevealsGalleryPhoto;
 use App\Traits\SummarizesGalleryTabs;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
@@ -21,7 +21,6 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Renderless;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use TallStackUi\Traits\Interactions;
 
@@ -126,6 +125,10 @@ new class extends Component
     /**
      * Store one queued Livewire upload in S3.
      *
+     * Kept as the Livewire entry point for the gallery uploader while the
+     * browser-facing upload rules live in `GalleryUploadService`, shared with
+     * the background HTTP upload endpoint.
+     *
      * Large RAW/video uploads can exceed PHP's default max_execution_time
      * while the local temporary file is copied to S3.
      *
@@ -143,86 +146,23 @@ new class extends Component
             return null;
         }
 
-        $action = match ($action) {
-            true => 'replace',
-            false => 'version',
-            'replace' => 'replace',
-            'skip' => 'skip',
-            default => 'version',
-        };
+        $uploads = app(GalleryUploadService::class);
 
-        if ($action === 'skip') {
+        try {
+            $photo = $uploads->store($this->gallery, $this->photos[$index], $action);
+        } catch (GalleryUploadException $exception) {
+            // Surface per-file errors through Livewire's validation bag so the
+            // uploader can show them next to the file name.
+            throw ValidationException::withMessages([
+                "photos.{$index}" => $exception->getMessage(),
+            ]);
+        }
+
+        if ($photo === null) {
             return null;
         }
 
-        $uploadedPhoto = $this->photos[$index];
-
-        $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
-
-        $this->validate([
-            "photos.{$index}" => [
-                function ($attribute, $value, $fail) use ($index, $existingPhoto, $action) {
-                    $uploadedPhoto = $this->photos[$index];
-
-                    if (! in_array(strtolower($uploadedPhoto->getClientOriginalExtension()), config('picstome.upload_extensions'), true)) {
-                        $fail(__('This file type is not supported.'));
-                    }
-
-                    if (preg_match('#[/\\\\\x00-\x1F\x7F]#', $uploadedPhoto->getClientOriginalName())) {
-                        $fail(__('The file name contains invalid characters.'));
-                    }
-
-                    if (strtolower($uploadedPhoto->getClientOriginalExtension()) === 'pdf' && ! $this->looksLikeAPdf($uploadedPhoto)) {
-                        $fail(__('This file is not a valid PDF.'));
-                    }
-
-                    if ($existingPhoto && $action === 'version' && ! config('picstome.file_versions_enabled')) {
-                        $fail(__('File versions are currently unavailable.'));
-                    }
-
-                    $replacedSize = $action === 'replace' && $existingPhoto ? ($existingPhoto->stored_size ?: $existingPhoto->size) : 0;
-
-                    if (! $this->hasSufficientStorage($uploadedPhoto, $replacedSize)) {
-                        $fail(__('You do not have enough storage space to upload this photo.'));
-                    }
-                },
-            ],
-        ]);
-
-        $uploadedPhoto = $this->photos[$index];
-        $identityKey = Gallery::identityKey($uploadedPhoto->getClientOriginalName());
-
-        try {
-            $photo = $this->gallery->withPhotoIdentityLock($identityKey, function () use ($uploadedPhoto, $action): Photo {
-                $existingPhoto = $this->findPhotoByName($uploadedPhoto->getClientOriginalName());
-
-                if ($existingPhoto !== null && $action === 'replace') {
-                    return $this->replaceCurrentPhotoInGallery($uploadedPhoto, $existingPhoto);
-                }
-
-                if ($existingPhoto !== null) {
-                    return $this->addVersionToGallery($uploadedPhoto, $existingPhoto);
-                }
-
-                return $this->addPhotoToGallery($uploadedPhoto);
-            });
-        } catch (\Exception $exception) {
-            // The first check runs before the temp file moves to S3, but a
-            // concurrent upload can fill the quota between the two checks.
-            // Surface it as a field error so the uploader can show it per file.
-            if ($exception->getMessage() === 'Not enough storage') {
-                throw ValidationException::withMessages([
-                    "photos.{$index}" => __('You do not have enough storage space to upload this photo.'),
-                ]);
-            }
-
-            throw $exception;
-        }
-
-        $team = $this->gallery->team;
-        $this->remainingStorageBytes = $team->storage_limit === null
-            ? null
-            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
+        $this->remainingStorageBytes = $uploads->remainingStorageBytes($this->gallery);
 
         return [
             'photoId' => $photo->id,
@@ -273,74 +213,8 @@ new class extends Component
      */
     public function findDuplicateNames(array $fileNames): array
     {
-        $identityKeys = collect($fileNames)
-            ->mapWithKeys(fn ($name) => [Gallery::identityKey((string) $name) => true]);
-
-        $existingKeys = $this->gallery->photos()
-            ->whereIn('identity_key', $identityKeys->keys())
-            ->pluck('identity_key')
-            ->flip();
-
-        return $this->existingPhotoNames = collect($fileNames)
-            ->unique()
-            ->filter(fn ($name) => $existingKeys->has(Gallery::identityKey((string) $name)))
-            ->values()
-            ->map(fn ($name) => (string) $name)
-            ->all();
-    }
-
-    protected function findPhotoByName(string $clientName): ?Photo
-    {
-        return $this->gallery->findLogicalPhotoBySourceName($clientName);
-    }
-
-    protected function hasSufficientStorage(UploadedFile $uploadedPhoto, int $replacedSize = 0): bool
-    {
-        $photoSize = max(0, $uploadedPhoto->getSize() - $replacedSize);
-
-        return $this->gallery->team->canStoreFile($photoSize);
-    }
-
-    protected function looksLikeAPdf(TemporaryUploadedFile $uploadedPhoto): bool
-    {
-        $stream = $uploadedPhoto->readStream();
-
-        if (! is_resource($stream)) {
-            return false;
-        }
-
-        try {
-            return fread($stream, 5) === '%PDF-';
-        } finally {
-            fclose($stream);
-        }
-    }
-
-    protected function addPhotoToGallery(UploadedFile $uploadedPhoto): Photo
-    {
-        $photo = $this->gallery->addPhoto($uploadedPhoto);
-
-        PhotoAdded::dispatch($photo);
-
-        return $photo;
-    }
-
-    protected function addVersionToGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): Photo
-    {
-        $photo = $this->gallery->addVersion($uploadedPhoto, $existingPhoto);
-
-        PhotoAdded::dispatch($photo);
-
-        return $photo;
-    }
-
-    protected function replaceCurrentPhotoInGallery(UploadedFile $uploadedPhoto, Photo $existingPhoto): Photo
-    {
-        $photo = $this->gallery->replaceCurrentVersion($uploadedPhoto, $existingPhoto);
-
-        PhotoAdded::dispatch($photo);
-
-        return $photo;
+        return $this->existingPhotoNames = app(GalleryUploadService::class)
+            ->duplicateNames($this->gallery, $fileNames);
     }
 
     public function share()
@@ -1008,7 +882,31 @@ new class extends Component
     }
 }; ?>
 
-<div x-data x-on:open-cover-focus.window="$wire.adjustingCover = true">
+<div
+    x-data="galleryDrop"
+    data-gallery-id="{{ $gallery->id }}"
+    data-gallery-name="{{ $gallery->name }}"
+    x-on:open-cover-focus.window="$wire.adjustingCover = true"
+    x-on:dragover.window="onDragOver($event)"
+    x-on:dragleave.window="onDragLeave($event)"
+    x-on:drop.window="onDrop($event)"
+>
+    {{-- Full-page drop target: files can be dropped anywhere in the gallery,
+         without opening the Add media modal first. --}}
+    <div
+        x-show="dragActive"
+        x-cloak
+        data-test="upload-drop-overlay"
+        class="bg-brand-night/70 fixed inset-0 z-[55] flex items-center justify-center p-6 backdrop-blur-sm"
+        role="presentation"
+    >
+        <div class="rounded-2xl border-2 border-dashed border-white/70 bg-white/10 px-10 py-14 text-center text-white">
+            <x-icon name="arrow-up-tray" class="mx-auto size-10" />
+            <p class="mt-4 text-lg font-semibold">{{ __('Drop files to upload') }}</p>
+            <p class="mt-1 text-sm text-white/80">{{ __('They will be added to this gallery.') }}</p>
+        </div>
+    </div>
+
     <livewire:gallery-live-watcher
         :$gallery
         :scan-inbox="true"
@@ -1364,7 +1262,7 @@ new class extends Component
     @endif
 
     <x-ts-modal name="add-photos" class="w-full sm:max-w-lg">
-        <form class="space-y-6">
+        <div class="space-y-6" id="add-photos-uploader" data-gallery-id="{{ $gallery->id }}" data-gallery-name="{{ $gallery->name }}">
             <div>
                 <x-ts-heading size="lg">{{ __('Add media') }}</x-ts-heading>
                 <x-ts-subheading>
@@ -1395,191 +1293,30 @@ new class extends Component
                 </x-ts-callout>
             @endif
 
-            <div
-                x-data="multiFileUploader"
-                x-on:dragover.window="handleWindowDragOver($event)"
-                x-on:dragleave.window="handleWindowDragLeave($event)"
-                x-on:drop.window="handleWindowDrop($event)"
-                x-on:modal-close.document="if ($event.detail.name === 'add-photos') { resetDrag(); stopStatusPolling(); }"
-                x-on:confirm-replace-all.window="confirmReplaceAll()"
-                x-on:confirm-replace-conflict.window="confirmReplaceConflict()"
-                :class="{'ring-2 ring-(--color-accent) ring-offset-4 rounded-lg': dragActive}"
-                id="add-photos-uploader"
-            >
-                <!-- File Input -->
-                <x-ts-input
-                    @change="handleFileSelect($event)"
-                    type="file"
-                    data-test="upload-files"
-                    accept="{{ '.'.implode(',.', config('picstome.upload_extensions')) }}"
-                    multiple
-                />
-                <x-ts-description class="mt-2 max-sm:hidden">
-                    {{ __('Drag and drop files anywhere on the screen, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
-                </x-ts-description>
-
-                <x-ts-error name="photos" />
-
-                <x-ts-callout
-                    x-show="oversizedFiles.length > 0"
-                    x-cloak
-                    icon="exclamation-triangle"
-                    variant="danger"
-                    class="mt-2"
-                >
-                    <x-ts-callout-heading>{{ __('Files too large') }}</x-ts-callout-heading>
-                    <x-ts-callout-text>
-                        <p>{{ __('The following files exceed the 5 GB upload limit and were skipped:') }}</p>
-                        <ul class="mt-1 list-disc pl-4">
-                            <template x-for="(file, i) in oversizedFiles" :key="i">
-                                <li x-text="file.name"></li>
-                            </template>
-                        </ul>
-                    </x-ts-callout-text>
-                </x-ts-callout>
-
-                <x-ts-callout
-                    x-show="unsupportedFiles.length > 0"
-                    x-cloak
-                    icon="exclamation-triangle"
-                    variant="danger"
-                    class="mt-2"
-                >
-                    <x-ts-callout-heading>{{ __('Unsupported file type') }}</x-ts-callout-heading>
-                    <x-ts-callout-text>
-                        <p>{{ __('The following files have an unsupported format and were skipped:') }}</p>
-                        <ul class="mt-1 list-disc pl-4">
-                            <template x-for="(file, i) in unsupportedFiles" :key="i">
-                                <li x-text="file.name"></li>
-                            </template>
-                        </ul>
-                    </x-ts-callout-text>
-                </x-ts-callout>
-
-                <div
-                    x-show="files.filter((file) => ! isFileResolved(file)).length > 0"
-                    class="mt-4 text-sm font-medium text-zinc-800 dark:text-white"
-                >
-                    <span x-text="files.filter((file) => ! isFileResolved(file)).length"></span>
-                    {{ __('remaining files.') }}
-                </div>
-
-                <div
-                    x-show="files.some((fileObj) => fileObj.status === 'conflict')"
-                    class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
-                >
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <span
-                            x-text="
-                                files.filter((fileObj) => fileObj.status === 'conflict').length +
-                                    ' ' +
-                                    {{ Js::from(__('files already exist. Choose what to do, or apply to all:')) }}
-                            "
-                        ></span>
-                        <div class="flex flex-wrap gap-2">
-                            @if (config('picstome.file_versions_enabled'))
-                                <x-ts-button size="sm" variant="primary" x-on:click="resolveAllConflicts('version')">
-                                    {{ __('Version all') }}
-                                </x-ts-button>
-                            @endif
-
-                            <x-ts-button size="sm" variant="subtle" x-on:click="askReplaceAll()">
-                                {{ __('Replace all') }}
-                            </x-ts-button>
-                            <x-ts-button size="sm" variant="ghost" x-on:click="resolveAllConflicts('skip')">
-                                {{ __('Skip all') }}
-                            </x-ts-button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Upload Queue Display -->
-                <div class="space-y-2">
-                    <template x-for="(fileObj, index) in files" :key="index">
-                        <div
-                            x-show="isRowVisible(fileObj)"
-                            class="relative mt-3 flex flex-1 justify-between gap-3 rounded-lg border border-zinc-800/15 bg-white p-4 shadow-xs [--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)] [--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)] [--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)] *:relative after:pointer-events-none after:absolute after:-inset-px after:rounded-lg hover:border-[var(--haze-border)] hover:after:bg-[var(--haze-light)] dark:border-white/10 dark:bg-white/10 dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)] dark:hover:border-white/10 dark:hover:bg-white/15 dark:hover:after:bg-white/[4%]"
-                        >
-                            <div class="flex w-full flex-wrap items-center gap-4">
-                                <div
-                                    x-text="fileObj.file.name"
-                                    class="flex-1 truncate text-sm font-medium text-zinc-800 dark:text-white"
-                                ></div>
-                                <div
-                                    class="text-sm text-zinc-500 dark:text-white/70"
-                                    x-show="['pending', 'queued', 'uploading'].includes(fileObj.status)"
-                                >
-                                    <span x-text="fileObj.progress + '%'"></span>
-                                </div>
-                                <x-ts-badge
-                                    x-show="! ['failed', 'conflict', 'skipped'].includes(displayStatus(fileObj))"
-                                    x-text="statusLabel(fileObj)"
-                                    size="sm"
-                                    color="zinc"
-                                ></x-ts-badge>
-                                <x-ts-badge
-                                    x-show="displayStatus(fileObj) === 'failed'"
-                                    x-text="statusLabel(fileObj)"
-                                    size="sm"
-                                    color="red"
-                                ></x-ts-badge>
-                                <x-ts-badge
-                                    x-show="fileObj.status === 'conflict'"
-                                    x-text="{{ Js::from(__('Already exists')) }}"
-                                    size="sm"
-                                    color="yellow"
-                                ></x-ts-badge>
-                                <x-ts-badge
-                                    x-show="fileObj.status === 'skipped'"
-                                    x-text="{{ Js::from(__('Skipped')) }}"
-                                    size="sm"
-                                    color="zinc"
-                                ></x-ts-badge>
-
-                                <div
-                                    class="flex flex-wrap items-center gap-2"
-                                    x-show="fileObj.status === 'conflict'"
-                                >
-                                    @if (config('picstome.file_versions_enabled'))
-                                        <x-ts-button
-                                            size="sm"
-                                            variant="primary"
-                                            x-on:click="resolveConflict(index, 'version')"
-                                        >
-                                            {{ __('Save as new version') }}
-                                        </x-ts-button>
-                                    @endif
-
-                                    <x-ts-button size="sm" variant="subtle" x-on:click="askReplaceConflict(index)">
-                                        {{ __('Replace current') }}
-                                    </x-ts-button>
-                                    <x-ts-button
-                                        size="sm"
-                                        variant="ghost"
-                                        x-on:click="resolveConflict(index, 'skip')"
-                                    >
-                                        {{ __('Skip') }}
-                                    </x-ts-button>
-                                </div>
-
-                                <x-ts-button
-                                    class="z-10"
-                                    x-show="fileObj.status === 'failed'"
-                                    x-on:click="retryUpload(index)"
-                                    size="sm"
-                                    icon="arrow-path"
-                                />
-                            </div>
-                            <div
-                                x-show="fileObj.status === 'failed' && fileObj.error"
-                                x-text="fileObj.error"
-                                class="w-full text-sm text-red-600 dark:text-red-400"
-                            ></div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </form>
+            {{-- The queue lives in the persistent upload dock (layout), so this
+                 modal is only the file chooser. It closes as soon as the files
+                 are handed over to the uploader. --}}
+            <x-ts-input
+                x-on:change="
+                    const files = $event.target.files;
+                    if (files && files.length > 0) {
+                        window.PicstomeUploads.enqueue(files, {
+                            galleryId: $el.closest('[data-gallery-id]').dataset.galleryId,
+                            galleryName: $el.closest('[data-gallery-name]').dataset.galleryName,
+                        });
+                        $tsui.close.modal('add-photos');
+                    }
+                    $event.target.value = '';
+                "
+                type="file"
+                data-test="upload-files"
+                accept="{{ '.'.implode(',.', config('picstome.upload_extensions')) }}"
+                multiple
+            />
+            <x-ts-description class="mt-2 max-sm:hidden">
+                {{ __('Drag and drop files anywhere on the screen, or click on choose files. Supported formats: JPG, JPEG, PNG, TIFF, MP4, WEBM, OGG, PDF, and RAW files (CR2, CR3, NEF, ARW, DNG, ORF, RW2, PEF, SRW, MOS, MRW, 3FR).') }}
+            </x-ts-description>
+        </div>
     </x-ts-modal>
 
     <x-ts-modal name="share" class="w-full sm:max-w-lg">
@@ -2039,20 +1776,6 @@ new class extends Component
     </x-ts-modal>
 
     <x-confirm-modal
-        name="replace-conflict"
-        :title="__('Replace the current version? Older versions will be kept.')"
-        alpine-action="$dispatch(`confirm-replace-conflict`)"
-        :confirm-label="__('Replace')"
-    />
-
-    <x-confirm-modal
-        name="replace-conflicts"
-        :title="__('Replace the current versions? Older versions will be kept.')"
-        alpine-action="$dispatch(`confirm-replace-all`)"
-        :confirm-label="__('Replace all')"
-    />
-
-    <x-confirm-modal
         name="delete-archived"
         :title="__('Delete all archived photos?')"
         :message="__('This deletes every archived photo and its files. This action CANNOT be undone: the photos and their originals are gone for good.')"
@@ -2112,112 +1835,15 @@ new class extends Component
             },
         }));
 
-        Alpine.data('multiFileUploader', () => ({
-            files: [],
-            pendingConflictIndex: null,
-            rawExtensions: @js(\App\Services\PhotoIdentityService::RAW_EXTENSIONS),
-            oversizedFiles: [],
-            unsupportedFiles: [],
+        Alpine.data('galleryDrop', () => ({
             dragActive: false,
-            maxParallelUploads: 10,
-            activeUploads: 0,
-            maxUploadsPerMinute: 200,
-            uploadTimestamps: [],
-            photoPollTimer: null,
-            photoStatusRequestInFlight: false,
-            photoStatusPollMs: 2000,
-            statusLabels: @js([
-                'checking' => __('Checking...'),
-                'pending' => __('Queued'),
-                'queued' => __('Queued'),
-                'uploading' => __('Uploading...'),
-                'processing' => __('Processing...'),
-                'warming' => __('Warming CDN...'),
-                'processed' => __('Ready'),
-                'skipped' => __('Skipped'),
-                'failed' => __('Failed'),
-            ]),
 
-            remainingBytes: @js($this->remainingStorageBytes),
-
-            quotaMessage: @js(__('You do not have enough storage space to upload this photo.')),
-
-            uploadFailedMessage: @js(__('The file could not be uploaded. Please try again.')),
-
-            reservedBytes() {
-                return this.files
-                    .filter((fileObj) => ['checking', 'pending', 'queued', 'uploading', 'conflict'].includes(fileObj.status))
-                    .reduce((total, fileObj) => total + (fileObj.file?.size ?? 0), 0);
-            },
-
-            errorMessage(errors) {
-                if (! errors) {
-                    return null;
-                }
-
-                if (typeof errors === 'string') {
-                    return errors;
-                }
-
-                if (Array.isArray(errors)) {
-                    return errors[0] ?? null;
-                }
-
-                return null;
-            },
-
-            failUpload(fileObj, message) {
-                fileObj.error = message;
-                fileObj.status = 'failed';
-                fileObj.progress = 0;
-                this.activeUploads = Math.max(0, this.activeUploads - 1);
-                this.processUploadQueue();
-                this.closeIfAllResolved();
-            },
-
-            init() {
-                setInterval(() => {
-                    const oneMinuteAgo = Date.now() - 60000;
-                    this.uploadTimestamps = this.uploadTimestamps.filter((timestamp) => timestamp > oneMinuteAgo);
-                    this.processUploadQueue();
-                }, 1000);
-            },
-
-            async handleFileSelect(event) {
-                const selectedFiles = Array.from(event.target.files);
-                this.oversizedFiles = [];
-                this.unsupportedFiles = [];
-                const added = this.processFiles(selectedFiles);
-                await this.markConflicts();
-                this.applyStoragePrecheck(added);
-                this.processUploadQueue();
-            },
-
-            async handleDrop(event) {
-                this.dragActive = false;
-                this.oversizedFiles = [];
-                this.unsupportedFiles = [];
-                const dt = event.dataTransfer;
-                if (dt && dt.files && dt.files.length > 0) {
-                    const added = this.processFiles(Array.from(dt.files));
-                    await this.markConflicts();
-                    this.applyStoragePrecheck(added);
-                    this.processUploadQueue();
-                }
-            },
-
-            isAddPhotosModalOpen() {
-                const modal = this.$el.closest('#add-photos');
-
-                return !!modal && modal.offsetParent !== null;
-            },
-
-            hasDraggedFiles(event) {
+            hasFiles(event) {
                 return Array.from(event.dataTransfer?.types ?? []).includes('Files');
             },
 
-            handleWindowDragOver(event) {
-                if (! this.isAddPhotosModalOpen() || ! this.hasDraggedFiles(event)) {
+            onDragOver(event) {
+                if (! this.hasFiles(event)) {
                     return;
                 }
 
@@ -2225,394 +1851,29 @@ new class extends Component
                 this.dragActive = true;
             },
 
-            handleWindowDragLeave(event) {
-                if (! this.isAddPhotosModalOpen()) {
-                    return;
-                }
-
+            onDragLeave(event) {
                 if (event.relatedTarget === null) {
                     this.dragActive = false;
                 }
             },
 
-            async handleWindowDrop(event) {
-                if (! this.isAddPhotosModalOpen() || ! this.hasDraggedFiles(event)) {
+            onDrop(event) {
+                if (! this.hasFiles(event)) {
                     return;
                 }
 
                 event.preventDefault();
-
-                await this.handleDrop(event);
-            },
-
-            resetDrag() {
                 this.dragActive = false;
-            },
 
-            canUpload() {
-                const oneMinuteAgo = Date.now() - 60000;
-                this.uploadTimestamps = this.uploadTimestamps.filter((timestamp) => timestamp > oneMinuteAgo);
-                return this.uploadTimestamps.length < this.maxUploadsPerMinute;
-            },
+                const files = event.dataTransfer?.files;
+                const galleryId = this.$el.dataset.galleryId;
 
-            async processUploadQueue() {
-                const availableFiles = this.files.filter((f) => f.status === 'pending' || f.status === 'queued');
-
-                while (this.activeUploads < this.maxParallelUploads && availableFiles.length > 0 && this.canUpload()) {
-                    const fileObj = availableFiles.shift();
-                    const fileIndex = this.files.indexOf(fileObj);
-                    fileObj.status = 'pending';
-                    this.uploadFile(fileObj, fileIndex);
-                }
-
-                this.files.forEach((fileObj) => {
-                    if (
-                        (fileObj.status === 'pending' || fileObj.status === 'queued') &&
-                        (!this.canUpload() || this.activeUploads >= this.maxParallelUploads)
-                    ) {
-                        fileObj.status = 'queued';
-                    }
-                });
-            },
-
-            isPhotoStatusTerminal(status) {
-                return ['processed', 'skipped', 'failed'].includes(status);
-            },
-
-            isFileResolved(fileObj) {
-                if (fileObj.status === 'failed' || fileObj.status === 'conflict' || fileObj.status === 'checking') {
-                    return false;
-                }
-
-                if (fileObj.status === 'completed' && fileObj.photoId) {
-                    return this.isPhotoStatusTerminal(fileObj.photoStatus);
-                }
-
-                return fileObj.status === 'completed' || fileObj.status === 'skipped';
-            },
-
-            isRowVisible(fileObj) {
-                return true;
-            },
-
-            displayStatus(fileObj) {
-                return fileObj.photoStatus || fileObj.status;
-            },
-
-            statusLabel(fileObj) {
-                return this.statusLabels[this.displayStatus(fileObj)] || this.displayStatus(fileObj);
-            },
-
-            checkAllUploadsComplete() {
-                return this.files.length > 0
-                    && this.files.every((file) => this.isFileResolved(file))
-                    && this.activeUploads === 0;
-            },
-
-            closeIfAllResolved() {
-                if (this.checkAllUploadsComplete()) {
-                    this.stopStatusPolling();
-                    $tsui.close.modal('add-photos');
-
-                    // Upload actions are `#[Renderless]` so the photo wall is
-                    // not re-rendered once per file. Refresh it a single time
-                    // once the whole batch has finished.
-                    $wire.$refresh();
-                }
-            },
-
-            startStatusPolling() {
-                this.refreshPhotoStatuses();
-
-                if (this.photoPollTimer) {
-                    return;
-                }
-
-                this.photoPollTimer = setInterval(() => this.refreshPhotoStatuses(), this.photoStatusPollMs);
-            },
-
-            stopStatusPolling() {
-                if (this.photoPollTimer) {
-                    clearInterval(this.photoPollTimer);
-                    this.photoPollTimer = null;
-                }
-            },
-
-            refreshPhotoStatuses() {
-                if (! this.isAddPhotosModalOpen()) {
-                    this.stopStatusPolling();
-
-                    return;
-                }
-
-                const tracked = this.files.filter(
-                    (fileObj) => fileObj.photoId && ! this.isPhotoStatusTerminal(fileObj.photoStatus),
-                );
-
-                if (tracked.length === 0) {
-                    this.stopStatusPolling();
-                    this.closeIfAllResolved();
-
-                    return;
-                }
-
-                if (this.photoStatusRequestInFlight) {
-                    return;
-                }
-
-                this.photoStatusRequestInFlight = true;
-
-                $wire.uploadStatuses(tracked.map((fileObj) => fileObj.photoId))
-                    .then((statuses) => {
-                        this.files.forEach((fileObj) => {
-                            if (fileObj.photoId && statuses[fileObj.photoId]) {
-                                fileObj.photoStatus = statuses[fileObj.photoId];
-                            }
-                        });
-
-                        if (this.files.every((fileObj) => ! fileObj.photoId || this.isPhotoStatusTerminal(fileObj.photoStatus))) {
-                            this.stopStatusPolling();
-                            this.closeIfAllResolved();
-                        }
-                    })
-                    .finally(() => {
-                        this.photoStatusRequestInFlight = false;
-                    });
-            },
-
-            async markConflicts() {
-                const checkingFiles = this.files.filter((f) => f.status === 'checking');
-
-                if (checkingFiles.length === 0) {
-                    return;
-                }
-
-                try {
-                    const duplicates = await $wire.findDuplicateNames(checkingFiles.map((f) => f.file.name));
-
-                    checkingFiles.forEach((fileObj) => {
-                        const duplicate = duplicates.includes(fileObj.file.name);
-                        const extension = fileObj.file.name.split('.').pop().toLowerCase();
-
-                        if (duplicate && this.rawExtensions.includes(extension)) {
-                            fileObj.conflictAction = 'version';
-                            fileObj.status = 'pending';
-
-                            return;
-                        }
-
-                        fileObj.status = duplicate ? 'conflict' : 'pending';
-                    });
-                } catch (error) {
-                    // Fail open: the server still rejects duplicates on save.
-                    console.error('Duplicate name check failed:', error);
-                    checkingFiles.forEach((fileObj) => {
-                        fileObj.status = 'pending';
+                if (files && files.length > 0 && galleryId) {
+                    window.PicstomeUploads.enqueue(files, {
+                        galleryId,
+                        galleryName: this.$el.dataset.galleryName,
                     });
                 }
-            },
-
-            askReplaceAll() {
-                window.$tsui.open.modal('replace-conflicts');
-            },
-
-            askReplaceConflict(index) {
-                this.pendingConflictIndex = index;
-
-                window.$tsui.open.modal('replace-conflict');
-            },
-
-            confirmReplaceAll() {
-                this.resolveAllConflicts('replace');
-            },
-
-            confirmReplaceConflict() {
-                if (this.pendingConflictIndex === null) {
-                    return;
-                }
-
-                this.resolveConflict(this.pendingConflictIndex, 'replace');
-
-                this.pendingConflictIndex = null;
-            },
-
-            resolveConflict(index, action) {
-                const fileObj = this.files[index];
-
-                if (action === 'version' || action === 'replace') {
-                    fileObj.conflictAction = action;
-                    fileObj.status = 'pending';
-                    this.processUploadQueue();
-
-                    return;
-                }
-
-                fileObj.status = 'skipped';
-                this.closeIfAllResolved();
-            },
-
-            resolveAllConflicts(action) {
-                this.files.forEach((fileObj) => {
-                    if (fileObj.status !== 'conflict') {
-                        return;
-                    }
-
-                    if (action === 'skip') {
-                        fileObj.status = 'skipped';
-                    } else {
-                        fileObj.conflictAction = action;
-                        fileObj.status = 'pending';
-                    }
-                });
-
-                this.processUploadQueue();
-                this.closeIfAllResolved();
-            },
-
-            uploadFile(fileObj, index) {
-                this.activeUploads++;
-                this.uploadTimestamps.push(Date.now());
-                fileObj.status = 'uploading';
-
-                const uploadName = `photos.${index}`;
-
-                $wire.upload(
-                    uploadName,
-                    fileObj.file,
-                    () => {
-                        $wire.save(index, fileObj.conflictAction || 'version')
-                            .then((result) => {
-                                const validationError = this.errorMessage(result?.errors?.['photos.' + index]);
-
-                                if (validationError) {
-                                    this.failUpload(fileObj, validationError);
-
-                                    return;
-                                }
-
-                                fileObj.status = 'completed';
-                                fileObj.error = null;
-                                fileObj.photoId = result?.photoId ?? null;
-                                fileObj.photoStatus = result?.status ?? 'pending';
-                                fileObj.progress = 100;
-
-                                if (typeof result?.remainingStorageBytes !== 'undefined') {
-                                    this.remainingBytes = result.remainingStorageBytes;
-                                }
-
-                                this.activeUploads = Math.max(0, this.activeUploads - 1);
-                                this.processUploadQueue();
-
-                                if (fileObj.photoId && ! this.isPhotoStatusTerminal(fileObj.photoStatus)) {
-                                    this.startStatusPolling();
-                                }
-
-                                this.closeIfAllResolved();
-                            })
-                            .catch((error) => {
-                                // Livewire rejects the action promise with
-                                // {status: 422, errors: {...}} when the server
-                                // validation fails (for example, quota exceeded).
-                                const validationError = this.errorMessage(error?.errors?.['photos.' + index])
-                                    ?? this.errorMessage(error?.response?.errors?.['photos.' + index]);
-
-                                this.failUpload(fileObj, validationError ?? this.uploadFailedMessage);
-                            });
-                    },
-                    (error) => {
-                        console.error('Upload failed:', error);
-                        this.failUpload(fileObj, this.uploadFailedMessage);
-                    },
-                    (event) => {
-                        fileObj.progress = Math.round((event.loaded / event.total) * 100);
-                    },
-                );
-            },
-
-            processFiles(files) {
-                const allowedExtensions = {{ Js::from(config('picstome.upload_extensions')) }};
-                const maxSize = 5 * 1024 * 1024 * 1024;
-                const added = [];
-
-                files.forEach((file) => {
-                    const name = file.name;
-                    const lastDot = name.lastIndexOf('.');
-                    const extension = lastDot !== -1 ? name.substring(lastDot + 1).toLowerCase() : '';
-
-                    if (file.size > maxSize) {
-                        this.oversizedFiles.push({ name: file.name, size: file.size });
-
-                        return;
-                    }
-
-                    if (!allowedExtensions.includes(extension)) {
-                        this.unsupportedFiles.push({ name: file.name });
-
-                        return;
-                    }
-
-                    const fileObj = {
-                        file,
-                        progress: 0,
-                        status: 'checking',
-                    };
-
-                    this.files.push(fileObj);
-                    added.push(file);
-                });
-
-                return added;
-            },
-
-            applyStoragePrecheck(newFiles) {
-                if (this.remainingBytes === null) {
-                    return;
-                }
-
-                const selected = this.files.filter((fileObj) => newFiles.includes(fileObj.file));
-
-                // Files that are already queued count against the remaining
-                // bytes. Conflicts are left to the server because replacing a
-                // photo only needs the difference, not the whole new file.
-                let reserved = this.files
-                    .filter((fileObj) => ! selected.includes(fileObj) && ['checking', 'pending', 'queued', 'uploading', 'conflict'].includes(fileObj.status))
-                    .reduce((total, fileObj) => total + (fileObj.file?.size ?? 0), 0);
-
-                selected.forEach((fileObj) => {
-                    if (! ['pending', 'queued'].includes(fileObj.status)) {
-                        return;
-                    }
-
-                    const available = Math.max(0, this.remainingBytes - reserved);
-
-                    if (fileObj.file.size > available) {
-                        fileObj.status = 'failed';
-                        fileObj.error = this.quotaMessage;
-                        fileObj.progress = 0;
-
-                        return;
-                    }
-
-                    reserved += fileObj.file.size;
-                });
-            },
-
-            retryUpload(index) {
-                const fileObj = this.files[index];
-
-                if (this.remainingBytes !== null && fileObj.conflictAction !== 'replace' && fileObj.file.size > Math.max(0, this.remainingBytes - this.reservedBytes())) {
-                    fileObj.status = 'failed';
-                    fileObj.error = this.quotaMessage;
-
-                    return;
-                }
-
-                fileObj.status = 'pending';
-                fileObj.progress = 0;
-                fileObj.error = null;
-                fileObj.photoId = null;
-                fileObj.photoStatus = null;
-                this.processUploadQueue();
             },
         }));
     </script>
