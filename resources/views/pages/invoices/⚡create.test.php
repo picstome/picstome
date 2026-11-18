@@ -447,3 +447,69 @@ it('pre-fills a simplified invoice for a client without fiscal data', function (
         ->assertSet('form.customer_id', $customer->id)
         ->assertSet('form.invoice_type', Invoice::TYPE_SIMPLIFIED);
 });
+
+it('lets a corrective invoice be issued after reaching the monthly limit', function () {
+    $original = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    $rectificative = $this->team->invoices()->create([
+        'customer_id' => $original->customer_id,
+        'invoice_type' => $original->invoice_type,
+        'issue_date' => now()->toDateString(),
+        'currency' => $original->currency,
+        'vat_percent' => $original->vat_percent,
+        'subtotal' => 100,
+        'base_amount' => 100,
+        'vat_amount' => 21,
+        'total' => 121,
+        'amount_due' => 121,
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+        'invoice_data' => $original->invoice_data,
+    ]);
+
+    $this->team->update(['monthly_invoice_limit' => 1]);
+
+    Livewire::withQueryParams(['invoice' => $rectificative->ulid])
+        ->actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertSet('canIssue', true)
+        ->set('form.lineItems.0.unit_price', 50)
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    expect($rectificative->fresh()->status)->toBe(Invoice::STATUS_ISSUED)
+        ->and((float) $rectificative->fresh()->total)->toBe(60.5);
+});
+
+it('jumps back to the line items from the review of a corrective invoice', function () {
+    $original = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
+
+    $rectificative = $this->team->invoices()->create([
+        'customer_id' => $original->customer_id,
+        'invoice_type' => $original->invoice_type,
+        'issue_date' => now()->toDateString(),
+        'currency' => $original->currency,
+        'vat_percent' => $original->vat_percent,
+        'subtotal' => 100,
+        'base_amount' => 100,
+        'vat_amount' => 21,
+        'total' => 121,
+        'amount_due' => 121,
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+        'invoice_data' => $original->invoice_data,
+    ]);
+
+    Livewire::withQueryParams(['invoice' => $rectificative->ulid])
+        ->actingAs($this->user)
+        ->test('pages::invoices.create')
+        ->assertSet('step', 2)
+        ->call('nextStep')
+        ->assertSet('step', 3)
+        ->assertSee('Change the amounts')
+        ->call('editLineItems')
+        ->assertSet('step', 2)
+        ->assertSee('The original invoice totals');
+});

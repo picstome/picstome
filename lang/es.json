@@ -1798,5 +1798,14 @@
     "We sent a login link to :email.": "Hemos enviado un enlace de acceso a :email.",
     "We sent a verification link to :email.": "Hemos enviado un enlace de verificación a :email.",
     "You can also [log in directly](:url) without a password.": "También puedes [iniciar sesión directamente](:url) sin contraseña.",
-    "Your Picstome login link": "Tu enlace de acceso a Picstome"
+    "Your Picstome login link": "Tu enlace de acceso a Picstome",
+    "A corrective invoice is created with the same client and line items, and you can change the amounts before issuing it. The original invoice keeps its number and its PDF.": "Se crea una factura rectificativa con el mismo cliente y las mismas líneas, y puedes cambiar los importes antes de emitirla. La factura original conserva su número y su PDF.",
+    "Difference": "Diferencia",
+    "Issue with the same amounts": "Emitir con los mismos importes",
+    "Original invoice": "Factura original",
+    "Review and change the amounts": "Revisar y cambiar los importes",
+    "The original invoice totals :total. Change the line items or the discount so this corrective invoice carries the corrected amount, then issue it.": "La factura original suma :total. Cambia las líneas o el descuento para que esta rectificativa lleve el importe corregido y emítela.",
+    "The original invoice totals :total. If the correction changes the amount, edit the line items before issuing it.": "La factura original suma :total. Si la rectificación cambia el importe, edita las líneas antes de emitirla.",
+    "This amount is the same as the original invoice. If the correction changes the amount, edit the line items or the discount before issuing it.": "Este importe es el mismo que el de la factura original. Si la rectificación cambia el importe, edita las líneas o el descuento antes de emitirla.",
+    "Change the amounts": "Cambiar los importes"
 }

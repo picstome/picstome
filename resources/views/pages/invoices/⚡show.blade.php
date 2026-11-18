@@ -148,10 +148,41 @@ new class extends Component
     }
 
     /**
-     * Create the corrective invoice. It is issued straight away, unless the
-     * user prefers to review it first.
+     * Start the corrective invoice.
+     *
+     * The draft opens on the line items step so the amounts can be checked
+     * and changed before issuing it. The original invoice stays issued until
+     * the corrective one is issued.
      */
-    public function rectify(bool $review = false): void
+    public function rectify(): void
+    {
+        $draft = $this->createCorrectiveDraft();
+
+        $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
+    }
+
+    /**
+     * Issue the corrective invoice with the same amounts.
+     *
+     * Meant for corrections that do not touch the amount, such as a wrong
+     * client name or a missing reference.
+     */
+    public function rectifyWithoutChanges(): void
+    {
+        $draft = $this->createCorrectiveDraft();
+
+        app(InvoiceIssuanceService::class)->issue($draft, Auth::user());
+
+        $this->redirect(route('invoices.show', $draft), navigate: true);
+    }
+
+    /**
+     * Copy the original invoice into a corrective draft.
+     *
+     * The copy keeps the client, the line items and the taxes, so it can be
+     * issued as is or adjusted before issuing it.
+     */
+    private function createCorrectiveDraft(): Invoice
     {
         $this->authorize('rectify', $this->invoice);
 
@@ -198,15 +229,7 @@ new class extends Component
             'rectifies' => $original->full_number,
         ]);
 
-        if ($review) {
-            $this->redirect(route('invoices.create', ['invoice' => $draft->ulid]), navigate: true);
-
-            return;
-        }
-
-        app(InvoiceIssuanceService::class)->issue($draft, Auth::user());
-
-        $this->redirect(route('invoices.show', $draft), navigate: true);
+        return $draft;
     }
 
     /**
@@ -589,7 +612,7 @@ new class extends Component
             <div>
                 <x-ts-heading size="lg">{{ __('Rectify invoice') }}</x-ts-heading>
                 <x-ts-subheading>
-                    {{ __('The corrective invoice is issued with the same client and line items. The original invoice keeps its number and its PDF.') }}
+                    {{ __('A corrective invoice is created with the same client and line items, and you can change the amounts before issuing it. The original invoice keeps its number and its PDF.') }}
                 </x-ts-subheading>
             </div>
 
@@ -610,12 +633,12 @@ new class extends Component
             @endif
 
             <div class="flex flex-wrap items-center justify-end gap-2">
-                <x-ts-button type="button" variant="outline" class="btn-outline-brand" wire:click="rectify(true)">
-                    {{ __('Review before issuing') }}
+                <x-ts-button type="button" variant="outline" class="btn-outline-brand" wire:click="rectifyWithoutChanges">
+                    {{ __('Issue with the same amounts') }}
                 </x-ts-button>
 
-                <x-ts-button type="submit" variant="primary" class="btn-coral">
-                    {{ __('Issue corrective invoice') }}
+                <x-ts-button type="submit" variant="primary" class="btn-coral" icon="pencil-square">
+                    {{ __('Review and change the amounts') }}
                 </x-ts-button>
             </div>
         </form>

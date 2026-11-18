@@ -218,19 +218,26 @@ An issued invoice is never voided: it is **rectified** (article 15 of RD
 1619/2012).
 
 - The rectification creates a new invoice that references the original, with
-  the same client and line items and a mandatory reason. It is issued straight
-  away, although the detail offers to review it first when the amounts have to
-  be adjusted.
+  the same client and line items and a mandatory reason.
+- The corrective invoice opens on the **line items** step of the guided form,
+  never on the review step, so the amounts are editable before issuing it. The
+  screen shows the total of the original and the difference, and warns while
+  the corrective total still matches the original one: a rectification that
+  keeps the amount is valid for data corrections, but it is never what the
+  user wants when the reason is a wrong amount.
+- The modal also offers **Issue with the same amounts** for corrections that do
+  not touch the amount, such as a wrong client name, so those can be issued
+  without going through the form.
 - The corrective invoice is issued in the rectification series and continues
   its own chain. The original keeps its number, its PDF and its chain, and
   moves to the `rectified` state.
 - The original and the corrective invoice are linked in both the app and the
   public page.
 - Corrective invoices never consume the monthly plan limit, so a team can
-  always correct an invoice it already issued.
+  always correct an invoice it already issued. The issue button of the guided
+  form is enabled for a corrective draft even when the team reached the limit.
 - The full number of the corrective invoice can be edited while it is reviewed
-  before issuing. When it is issued directly, the number suggested from the
-  rectification series is used.
+  before issuing.
 - The deadline is four years since the tax accrual. The app warns when the
   original invoice belongs to a previous exercise.
 
@@ -252,6 +259,37 @@ currency has not changed.
 The audit trail records the `created` event of the draft with the invoice it
 comes from in its context, so a recurring invoice can always be traced back to
 the document it was copied from.
+
+## Deleting an invoice (maintenance)
+
+Issued invoices must be kept, so the app never deletes one from the UI. When a
+document never reached the client (a first invoice issued by mistake with a
+wrong amount, plus an equally wrong corrective invoice), the maintainer can
+remove it with the `invoices:delete` command.
+
+```bash
+# Inspect the scope, nothing is removed.
+php artisan invoices:delete F-2026-0001 --dry-run
+
+# Delete the invoices, the audit trail, the PDFs and rewind the numbering.
+php artisan invoices:delete F-2026-0001 --force
+```
+
+- The reference is the full number or the ULID. Pass `--team=<id>` when the
+  same full number exists in more than one team.
+- It deletes the invoice, the original it corrects and every corrective
+  invoice of the same original, so a rectification is never left orphaned.
+- The audit trail and the stored PDFs are removed too, and the numbering and
+  fingerprint state of the series is rebuilt from the invoices that are left,
+  so the next invoice can reuse the number with an empty chain.
+- It refuses to delete an invoice that is not the last one of its series and
+  exercise, because that would leave a gap in the fingerprint chain.
+- It refuses to delete an invoice linked to payments unless `--force` is
+  passed; the payments stay and lose their `invoice_id`.
+- Without `--dry-run` or `--force` the command only explains the options.
+
+This is not a substitute for rectifying: once a document has been delivered to
+the client it must be corrected with a corrective invoice, never deleted.
 
 ## Invoicing a payment
 
