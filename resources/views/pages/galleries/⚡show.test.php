@@ -413,7 +413,7 @@ describe('Gallery Viewing', function () {
         }
     })->group('browser');
 
-    it('accepts files dropped anywhere while the add media modal is open', function () {
+    it('accepts files dropped anywhere on the gallery page', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
         Photo::factory()->for($gallery)->create(['status' => 'processed']);
 
@@ -421,13 +421,10 @@ describe('Gallery Viewing', function () {
 
         $page = visit("/galleries/{$gallery->id}");
 
-        $page->click('Add media');
-        $page->wait(0.3);
-
         $page->script(<<<'JS'
             (() => {
                 const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(new File(['x'], 'outside-drop.exe', { type: 'application/octet-stream' }));
+                dataTransfer.items.add(new File(['x'], 'outside-drop.jpg', { type: 'image/jpeg' }));
 
                 document.body.dispatchEvent(new DragEvent('dragover', {
                     bubbles: true,
@@ -438,23 +435,23 @@ describe('Gallery Viewing', function () {
         JS);
 
         $page->wait(0.2);
-        $page->assertAttributeContains('#add-photos-uploader', 'class', 'ring-2');
+        $page->assertVisible('@upload-drop-overlay');
 
         $page->script(<<<'JS'
             (() => {
                 const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(new File(['x'], 'outside-drop.exe', { type: 'application/octet-stream' }));
+                dataTransfer.items.add(new File(['x'], 'outside-drop.jpg', { type: 'image/jpeg' }));
 
-                document.body.dispatchEvent(new DragEvent('drop', {
-                    bubbles: true,
-                    cancelable: true,
-                    dataTransfer,
-                }));
+                const event = new Event('drop', { bubbles: true, cancelable: true });
+                Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+                window.dispatchEvent(event);
             })()
         JS);
 
-        $page->wait(0.3);
-        $page->assertSee('outside-drop.exe');
+        $page->wait(0.5);
+        $page->assertVisible('@upload-dock')
+            ->assertSee('outside-drop.jpg')
+            ->assertNoJavascriptErrors();
     })->group('browser');
 
     it('prevents guests from viewing any galleries', function () {
@@ -2426,10 +2423,8 @@ test('the owner can open their own password-protected shared gallery', function 
         ->assertOk();
 });
 
-it('rejects a file in the modal without uploading it when the team has no storage left', function () {
+it('moves files selected in the add media modal to the upload dock', function () {
     Storage::fake('s3');
-
-    $this->team->update(['custom_storage_limit' => 0]);
 
     $gallery = Gallery::factory()->for($this->team)->create();
 
@@ -2443,15 +2438,166 @@ it('rejects a file in the modal without uploading it when the team has no storag
     // cannot be attached. Dispatch a real File through the input instead.
     $page->script(<<<'JS'
         const input = document.querySelector('#add-photos-uploader input[type=file]');
-        const file = new File([new Uint8Array(200 * 1024)], 'quota.jpg', { type: 'image/jpeg' });
+        const file = new File([new Uint8Array(200 * 1024)], 'modal.jpg', { type: 'image/jpeg' });
         const data = new DataTransfer();
         data.items.add(file);
         input.files = data.files;
         input.dispatchEvent(new Event('change', { bubbles: true }));
     JS);
 
-    $page->assertSee('You do not have enough storage space to upload this photo.')
+    $page->wait(1)
+        ->assertVisible('@upload-dock')
+        ->assertSee('modal.jpg')
+        ->assertNoJavascriptErrors();
+})->group('browser');
+
+it('shows files dropped anywhere in the gallery in the upload dock', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    $page->script(<<<'JS'
+        const file = new File([new Uint8Array(64 * 1024)], 'drop.jpg', { type: 'image/jpeg' });
+        const data = new DataTransfer();
+        data.items.add(file);
+        const event = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'dataTransfer', { value: data });
+        window.dispatchEvent(event);
+    JS);
+
+    $page->wait(1)
+        ->assertVisible('@upload-dock')
+        ->assertSee('drop.jpg')
         ->assertNoJavascriptErrors();
 
-    expect($gallery->fresh()->photos()->count())->toBe(0);
+    $page->click('@upload-dock-minimize')->wait(0.3);
+
+    $page->assertVisible('@upload-dock-chip')->assertNoJavascriptErrors();
+
+    $page->click('@upload-dock-chip')->wait(0.3);
+
+    $page->assertVisible('@upload-dock')->assertNoJavascriptErrors();
+})->group('browser');
+
+it('keeps the upload dock alive across in-app navigation', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    $page->script(<<<'JS'
+        const file = new File([new Uint8Array(2 * 1024 * 1024)], 'navigation.jpg', { type: 'image/jpeg' });
+        const data = new DataTransfer();
+        data.items.add(file);
+        const event = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'dataTransfer', { value: data });
+        window.dispatchEvent(event);
+    JS);
+
+    $page->wait(0.5)
+        ->click('nav[aria-label="Sidebar"] a[href="'.route('dashboard').'"]')
+        ->wait(1);
+
+    $page->assertVisible('@upload-dock')
+        ->assertSee('navigation.jpg')
+        ->assertNoJavascriptErrors();
+})->group('browser');
+
+it('asks before closing the dock while files are still pending', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Just a Gallery']);
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    $page->script(<<<'JS'
+        const store = window.PicstomeUploads;
+        const galleryId = String(document.querySelector('[data-gallery-id]').dataset.galleryId);
+
+        store.entries.push({
+            id: 8001,
+            name: 'pending.jpg',
+            size: 1024,
+            galleryId,
+            progress: 40,
+            status: 'uploading',
+            error: null,
+            photoId: null,
+            photoStatus: null,
+            conflictAction: null,
+            previewUrl: null,
+        });
+        store.open = true;
+        store.collapsed = false;
+    JS);
+
+    $page->wait(0.3)->click('@upload-dock-close');
+
+    $page->assertVisible('@upload-close-prompt')
+        ->assertSee('1 photo left, if you close it will stop uploading')
+        ->assertSee('Stop and close')
+        ->assertNoJavascriptErrors();
+
+    $page->click('Stop and close')->wait(0.3);
+
+    expect($page->script("getComputedStyle(document.querySelector('[data-test=upload-dock]')).display"))->toBe('none')
+        ->and($page->script("getComputedStyle(document.querySelector('[data-test=upload-close-prompt]')).display"))->toBe('none')
+        ->and($page->script('window.PicstomeUploads.entries.length'))->toBe(0);
+
+    $page->assertNoJavascriptErrors();
+})->group('browser');
+
+it('shows the uploaded summary with a link to the gallery', function () {
+    Storage::fake('s3');
+
+    $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Just a Gallery']);
+
+    $this->actingAs($this->user);
+
+    $page = visit('/galleries/'.$gallery->id);
+
+    $page->script(<<<'JS'
+        const store = window.PicstomeUploads;
+        const galleryId = String(document.querySelector('[data-gallery-id]').dataset.galleryId);
+
+        store.galleries[galleryId] = { name: 'Just a Gallery', url: '/galleries/' + galleryId };
+        store.entries.push({
+            id: 8002,
+            name: 'ready.jpg',
+            size: 1024,
+            galleryId,
+            progress: 100,
+            status: 'processed',
+            error: null,
+            photoId: 123,
+            photoStatus: 'processed',
+            conflictAction: null,
+            previewUrl: null,
+        });
+        store.completedAt = Date.now();
+        store.open = true;
+        store.collapsed = false;
+    JS);
+
+    $page->wait(0.3);
+
+    $page->assertVisible('@upload-dock')
+        ->assertSee('1 photo uploaded to the gallery Just a Gallery')
+        ->assertSee('View gallery')
+        ->assertNoJavascriptErrors();
+
+    $page->click('@upload-dock-dismiss')->wait(0.3);
+
+    expect($page->script("getComputedStyle(document.querySelector('[data-test=upload-dock]')).display"))->toBe('none');
+
+    $page->assertNoJavascriptErrors();
 })->group('browser');

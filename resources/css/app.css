@@ -1,6 +1,23 @@
 @import 'tailwindcss';
 @import '../../vendor/tallstackui/tallstackui/css/v4.css';
 
+/*
+ * Reserve the scrollbar gutter on every page. The masonry wall writes its own
+ * height and, when the page height sits near the viewport edge, toggling the
+ * scrollbar changes the column width, which changes the tile heights and
+ * toggles the scrollbar again. Visible as the whole wall "shaking" while a
+ * video or a late image loads.
+ */
+html {
+    scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+    html {
+        overflow-y: scroll;
+    }
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @plugin "@tailwindcss/typography";

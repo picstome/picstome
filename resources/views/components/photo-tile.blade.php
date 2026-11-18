@@ -119,7 +119,17 @@
                     <div class="aspect-[3/4] w-full animate-pulse bg-zinc-300 dark:bg-white/10"></div>
                 @endif
             @elseif ($photo->isVideo())
-                <video class="block h-auto w-full bg-zinc-300 dark:bg-white/10" muted playsinline preload="metadata">
+                <video
+                    class="block w-full bg-zinc-300 dark:bg-white/10"
+                    data-photo-video
+                    x-data="{ ratio: null }"
+                    x-init="if ($el.readyState >= 1 && $el.videoWidth && $el.videoHeight) { ratio = $el.videoWidth / $el.videoHeight }"
+                    x-on:loadedmetadata="if ($el.videoWidth && $el.videoHeight) { ratio = $el.videoWidth / $el.videoHeight }"
+                    x-bind:style="ratio ? `aspect-ratio: ${ratio}` : 'aspect-ratio: 16 / 9'"
+                    muted
+                    playsinline
+                    preload="metadata"
+                >
                     <source src="{{ $photo->url }}" type="video/{{ pathinfo($photo->path, PATHINFO_EXTENSION) }}" />
                     Your browser does not support the video tag.
                 </video>

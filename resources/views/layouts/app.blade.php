@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="csrf-token" content="{{ csrf_token() }}" />
         <title>{{ config('app.name') }}</title>
 
         <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -17,6 +18,55 @@
 
         <tallstackui:script />
         @vite('resources/css/app.css')
+        @vite('resources/js/uploads.js')
+
+        {{-- Routes and labels consumed by the persistent uploader. The
+             `__gallery__` placeholder is replaced in JS with the gallery id. --}}
+        <script data-navigate-once>
+            window.PicstomeUploadsConfig = {
+                uploadUrl: @js(route('galleries.uploads.store', ['gallery' => '__gallery__'])),
+                checkUrl: @js(route('galleries.uploads.check', ['gallery' => '__gallery__'])),
+                statusUrl: @js(route('galleries.uploads.status', ['gallery' => '__gallery__'])),
+                galleryUrl: @js(route('galleries.show', ['gallery' => '__gallery__'])),
+                csrfToken: @js(csrf_token()),
+                extensions: @js(config('picstome.upload_extensions')),
+                rawExtensions: @js(\App\Services\PhotoIdentityService::RAW_EXTENSIONS),
+                maxBytes: {{ 5 * 1024 * 1024 * 1024 }},
+                fileVersionsEnabled: @js((bool) config('picstome.file_versions_enabled')),
+                locale: @js(app()->getLocale()),
+                labels: @js([
+                    'fileCount' => __(':count file'),
+                    'fileCountPlural' => __(':count files'),
+                    'checking' => __('Checking...'),
+                    'queued' => __('Queued'),
+                    'uploading' => __('Uploading...'),
+                    'finalizing' => __('Finalizing'),
+                    'pending' => __('Finalizing'),
+                    'processing' => __('Finalizing'),
+                    'warming' => __('Finalizing'),
+                    'processed' => __('Ready'),
+                    'skipped' => __('Skipped'),
+                    'failed' => __('Failed'),
+                    'alreadyExists' => __('Already exists'),
+                    'remaining' => __('~:time remaining'),
+                    'calculating' => __('Calculating...'),
+                    'estimating' => __('Estimating...'),
+                    'finalizingCount' => __('Finalizing :count files...'),
+                    'finalizingOne' => __('Finalizing 1 file...'),
+                    'conflictOne' => __('1 file already exists. Choose what to do, or apply to all:'),
+                    'conflictMany' => __(':count files already exist. Choose what to do, or apply to all:'),
+                    'photoUploaded' => __(':count photo uploaded to :gallery'),
+                    'photosUploaded' => __(':count photos uploaded to :gallery'),
+                    'closeWarning' => __(':count photos left, if you close they will stop uploading but the ones already uploaded stay.'),
+                    'closeWarningOne' => __('1 photo left, if you close it will stop uploading but the ones already uploaded stay.'),
+                    'allReady' => __('All files ready'),
+                    'storageQuota' => __('You do not have enough storage space to upload this photo.'),
+                    'uploadFailed' => __('The file could not be uploaded. Please try again.'),
+                    'sessionExpired' => __('Your session expired. Reload the page and try again.'),
+                    'processingFailed' => __('Processing failed'),
+                ]),
+            };
+        </script>
         @stack('head')
     </head>
     <body
@@ -349,6 +399,12 @@
 
         @auth
             @include('partials.black-screen')
+
+            {{-- Uploads must survive `wire:navigate`, so the dock lives in the
+                 layout inside a persisted element instead of the gallery page. --}}
+            @persist('upload-dock')
+                <x-upload-dock />
+            @endpersist
         @endauth
 
         <x-toast />
