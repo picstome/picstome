@@ -55,7 +55,9 @@ new class extends Component
         if ($invoice?->isDraft()) {
             $this->form->setInvoice($invoice);
 
-            $this->step = $invoice->isRectificative() ? 3 : ($invoice->customer_id ? 2 : 1);
+            // A corrective draft opens on the line items so the amounts can
+            // be checked and changed before issuing it.
+            $this->step = $invoice->customer_id ? 2 : 1;
         } else {
             $customer = $this->customerFromRequest();
 
@@ -128,6 +130,12 @@ new class extends Component
     #[Computed]
     public function canIssue(): bool
     {
+        // Corrective invoices never consume the monthly limit, so a team can
+        // always issue the correction of an invoice it already issued.
+        if ($this->form->invoice?->isRectificative()) {
+            return true;
+        }
+
         return app(InvoicePlanLimitService::class)->canIssue(Auth::user()->currentTeam);
     }
 
@@ -240,6 +248,44 @@ new class extends Component
     public function summary(): array
     {
         return $this->form->totals();
+    }
+
+    /**
+     * Total of the original invoice, when this is a corrective one.
+     */
+    #[Computed]
+    public function originalTotal(): ?float
+    {
+        $original = $this->form->invoice?->rectifiesInvoice;
+
+        return $original ? round((float) $original->total, 2) : null;
+    }
+
+    /**
+     * Difference between the corrective total and the original one.
+     *
+     * Positive when the correction adds money to the client, negative when it
+     * returns money. It is the value stored as `rectified_amount` on issue.
+     */
+    #[Computed]
+    public function amountDifference(): ?float
+    {
+        $original = $this->originalTotal();
+
+        return $original === null ? null : round($this->summary()['total'] - $original, 2);
+    }
+
+    /**
+     * Whether the corrective invoice keeps the total of the original.
+     *
+     * A rectification that does not change the amount is valid for data
+     * corrections, but it is not what the user wants when the reason is a
+     * wrong amount, so the screen states it plainly.
+     */
+    #[Computed]
+    public function keepsOriginalAmount(): bool
+    {
+        return $this->amountDifference() === 0.0;
     }
 
     #[Computed]
@@ -409,6 +455,15 @@ new class extends Component
         $this->step = max($this->step - 1, 1);
     }
 
+    /**
+     * Jump back to the line items from the review step, so the amounts of a
+     * corrective invoice can be changed without walking the whole form.
+     */
+    public function editLineItems(): void
+    {
+        $this->step = 2;
+    }
+
     public function saveDraft(): void
     {
         $this->authorize('create', Invoice::class);
@@ -456,7 +511,7 @@ new class extends Component
     </div>
 
     <x-ts-heading level="1" size="xl">
-        {{ $this->form->invoice ? __('Edit invoice') : __('New invoice') }}
+        {{ $this->form->invoice?->isRectificative() ? __('Corrective invoice') : ($this->form->invoice ? __('Edit invoice') : __('New invoice')) }}
     </x-ts-heading>
     <x-ts-subheading>{{ __('Step :step of 3', ['step' => $this->step]) }}</x-ts-subheading>
 
@@ -485,6 +540,16 @@ new class extends Component
                 @endif
             </x-ts-callout-text>
         </x-ts-callout>
+
+        @if ($this->originalTotal !== null)
+            <x-ts-callout icon="pencil-square" variant="outline" class="mt-4">
+                <x-ts-callout-text>
+                    {{ __('The original invoice totals :total. Change the line items or the discount so this corrective invoice carries the corrected amount, then issue it.', [
+                        'total' => $this->money($this->originalTotal).' '.$this->settings->currency,
+                    ]) }}
+                </x-ts-callout-text>
+            </x-ts-callout>
+        @endif
     @endif
 
     @if ($this->selectedCustomer() && $this->missingCustomerFields() !== [])
@@ -571,14 +636,14 @@ new class extends Component
                             :label="__('Description')"
                         />
                         <x-ts-input
-                            wire:model="form.lineItems.{{ $index }}.quantity"
+                            wire:model.live.debounce.400ms="form.lineItems.{{ $index }}.quantity"
                             :label="__('Qty')"
                             type="number"
                             step="0.01"
                             min="0"
                         />
                         <x-ts-input
-                            wire:model="form.lineItems.{{ $index }}.unit_price"
+                            wire:model.live.debounce.400ms="form.lineItems.{{ $index }}.unit_price"
                             :label="__('Price')"
                             type="number"
                             step="0.01"
@@ -596,9 +661,26 @@ new class extends Component
                 @endforeach
             </div>
 
-            <x-ts-button variant="primary" class="btn-ink mt-4" icon="plus" wire:click="addLine">
-                {{ __('Add line item') }}
-            </x-ts-button>
+            <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <x-ts-button variant="primary" class="btn-ink" icon="plus" wire:click="addLine">
+                    {{ __('Add line item') }}
+                </x-ts-button>
+
+                <div class="rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm shadow-xs dark:border-white/10 dark:bg-white/5">
+                    <span class="text-zinc-500">{{ __('Subtotal') }}:</span>
+                    <span class="font-semibold">{{ $this->money($this->summary()['subtotal']) }} {{ $this->settings->currency }}</span>
+                </div>
+            </div>
+
+            @if ($this->keepsOriginalAmount)
+                <x-ts-callout icon="exclamation-triangle" variant="outline" class="mt-4">
+                    <x-ts-callout-text>
+                        {{ __('The original invoice totals :total. If the correction changes the amount, edit the line items before issuing it.', [
+                            'total' => $this->money((float) $this->originalTotal).' '.$this->settings->currency,
+                        ]) }}
+                    </x-ts-callout-text>
+                </x-ts-callout>
+            @endif
         </section>
     @else
         <section class="mt-8 grid gap-8 lg:grid-cols-2">
@@ -719,7 +801,28 @@ new class extends Component
                             <dt>{{ $this->form->apply_irpf ? __('Amount to pay') : __('Total') }}</dt>
                             <dd>{{ $this->money($this->form->apply_irpf ? $this->summary()['amount_due'] : $this->summary()['total']) }} {{ $this->settings->currency }}</dd>
                         </div>
+
+                        @if ($this->originalTotal !== null)
+                            <div class="flex justify-between border-t border-zinc-200 pt-2 dark:border-white/10">
+                                <dt class="text-zinc-500">{{ __('Original invoice') }}</dt>
+                                <dd>{{ $this->money($this->originalTotal) }} {{ $this->settings->currency }}</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-zinc-500">{{ __('Difference') }}</dt>
+                                <dd class="font-semibold">
+                                    {{ $this->amountDifference > 0 ? '+' : '' }}{{ $this->money($this->amountDifference) }} {{ $this->settings->currency }}
+                                </dd>
+                            </div>
+                        @endif
                     </dl>
+
+                    @if ($this->keepsOriginalAmount)
+                        <x-ts-callout icon="exclamation-triangle" variant="outline" class="mt-4">
+                            <x-ts-callout-text>
+                                {{ __('This amount is the same as the original invoice. If the correction changes the amount, edit the line items or the discount before issuing it.') }}
+                            </x-ts-callout-text>
+                        </x-ts-callout>
+                    @endif
                 </div>
 
                 <div class="mt-4 space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-white/5">
@@ -756,6 +859,12 @@ new class extends Component
         </x-ts-button>
 
         <div class="flex items-center gap-3">
+            @if ($this->step === 3 && $this->form->invoice?->isRectificative())
+                <x-ts-button variant="outline" icon="pencil-square" wire:click="editLineItems">
+                    {{ __('Change the amounts') }}
+                </x-ts-button>
+            @endif
+
             <x-ts-button variant="primary" class="btn-ink" wire:click="saveDraft">{{ __('Save draft') }}</x-ts-button>
 
             @if ($this->step < 3)

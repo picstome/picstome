@@ -1666,5 +1666,14 @@
     "We sent a login link to :email.": "We sent a login link to :email.",
     "We sent a verification link to :email.": "We sent a verification link to :email.",
     "You can also [log in directly](:url) without a password.": "You can also [log in directly](:url) without a password.",
-    "Your Picstome login link": "Your Picstome login link"
+    "Your Picstome login link": "Your Picstome login link",
+    "A corrective invoice is created with the same client and line items, and you can change the amounts before issuing it. The original invoice keeps its number and its PDF.": "A corrective invoice is created with the same client and line items, and you can change the amounts before issuing it. The original invoice keeps its number and its PDF.",
+    "Difference": "Difference",
+    "Issue with the same amounts": "Issue with the same amounts",
+    "Original invoice": "Original invoice",
+    "Review and change the amounts": "Review and change the amounts",
+    "The original invoice totals :total. Change the line items or the discount so this corrective invoice carries the corrected amount, then issue it.": "The original invoice totals :total. Change the line items or the discount so this corrective invoice carries the corrected amount, then issue it.",
+    "The original invoice totals :total. If the correction changes the amount, edit the line items before issuing it.": "The original invoice totals :total. If the correction changes the amount, edit the line items before issuing it.",
+    "This amount is the same as the original invoice. If the correction changes the amount, edit the line items or the discount before issuing it.": "This amount is the same as the original invoice. If the correction changes the amount, edit the line items or the discount before issuing it.",
+    "Change the amounts": "Change the amounts"
 }
