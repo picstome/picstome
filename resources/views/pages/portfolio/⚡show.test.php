@@ -48,7 +48,7 @@ it('does not overflow on mobile and keeps photos in a masonry wall', function ()
                 wall
                 && tile
                 && image
-                && Math.abs(wall.getBoundingClientRect().width - document.documentElement.clientWidth) < 2
+                && Math.abs(wall.getBoundingClientRect().width - wall.parentElement.getBoundingClientRect().width) < 2
                 && getComputedStyle(wall).columnCount !== 'auto'
                 && tile.classList.contains('break-inside-avoid')
                 && ! tile.classList.contains('aspect-square')

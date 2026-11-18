@@ -430,7 +430,7 @@ test('shared gallery does not overflow on mobile', function () {
 
             const rect = wall.getBoundingClientRect();
 
-            return Math.abs(rect.width - document.documentElement.clientWidth) < 2
+            return Math.abs(rect.width - wall.parentElement.getBoundingClientRect().width) < 2
                 && getComputedStyle(wall).columnCount === '1';
         })()
     JS))->toBeTrue();

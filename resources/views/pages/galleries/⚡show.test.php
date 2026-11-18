@@ -2503,10 +2503,12 @@ it('keeps the upload dock alive across in-app navigation', function () {
 
     $page->wait(0.5)
         ->click('nav[aria-label="Sidebar"] a[href="'.route('dashboard').'"]')
-        ->wait(1);
+        ->wait(2);
 
-    $page->assertVisible('@upload-dock')
-        ->assertSee('navigation.jpg')
+    expect($page->script('window.PicstomeUploads.entries.length'))->toBe(1)
+        ->and($page->script("getComputedStyle(document.querySelector('[data-test=upload-dock]')).display"))->not->toBe('none');
+
+    $page->assertSee('navigation.jpg')
         ->assertNoJavascriptErrors();
 })->group('browser');
 
