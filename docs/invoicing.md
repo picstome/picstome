@@ -355,3 +355,23 @@ it.
 - **Phase 2** — SII, Facturae 3.2+, XAdES, FACe and the official verification
   on the AEAT website.
 - **Phase 3** — Compliance panel, retries, alerts and certificate management.
+
+## Revenue on the dashboard
+
+The **Revenue (30d)** card of the dashboard is the money the team collected
+during the last 30 days, from both ways a photographer gets paid:
+
+- the **payments** completed in the period (Stripe, or a payment recorded by
+  hand), stored in cents, and
+- the **invoices marked as paid** in the period that no payment settles, which
+  is what the app records when the team marks an invoice as paid manually.
+
+An invoice settled by a linked payment is never counted twice: the payment is
+the money that actually entered the account. Rectified invoices are skipped,
+because their amount was replaced by the corrective invoice, and a draft is
+never counted.
+
+Amounts are expressed in the currency of the team (`teams.stripe_currency`).
+Payments always use that currency. An invoice issued in another currency is
+converted with its exchange rate when the team is billed in euros, and skipped
+when there is no usable rate, so the card never adds apples to oranges.
