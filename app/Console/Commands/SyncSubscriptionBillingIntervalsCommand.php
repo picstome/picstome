@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use App\Models\Subscription;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -10,6 +11,8 @@ use Throwable;
 
 class SyncSubscriptionBillingIntervalsCommand extends Command
 {
+    use RequiresDryRunOrForce;
+
     protected $signature = 'subscriptions:sync-billing-intervals
                             {--dry-run : Show what would change without writing}
                             {--force : Write the changes}';
@@ -18,10 +21,8 @@ class SyncSubscriptionBillingIntervalsCommand extends Command
 
     public function handle(): int
     {
-        if (! $this->option('dry-run') && ! $this->option('force')) {
-            $this->error('Use --dry-run to inspect or --force to write.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect or --force to write.', asError: true)) !== null) {
+            return $failure;
         }
 
         $dryRun = (bool) $this->option('dry-run');

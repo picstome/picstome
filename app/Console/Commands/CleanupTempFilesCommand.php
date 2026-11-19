@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use App\Traits\FormatsFileSize;
 use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 class CleanupTempFilesCommand extends Command
 {
     use FormatsFileSize;
+    use RequiresDryRunOrForce;
 
     protected $signature = 'temp:cleanup
         {--dry-run : Show what would be removed without changing anything}
@@ -28,10 +30,8 @@ class CleanupTempFilesCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        if (! $dryRun && ! $force) {
-            $this->warn('Use --dry-run to inspect the scope or --force to delete temporary files.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect the scope or --force to delete temporary files.')) !== null) {
+            return $failure;
         }
 
         if (! config('picstome.temp_cleanup.enabled', true)) {

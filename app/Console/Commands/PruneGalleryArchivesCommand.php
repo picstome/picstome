@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use App\Models\GalleryArchive;
 use App\Services\GalleryArchiveService;
 use Illuminate\Console\Command;
@@ -14,6 +15,8 @@ use Illuminate\Console\Command;
  */
 class PruneGalleryArchivesCommand extends Command
 {
+    use RequiresDryRunOrForce;
+
     protected $signature = 'gallery-archives:prune
         {--dry-run : Show what would be removed without changing anything}
         {--force : Delete expired archives and old rows}';
@@ -25,10 +28,8 @@ class PruneGalleryArchivesCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        if (! $dryRun && ! $force) {
-            $this->warn('Use --dry-run to inspect the scope or --force to delete archives.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect the scope or --force to delete archives.')) !== null) {
+            return $failure;
         }
 
         $now = now();

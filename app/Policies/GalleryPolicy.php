@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Gallery;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class GalleryPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class GalleryPolicy
      */
     public function view(User $user, Gallery $gallery): bool
     {
-        return $gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $gallery->team);
     }
 
     /**
@@ -36,7 +39,7 @@ class GalleryPolicy
      */
     public function update(User $user, Gallery $gallery): bool
     {
-        return $gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $gallery->team);
     }
 
     /**
@@ -68,6 +71,6 @@ class GalleryPolicy
      */
     public function updateCover(User $user, Gallery $gallery): bool
     {
-        return $gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $gallery->team);
     }
 }

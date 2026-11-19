@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Photoshoot;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class PhotoshootPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class PhotoshootPolicy
      */
     public function view(User $user, Photoshoot $photoshoot): bool
     {
-        return $photoshoot->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $photoshoot->team);
     }
 
     /**
@@ -68,6 +71,6 @@ class PhotoshootPolicy
      */
     public function addContract(User $user, Photoshoot $photoshoot): bool
     {
-        return $photoshoot->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $photoshoot->team);
     }
 }

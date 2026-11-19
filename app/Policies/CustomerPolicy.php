@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Customer;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class CustomerPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        return $customer->team && $customer->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $customer->team);
     }
 
     /**

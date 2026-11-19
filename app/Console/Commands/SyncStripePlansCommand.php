@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
@@ -22,6 +23,8 @@ use Throwable;
  */
 class SyncStripePlansCommand extends Command
 {
+    use RequiresDryRunOrForce;
+
     protected $signature = 'stripe:sync-plans
                             {--dry-run : Show what would be created or updated}
                             {--force : Create or update the objects in Stripe}
@@ -31,10 +34,8 @@ class SyncStripePlansCommand extends Command
 
     public function handle(): int
     {
-        if (! $this->option('dry-run') && ! $this->option('force')) {
-            $this->error('Use --dry-run to inspect or --force to write.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect or --force to write.', asError: true)) !== null) {
+            return $failure;
         }
 
         $dryRun = (bool) $this->option('dry-run');
