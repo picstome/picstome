@@ -224,7 +224,7 @@ class PhotoUrlService
      * Resolve a disk URL using the configured public/CDN base before falling
      * back to the filesystem adapter (which is what fake disks expose).
      */
-    protected function storageUrl(string $path): string
+    public function storageUrl(string $path): string
     {
         $diskConfig = config("filesystems.disks.{$this->disk}", []);
         $baseUrl = $diskConfig['url'] ?? null;

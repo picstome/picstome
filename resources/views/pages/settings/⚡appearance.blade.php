@@ -1,12 +1,12 @@
 <?php
 
-use App\Livewire\Forms\AppearenceSettingsForm;
+use App\Livewire\Forms\AppearanceSettingsForm;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 new class extends Component
 {
-    public AppearenceSettingsForm $form;
+    public AppearanceSettingsForm $form;
 
     public function mount()
     {

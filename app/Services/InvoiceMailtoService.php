@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Invoice;
-use Illuminate\Support\Number;
+use App\Traits\FormatsMoney;
 
 /**
  * Builds the mailto link that opens the email client of the photographer.
@@ -13,6 +13,8 @@ use Illuminate\Support\Number;
  */
 class InvoiceMailtoService
 {
+    use FormatsMoney;
+
     /**
      * Mailto link for an invoice, or null when the invoice cannot be shared.
      */
@@ -55,7 +57,7 @@ class InvoiceMailtoService
     {
         $data = $invoice->invoice_data ?? [];
         $name = $customer['legal_name'] ?? $customer['name'] ?? null;
-        $total = Number::format((float) $invoice->total, 2, null, app()->getLocale()).' '.$invoice->currency;
+        $total = $this->money($invoice->total).' '.$invoice->currency;
 
         $lines = [
             filled($name) ? __('Hello :name,', ['name' => $name]) : __('Hello,'),

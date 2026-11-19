@@ -1,18 +1,21 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
-use TallStackUi\Traits\Interactions;
 use App\Services\CalculatorService;
+use App\Traits\FormatsMoney;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
-    use InteractsWithTallStackModals;
+    use FormatsMoney;
     use Interactions;
+    use InteractsWithTallStackModals;
+
     public array $settings = [];
 
     public array $fixed_expenses = [];
@@ -267,7 +270,7 @@ new class extends Component
 
     public function formatHours(float $value): string
     {
-        return Number::format($value, 2, null, app()->getLocale()).' h';
+        return $this->money($value).' h';
     }
 
     /**

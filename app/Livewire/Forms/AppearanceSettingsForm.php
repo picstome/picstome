@@ -6,7 +6,7 @@ use App\Models\User;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
-class AppearenceSettingsForm extends Form
+class AppearanceSettingsForm extends Form
 {
     public User $user;
 

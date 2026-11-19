@@ -4,10 +4,9 @@ namespace App\Services;
 
 use App\Models\Photo;
 use App\Models\PhotoVersion;
+use App\Support\ContentDisposition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -50,7 +49,7 @@ class PhotoDownloadService
 
         return $disk->temporaryUrl($path, now()->addMinutes($ttlMinutes ?? $this->ttlMinutes($model)), [
             'ResponseContentType' => 'application/octet-stream',
-            'ResponseContentDisposition' => $this->contentDisposition($filename),
+            'ResponseContentDisposition' => ContentDisposition::attachment($filename),
         ]);
     }
 
@@ -77,16 +76,5 @@ class PhotoDownloadService
             : config('picstome.photo_download_url_ttl_minutes', 10);
 
         return max(1, (int) $minutes);
-    }
-
-    protected function contentDisposition(string $filename): string
-    {
-        $fallback = preg_replace('/[^\x20-\x7E]/', '', Str::ascii($filename)) ?: 'download';
-
-        return HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            $filename,
-            $fallback,
-        );
     }
 }

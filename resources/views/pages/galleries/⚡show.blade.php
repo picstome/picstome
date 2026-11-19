@@ -8,7 +8,6 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Services\GalleryPhotoQuery;
 use App\Services\GalleryUploadService;
-use App\Services\StorageUsageService;
 use App\Traits\InteractsWithTallStackModals;
 use App\Traits\RevealsGalleryPhoto;
 use App\Traits\SummarizesGalleryTabs;
@@ -95,9 +94,7 @@ new class extends Component
         $this->gallery->loadMissing(['coverPhoto', 'team']);
 
         $team = $this->gallery->team;
-        $this->remainingStorageBytes = $team->storage_limit === null
-            ? null
-            : max(0, $team->storage_limit - StorageUsageService::forTeam($team));
+        $this->remainingStorageBytes = $team->remainingStorageBytes();
 
         $this->photoshoots = Auth::user()?->currentTeam?->photoshoots()->latest()->get();
         $this->keepOriginalSize = (bool) $this->gallery->keep_original_size;
@@ -790,9 +787,7 @@ new class extends Component
     {
         $team = $this->gallery->team;
 
-        $this->remainingStorageBytes = $team->storage_limit === null
-            ? null
-            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
+        $this->remainingStorageBytes = $team->remainingStorageBytes(fresh: true);
 
         unset($this->ftpAccount);
     }

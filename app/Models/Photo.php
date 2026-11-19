@@ -657,19 +657,7 @@ class Photo extends Model
                 return null;
             }
 
-            $disk = $this->diskOrDefault();
-            $diskConfig = config("filesystems.disks.$disk");
-            $baseUrl = $diskConfig['url'] ?? null;
-
-            if (! $baseUrl && isset($diskConfig['origin'], $diskConfig['bucket'])) {
-                $baseUrl = rtrim($diskConfig['origin'], '/').'/'.$diskConfig['bucket'];
-            }
-
-            if ($baseUrl) {
-                return rtrim($baseUrl, '/').'/'.ltrim($this->path, '/');
-            }
-
-            return Storage::disk($disk)->url($this->path);
+            return PhotoUrlService::make($this)->storageUrl($this->path);
         });
     }
 
@@ -797,7 +785,7 @@ class Photo extends Model
     }
 
     /**
-     * Determine if the photo is a video (mp4, mkv, avi)
+     * Determine if the photo is a video (mp4, webm, ogg)
      */
     public function isVideo(): bool
     {

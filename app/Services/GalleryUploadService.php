@@ -80,9 +80,7 @@ class GalleryUploadService
     {
         $team = $gallery->team;
 
-        return $team->storage_limit === null
-            ? null
-            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
+        return $team->remainingStorageBytes(fresh: true);
     }
 
     /**

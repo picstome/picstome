@@ -8,6 +8,7 @@ use App\Models\Gallery;
 use App\Models\GalleryArchive;
 use App\Models\Photo;
 use App\Models\User;
+use App\Support\ContentDisposition;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use League\Flysystem\AwsS3V3\AwsS3V3Adapter;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Throwable;
 use ZipStream\CompressionMethod;
 use ZipStream\ZipStream;
@@ -438,7 +438,7 @@ class GalleryArchiveService
 
         return $disk->temporaryUrl($archive->path, now()->addMinutes($this->urlTtlMinutes()), [
             'ResponseContentType' => 'application/zip',
-            'ResponseContentDisposition' => $this->contentDisposition($archive->filename),
+            'ResponseContentDisposition' => ContentDisposition::attachment($archive->filename, 'download.zip'),
         ]);
     }
 
@@ -1131,16 +1131,5 @@ class GalleryArchiveService
         }
 
         return $deleted;
-    }
-
-    protected function contentDisposition(string $filename): string
-    {
-        $fallback = preg_replace('/[^\x20-\x7E]/', '', Str::ascii($filename)) ?: 'download.zip';
-
-        return HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            $filename,
-            $fallback,
-        );
     }
 }

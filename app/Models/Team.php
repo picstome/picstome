@@ -56,6 +56,22 @@ class Team extends Model
         return (StorageUsageService::forTeamFresh($this) + $size) <= $this->storage_limit;
     }
 
+    /**
+     * Remaining storage in bytes, or null when the plan is unlimited.
+     */
+    public function remainingStorageBytes(bool $fresh = false): ?int
+    {
+        if ($this->storage_limit === null) {
+            return null;
+        }
+
+        $used = $fresh
+            ? StorageUsageService::forTeamFresh($this)
+            : StorageUsageService::forTeam($this);
+
+        return max(0, $this->storage_limit - $used);
+    }
+
     protected function casts()
     {
         return [
