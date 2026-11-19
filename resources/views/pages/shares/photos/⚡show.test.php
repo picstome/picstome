@@ -477,13 +477,26 @@ test('annotation pins are positioned after the image loads', function () {
 
     $page = visit("/shares/{$gallery->ulid}/photos/{$photo->id}");
     $page->script("const image = document.querySelector('#photo img'); image.removeAttribute('srcset'); image.src = '/favicon-96x96.png';");
-    $page->wait(0.6);
 
     expect($page->script("document.querySelectorAll('button[title=\"Photo annotation\"]').length"))
         ->toBeGreaterThan(0);
 
-    expect($page->script("(() => { const pin = document.querySelector('button[title=\"Photo annotation\"]'); const image = document.querySelector('#photo img'); const p = pin.getBoundingClientRect(); const i = image.getBoundingClientRect(); return p.left >= i.left - 2 && p.right <= i.right + 2 && p.top >= i.top - 2 && p.bottom <= i.bottom + 2; })()"))
-        ->toBeTrue();
+    $positioned = waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('button[title="Photo annotation"]');
+        const image = document.querySelector('#photo img');
+
+        if (! pin || ! image) return null;
+
+        const p = pin.getBoundingClientRect();
+        const i = image.getBoundingClientRect();
+
+        return p.left >= i.left - 2 && p.right <= i.right + 2
+            && p.top >= i.top - 2 && p.bottom <= i.bottom + 2
+            ? 1
+            : null;
+    JS, 10000);
+
+    expect($positioned)->toBe(1);
 
     $page->assertNoJavaScriptErrors();
 })->group('browser');

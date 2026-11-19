@@ -1053,15 +1053,20 @@ test('pressing delete asks for confirmation before removing the photo', function
     $this->actingAs($this->user);
 
     $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
-    $page->wait(0.5);
-    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Delete', bubbles: true }))");
-    $page->wait(0.3);
 
-    expect($page->script(<<<'JS'
-        [...document.querySelectorAll('[role="dialog"]')]
+    waitForBrowserValue($page, <<<'JS'
+        return document.querySelector('[data-photo-delete]') ? 1 : null;
+    JS, 10000);
+
+    $page->script("window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Delete', bubbles: true }))");
+
+    $opened = waitForBrowserValue($page, <<<'JS'
+        return [...document.querySelectorAll('[role="dialog"]')]
             .some((dialog) => getComputedStyle(dialog).display !== 'none'
-                && dialog.innerText.includes('Delete photo?'))
-    JS))->toBeTrue();
+                && dialog.innerText.includes('Delete photo?')) ? 1 : null;
+    JS, 10000);
+
+    expect($opened)->toBe(1);
 
     expect(Photo::find($photo->id))->not->toBeNull();
 })->group('browser');
@@ -1075,13 +1080,14 @@ test('the quick delete button asks for confirmation before removing the photo', 
     $page = visit("/galleries/{$gallery->id}/photos/{$photo->id}");
     $page->wait(0.5);
     $page->click('[data-photo-delete]');
-    $page->wait(0.3);
 
-    expect($page->script(<<<'JS'
-        [...document.querySelectorAll('[role="dialog"]')]
+    $opened = waitForBrowserValue($page, <<<'JS'
+        return [...document.querySelectorAll('[role="dialog"]')]
             .some((dialog) => getComputedStyle(dialog).display !== 'none'
-                && dialog.innerText.includes('Delete photo?'))
-    JS))->toBeTrue();
+                && dialog.innerText.includes('Delete photo?')) ? 1 : null;
+    JS, 10000);
+
+    expect($opened)->toBe(1);
 
     expect(Photo::find($photo->id))->not->toBeNull();
 })->group('browser');
