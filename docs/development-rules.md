@@ -116,8 +116,11 @@ legacy migrations that are not fully reversible.
 ## Testing
 
 - Run the full suite with `composer test` (Pest in parallel, 2 workers so the
-  run fits in this machine's memory). While iterating,
-  use `./vendor/bin/pest --compact --filter=testName`.
+  run fits in this machine's memory). While iterating, use
+  `composer test:dirty` to run only the tests affected by uncommitted changes,
+  or `./vendor/bin/pest --compact --filter=testName` for a single test.
+- `composer test:profile` prints the ten slowest unit tests, which is the
+  starting point before optimising a slow area.
 - Feature tests cover the happy path, permissions and failure cases.
 - UI changes require a browser test where practical. Browser tests are tagged
   `->group('browser')` so `composer test:feature` can skip them while iterating
@@ -132,16 +135,25 @@ The browser suite (Pest + Playwright, `--testsuite=Components`) is slow: each
 test boots a real page in headless Chromium, so it takes minutes and it is the
 main reason local iteration feels sluggish.
 
-- **While developing**, run only what you changed: `--filter=testName` on a
-  feature test, or the specific `.test.php` file. Do not run the browser suite
-  on every save.
+- **While developing**, run only what you changed:
+  `composer test:browser:file -- <path/to/file.test.php>` or
+  `composer test:dirty:browser` for browser tests touched by uncommitted
+  changes. Do not run the browser suite on every save.
 - **Before opening a pull request**, run it once:
-  `composer test:browser` (or `composer test` for
-  everything). That is the moment the browser tests earn their cost.
+  `composer test:browser:groups` (or `composer test` for everything). That is
+  the moment the browser tests earn their cost. The groups run in separate
+  processes, which is how CI runs them and avoids the shared-browser
+  degradation of a single 60-test process.
+- `composer test:browser` still exists for debugging the whole browser group in
+  one process, but it can be flaky after ~40 tests because the Playwright plugin
+  reuses browser state. Use the groups or a single file instead.
 - If a browser test fails only under a full run and passes alone, re-run it
   alone first: `Target page, context or browser has been closed` and geometry
   timeouts are environment flakiness (RAM / parallel workers), not a
   regression. Say so in the PR instead of chasing it.
+- CI splits the unit suite into four shards and the browser suite into five
+  isolated groups. A local full browser run can still hit the known Playwright
+  hang; the CI retry loop exists for that reason.
 
 ### Testing payments locally
 
