@@ -115,6 +115,19 @@ test('user can edit a template', function () {
     });
 });
 
+test('template preview strips raw html and unsafe links', function () {
+    $template = ContractTemplate::factory()->for($this->team)->create([
+        'markdown_body' => '<img src=x onerror="alert(1)"> [click](javascript:alert(1)) **safe**',
+    ]);
+
+    $html = (string) $template->formatted_markdown_body;
+
+    expect($html)->not->toContain('<img')
+        ->and($html)->not->toContain('onerror')
+        ->and($html)->not->toContain('javascript:')
+        ->and($html)->toContain('<strong>safe</strong>');
+});
+
 test('user can delete a template', function () {
     $template = ContractTemplate::factory()->for($this->team)->create();
 

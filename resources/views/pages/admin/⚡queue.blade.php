@@ -6,6 +6,7 @@ use App\Traits\InteractsWithTallStackModals;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use TallStackUi\Traits\Interactions;
@@ -35,14 +36,19 @@ new class extends Component
 
     public ?string $selectedTaskName = null;
 
+    #[Locked]
     public string $confirmAction = '';
 
+    #[Locked]
     public string $confirmTarget = '';
 
+    #[Locked]
     public string $confirmTitle = '';
 
+    #[Locked]
     public string $confirmMessage = '';
 
+    #[Locked]
     public string $confirmLabel = '';
 
     public function mount(): void

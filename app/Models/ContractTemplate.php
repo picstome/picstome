@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\SafeMarkdown;
 use Database\Factories\ContractTemplateFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class ContractTemplate extends Model
 {
@@ -53,9 +53,7 @@ class ContractTemplate extends Model
 
     protected function formattedMarkdownBody(): Attribute
     {
-        return Attribute::get(function (): string {
-            return (string) Str::of($this->markdown_body)->markdown();
-        });
+        return Attribute::get(fn (): string => SafeMarkdown::render($this->markdown_body));
     }
 
     protected function formattedUpdatedAt(): Attribute

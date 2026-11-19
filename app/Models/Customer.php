@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SafeMarkdown;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -107,8 +108,6 @@ class Customer extends Model
 
     protected function formattedNotes(): Attribute
     {
-        return Attribute::get(function () {
-            return Str::markdown($this->notes ?? '');
-        });
+        return Attribute::get(fn (): string => SafeMarkdown::render($this->notes));
     }
 }

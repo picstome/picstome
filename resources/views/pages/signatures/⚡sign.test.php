@@ -51,6 +51,20 @@ test('guests can sign a contract', function () {
     });
 });
 
+test('signing page strips raw html and unsafe links from the contract body', function () {
+    $contract = Contract::factory()->create([
+        'markdown_body' => '<img src=x onerror="alert(1)"> [click](javascript:alert(1)) **safe**',
+    ]);
+    Signature::factory()->unsigned()->for($contract)->create(['ulid' => 'SAFE123']);
+
+    get('/signatures/SAFE123/sign')
+        ->assertOk()
+        ->assertDontSee('onerror', false)
+        ->assertDontSee('<img', false)
+        ->assertDontSee('javascript:', false)
+        ->assertSee('<strong>safe</strong>', false);
+});
+
 test('contract is executed once the final signature is submitted', function () {
     Storage::fake('s3');
     Notification::fake();

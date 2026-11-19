@@ -44,6 +44,8 @@ new class extends Component
 
     public function update()
     {
+        $this->authorize('view', $this->customer);
+
         $this->form->update();
 
         $this->customer = $this->customer->fresh();
@@ -59,6 +61,8 @@ new class extends Component
 
     public function saveNotes()
     {
+        $this->authorize('view', $this->customer);
+
         $this->customer->notes = $this->editedNotes;
         $this->customer->save();
         $this->editingNotes = false;
@@ -72,6 +76,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('view', $this->customer);
+
         $this->customer->delete();
         $this->redirect(route('customers'));
     }

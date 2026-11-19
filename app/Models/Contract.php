@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPdfContract;
+use App\Support\SafeMarkdown;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Database\Factories\ContractFactory;
@@ -122,12 +123,7 @@ class Contract extends Model
 
     protected function formattedMarkdownBody(): Attribute
     {
-        return Attribute::get(function () {
-            return Str::of($this->markdown_body)->markdown([
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]);
-        });
+        return Attribute::get(fn (): string => SafeMarkdown::render($this->markdown_body));
     }
 
     public function deleteFromDisk()

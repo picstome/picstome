@@ -69,6 +69,18 @@ it('can edit customer notes via Livewire', function () {
     expect($customer->formatted_notes)->toContain('<strong>markdown</strong>');
 });
 
+it('strips raw html from customer notes before rendering', function () {
+    $customer = Customer::factory()->for($this->team)->create([
+        'notes' => '<img src=x onerror="alert(1)"> **safe**',
+    ]);
+
+    $notes = $customer->formatted_notes;
+
+    expect($notes)->not->toContain('<img')
+        ->and($notes)->not->toContain('onerror')
+        ->and($notes)->toContain('<strong>safe</strong>');
+});
+
 it('shows the client link modal with the customer share url and shared galleries count', function () {
     $customer = Customer::factory()->for($this->team)->create();
     $photoshoot = Photoshoot::factory()->for($this->team)->for($customer)->create();
