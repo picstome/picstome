@@ -22,7 +22,7 @@ class BioLinkForm extends Form
         ];
     }
 
-    public function setBioLink(BioLink $bioLink)
+    public function setBioLink(BioLink $bioLink): void
     {
         $this->bioLink = $bioLink;
 
@@ -30,7 +30,7 @@ class BioLinkForm extends Form
         $this->url = $bioLink->url;
     }
 
-    public function store()
+    public function store(): BioLink
     {
         $this->validate();
 
@@ -40,7 +40,7 @@ class BioLinkForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 
@@ -50,7 +50,7 @@ class BioLinkForm extends Form
         ]);
     }
 
-    public function resetForm()
+    public function resetForm(): void
     {
         $this->reset(['title', 'url', 'bioLink']);
     }

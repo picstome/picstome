@@ -73,95 +73,86 @@ new class extends Component
         }
     }
 
+    /**
+     * Validate, append and persist one calculator line item.
+     */
+    private function addItem(string $collection, array $rules, callable $factory, array $fields, ?callable $afterReset = null): void
+    {
+        $this->validate($rules);
+
+        $this->{$collection}[] = $factory();
+
+        $this->reset(...$fields);
+        $afterReset?->call($this);
+
+        $this->persist();
+    }
+
     public function addFixedExpense(): void
     {
-        $this->validate([
+        $this->addItem('fixed_expenses', [
             'newFixedName' => ['required', 'string', 'max:255'],
             'newFixedAmount' => ['required', 'numeric', 'min:0', 'max:10000000'],
-        ]);
-
-        $this->fixed_expenses[] = [
+        ], fn () => [
             'id' => (string) Str::uuid(),
             'name' => trim($this->newFixedName),
             'amount' => round((float) $this->newFixedAmount, 2),
-        ];
-
-        $this->reset('newFixedName', 'newFixedAmount');
-        $this->persist();
+        ], ['newFixedName', 'newFixedAmount']);
     }
 
     public function addSessionExpense(): void
     {
-        $this->validate([
+        $this->addItem('session_expenses', [
             'newSessionName' => ['required', 'string', 'max:255'],
             'newSessionAmount' => ['required', 'numeric', 'min:0', 'max:10000000'],
-        ]);
-
-        $this->session_expenses[] = [
+        ], fn () => [
             'id' => (string) Str::uuid(),
             'name' => trim($this->newSessionName),
             'amount' => round((float) $this->newSessionAmount, 2),
-        ];
-
-        $this->reset('newSessionName', 'newSessionAmount');
-        $this->persist();
+        ], ['newSessionName', 'newSessionAmount']);
     }
 
     public function addEquipment(): void
     {
-        $this->validate([
+        $this->addItem('equipment', [
             'newEquipmentName' => ['required', 'string', 'max:255'],
             'newEquipmentPrice' => ['required', 'numeric', 'min:0', 'max:10000000'],
             'newEquipmentResale' => ['nullable', 'numeric', 'min:0', 'lte:newEquipmentPrice'],
             'newEquipmentLife' => ['required', 'integer', 'min:1', 'max:50'],
-        ]);
-
-        $this->equipment[] = [
+        ], fn () => [
             'id' => (string) Str::uuid(),
             'name' => trim($this->newEquipmentName),
             'price' => round((float) $this->newEquipmentPrice, 2),
             'resale_value' => round((float) ($this->newEquipmentResale ?: 0), 2),
             'useful_life_years' => (int) $this->newEquipmentLife,
-        ];
-
-        $this->reset('newEquipmentName', 'newEquipmentPrice', 'newEquipmentResale', 'newEquipmentLife');
-        $this->newEquipmentResale = '0';
-        $this->newEquipmentLife = '5';
-        $this->persist();
+        ], ['newEquipmentName', 'newEquipmentPrice', 'newEquipmentResale', 'newEquipmentLife'], function (): void {
+            $this->newEquipmentResale = '0';
+            $this->newEquipmentLife = '5';
+        });
     }
 
     public function addSessionTask(): void
     {
-        $this->validate([
+        $this->addItem('session_tasks', [
             'newSessionTaskName' => ['required', 'string', 'max:255'],
             'newSessionTaskHours' => ['required', 'numeric', 'min:0', 'max:10000'],
-        ]);
-
-        $this->session_tasks[] = [
+        ], fn () => [
             'id' => (string) Str::uuid(),
             'name' => trim($this->newSessionTaskName),
             'hours' => round((float) $this->newSessionTaskHours, 2),
-        ];
-
-        $this->reset('newSessionTaskName', 'newSessionTaskHours');
-        $this->persist();
+        ], ['newSessionTaskName', 'newSessionTaskHours']);
     }
 
     public function addMonthlyTask(): void
     {
-        $this->validate([
+        $this->addItem('monthly_tasks', [
             'newMonthlyTaskName' => ['required', 'string', 'max:255'],
             'newMonthlyTaskHours' => ['required', 'numeric', 'min:0', 'max:10000'],
-        ]);
-
-        $this->monthly_tasks[] = [
+        ], fn () => [
             'id' => (string) Str::uuid(),
             'name' => trim($this->newMonthlyTaskName),
             'hours' => round((float) $this->newMonthlyTaskHours, 2),
-        ];
-
-        $this->reset('newMonthlyTaskName', 'newMonthlyTaskHours');
-        $this->persist();
+        ], ['newMonthlyTaskName', 'newMonthlyTaskHours']);
     }
 
     public ?string $pendingDeleteType = null;

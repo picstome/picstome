@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\MediaType;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
 use App\Services\PhotoThumbnailService;
@@ -202,7 +203,7 @@ class ProcessPhoto implements ShouldQueue
     {
         $filename = $this->targetSourceName();
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'tiff'];
+        $allowedExtensions = MediaType::IMAGE_EXTENSIONS;
 
         return in_array($extension, $allowedExtensions, true) || RawPhotoService::isRawFile($filename);
     }

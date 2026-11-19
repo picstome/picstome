@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\GalleryTab;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
@@ -147,9 +148,9 @@ final readonly class GalleryPhotoQuery
         $query = $gallery->photos()->getQuery();
 
         return match ($tab) {
-            'favorited' => $query->favorited()->ready()->notArchived(),
-            'commented' => $query->ready()->notArchived()->whereHas('comments'),
-            'archived' => $query->archived(),
+            GalleryTab::Favorited->value => $query->favorited()->ready()->notArchived(),
+            GalleryTab::Commented->value => $query->ready()->notArchived()->whereHas('comments'),
+            GalleryTab::Archived->value => $query->archived(),
             // The Favorites tab applies `favoritesOnly` on the All photos
             // grid. Match the old favourites view by excluding photos that are
             // still processing, so the tab count and the export list agree.

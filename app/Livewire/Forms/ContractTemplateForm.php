@@ -26,7 +26,7 @@ class ContractTemplateForm extends Form
     #[Validate(['nullable', 'string', 'in:en,es'])]
     public $locale;
 
-    public function setContractTemplate(ContractTemplate $contractTemplate)
+    public function setContractTemplate(ContractTemplate $contractTemplate): void
     {
         $this->contractTemplate = $contractTemplate;
 
@@ -39,7 +39,7 @@ class ContractTemplateForm extends Form
         $this->locale = $contractTemplate->locale ?? app()->getLocale();
     }
 
-    public function store()
+    public function store(): ContractTemplate
     {
         $this->validate();
 
@@ -53,7 +53,7 @@ class ContractTemplateForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 

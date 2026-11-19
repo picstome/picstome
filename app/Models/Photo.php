@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MediaType;
 use App\Jobs\DeleteFromDisk;
 use App\Services\GalleryArchiveService;
 use App\Services\PhotoUrlService;
@@ -363,7 +364,7 @@ class Photo extends Model
     protected function images(Builder $query): void
     {
         $query->where(function (Builder $query) {
-            foreach (['jpg', 'jpeg', 'png', 'tiff'] as $extension) {
+            foreach (MediaType::IMAGE_EXTENSIONS as $extension) {
                 $query->orWhere('path', 'like', '%.'.$extension);
             }
         });
@@ -779,9 +780,7 @@ class Photo extends Model
      */
     public function isImage(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff']);
+        return MediaType::isImagePath($this->path);
     }
 
     /**
@@ -789,9 +788,7 @@ class Photo extends Model
      */
     public function isVideo(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['mp4', 'webm', 'ogg']);
+        return MediaType::isVideoPath($this->path);
     }
 
     /**
@@ -799,9 +796,7 @@ class Photo extends Model
      */
     public function isPdf(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return $ext === 'pdf';
+        return MediaType::isPdfPath($this->path);
     }
 
     /**

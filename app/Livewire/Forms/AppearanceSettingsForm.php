@@ -13,14 +13,14 @@ class AppearanceSettingsForm extends Form
     #[Validate(['required'])]
     public $language = '';
 
-    public function setUser(User $user)
+    public function setUser(User $user): void
     {
         $this->user = $user;
 
         $this->language = $user->language ?? config('app.locale');
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

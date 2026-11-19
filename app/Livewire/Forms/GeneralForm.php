@@ -11,21 +11,21 @@ class GeneralForm extends Form
 
     public $name;
 
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => ['required'],
         ];
     }
 
-    public function setTeam(Team $team)
+    public function setTeam(Team $team): void
     {
         $this->team = $team;
 
         $this->name = $team->name;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

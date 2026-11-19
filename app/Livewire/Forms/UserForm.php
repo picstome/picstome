@@ -26,7 +26,7 @@ class UserForm extends Form
      */
     public bool $emailVerified = false;
 
-    public function setUser(User $user)
+    public function setUser(User $user): void
     {
         $this->user = $user;
 
@@ -43,7 +43,7 @@ class UserForm extends Form
         $this->emailVerified = $user->hasVerifiedEmail();
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate([
             'custom_storage_limit' => 'nullable|numeric|min:0',

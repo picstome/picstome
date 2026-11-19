@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MediaType;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Storage;
 
@@ -195,16 +196,12 @@ class PhotoUrlService
 
     protected function isImage(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
+        return MediaType::isImagePath($this->path);
     }
 
     protected function isVideo(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['mp4', 'webm', 'ogg'], true);
+        return MediaType::isVideoPath($this->path);
     }
 
     /**

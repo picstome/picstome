@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\MediaType;
 use App\Events\PhotoAdded;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\UploadPhotoRequest;
@@ -158,7 +159,7 @@ class PhotoUploadController extends Controller
     {
         return in_array(
             strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
-            ['jpg', 'jpeg', 'png', 'tiff', 'tif'],
+            MediaType::UPLOAD_IMAGE_EXTENSIONS,
             true,
         );
     }

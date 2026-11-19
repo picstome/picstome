@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MediaType;
 use App\Jobs\DeleteFromDisk;
 use App\Services\PhotoUrlService;
 use App\Services\StorageUsageService;
@@ -161,16 +162,12 @@ class PhotoVersion extends Model
 
     public function isImage(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
+        return MediaType::isImagePath($this->path);
     }
 
     public function isVideo(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['mp4', 'webm', 'ogg'], true);
+        return MediaType::isVideoPath($this->path);
     }
 
     public function download()

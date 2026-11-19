@@ -37,7 +37,7 @@ new class extends Component
     public ShareGalleryForm $shareForm;
 
     /** Number of cards rendered per tab. Increased by the "load more" action. */
-    public int $allPhotoLimit = 60;
+    public int $allPhotoLimit = self::PHOTO_PAGE_SIZE;
 
     public bool $adjustingCover = false;
 
@@ -46,11 +46,11 @@ new class extends Component
      * legacy `favorited` tab. The owner wall normalises that tab to the
      * favourites filter on All photos before revealing a photo.
      */
-    public int $favoritePhotoLimit = 60;
+    public int $favoritePhotoLimit = self::PHOTO_PAGE_SIZE;
 
-    public int $commentedPhotoLimit = 60;
+    public int $commentedPhotoLimit = self::PHOTO_PAGE_SIZE;
 
-    public int $archivedPhotoLimit = 60;
+    public int $archivedPhotoLimit = self::PHOTO_PAGE_SIZE;
 
     /** Archived photo ids awaiting the "delete all" confirmation. */
     public int $pendingArchivedCount = 0;
@@ -515,10 +515,10 @@ new class extends Component
 
     protected function resetPhotoLimits(): void
     {
-        $this->allPhotoLimit = 60;
-        $this->favoritePhotoLimit = 60;
-        $this->commentedPhotoLimit = 60;
-        $this->archivedPhotoLimit = 60;
+        $this->allPhotoLimit = self::PHOTO_PAGE_SIZE;
+        $this->favoritePhotoLimit = self::PHOTO_PAGE_SIZE;
+        $this->commentedPhotoLimit = self::PHOTO_PAGE_SIZE;
+        $this->archivedPhotoLimit = self::PHOTO_PAGE_SIZE;
 
         $this->forgetPhotoCollections();
     }
@@ -759,9 +759,9 @@ new class extends Component
     public function loadMore(string $tab = 'all'): void
     {
         match ($tab) {
-            'commented' => $this->commentedPhotoLimit += 60,
-            'archived' => $this->archivedPhotoLimit += 60,
-            default => $this->allPhotoLimit += 60,
+            'commented' => $this->commentedPhotoLimit += self::PHOTO_PAGE_SIZE,
+            'archived' => $this->archivedPhotoLimit += self::PHOTO_PAGE_SIZE,
+            default => $this->allPhotoLimit += self::PHOTO_PAGE_SIZE,
         };
 
         $this->forgetPhotoCollections();

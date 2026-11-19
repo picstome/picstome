@@ -35,7 +35,7 @@ class CustomerForm extends Form
 
     public ?string $country = '';
 
-    public function rules()
+    public function rules(): array
     {
         $emailRule = Rule::unique('customers', 'email')
             ->where(fn ($q) => $q->where('team_id', Auth::user()->currentTeam->id));
@@ -74,7 +74,7 @@ class CustomerForm extends Form
         ];
     }
 
-    public function setCustomer(Customer $customer)
+    public function setCustomer(Customer $customer): void
     {
         $this->customer = $customer;
 
@@ -103,7 +103,7 @@ class CustomerForm extends Form
         $this->country = $customer->country;
     }
 
-    public function store()
+    public function store(): Customer
     {
         $this->validate();
 
@@ -123,7 +123,7 @@ class CustomerForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 

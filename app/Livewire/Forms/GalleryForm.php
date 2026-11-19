@@ -37,12 +37,12 @@ class GalleryForm extends Form
         ];
     }
 
-    public function setPhotoshoot(Photoshoot $photoshoot)
+    public function setPhotoshoot(Photoshoot $photoshoot): void
     {
         $this->photoshoot = $photoshoot;
     }
 
-    public function setGallery(Gallery $gallery)
+    public function setGallery(Gallery $gallery): void
     {
         $this->gallery = $gallery;
 
@@ -55,7 +55,7 @@ class GalleryForm extends Form
     /**
      * Create a gallery and remember its creation options for the next one.
      */
-    public function store()
+    public function store(): Gallery
     {
         $this->validate();
 
@@ -70,7 +70,7 @@ class GalleryForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 

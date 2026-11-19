@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\MediaType;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPhoto;
 use App\Notifications\GalleryExpirationReminder;
@@ -1052,7 +1054,7 @@ class Gallery extends Model
                 'all' => $this->photos()->ready()->notArchived()->count(),
                 'images' => $this->photos()->ready()->notArchived()->images()->count(),
                 'videos' => $this->photos()->ready()->notArchived()->where(function (Builder $query) {
-                    foreach (['mp4', 'webm', 'ogg'] as $extension) {
+                    foreach (MediaType::VIDEO_EXTENSIONS as $extension) {
                         $query->orWhere('path', 'like', '%.'.$extension);
                     }
                 })->count(),
