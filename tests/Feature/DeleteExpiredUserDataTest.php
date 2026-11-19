@@ -91,7 +91,7 @@ it('deletes all galleries when subscription expired more than 7 days ago', funct
         'disk' => $this->disk,
     ]);
 
-    artisan('subscriptions:cleanup')->assertExitCode(0);
+    artisan('subscriptions:cleanup --force')->assertExitCode(0);
 
     expect(Gallery::find($gallery->id))->toBeNull();
     expect(Photo::find($photo->id))->toBeNull();
@@ -142,4 +142,34 @@ it('does not delete galleries for active subscriptions', function () {
     expect(Gallery::find($gallery->id))->not->toBeNull();
     expect(Photo::find($photo->id))->not->toBeNull();
     expect(Storage::disk($this->disk)->exists($path))->toBeTrue();
+});
+
+it('does not delete galleries without --force', function () {
+    $this->team->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test',
+        'stripe_status' => 'canceled',
+        'ends_at' => now()->subDays(8),
+    ]);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    artisan('subscriptions:cleanup')->assertExitCode(0);
+
+    expect(Gallery::find($gallery->id))->not->toBeNull();
+});
+
+it('does not delete galleries in dry-run mode', function () {
+    $this->team->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test',
+        'stripe_status' => 'canceled',
+        'ends_at' => now()->subDays(8),
+    ]);
+
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    artisan('subscriptions:cleanup --dry-run')->assertExitCode(0);
+
+    expect(Gallery::find($gallery->id))->not->toBeNull();
 });
