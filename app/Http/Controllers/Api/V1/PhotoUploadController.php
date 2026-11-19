@@ -104,7 +104,7 @@ class PhotoUploadController extends Controller
                 return $gallery->addPhoto($upload);
             });
         } catch (Throwable $exception) {
-            if ($exception->getMessage() === 'Not enough storage') {
+            if ($exception instanceof StorageQuotaExceededException) {
                 return $this->apiError('storage_quota_exceeded', __('There is not enough storage available.'), 413);
             }
 

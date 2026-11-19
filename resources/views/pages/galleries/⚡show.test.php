@@ -636,11 +636,12 @@ describe('Rating filters and sorting', function () {
         $page = visit("/galleries/{$gallery->id}");
 
         $page->click('[data-rating-filter-trigger]');
+        $page->wait(0.3);
         $page->click('[data-rating-filter-popover] [data-rating-star="5"]');
-        $page->wait(0.4);
+        $page->wait(1);
 
         expect($page->script("document.querySelectorAll('[data-photo-card]').length"))->toBe(1);
-    });
+    })->group('browser');
 });
 
 describe('Rated count cache', function () {

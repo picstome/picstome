@@ -418,7 +418,7 @@ class Gallery extends Model
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
-            throw new \Exception('Not enough storage');
+            throw new StorageQuotaExceededException;
         }
 
         $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
@@ -454,7 +454,7 @@ class Gallery extends Model
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($photoSize)) {
-            throw new \Exception('Not enough storage');
+            throw new StorageQuotaExceededException;
         }
 
         $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
@@ -495,7 +495,7 @@ class Gallery extends Model
         $photoSize = $photo->getSize();
 
         if ($team->storage_limit !== null && ! $team->canStoreFile(max(0, $photoSize - $existing->stored_size))) {
-            throw new \Exception('Not enough storage');
+            throw new StorageQuotaExceededException;
         }
 
         $sourceName = static::sanitizeFileName($photo->getClientOriginalName());
@@ -751,7 +751,7 @@ class Gallery extends Model
         $team = $this->team;
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($size)) {
-            throw new \Exception('Not enough storage');
+            throw new StorageQuotaExceededException;
         }
 
         $sourceName = static::sanitizeFileName($clientName);
@@ -781,7 +781,7 @@ class Gallery extends Model
         $team = $this->team;
 
         if ($team->storage_limit !== null && ! $team->canStoreFile($size)) {
-            throw new \Exception('Not enough storage');
+            throw new StorageQuotaExceededException;
         }
 
         $sourceName = static::sanitizeFileName($clientName);

@@ -59,16 +59,12 @@ class GalleryUploadService
                     default => $gallery->addPhoto($file),
                 };
             });
+        } catch (StorageQuotaExceededException) {
+            throw new GalleryUploadException(
+                GalleryUploadException::STORAGE_QUOTA,
+                __('You do not have enough storage space to upload this photo.'),
+            );
         } catch (\Exception $exception) {
-            // `Gallery::addPhoto()` and friends signal quota problems with a
-            // plain exception so this service can translate them.
-            if ($exception->getMessage() === 'Not enough storage') {
-                throw new GalleryUploadException(
-                    GalleryUploadException::STORAGE_QUOTA,
-                    __('You do not have enough storage space to upload this photo.'),
-                );
-            }
-
             throw $exception;
         }
 
