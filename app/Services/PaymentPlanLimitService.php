@@ -11,7 +11,7 @@ use App\Models\Team;
  * completed payments consume the limit: opening a checkout and abandoning it
  * must not use up the month, because nothing was charged.
  */
-class PaymentPlanLimitService
+class PaymentPlanLimitService extends MonthlyPlanLimitService
 {
     /**
      * Number of payments completed by the team during the current month.
@@ -27,23 +27,22 @@ class PaymentPlanLimitService
             ->count();
     }
 
+    public function countThisMonth(Team $team): int
+    {
+        return $this->receivedThisMonth($team);
+    }
+
+    protected function limitField(): string
+    {
+        return 'monthly_payment_limit';
+    }
+
     /**
      * Whether the team can receive another payment.
-     *
-     * A null limit means unlimited, mirroring the monthly invoice limit.
-     * Paid and lifetime teams are never limited.
      */
     public function canReceive(Team $team): bool
     {
-        if ($team->subscribed() || is_null($team->monthly_payment_limit)) {
-            return true;
-        }
-
-        if ($team->monthly_payment_limit <= 0) {
-            return false;
-        }
-
-        return $this->receivedThisMonth($team) < $team->monthly_payment_limit;
+        return $this->canUse($team);
     }
 
     /**
@@ -51,10 +50,6 @@ class PaymentPlanLimitService
      */
     public function remainingThisMonth(Team $team): ?int
     {
-        if ($team->subscribed() || is_null($team->monthly_payment_limit)) {
-            return null;
-        }
-
-        return max(0, $team->monthly_payment_limit - $this->receivedThisMonth($team));
+        return $this->remaining($team);
     }
 }
