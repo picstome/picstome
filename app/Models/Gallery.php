@@ -365,11 +365,11 @@ class Gallery extends Model
             'Content-Type' => 'application/octet-stream',
         ];
 
-        $photos = $favorites ? $this->favorites : $this->photos;
+        $photos = $favorites ? $this->favorites() : $this->photos();
 
         set_time_limit(1200); // 20 minutes
 
-        return new StreamedResponse(fn () => $this->getPhotosZipStream($photos, $zipName), 200, $headers);
+        return new StreamedResponse(fn () => $this->getPhotosZipStream($photos->cursor(), $zipName), 200, $headers);
     }
 
     protected function getPhotosZipStream($photos, $zipName)

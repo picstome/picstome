@@ -44,6 +44,10 @@ new class extends Component
     {
         return Auth::user()?->currentTeam
             ->contracts()
+            ->withCount([
+                'signatures',
+                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+            ])
             ->latest()
             ->paginate(25);
     }
@@ -134,7 +138,7 @@ new class extends Component
                                 href="{{ route('contracts.show', ['contract' => $contract]) }}"
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
-                            {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                            {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
                         </x-data-table.cell>
                         <x-data-table.cell class="text-end">
                             @if ($contract->isExecuted() && $contract->pdf_file_path)

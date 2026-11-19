@@ -61,8 +61,15 @@ new class extends Component
 
         // The Galleries block renders a thumbnail per gallery; eager loading
         // the photo and its gallery keeps PhotoUrlService from resolving both
-        // lazily (one pair of queries per card).
-        $this->photoshoot->loadMissing('galleries.firstImagePhoto.gallery');
+        // lazily (one pair of queries per card). Contracts carry their
+        // signature counters so the list does not run two COUNTs per row.
+        $this->photoshoot->loadMissing([
+            'galleries.firstImagePhoto.gallery',
+            'contracts' => fn ($query) => $query->withCount([
+                'signatures',
+                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+            ]),
+        ]);
 
         $this->form->setPhotoshoot($this->photoshoot);
 
@@ -391,7 +398,7 @@ new class extends Component
                         </x-data-table.cell>
                         <x-data-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                            {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                            {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
                         </x-data-table.cell>
                         <x-data-table.cell class="text-end">
                             @if ($contract->isExecuted() && $contract->pdf_file_path)

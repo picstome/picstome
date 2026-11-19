@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Photo;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -63,12 +64,12 @@ new class extends Component
             return collect();
         }
 
-        return $this->team->galleries()
-            ->with(['photos' => fn ($query) => $query->where('name', 'like', '%'.$this->search.'%')->limit(20)])
-            ->get()
-            ->pluck('photos')
-            ->flatten()
-            ->take(20);
+        return Photo::query()
+            ->whereIn('gallery_id', $this->team->galleries()->select('id'))
+            ->where('name', 'like', '%'.$this->search.'%')
+            ->with('gallery')
+            ->limit(20)
+            ->get();
     }
 
     #[Computed]

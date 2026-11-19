@@ -602,7 +602,9 @@ class Photo extends Model
      */
     public function deleteFromDisk()
     {
-        foreach ($this->versions()->get() as $version) {
+        $this->loadMissing('versions');
+
+        foreach ($this->versions as $version) {
             $version->deleteFromDisk($this->id);
         }
 

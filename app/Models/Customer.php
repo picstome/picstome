@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Support\SafeMarkdown;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -96,6 +98,39 @@ class Customer extends Model
 
         return $now->diffInDays($thisYearBirthday, false) >= 0
             && $now->diffInDays($thisYearBirthday, false) <= 30;
+    }
+
+    /**
+     * Coarse SQL filter for the next $days of birthdays.
+     *
+     * It deliberately adds a small margin so the exact `isBirthdaySoon()`
+     * check can run on a much smaller set instead of every customer. Month/day
+     * comparison keeps it portable between SQLite (tests) and MySQL.
+     */
+    #[Scope]
+    protected function birthdaySoon(Builder $query, int $days = 30): void
+    {
+        $today = now()->startOfDay();
+        $end = $today->copy()->addDays($days + 2);
+
+        $driver = $query->getConnection()->getDriverName();
+        $expression = $driver === 'sqlite'
+            ? "strftime('%m-%d', birthdate)"
+            : "DATE_FORMAT(birthdate, '%m-%d')";
+
+        $start = $today->format('m-d');
+        $endDate = $end->format('m-d');
+
+        $query->whereNotNull('birthdate');
+
+        if ($start <= $endDate) {
+            $query->whereRaw("{$expression} BETWEEN ? AND ?", [$start, $endDate]);
+        } else {
+            $query->where(function (Builder $query) use ($expression, $start, $endDate) {
+                $query->whereRaw("{$expression} >= ?", [$start])
+                    ->orWhereRaw("{$expression} <= ?", [$endDate]);
+            });
+        }
     }
 
     protected function formattedWhatsappPhone(): Attribute

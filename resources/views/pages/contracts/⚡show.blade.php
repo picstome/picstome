@@ -1,7 +1,7 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Models\Contract;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -10,6 +10,7 @@ use Livewire\Component;
 new class extends Component
 {
     use InteractsWithTallStackModals;
+
     public Contract $contract;
 
     public ?Collection $photoshoots = null;
@@ -19,6 +20,11 @@ new class extends Component
     public function mount()
     {
         $this->authorize('view', $this->contract);
+
+        $this->contract->loadCount([
+            'signatures',
+            'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+        ]);
 
         $this->photoshoots = Auth::user()?->currentTeam->photoshoots()->latest()->get();
         $this->photoshoot_id = $this->contract->photoshoot_id;
@@ -90,7 +96,7 @@ new class extends Component
                         class="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500"
                     />
                     <span>
-                        {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                        {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
                         {{ __('signatures') }}
                     </span>
                 </span>
@@ -145,7 +151,7 @@ new class extends Component
 
             <x-description.term>{{ __('Signatures required') }}</x-description.term>
             <x-description.details>
-                {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
             </x-description.details>
         </x-description.list>
     </div>

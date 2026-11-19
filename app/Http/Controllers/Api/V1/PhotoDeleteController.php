@@ -40,9 +40,11 @@ class PhotoDeleteController extends Controller
         $requested = collect($request->input('photo_ids', []))
             ->map(fn ($id) => (int) $id)
             ->unique()
+            ->take(500)
             ->values();
 
         $photos = $gallery->photos()
+            ->with('versions')
             ->whereKey($requested)
             ->get()
             ->keyBy('id');

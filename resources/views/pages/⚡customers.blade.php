@@ -1,8 +1,8 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Livewire\Forms\CustomerForm;
 use App\Models\Customer;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -38,6 +38,7 @@ new class extends Component
     {
         return Auth::user()?->currentTeam
             ->customers()
+            ->birthdaySoon()
             ->get()
             ->filter(fn ($customer) => $customer->isBirthdaySoon())
             ->sortBy(function ($customer) {

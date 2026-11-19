@@ -255,7 +255,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
     #[Computed]
     public function comments()
     {
-        return $this->photo->comments()->latest()->with('user')->get();
+        return $this->photo->comments()->latest()->with('user')->limit(200)->get();
     }
 
     /**
