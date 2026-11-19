@@ -79,6 +79,36 @@ class Signature extends Model
         });
     }
 
+    /**
+     * The signature image as a data URI.
+     *
+     * The contract PDF used to render the remote storage URL, which forced
+     * dompdf to fetch it from the worker network (an SSRF vector). Embedding
+     * the bytes keeps the signature visible while remote loading stays off.
+     */
+    public function signatureImageDataUri(): ?string
+    {
+        if (blank($this->signature_image_path)) {
+            return null;
+        }
+
+        $disk = Storage::disk(config('picstome.disk'));
+
+        if (! $disk->exists($this->signature_image_path)) {
+            return null;
+        }
+
+        $contents = $disk->get($this->signature_image_path);
+
+        if ($contents === null || $contents === '') {
+            return null;
+        }
+
+        $mimeType = $disk->mimeType($this->signature_image_path) ?: 'image/png';
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($contents);
+    }
+
     protected function storagePath(): Attribute
     {
         return Attribute::get(function () {

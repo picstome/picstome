@@ -31,7 +31,7 @@ class ProcessPdfContract implements ShouldQueue
         app()->setLocale($this->contract->team->owner->language ?? config('app.locale'));
 
         $this->contract->updatePdfFile(
-            Pdf::setOption(['letter' => 'letter', 'isRemoteEnabled' => true])->loadView('pdf.contract', [
+            Pdf::setOption(['letter' => 'letter', 'isRemoteEnabled' => false])->loadView('pdf.contract', [
                 'contract' => $this->contract,
             ])
         );

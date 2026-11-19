@@ -65,6 +65,25 @@ test('signing page strips raw html and unsafe links from the contract body', fun
         ->assertSee('<strong>safe</strong>', false);
 });
 
+test('signature images are embedded as data uris for the pdf', function () {
+    Storage::fake('s3');
+
+    $contract = Contract::factory()->create();
+    $signature = Signature::factory()->for($contract)->create([
+        'signature_image_path' => 'signatures/signature.png',
+    ]);
+    Storage::disk('s3')->put('signatures/signature.png', 'fake-image-bytes');
+
+    expect($signature->signatureImageDataUri())
+        ->toStartWith('data:')
+        ->toContain(base64_encode('fake-image-bytes'));
+
+    $html = view('pdf.contract', ['contract' => $contract->load('signatures')])->render();
+
+    expect($html)->toContain('data:')
+        ->and($html)->not->toContain($signature->signature_image_url);
+});
+
 test('contract is executed once the final signature is submitted', function () {
     Storage::fake('s3');
     Notification::fake();

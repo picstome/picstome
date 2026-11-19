@@ -2,6 +2,7 @@
 
 use App\Models\Gallery;
 use App\Services\GalleryUnlockService;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -21,15 +22,42 @@ new #[Layout('layouts.guest')] class extends Component
 
     public function unlock()
     {
+        $this->ensureIsNotRateLimited();
+
         $validated = $this->validate(['password' => ['required', 'string']]);
 
         if (! app(GalleryUnlockService::class)->unlock($this->gallery, $validated['password'])) {
+            RateLimiter::hit($this->throttleKey(), 60);
+
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
             ]);
         }
 
+        RateLimiter::clear($this->throttleKey());
+
         return $this->redirect("/shares/{$this->gallery->ulid}/{$this->gallery->slug}");
+    }
+
+    /**
+     * Limit password guesses per visitor and gallery.
+     */
+    protected function ensureIsNotRateLimited(): void
+    {
+        $key = $this->throttleKey();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'password' => __('Too many attempts. Please try again in :seconds seconds.', [
+                    'seconds' => RateLimiter::availableIn($key),
+                ]),
+            ]);
+        }
+    }
+
+    protected function throttleKey(): string
+    {
+        return 'gallery-unlock:'.request()->ip().':'.$this->gallery->ulid;
     }
 }; ?>
 
