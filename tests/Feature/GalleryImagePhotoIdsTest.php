@@ -105,7 +105,11 @@ it('pages through the public portfolio with the neighbours from the cached image
         'status' => 'processed',
     ]);
 
-    $component = Livewire::test('pages::portfolio.photos.show', ['photo' => $second]);
+    $component = Livewire::test('pages::portfolio.photos.show', [
+        'handle' => $this->team->handle,
+        'gallery' => $gallery,
+        'photo' => $second,
+    ]);
 
     expect($component->instance()->previous?->id)->toBe($first->id)
         ->and($component->instance()->next?->id)->toBe($third->id)

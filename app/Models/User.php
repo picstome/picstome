@@ -112,6 +112,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function switchTeam(Team $team)
     {
+        abort_unless($this->ownedTeams()->whereKey($team->getKey())->exists(), 403);
+
         $this->forceFill([
             'current_team_id' => $team->id,
         ])->save();

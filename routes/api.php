@@ -24,7 +24,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/tokens/exchange', TokenExchangeController::class)
         ->middleware('throttle:10,1');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'abilities:sync'])->group(function () {
         Route::post('/tokens/revoke', TokenRevokeController::class);
         Route::get('/me', MeController::class);
         Route::get('/galleries', GalleryIndexController::class);

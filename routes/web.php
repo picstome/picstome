@@ -27,7 +27,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::livewire('/@{handle}', 'pages::handle.show')->where('handle', '[a-zA-Z0-9_]+')->name('handle.show');
 
-Route::livewire('/@{handle}/pay/{amount}/{description}', 'pages::pay.show')->where('handle', '[a-zA-Z0-9_]+')->name('handle.pay');
+Route::livewire('/@{handle}/pay/{amount}/{description}', 'pages::pay.show')
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->where('amount', '[0-9]+')
+    ->name('handle.pay');
 
 Route::get('/@{handle}/pay/', function ($handle) {
     return redirect()->route('handle.show', ['handle' => $handle, 'pay' => 1]);

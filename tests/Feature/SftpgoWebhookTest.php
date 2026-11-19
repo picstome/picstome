@@ -103,3 +103,17 @@ it('ignores failed or empty upload events', function () {
 
     Queue::assertNotPushed(IngestFtpUpload::class);
 });
+
+it('ignores paths with traversal segments', function () {
+    Queue::fake();
+
+    $this->postJson('/webhooks/sftpgo', [
+        'action' => 'upload',
+        'username' => '234816',
+        'virtual_path' => '/../../etc/passwd',
+        'status' => 1,
+        'file_size' => 1024,
+    ], ['X-PICSTOME-TOKEN' => 'secret-token'])->assertNoContent();
+
+    Queue::assertNotPushed(IngestFtpUpload::class);
+});

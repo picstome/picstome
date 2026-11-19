@@ -119,7 +119,7 @@ class extends Component
                     <x-ts-heading size="lg">{{ __('Protected galleries') }}</x-ts-heading>
                     <x-ts-subheading>{{ __('Enter a password to view protected galleries.') }}</x-ts-subheading>
                 </div>
-                <x-ts-input wire:model="password" :label="__('Password')" type="text" />
+                <x-ts-input wire:model="password" :label="__('Password')" type="password" />
                 <div class="flex">
                     <x-ts-spacer />
                     <x-ts-button type="submit" variant="primary">{{ __('Unlock') }}</x-ts-button>

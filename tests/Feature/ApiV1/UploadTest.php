@@ -15,6 +15,13 @@ it('requires authentication', function () {
     $this->postJson('/api/v1/photos')->assertUnauthorized();
 });
 
+it('rejects tokens without the sync ability', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    Sanctum::actingAs($user, ['other']);
+
+    $this->getJson('/api/v1/me')->assertForbidden();
+});
+
 it('uploads a photo, recomputes its hash and moves the revision', function () {
     Storage::fake('s3');
     Event::fake([PhotoAdded::class]);
@@ -22,7 +29,7 @@ it('uploads a photo, recomputes its hash and moves the revision', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $before = $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)->json('rev');
 
@@ -59,7 +66,7 @@ it('denies uploading to another team gallery', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -76,7 +83,7 @@ it('rejects unsupported file extensions', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -96,7 +103,7 @@ it('rejects a file that is not a readable image before storing it', function () 
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -113,7 +120,7 @@ it('returns 404 for an unknown gallery', function () {
     Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) str()->ulid(),

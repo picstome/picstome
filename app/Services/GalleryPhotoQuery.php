@@ -29,7 +29,7 @@ final readonly class GalleryPhotoQuery
 
     public const DIRECTIONS = ['asc', 'desc'];
 
-    public function __construct(
+    private function __construct(
         public ?int $rating = null,
         public bool $favoritesOnly = false,
         public string $sort = 'name',
