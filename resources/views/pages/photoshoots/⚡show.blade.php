@@ -84,6 +84,8 @@ new class extends Component
 
     public function update()
     {
+        $this->authorize('update', $this->photoshoot);
+
         $this->form->update();
 
         $this->photoshoot = $this->photoshoot->fresh();
@@ -93,6 +95,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->photoshoot);
+
         $this->photoshoot->deleteGalleries()->delete();
 
         $this->redirect(route('photoshoots'));
@@ -100,6 +104,8 @@ new class extends Component
 
     public function deletePreservingGalleries()
     {
+        $this->authorize('delete', $this->photoshoot);
+
         $this->photoshoot->delete();
 
         $this->redirect(route('photoshoots'));
@@ -107,6 +113,8 @@ new class extends Component
 
     public function addGallery()
     {
+        $this->authorize('update', $this->photoshoot);
+
         tap($this->galleryForm->store(), function ($gallery) {
             $this->redirect(route('galleries.show', ['gallery' => $gallery]));
         });
@@ -130,6 +138,8 @@ new class extends Component
 
     public function generatePaymentLink()
     {
+        $this->authorize('update', $this->photoshoot);
+
         $this->generatedPaymentLink = $this->paymentLinkForm->generatePaymentLink();
 
         $this->closeModal('generate-payment-link');

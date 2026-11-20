@@ -34,6 +34,8 @@ trait ManagesGalleryPhotos
     {
         abort_unless($photo->gallery_id === $this->gallery->id, 404);
 
+        $this->authorize('update', $this->gallery);
+
         $photo->toggleFavorite();
 
         $this->forgetPhotoCollections();
@@ -153,6 +155,8 @@ trait ManagesGalleryPhotos
 
     public function markFavorites()
     {
+        $this->authorize('update', $this->gallery);
+
         $this->validate([
             'favoriteFileNames' => ['required', 'string'],
         ]);

@@ -39,7 +39,7 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $customer->team);
     }
 
     /**
@@ -47,7 +47,7 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $customer->team);
     }
 
     /**

@@ -23,7 +23,7 @@ class PhotoPolicy
      */
     public function view(User $user, Photo $photo): bool
     {
-        return $this->belongsToCurrentTeam($user, $photo->gallery->team);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**
@@ -39,7 +39,7 @@ class PhotoPolicy
      */
     public function update(User $user, Photo $photo): bool
     {
-        return $this->belongsToCurrentTeam($user, $photo->gallery->team);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**
@@ -47,7 +47,7 @@ class PhotoPolicy
      */
     public function delete(User $user, Photo $photo): bool
     {
-        return $this->belongsToCurrentTeam($user, $photo->gallery->team);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**

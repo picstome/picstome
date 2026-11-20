@@ -13,6 +13,8 @@ trait ManagesGallerySharing
 {
     public function share()
     {
+        $this->authorize('update', $this->gallery);
+
         $this->shareForm->gallery->is_shared = true;
 
         $this->shareForm->update();
@@ -28,6 +30,8 @@ trait ManagesGallerySharing
 
     public function disableSharing()
     {
+        $this->authorize('update', $this->gallery);
+
         $this->gallery->update(['is_shared' => false]);
 
         $this->dispatch('gallery-sharing-changed');
@@ -35,6 +39,8 @@ trait ManagesGallerySharing
 
     public function togglePublic()
     {
+        $this->authorize('update', $this->gallery);
+
         $this->gallery->togglePublic();
 
         $this->dispatch('gallery-public-changed');

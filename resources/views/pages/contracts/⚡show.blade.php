@@ -32,6 +32,8 @@ new class extends Component
 
     public function execute()
     {
+        $this->authorize('execute', $this->contract);
+
         abort_if($this->contract->signaturesRemaining() > 0, 401);
 
         $this->contract->execute();
@@ -46,6 +48,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->contract);
+
         $this->contract
             ->deleteFromDisk()
             ->deleteSignatures()
@@ -56,6 +60,8 @@ new class extends Component
 
     public function assignToPhotoshoot()
     {
+        $this->authorize('update', $this->contract);
+
         $this->validate([
             'photoshoot_id' => [
                 'nullable',

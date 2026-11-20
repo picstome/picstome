@@ -47,7 +47,7 @@ class GalleryPolicy
      */
     public function delete(User $user, Gallery $gallery): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $gallery->team);
     }
 
     /**

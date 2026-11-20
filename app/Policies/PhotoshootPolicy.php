@@ -39,7 +39,7 @@ class PhotoshootPolicy
      */
     public function update(User $user, Photoshoot $photoshoot): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $photoshoot->team);
     }
 
     /**
@@ -47,7 +47,7 @@ class PhotoshootPolicy
      */
     public function delete(User $user, Photoshoot $photoshoot): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $photoshoot->team);
     }
 
     /**

@@ -42,7 +42,15 @@ class ContractPolicy
      */
     public function update(User $user, Contract $contract): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $contract->team);
+    }
+
+    /**
+     * Determine whether the user can execute the model once signed.
+     */
+    public function execute(User $user, Contract $contract): bool
+    {
+        return $this->belongsToCurrentTeam($user, $contract->team);
     }
 
     /**
@@ -50,7 +58,7 @@ class ContractPolicy
      */
     public function delete(User $user, Contract $contract): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $contract->team);
     }
 
     /**

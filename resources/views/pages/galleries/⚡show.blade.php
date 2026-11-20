@@ -121,6 +121,8 @@ new class extends Component
 
     public function update()
     {
+        $this->authorize('update', $this->gallery);
+
         $this->form->update();
 
         $this->gallery = $this->gallery->fresh();
@@ -133,6 +135,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->gallery);
+
         $this->gallery->deletePhotos()->delete();
 
         $this->redirect(route('galleries'));
