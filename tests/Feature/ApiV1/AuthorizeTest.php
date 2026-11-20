@@ -74,6 +74,31 @@ it('creates a single-use code and redirects to the client deep link', function (
         ->and($authorization->expires_at->diffInMinutes(now()))->toBeLessThanOrEqual(5);
 });
 
+it('supersedes the previous code when the same nonce is authorized twice', function () {
+    $user = User::factory()->create();
+    $nonce = str_repeat('c', 43);
+
+    $first = $this->actingAs($user)->post('/authorize', authorizeQuery(['nonce' => $nonce]));
+    $second = $this->actingAs($user)->post('/authorize', authorizeQuery(['nonce' => $nonce]));
+
+    parse_str((string) parse_url((string) $first->headers->get('Location'), PHP_URL_QUERY), $firstQuery);
+    parse_str((string) parse_url((string) $second->headers->get('Location'), PHP_URL_QUERY), $secondQuery);
+
+    expect(ExternalAuthorization::query()->count())->toBe(2);
+
+    $this->postJson('/api/v1/tokens/exchange', [
+        'code' => $firstQuery['code'],
+        'client_name' => 'picstome-sync',
+    ])
+        ->assertStatus(400)
+        ->assertJsonPath('code', 'invalid_code');
+
+    $this->postJson('/api/v1/tokens/exchange', [
+        'code' => $secondQuery['code'],
+        'client_name' => 'picstome-sync',
+    ])->assertOk();
+});
+
 it('renders the close-window message when the user cancels', function () {
     $user = User::factory()->create();
 

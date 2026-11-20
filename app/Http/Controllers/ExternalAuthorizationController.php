@@ -37,6 +37,15 @@ class ExternalAuthorizationController extends Controller
 
         $code = Str::random(48);
 
+        // A new code supersedes every live code issued for the same browser
+        // state, so a replayed consent page cannot keep several codes alive at
+        // once and exchange them one after another.
+        ExternalAuthorization::query()
+            ->where('user_id', $request->user()->id)
+            ->where('nonce', $payload['nonce'])
+            ->whereNull('consumed_at')
+            ->update(['consumed_at' => now()]);
+
         ExternalAuthorization::create([
             'user_id' => $request->user()->id,
             'client_name' => $payload['client_name'],
