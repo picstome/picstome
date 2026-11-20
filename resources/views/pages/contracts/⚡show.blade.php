@@ -1,14 +1,17 @@
 <?php
 
+use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
 use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
+    use Interactions;
     use InteractsWithTallStackModals;
 
     public Contract $contract;
@@ -44,6 +47,22 @@ new class extends Component
         if ($this->contract->isExecuted()) {
             return $this->contract->download();
         }
+    }
+
+    /**
+     * Request the PDF again when a previous generation attempt failed. The
+     * contract is already executed, so this only re-runs the renderer.
+     */
+    public function retryPdf()
+    {
+        $this->authorize('execute', $this->contract);
+
+        abort_unless($this->contract->isExecuted(), 403);
+        abort_if(filled($this->contract->pdf_file_path), 409);
+
+        ProcessPdfContract::dispatch($this->contract);
+
+        $this->toast()->success(__('Generating the PDF. This can take a moment.'))->send();
     }
 
     public function delete()
@@ -136,6 +155,8 @@ new class extends Component
 
                 @if ($contract->isExecuted() && $contract->pdf_file_path)
                     <x-ts-button wire:click="download" variant="primary">{{ __('Download') }}</x-ts-button>
+                @elseif ($contract->isExecuted())
+                    <x-ts-button wire:click="retryPdf" variant="primary">{{ __('Generate PDF') }}</x-ts-button>
                 @endif
 
                 @if (! $contract->isExecuted() && $contract->signaturesRemaining() === 0)

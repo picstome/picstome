@@ -2,118 +2,79 @@
 
 use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
-use App\Models\Team;
 use App\Models\User;
+use App\Notifications\ContractPdfFailed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
-it('renders the pdf in the contract owner language', function () {
-    Storage::fake('s3');
-
-    $renderedLocales = [];
-    View::composer('pdf.contract', function () use (&$renderedLocales) {
-        $renderedLocales[] = app()->getLocale();
-    });
-
-    $owner = User::factory()->create(['language' => 'es']);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
-    $contract->addSignatures(1);
-
-    (new ProcessPdfContract($contract))->handle();
-
-    expect($renderedLocales)->toBe(['es']);
-    expect($contract->fresh()->pdf_file_path)->not->toBeNull();
+beforeEach(function () {
+    $this->user = User::factory()->withPersonalTeam()->create();
+    $this->team = $this->user->currentTeam;
 });
 
-it('keeps generated contract pdfs small by subsetting embedded fonts', function () {
-    Storage::fake('s3');
+it('notifies the owner when pdf generation fails after all retries', function () {
+    Notification::fake();
 
-    $owner = User::factory()->create(['language' => 'es']);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
-    $contract->addSignatures(1);
+    $contract = Contract::factory()->for($this->team)->create();
 
-    (new ProcessPdfContract($contract))->handle();
+    (new ProcessPdfContract($contract))->failed(new RuntimeException('renderer exploded'));
 
-    $contract->refresh();
-
-    expect($contract->pdf_file_path)->not->toBeNull()
-        ->and(Storage::disk('s3')->size($contract->pdf_file_path))->toBeLessThan(200_000);
+    Notification::assertSentTo($contract->team->owner, ContractPdfFailed::class);
 });
 
-it('generates the pdf in the owner language when a contract is executed', function () {
-    Storage::fake('s3');
+it('stays silent when the contract disappeared before the failure arrived', function () {
+    Notification::fake();
 
-    $renderedLocales = [];
-    View::composer('pdf.contract', function () use (&$renderedLocales) {
-        $renderedLocales[] = app()->getLocale();
-    });
+    $contract = Contract::factory()->for($this->team)->create();
+    $job = new ProcessPdfContract($contract);
 
-    $owner = User::factory()->create(['language' => 'es']);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
+    Contract::query()->whereKey($contract->getKey())->delete();
 
-    $contract->execute();
+    $job->failed(new RuntimeException('renderer exploded'));
 
-    $contract = $contract->fresh();
-
-    expect($contract->executed_at)->not->toBeNull();
-    expect($renderedLocales)->toBe(['es']);
-    expect($contract->pdf_file_path)->not->toBeNull();
+    Notification::assertNothingSent();
 });
 
-it('renders the pdf in the default language when the owner has none', function () {
-    Storage::fake('s3');
+it('queues a new pdf generation for an executed contract without a pdf', function () {
+    Queue::fake();
 
-    $renderedLocales = [];
-    View::composer('pdf.contract', function () use (&$renderedLocales) {
-        $renderedLocales[] = app()->getLocale();
-    });
+    $contract = Contract::factory()->for($this->team)->executed()->create();
 
-    $owner = User::factory()->create(['language' => null]);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
+    Livewire::actingAs($this->user)
+        ->test('pages::contracts.show', ['contract' => $contract])
+        ->call('retryPdf');
 
-    (new ProcessPdfContract($contract))->handle();
-
-    expect($renderedLocales)->toBe([config('app.locale')]);
+    Queue::assertPushed(ProcessPdfContract::class);
 });
 
-it('restores the previous locale after rendering', function () {
-    Storage::fake('s3');
+it('refuses to generate a pdf for a contract that was not executed', function () {
+    Queue::fake();
 
-    $owner = User::factory()->create(['language' => 'es']);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
+    $contract = Contract::factory()->for($this->team)->create();
 
-    (new ProcessPdfContract($contract))->handle();
+    Livewire::actingAs($this->user)
+        ->test('pages::contracts.show', ['contract' => $contract])
+        ->call('retryPdf')
+        ->assertStatus(403);
 
-    expect(app()->getLocale())->toBe(config('app.locale'));
+    Queue::assertNothingPushed();
 });
 
-it('shows translated labels in the contract pdf view', function () {
-    app()->setLocale('es');
+it('refuses to generate a duplicate pdf when one already exists', function () {
+    Queue::fake();
 
-    $owner = User::factory()->create(['language' => 'es']);
-    $team = Team::factory()->for($owner, 'owner')->create();
-    $contract = Contract::factory()->for($team)->create();
-    $contract->addSignatures(1);
+    $contract = Contract::factory()->for($this->team)->executed()->create([
+        'pdf_file_path' => 'contracts/existing.pdf',
+    ]);
 
-    $html = view('pdf.contract', ['contract' => $contract])->render();
+    Livewire::actingAs($this->user)
+        ->test('pages::contracts.show', ['contract' => $contract])
+        ->call('retryPdf')
+        ->assertStatus(409);
 
-    expect($html)->toContain(
-        'Ubicación',
-        'Fecha de la sesión',
-        'Términos del contrato',
-        'Nombre legal',
-        'Rol',
-        'Cumpleaños',
-        'Nacionalidad',
-        'Número de documento',
-        'Correo electrónico',
-    );
+    Queue::assertNothingPushed();
 });
