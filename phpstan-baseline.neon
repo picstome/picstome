@@ -139,12 +139,6 @@ parameters:
 			path: app/Console/Commands/ImportCustomerBirthdays.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Signature\:\:\$contract\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Console/Commands/ImportCustomerBirthdays.php
-
-		-
 			message: '#^Parameter \#1 \$value of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:limit\(\) expects int, string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -154,12 +148,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\Team\:\:\$galleries\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Console/Commands/SubscriptionsCleanupCommand.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
-			identifier: property.notFound
-			count: 2
 			path: app/Console/Commands/SubscriptionsCleanupCommand.php
 
 		-
@@ -361,12 +349,6 @@ parameters:
 			path: app/Listeners/ScheduledTaskEventSubscriber.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Listeners/StripeEventListener.php
-
-		-
 			message: '#^Trait App\\Livewire\\Concerns\\HandlesPricingPage is used zero times and is not analysed\.$#'
 			identifier: trait.unused
 			count: 1
@@ -535,7 +517,7 @@ parameters:
 			path: app/Models/Contract.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_path\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Models/Contract.php
@@ -575,12 +557,6 @@ parameters:
 			identifier: method.nonObject
 			count: 1
 			path: app/Models/ExternalAuthorization.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/FtpAccount.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner\.$#'
@@ -637,12 +613,6 @@ parameters:
 			path: app/Models/Gallery.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 12
-			path: app/Models/Gallery.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$currentVersion\.$#'
 			identifier: property.notFound
 			count: 1
@@ -650,6 +620,18 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_limit\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_path\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Models/Gallery.php
@@ -769,7 +751,7 @@ parameters:
 			path: app/Models/Photoshoot.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Signature\:\:\$contract\.$#'
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$storage_path\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Models/Signature.php
@@ -794,12 +776,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Team\:\:\$brand_watermark_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Team.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Models/Team.php
@@ -835,12 +811,6 @@ parameters:
 			path: app/Notifications/BookingCreated.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Notifications/BookingCreated.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$storage_limit\.$#'
 			identifier: property.notFound
 			count: 1
@@ -862,12 +832,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$pdf_file_url\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Notifications/ContractExecuted.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 2
 			path: app/Notifications/ContractExecuted.php
 
 		-
@@ -907,12 +871,6 @@ parameters:
 			path: app/Policies/BioLinkPolicy.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Policies/ContractPolicy.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
 			identifier: property.notFound
 			count: 3
@@ -937,22 +895,10 @@ parameters:
 			path: app/Policies/ContractTemplatePolicy.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Policies/CustomerPolicy.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Policies/CustomerPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Policies/GalleryPolicy.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
@@ -995,12 +941,6 @@ parameters:
 			identifier: property.notFound
 			count: 2
 			path: app/Policies/PhotoPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/PhotoshootPolicy.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
@@ -1255,12 +1195,6 @@ parameters:
 			path: app/Services/GalleryUnlockService.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/GalleryUploadService.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1513,12 +1447,6 @@ parameters:
 			path: app/Services/ScheduledTaskMonitorService.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/StripeAttributionMetadata.php
-
-		-
 			message: '#^Cannot call method toIso8601String\(\) on DateTimeInterface\|string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -1652,12 +1580,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
-			identifier: property.notFound
-			count: 1
-			path: routes/web.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
 			identifier: property.notFound
 			count: 1
 			path: routes/web.php

@@ -64,7 +64,7 @@ class ProcessPdfContract implements ShouldQueue
     {
         report($exception);
 
-        $contract = Contract::query()->find($this->contract->getKey());
+        $contract = Contract::query()->whereKey($this->contract->getKey())->first();
 
         $contract?->team->owner?->notify(new ContractPdfFailed($contract));
     }

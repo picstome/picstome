@@ -8,6 +8,7 @@ use Database\Factories\SignatureFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -36,7 +37,10 @@ class Signature extends Model
         });
     }
 
-    public function contract()
+    /**
+     * @return BelongsTo<Contract, $this>
+     */
+    public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
     }
