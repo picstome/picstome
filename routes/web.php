@@ -8,6 +8,7 @@ use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\SharedGalleryDownloadController;
+use App\Http\Controllers\SignatureImageController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\NoIndex;
@@ -176,6 +177,10 @@ Route::livewire('/photoshoots', 'pages::photoshoots')->name('photoshoots')->midd
 Route::livewire('/photoshoots/{photoshoot}', 'pages::photoshoots.show')->name('photoshoots.show')->middleware(['auth', 'verified']);
 
 Route::livewire('/signatures/{signature:ulid}/sign', 'pages::signatures.sign')->name('signatures.sign');
+
+Route::get('/signatures/{signature:ulid}/image', SignatureImageController::class)
+    ->name('signatures.image')
+    ->middleware(['auth', 'verified']);
 
 Route::livewire('/settings/appearance', 'pages::settings.appearance')->name('settings.appearance')->middleware('auth');
 

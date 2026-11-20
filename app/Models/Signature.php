@@ -70,12 +70,16 @@ class Signature extends Model
         ]);
     }
 
+    /**
+     * Authorised route that streams the stored signature bytes.
+     *
+     * The storage URL used to be public, so anyone with the path could open
+     * the signature. Only the owning team can reach this route.
+     */
     protected function signatureImageUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->signature_image_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->signature_image_path)
-                    : null;
+            return $this->signature_image_path ? route('signatures.image', $this) : null;
         });
     }
 

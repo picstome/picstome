@@ -449,7 +449,7 @@ class Gallery extends Model
             'size' => $photoSize,
             'stored_size' => $photoSize,
             'path' => $this->storeUploadedPhoto($photo, $sourceName),
-            'disk' => 's3',
+            'disk' => $this->photoDisk(),
             'status' => 'pending',
             'version_count' => 1,
             'uploaded_at' => now(),
@@ -494,7 +494,7 @@ class Gallery extends Model
             'path' => $newPath,
             'thumb_path' => null,
             'raw_path' => null,
-            'disk' => 's3',
+            'disk' => $this->photoDisk(),
             'status' => 'pending',
             'current_version_id' => null,
             'uploaded_at' => now(),
@@ -539,7 +539,7 @@ class Gallery extends Model
                 'path' => $newPath,
                 'thumb_path' => null,
                 'raw_path' => null,
-                'disk' => 's3',
+                'disk' => $this->photoDisk(),
                 'status' => 'pending',
                 'uploaded_at' => now(),
             ]);
@@ -553,7 +553,7 @@ class Gallery extends Model
                     'stored_hash' => null,
                     'path' => $newPath,
                     'raw_path' => null,
-                    'disk' => 's3',
+                    'disk' => $this->photoDisk(),
                     'status' => 'pending',
                     'uploaded_at' => now(),
                 ]);
@@ -599,14 +599,31 @@ class Gallery extends Model
     }
 
     /**
+     * Disk the photos of this gallery are stored on.
+     *
+     * The gallery carries no disk column: the application-wide storage disk
+     * decides where uploads land and every photo row records it.
+     */
+    protected function photoDisk(): string
+    {
+        return (string) config('picstome.disk', 's3');
+    }
+
+    /**
      * Whether the Livewire temporary file itself lives on an S3 disk.
      *
      * The configured Livewire temp disk may differ from the actual file's disk
      * (for example in tests), so inspect the instance instead of the global
-     * config. `move()` only works when both sides are the same S3 disk.
+     * config. `move()` only works when both sides are the same S3 disk, so the
+     * photo disk has to be S3 as well: a local photo disk must stream the
+     * bytes up instead of moving the object in place.
      */
     protected function temporaryUploadLivesOnS3(TemporaryUploadedFile $photo): bool
     {
+        if ($this->photoDisk() !== 's3') {
+            return false;
+        }
+
         $disk = (function (): ?string {
             return is_string($this->disk) ? $this->disk : null;
         })->call($photo);
@@ -623,7 +640,7 @@ class Gallery extends Model
         // can be moved within S3. Regular HTTP uploads use a local PHP temp
         // file even when Livewire's temp disk is configured as S3.
         if ($photo instanceof TemporaryUploadedFile && $this->temporaryUploadLivesOnS3($photo)) {
-            $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
+            $moved = Storage::disk($this->photoDisk())->move($photo->getRealPath(), $path);
 
             if (! $moved) {
                 throw new \RuntimeException('Could not replace the current photo in storage.');
@@ -634,7 +651,7 @@ class Gallery extends Model
             return $path;
         }
 
-        $stored = Storage::disk('s3')->putFileAs(
+        $stored = Storage::disk($this->photoDisk())->putFileAs(
             path: dirname($path),
             file: $photo,
             name: basename($path),
@@ -657,8 +674,8 @@ class Gallery extends Model
     protected function verifyStoredPhoto(string $path, int $sourceSize): void
     {
         try {
-            $exists = Storage::disk('s3')->exists($path);
-            $storedSize = $exists ? (int) Storage::disk('s3')->size($path) : 0;
+            $exists = Storage::disk($this->photoDisk())->exists($path);
+            $storedSize = $exists ? (int) Storage::disk($this->photoDisk())->size($path) : 0;
         } catch (Throwable $exception) {
             throw new \RuntimeException(
                 'Could not verify the uploaded photo in S3.',
@@ -690,7 +707,7 @@ class Gallery extends Model
             // Laravel's move() returns false when the S3 transfer fails instead
             // of throwing. Without this check the database would point at a
             // missing object and ProcessPhoto would fail much later.
-            $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
+            $moved = Storage::disk($this->photoDisk())->move($photo->getRealPath(), $path);
 
             if (! $moved) {
                 throw new \RuntimeException('Could not store the uploaded photo in S3.');
@@ -701,7 +718,7 @@ class Gallery extends Model
             return $path;
         }
 
-        $stored = $photo->store(path: $this->storage_path, options: ['disk' => 's3']);
+        $stored = $photo->store(path: $this->storage_path, options: ['disk' => $this->photoDisk()]);
 
         if (! is_string($stored) || $stored === '') {
             throw new \RuntimeException('Could not store the uploaded photo.');
@@ -801,7 +818,7 @@ class Gallery extends Model
             'path' => $path,
             'thumb_path' => null,
             'raw_path' => null,
-            'disk' => config('picstome.disk', 's3'),
+            'disk' => $this->photoDisk(),
             'status' => 'pending',
             'version_count' => 1,
             'uploaded_at' => now(),
@@ -833,7 +850,7 @@ class Gallery extends Model
             'path' => $path,
             'thumb_path' => null,
             'raw_path' => null,
-            'disk' => config('picstome.disk', 's3'),
+            'disk' => $this->photoDisk(),
             'status' => 'pending',
             'current_version_id' => null,
             'uploaded_at' => now(),
