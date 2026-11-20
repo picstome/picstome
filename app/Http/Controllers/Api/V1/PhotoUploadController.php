@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\UploadPhotoRequest;
 use App\Models\Gallery;
 use App\Models\Photo as GalleryPhoto;
 use App\Services\ExternalGalleryRevisionService;
+use App\Support\UploadContent;
 use App\Traits\Concerns\FindsAuthorizedGallery;
 use App\Traits\Concerns\RespondsWithApiErrors;
 use Illuminate\Http\JsonResponse;
@@ -68,6 +69,10 @@ class PhotoUploadController extends Controller
 
         if ($this->isRasterImage($filename) && ($width === null || $height === null)) {
             return $this->apiError('invalid_image', __('The uploaded file is not a readable image.'), 422);
+        }
+
+        if (UploadContent::isVideo($filename) && ! UploadContent::isReadableVideo($file)) {
+            return $this->apiError('invalid_video', __('The uploaded file is not a readable video.'), 422);
         }
 
         $upload = new UploadedFile(

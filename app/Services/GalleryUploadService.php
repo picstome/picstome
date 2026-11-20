@@ -7,6 +7,7 @@ use App\Exceptions\GalleryUploadException;
 use App\Exceptions\StorageQuotaExceededException;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Support\UploadContent;
 use Illuminate\Http\UploadedFile;
 
 /**
@@ -158,6 +159,20 @@ class GalleryUploadService
             throw new GalleryUploadException(
                 GalleryUploadException::INVALID_PDF,
                 __('This file is not a valid PDF.'),
+            );
+        }
+
+        if (in_array($extension, UploadContent::IMAGE_EXTENSIONS, true) && ! UploadContent::isReadableImage($file)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::INVALID_IMAGE,
+                __('This file is not a readable image.'),
+            );
+        }
+
+        if (in_array($extension, UploadContent::VIDEO_EXTENSIONS, true) && ! UploadContent::isReadableVideo($file)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::INVALID_VIDEO,
+                __('This file is not a readable video.'),
             );
         }
 

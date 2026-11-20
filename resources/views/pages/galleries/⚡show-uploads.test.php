@@ -7,13 +7,10 @@ use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoComment;
-use App\Models\Photoshoot;
 use App\Models\PhotoVersion;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -21,8 +18,6 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
 use Livewire\Livewire;
 
-use function Pest\Laravel\actingAs;
-use function Pest\Laravel\get;
 use function Pest\Laravel\withoutDefer;
 
 uses(RefreshDatabase::class);
@@ -160,14 +155,54 @@ describe('Photo Upload', function () {
 
         $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
 
+        // The extension alone is not trusted any more: image and video bytes
+        // are inspected, so each format is faked with a readable header.
+        $file = match ($extension) {
+            'jpg', 'jpeg', 'png', 'tiff' => UploadedFile::fake()->image("photo.{$extension}"),
+            'mp4' => UploadedFile::fake()->createWithContent('photo.mp4', "\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00"),
+            'webm' => UploadedFile::fake()->createWithContent('photo.webm', "\x1A\x45\xDF\xA3\x01\x00\x00\x00"),
+            'ogg' => UploadedFile::fake()->createWithContent('photo.ogg', 'OggS\x00\x02'),
+            default => UploadedFile::fake()->create("photo.{$extension}", 100),
+        };
+
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', UploadedFile::fake()->create("photo.{$extension}", 100))
+            ->set('photos.0', $file)
             ->call('save', 0);
 
         $component->assertHasNoErrors();
         expect($gallery->fresh()->photos()->count())->toBe(1);
         expect($gallery->fresh()->photos[0]->name)->toBe("photo.{$extension}");
     })->with(['jpg', 'jpeg', 'png', 'tiff', 'mp4', 'webm', 'ogg', 'cr2', 'cr3', 'nef', 'arw', 'dng', 'orf', 'rw2', 'pef', 'srw', 'mos', 'mrw', '3fr']);
+
+    it('rejects an image whose bytes are not an image', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->createWithContent('photo.jpg', '<html>not an image</html>'))
+            ->call('save', 0);
+
+        $component->assertHasErrors(['photos.0' => 'This file is not a readable image.']);
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+    });
+
+    it('rejects a video whose bytes are not a video', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => '1243ABC']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->createWithContent('video.mp4', 'this is not a video container'))
+            ->call('save', 0);
+
+        $component->assertHasErrors(['photos.0' => 'This file is not a readable video.']);
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+    });
 
     it('keeps the upload extension allowlist equal to the advertised formats plus pdf', function () {
         expect(config('picstome.upload_extensions'))->toBe([
@@ -480,4 +515,3 @@ it('returns upload statuses only for photos in the current gallery', function ()
     expect($component->call('uploadStatuses', [$photo->id, $other->id])->effects['returns'][0])
         ->toBe([$photo->id => 'warming']);
 });
-

@@ -116,6 +116,25 @@ it('rejects unsupported file extensions', function () {
     expect($gallery->photos()->count())->toBe(0);
 });
 
+it('rejects a video whose bytes are not a video', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'broken.mp4',
+        'file' => UploadedFile::fake()->createWithContent('broken.mp4', 'this is not a video container'),
+    ], ['Accept' => 'application/json'])
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'invalid_video');
+
+    expect($gallery->photos()->count())->toBe(0);
+});
+
 it('rejects a file that is not a readable image before storing it', function () {
     Storage::fake('s3');
 

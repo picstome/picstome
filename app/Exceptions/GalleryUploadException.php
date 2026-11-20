@@ -19,6 +19,10 @@ class GalleryUploadException extends RuntimeException
 
     public const INVALID_PDF = 'invalid_pdf';
 
+    public const INVALID_IMAGE = 'invalid_image';
+
+    public const INVALID_VIDEO = 'invalid_video';
+
     public const VERSIONS_DISABLED = 'versions_disabled';
 
     public const STORAGE_QUOTA = 'storage_quota';
