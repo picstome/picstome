@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -358,6 +359,20 @@ class Gallery extends Model
         }
     }
 
+    /**
+     * Photos a download may contain: processed (or skipped) and never archived.
+     *
+     * The archive builder already applies these filters; the legacy streamed
+     * ZIP used to iterate every row, so a client with the link could receive
+     * photos the photographer had archived or had not finished processing.
+     */
+    public function downloadablePhotos(bool $favorites = false): Builder|HasMany
+    {
+        $photos = $favorites ? $this->favorites() : $this->photos();
+
+        return $photos->ready()->notArchived();
+    }
+
     public function download($favorites = false)
     {
         $zipName = Str::of($this->name)->slug()->append('.zip');
@@ -367,7 +382,7 @@ class Gallery extends Model
             'Content-Type' => 'application/octet-stream',
         ];
 
-        $photos = $favorites ? $this->favorites() : $this->photos();
+        $photos = $this->downloadablePhotos($favorites);
 
         set_time_limit(1200); // 20 minutes
 
@@ -379,31 +394,33 @@ class Gallery extends Model
         $zip = new ZipStream(outputName: $zipName);
 
         $photos->each(function ($photo) use ($zip) {
+            $disk = $photo->diskOrDefault();
+
             if ($photo->raw_path) {
                 $pathInfo = pathinfo($photo->name);
                 $jpgFilename = $pathInfo['filename'].'.jpg';
 
-                $jpgStream = Storage::disk($photo->disk)->readStream($photo->path);
-                $zip->addFileFromStream($jpgFilename, $jpgStream);
+                $jpgStream = Storage::disk($disk)->readStream($photo->path);
 
                 if (is_resource($jpgStream)) {
+                    $zip->addFileFromStream($jpgFilename, $jpgStream);
                     fclose($jpgStream);
                 }
 
-                $rawStream = Storage::disk($photo->disk)->readStream($photo->raw_path);
-                $zip->addFileFromStream($photo->name, $rawStream);
+                $rawStream = Storage::disk($disk)->readStream($photo->raw_path);
 
                 if (is_resource($rawStream)) {
+                    $zip->addFileFromStream($photo->name, $rawStream);
                     fclose($rawStream);
                 }
 
                 return;
             }
 
-            $stream = Storage::disk($photo->disk)->readStream($photo->path);
-            $zip->addFileFromStream($photo->name, $stream);
+            $stream = Storage::disk($disk)->readStream($photo->path);
 
             if (is_resource($stream)) {
+                $zip->addFileFromStream($photo->name, $stream);
                 fclose($stream);
             }
         });
