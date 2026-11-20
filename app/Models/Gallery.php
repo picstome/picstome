@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 use ZipStream\ZipStream;
@@ -581,6 +581,23 @@ class Gallery extends Model
             === strtolower(pathinfo($sourceName, PATHINFO_EXTENSION));
     }
 
+    /**
+     * Whether the Livewire temporary file itself lives on an S3 disk.
+     *
+     * The configured Livewire temp disk may differ from the actual file's disk
+     * (for example in tests), so inspect the instance instead of the global
+     * config. `move()` only works when both sides are the same S3 disk.
+     */
+    protected function temporaryUploadLivesOnS3(TemporaryUploadedFile $photo): bool
+    {
+        $disk = (function (): ?string {
+            return is_string($this->disk) ? $this->disk : null;
+        })->call($photo);
+
+        return $disk !== null
+            && config("filesystems.disks.{$disk}.driver") === 's3';
+    }
+
     protected function replaceStoredPhoto(UploadedFile $photo, string $path): string
     {
         $sourceSize = (int) @filesize($photo->getRealPath());
@@ -588,7 +605,7 @@ class Gallery extends Model
         // Only Livewire temporary files that already live on the S3 temp disk
         // can be moved within S3. Regular HTTP uploads use a local PHP temp
         // file even when Livewire's temp disk is configured as S3.
-        if ($photo instanceof TemporaryUploadedFile && FileUploadConfiguration::isUsingS3()) {
+        if ($photo instanceof TemporaryUploadedFile && $this->temporaryUploadLivesOnS3($photo)) {
             $moved = Storage::disk('s3')->move($photo->getRealPath(), $path);
 
             if (! $moved) {
@@ -650,7 +667,7 @@ class Gallery extends Model
         // can be moved within S3. Regular HTTP uploads (the background upload
         // endpoint and the external API) use a local PHP temp file, which must
         // be uploaded normally even when the Livewire temp disk is S3.
-        if ($photo instanceof TemporaryUploadedFile && FileUploadConfiguration::isUsingS3()) {
+        if ($photo instanceof TemporaryUploadedFile && $this->temporaryUploadLivesOnS3($photo)) {
             $path = $this->storage_path.'/'.Str::ulid().'-'.$sourceName;
 
             // Laravel's move() returns false when the S3 transfer fails instead

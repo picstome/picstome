@@ -110,6 +110,12 @@ it('can save a bio description', function () {
     expect($this->team->fresh()->bio)->toBe('This is my bio description');
 });
 
+it('strips scripts from the public bio', function () {
+    $this->team->update(['bio' => '<p>Hola</p><script>alert(1)</script>']);
+
+    expect($this->team->fresh()->bio)->toBe('<p>Hola</p>');
+});
+
 it('validates bio description maximum length', function () {
     $longBio = str_repeat('a', 1001);
 

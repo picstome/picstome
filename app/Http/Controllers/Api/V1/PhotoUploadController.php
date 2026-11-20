@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\MediaType;
 use App\Events\PhotoAdded;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\UploadPhotoRequest;
 use App\Models\Gallery;

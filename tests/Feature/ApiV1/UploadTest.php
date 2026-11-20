@@ -60,6 +60,25 @@ it('uploads a photo, recomputes its hash and moves the revision', function () {
         ->and($response->json('rev'))->toBe($after);
 });
 
+it('returns the storage quota error when the team is out of space', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $user->currentTeam->update(['custom_storage_limit' => 1]);
+
+    $gallery = Gallery::factory()->for($user->currentTeam)->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'quota.jpg',
+        'file' => UploadedFile::fake()->image('quota.jpg', 10, 20),
+    ], ['Accept' => 'application/json'])
+        ->assertStatus(413)
+        ->assertJsonPath('code', 'storage_quota_exceeded');
+});
+
 it('denies uploading to another team gallery', function () {
     Storage::fake('s3');
 

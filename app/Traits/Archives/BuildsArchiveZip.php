@@ -2,12 +2,14 @@
 
 namespace App\Traits\Archives;
 
+use App\Jobs\DeleteGalleryArchive;
 use App\Models\Gallery;
 use App\Models\GalleryArchive;
 use App\Models\Photo;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use League\Flysystem\AwsS3V3\AwsS3V3Adapter;
 use Throwable;
 use ZipStream\CompressionMethod;

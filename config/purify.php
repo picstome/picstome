@@ -1,7 +1,7 @@
 <?php
 
 use Stevebauman\Purify\Cache\CacheDefinitionCache;
-use Stevebauman\Purify\Definitions\TrixDefinition;
+use Stevebauman\Purify\Definitions\Html5Definition;
 
 return [
 
@@ -70,7 +70,7 @@ return [
     |
     */
 
-    'definitions' => TrixDefinition::class,
+    'definitions' => Html5Definition::class,
 
     /*
     |--------------------------------------------------------------------------

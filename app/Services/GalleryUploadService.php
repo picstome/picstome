@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\PhotoAdded;
 use App\Exceptions\GalleryUploadException;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\Http\UploadedFile;
