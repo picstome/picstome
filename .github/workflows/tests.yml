@@ -90,6 +90,115 @@ jobs:
           --default-time-limit=60
           --shard=${{ matrix.shard }}/4
 
+  static:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    environment: Testing
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+          ini-values: opcache.enable_cli=1
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy Environment File
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Run PHPStan
+        run: composer analyse
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    environment: Testing
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: pcov
+          ini-values: opcache.enable_cli=1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy Environment File
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Build Assets
+        run: npm run build
+
+      # Report-only for now. Once the baseline is known, add
+      # `--min=<percentage>` to turn this into a gate. Sequential on purpose:
+      # coverage collection across parallel workers is fragile.
+      - name: Run Coverage
+        run: >-
+          php vendor/bin/pest
+          --compact
+          --exclude-group=browser
+          --default-time-limit=120
+          --coverage
+          --coverage-clover=coverage.xml
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: ignore
+
   browser:
     name: Browser ${{ matrix.name }}
     runs-on: ubuntu-latest

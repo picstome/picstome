@@ -121,6 +121,15 @@ legacy migrations that are not fully reversible.
   or `./vendor/bin/pest --compact --filter=testName` for a single test.
 - `composer test:profile` prints the ten slowest unit tests, which is the
   starting point before optimising a slow area.
+- `composer analyse` runs Larastan/PHPStan. Existing findings live in
+  `phpstan-baseline.neon`; new code must not add errors. Regenerate the
+  baseline with
+  `vendor/bin/phpstan analyse --generate-baseline=phpstan-baseline.neon --memory-limit=1G`
+  only when deliberately accepting existing findings.
+- `composer coverage` writes `coverage.xml` (requires PCOV or Xdebug). CI also
+  runs a coverage job and uploads the report.
+- `composer preflight` runs Pint, caches, the frontend build, migration status,
+  PHPStan and the full suite in one command.
 - Feature tests cover the happy path, permissions and failure cases.
 - UI changes require a browser test where practical. Browser tests are tagged
   `->group('browser')` so `composer test:feature` can skip them while iterating

@@ -1,0 +1,22 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    level: 5
+
+    excludePaths:
+        - bootstrap/cache
+        - storage
+        - vendor
+        # Stale config for an optional local translation tool that is not
+        # installed in this project.
+        - config/translator.php
+
+    treatPhpDocTypesAsCertain: false

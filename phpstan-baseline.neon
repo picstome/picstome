@@ -1,0 +1,1669 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method League\\Flysystem\\StorageAttributes\:\:fileSize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Console/Commands/CleanupFtpInboxCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$versions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/CollapsePhotoVersionsCommand.php
+
+		-
+			message: '#^Relation ''versions'' is not found in App\\Models\\Photo model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Console/Commands/CollapsePhotoVersionsCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/DedupeCustomersCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$photoshoots_count\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Console/Commands/DedupeCustomersCommand.php
+
+		-
+			message: '#^Method App\\Console\\Commands\\DedupeCustomersCommand\:\:duplicateGroups\(\) should return Illuminate\\Support\\Collection\<int, Illuminate\\Support\\Collection\<int, App\\Models\\Customer\>\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Customer\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Console/Commands/DedupeCustomersCommand.php
+
+		-
+			message: '#^Relation ''photoshoots'' is not found in App\\Models\\Customer model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/DedupeCustomersCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Console/Commands/DedupeCustomersCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$full_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Invoice\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,App\\Models\\Invoice\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>full_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Console/Commands/DeleteInvoiceCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Console/Commands/GeneratePhotoThumbnailsCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$photo_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/GeneratePhotoThumbnailsCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$raw_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/GeneratePhotoThumbnailsCommand.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$thumb_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/GeneratePhotoThumbnailsCommand.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:diskOrDefault\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Console/Commands/GeneratePhotoThumbnailsCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ImportCustomerBirthdays.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Signature\:\:\$contract\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ImportCustomerBirthdays.php
+
+		-
+			message: '#^Parameter \#1 \$value of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:limit\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Console/Commands/ResendVerifyEmailCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$galleries\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/SubscriptionsCleanupCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Console/Commands/SubscriptionsCleanupCommand.php
+
+		-
+			message: '#^Cannot call method equalTo\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Console/Commands/SyncSubscriptionBillingIntervalsCommand.php
+
+		-
+			message: '#^Cannot call method toDateString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Console/Commands/SyncSubscriptionBillingIntervalsCommand.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$photos\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/UpdatePhotoSizes.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Support\\HigherOrderCollectionProxy\<string, App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Gallery\>\>\:\:\$photos\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/UpdatePhotoSizes.php
+
+		-
+			message: '#^Relation ''photos'' is not found in App\\Models\\Gallery model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Console/Commands/UpdatePhotoSizes.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/V1/GalleryIndexController.php
+
+		-
+			message: '#^Relation ''photos'' is not found in App\\Models\\Gallery model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/V1/ManifestController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/V1/TokenExchangeController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:createToken\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Api/V1/TokenExchangeController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$pdf_file_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/InvoicePdfController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\EmailVerificationService\:\:markVerified\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/MagicLoginController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Illuminate\\Support\\Facades\\Auth\:\:login\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/MagicLoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$pdf_file_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PublicInvoicePdfController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/SharedGalleryDownloadController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/EnsureUserIsAdmin.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$share_password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/PasswordProtectGallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Middleware/RedirectToCanonicalSharedGallerySlug.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\Api\\V1\\ManifestResource\:\:\$photos\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/Api/V1/ManifestResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\Api\\V1\\PhotoResource\:\:\$url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/Api/V1/PhotoResource.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Resources/Api/V1/PhotoResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Jobs/BuildGalleryArchive.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/IngestFtpUpload.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:canStoreFile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Jobs/IngestFtpUpload.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$signatures\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/NotifyContractExecuted.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>raw_path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>size" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>thumb_path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/ProcessPhoto.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/NotifyStorageAlmostFull.php
+
+		-
+			message: '#^Cannot call method diffInMilliseconds\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Listeners/ScheduledTaskEventSubscriber.php
+
+		-
+			message: '#^Method App\\Listeners\\ScheduledTaskEventSubscriber\:\:timezone\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Listeners/ScheduledTaskEventSubscriber.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/StripeEventListener.php
+
+		-
+			message: '#^Trait App\\Livewire\\Concerns\\HandlesPricingPage is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Livewire/Concerns/HandlesPricingPage.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/BioLinkForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/ContractForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ContractTemplate\:\:\$formatted_markdown_body\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/ContractTemplateForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Forms/ContractTemplateForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Forms/ContractTemplateForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/CustomerForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Livewire/Forms/CustomerForm.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/Forms/CustomerForm.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Livewire/Forms/CustomerForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Forms/GalleryForm.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/Forms/GalleryForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$invoiceSetting\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/InvoiceForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/InvoiceForm.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$invoice_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/InvoiceForm.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Livewire/Forms/InvoiceForm.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>currency" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Livewire/Forms/InvoiceForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/InvoiceSettingsForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Forms/PaymentLinkForm.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Livewire/Forms/PaymentLinkForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$customer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/PhotoshootForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/PhotoshootForm.php
+
+		-
+			message: '#^Cannot call method isoFormat\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/Forms/PhotoshootForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$share_password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/ShareGalleryForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$brand_watermark_size\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/WatermarkForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$brand_watermark_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Forms/WatermarkForm.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:bioLinks\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/BioLink.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Contract.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Contract.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Contract.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getDriverName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Customer.php
+
+		-
+			message: '#^Cannot call method copy\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Customer.php
+
+		-
+			message: '#^Cannot call method diffInYears\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Customer.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Customer.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/ExternalAuthorization.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Anonymous function should return App\\Models\\Gallery but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:galleries\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Method App\\Models\\FtpAccount\:\:provisionForTeam\(\) should return static\(App\\Models\\FtpAccount\)\|null but returns App\\Models\\FtpAccount\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Parameter \#1 \$team of static method App\\Models\\FtpAccount\:\:dailyGalleryFor\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Parameter \#1 \$team of static method App\\Models\\FtpAccount\:\:emptyDailyGalleryFor\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Parameter \#1 \$team of static method App\\Models\\FtpAccount\:\:shootNameFor\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/FtpAccount.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$photos\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 12
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$currentVersion\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:images\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Cannot call method copy\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Cannot call method gt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Class Illuminate\\Database\\Eloquent\\Casts\\Attribute is not an Attribute class\.$#'
+			identifier: attribute.notAttribute
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Relation ''photo'' is not found in App\\Models\\PhotoComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/GalleryArchive.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Invoice.php
+
+		-
+			message: '#^Method App\\Models\\Invoice\:\:recordEvent\(\) should return App\\Models\\InvoiceEvent but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Invoice.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:sum\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model\)\: \(float\|int\)\)\|string\|null, Closure\(App\\Models\\Payment\)\: \(float\|int\) given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Invoice.php
+
+		-
+			message: '#^Property App\\Models\\InvoiceSetting\:\:\$invoice_sequence_state \(string\|null\) does not accept array\<string, array\<int, array\<string, int\|string\|null\>\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/InvoiceSetting.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/MagicLoginToken.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 11
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$versions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Relation ''versions'' is not found in App\\Models\\Photo model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>version_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Photo.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:images\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Photoshoot.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/Photoshoot.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Signature\:\:\$contract\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Signature.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Signature\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Signature.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Models/Signature.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$brand_watermark_image_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Team.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$brand_watermark_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Team.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Team.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_limit\.$#'
+			identifier: property.notFound
+			count: 11
+			path: app/Models/Team.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Models/Team.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$ownedTeams\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$formattedAmount\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/BookingCreated.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/BookingCreated.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$storage_limit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/CameraUploadsPaused.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:calculateStorageUsed\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Notifications/CameraUploadsPaused.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:storageUpgradeUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Notifications/CameraUploadsPaused.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$pdf_file_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/ContractExecuted.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/ContractExecuted.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/GalleryArchiveFailed.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Notifications/GalleryArchiveReady.php
+
+		-
+			message: '#^Cannot call method toFormattedDateString\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Notifications/GalleryExpirationReminder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/GuestPhotoCommented.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/BioLinkPolicy.php
+
+		-
+			message: '#^Parameter \#2 \$team of method App\\Policies\\BioLinkPolicy\:\:belongsToCurrentTeam\(\) expects App\\Models\\Team\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Policies/BioLinkPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Contract\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/ContractPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/ContractPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ContractTemplate\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/ContractTemplatePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/ContractTemplatePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/ContractTemplatePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Policies/CustomerPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/CustomerPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/GalleryPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/GalleryPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Policies/InvoicePolicy.php
+
+		-
+			message: '#^Parameter \#1 \$team of method App\\Services\\InvoicePlanLimitService\:\:canIssue\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Policies/InvoicePolicy.php
+
+		-
+			message: '#^Parameter \#2 \$team of method App\\Policies\\InvoicePolicy\:\:belongsToCurrentTeam\(\) expects App\\Models\\Team\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 7
+			path: app/Policies/InvoicePolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/PaymentPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/PhotoPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/PhotoPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/PhotoshootPolicy.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Policies/PhotoshootPolicy.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$hasUnlimitedStorage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AccountSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_limit_gb\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AccountSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_used_gb\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AccountSummaryService.php
+
+		-
+			message: '#^Cannot call method copy\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/AccountSummaryService.php
+
+		-
+			message: '#^Method App\\Services\\AccountSummaryService\:\:forTeam\(\) should return array\{plan_label\: string, plan_name\: string\|null, interval_label\: string\|null, is_free\: bool, is_lifetime\: bool, renews_at\: Carbon\\Carbon\|null, renews_at_label\: string\|null, manage_url\: string, \.\.\.\} but returns array\{plan_label\: \(array\|string\), plan_name\: mixed, interval_label\: string\|null, is_free\: bool, is_lifetime\: bool, renews_at\: string\|null, renews_at_label\: array\|string\|null, manage_url\: string, \.\.\.\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/AccountSummaryService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$medium\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$paid\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$signups\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:active\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Relation ''gallery'' is not found in App\\Models\\Photo model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/AdminUsageStatsService.php
+
+		-
+			message: '#^Method App\\Services\\BlackFridayPromotion\:\:endsAtForDisplay\(\) should return Illuminate\\Support\\Carbon but returns Carbon\\Carbon\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/BlackFridayPromotion.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$schema_version\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CalculatorService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$has_unlimited_contracts\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ContractPlanLimitService.php
+
+		-
+			message: '#^Method App\\Services\\DiskSpaceService\:\:getFreeDiskSpace\(\) should return int\|null but returns float\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/DiskSpaceService.php
+
+		-
+			message: '#^Method App\\Services\\DiskSpaceService\:\:getTotalDiskSpace\(\) should return int\|null but returns float\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/DiskSpaceService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ulid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isImage\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isPdf\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isVideo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Cannot call method lt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Empty array passed to foreach\.$#'
+			identifier: foreach.emptyArray
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Method App\\Services\\GalleryArchiveService\:\:archiveEntries\(\) should return array\<int, array\{photo\: App\\Models\\Photo, type\: ''image''\|''pdf''\|''video'', name\: string\}\> but returns list\<array\{photo\: Illuminate\\Database\\Eloquent\\Model, type\: ''image''\|''pdf''\|''video'', name\: mixed\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int\<0, max\>, name\: string, path\: string, raw_path\: string\|null, disk\: string\|null, size\: int\<0, max\>, stored_size\: int\<0, max\>, status\: string, updated_at\: string\|null, favorited_at\?\: mixed\}, Closure\(App\\Models\\Photo\)\: array\{id\: int\<0, max\>, name\: string, path\: string, raw_path\: string\|null, disk\: string\|null, size\: int\<0, max\>, stored_size\: int\<0, max\>, status\: string, updated_at\: string\|null, favorited_at\?\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: int, Closure\(App\\Models\\Photo\)\: int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$gallery of method App\\Services\\GalleryArchiveService\:\:downloadBufferBytes\(\) expects App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$gallery of method App\\Services\\GalleryArchiveService\:\:estimate\(\) expects App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$gallery of method App\\Services\\GalleryArchiveService\:\:findOrCreate\(\) expects App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$gallery of method App\\Services\\GalleryArchiveService\:\:photosQuery\(\) expects App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$gallery of method App\\Services\\GalleryArchiveService\:\:photosQuery\(\) expects App\\Models\\Gallery, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$photo of method App\\Services\\GalleryArchiveService\:\:imageEntryName\(\) expects App\\Models\\Photo, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#1 \$photos of method App\\Services\\GalleryArchiveService\:\:estimatedSizeForPhotos\(\) expects iterable\<int, App\\Models\\Photo\>, Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Parameter \#2 \$photo of method App\\Services\\GalleryArchiveService\:\:addPhotoToZip\(\) expects App\\Models\\Photo, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryArchiveService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:ready\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/GalleryPhotoQuery.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$photoshoot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/GalleryUnlockService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$share_password\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/GalleryUnlockService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:filter\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: bool\)\|null, Closure\(App\\Models\\Gallery\)\: bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/GalleryUnlockService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/GalleryUploadService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceDuplicationService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:invoices\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/InvoiceDuplicationService.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/InvoiceDuplicationService.php
+
+		-
+			message: '#^Parameter \#1 \$customer of method App\\Services\\InvoiceService\:\:customerSnapshot\(\) expects App\\Models\\Customer\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/InvoiceDuplicationService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$fingerprint\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceFingerprintService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceFingerprintService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceFingerprintService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$series\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceFingerprintService.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/InvoiceFingerprintService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$invoice\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceFromPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/InvoiceFromPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:canStoreFile\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:isIssued\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Cannot access property \$year on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Parameter \#1 \$team of method App\\Services\\InvoicePlanLimitService\:\:canIssue\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Parameter \#2 \$original of method App\\Services\\InvoiceIssuanceService\:\:markOriginalAsRectified\(\) expects App\\Models\\Invoice\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/InvoiceIssuanceService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/InvoiceMailtoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceMailtoService.php
+
+		-
+			message: '#^Cannot call method format\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/InvoiceMailtoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceNumberingService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$pdf_file_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoicePdfService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoicePdfService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$brand_color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoicePdfService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$brand_logo_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoicePdfService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>language" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/InvoicePdfService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timezone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/InvoicePlanLimitService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Customer\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/InvoiceService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>cover_focal_x" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/PhotoUrlService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>cover_focal_y" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/PhotoUrlService.php
+
+		-
+			message: '#^Method App\\Services\\QueueMonitorService\:\:failedJobs\(\) should return Illuminate\\Support\\Collection\<int, array\{uuid\: string, class\: string, name\: string, queue\: string, connection\: string, exception\: string, exception_summary\: string, failed_at\: Carbon\\CarbonInterface, \.\.\.\}\> but returns Illuminate\\Support\\Collection\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/QueueMonitorService.php
+
+		-
+			message: '#^Method App\\Services\\QueueMonitorService\:\:queueNames\(\) should return Illuminate\\Support\\Collection\<int, string\> but returns Illuminate\\Support\\Collection\<int, non\-falsy\-string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/QueueMonitorService.php
+
+		-
+			message: '#^Method App\\Services\\QueueMonitorService\:\:queuedJobs\(\) should return Illuminate\\Support\\Collection\<int, array\{id\: int, uuid\: string\|null, class\: string, name\: string, queue\: string, attempts\: int, max_tries\: mixed, timeout\: mixed, \.\.\.\}\> but returns Illuminate\\Support\\Collection\<int, array\<string, mixed\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/QueueMonitorService.php
+
+		-
+			message: '#^Method App\\Services\\RawPhotoService\:\:getExifOrientation\(\) should return int\|null but returns string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/RawPhotoService.php
+
+		-
+			message: '#^Access to an undefined property Stripe\\StripeObject\:\:\$end_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ScheduledPlanChangeService.php
+
+		-
+			message: '#^Access to an undefined property Stripe\\StripeObject\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ScheduledPlanChangeService.php
+
+		-
+			message: '#^Access to an undefined property Stripe\\StripeObject\:\:\$start_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ScheduledPlanChangeService.php
+
+		-
+			message: '#^Method App\\Services\\ScheduledPlanChangeService\:\:scheduledChange\(\) should return array\{date\: Carbon\\Carbon, tier\: string\|null, price\: string\|null\}\|null but returns array\{date\: non\-falsy\-string, tier\: string\|null, price\: string\|null\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ScheduledPlanChangeService.php
+
+		-
+			message: '#^Cannot call method lt\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/ScheduledTaskMonitorService.php
+
+		-
+			message: '#^Method App\\Services\\ScheduledTaskMonitorService\:\:tasks\(\) should return list\<array\{name\: string, command\: string, expression\: string, frequency\: string, next_run_at\: Carbon\\CarbonInterface\|null, last_status\: string, last_started_at\: Carbon\\CarbonInterface\|null, last_finished_at\: Carbon\\CarbonInterface\|null, \.\.\.\}\> but returns array\<int, array\{name\: string, command\: string, expression\: string, frequency\: string, next_run_at\: Carbon\\CarbonInterface\|null, last_status\: string, last_started_at\: string\|null, last_finished_at\: string\|null, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ScheduledTaskMonitorService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_status" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/ScheduledTaskMonitorService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Team\:\:\$owner\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/StripeAttributionMetadata.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on DateTimeInterface\|string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/StripeAttributionMetadata.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{float, float, float\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/SystemInfoService.php
+
+		-
+			message: '#^Trait App\\Traits\\Concerns\\ManagesPhotoViewer is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Concerns/ManagesPhotoViewer.php
+
+		-
+			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryPhotoWall is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Gallery/ManagesGalleryPhotoWall.php
+
+		-
+			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryPhotos is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Gallery/ManagesGalleryPhotos.php
+
+		-
+			message: '#^Trait App\\Traits\\Gallery\\ManagesGallerySharing is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Gallery/ManagesGallerySharing.php
+
+		-
+			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryUploads is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Gallery/ManagesGalleryUploads.php
+
+		-
+			message: '#^Trait App\\Traits\\InteractsWithTallStackModals is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/InteractsWithTallStackModals.php
+
+		-
+			message: '#^Trait App\\Traits\\Queue\\FormatsQueueMetrics is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Queue/FormatsQueueMetrics.php
+
+		-
+			message: '#^Trait App\\Traits\\Queue\\ManagesQueueActions is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Queue/ManagesQueueActions.php
+
+		-
+			message: '#^Trait App\\Traits\\Queue\\MonitorsQueueHealth is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/Queue/MonitorsQueueHealth.php
+
+		-
+			message: '#^Trait App\\Traits\\RevealsGalleryPhoto is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/RevealsGalleryPhoto.php
+
+		-
+			message: '#^Trait App\\Traits\\SummarizesGalleryTabs is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Traits/SummarizesGalleryTabs.php
+
+		-
+			message: '#^Call to an undefined method Faker\\Generator\:\:state\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: database/factories/InvoiceSettingFactory.php
+
+		-
+			message: '#^Method Database\\Factories\\TeamFactory\:\:withTextWatermark\(\) should return \$this\(Database\\Factories\\TeamFactory\) but returns static\(Database\\Factories\\TeamFactory\)\.$#'
+			identifier: return.type
+			count: 1
+			path: database/factories/TeamFactory.php
+
+		-
+			message: '#^Method Database\\Factories\\TeamFactory\:\:withWatermark\(\) should return \$this\(Database\\Factories\\TeamFactory\) but returns static\(Database\\Factories\\TeamFactory\)\.$#'
+			identifier: return.type
+			count: 1
+			path: database/factories/TeamFactory.php
+
+		-
+			message: '#^Parameter \#1 \$state of method Illuminate\\Database\\Eloquent\\Factories\\Factory\<App\\Models\\Team\>\:\:state\(\) expects array\<string, mixed\>\|\(callable\(array\<string, mixed\>, Illuminate\\Database\\Eloquent\\Model\|null\)\: array\<string, mixed\>\), Closure\(mixed, App\\Models\\User\)\: array\{name\: non\-falsy\-string, user_id\: int\<0, max\>, personal_team\: true\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: database/factories/UserFactory.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: database/seeders/DatabaseSeeder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 2
+			path: database/seeders/DevelTestDataSeeder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 2
+			path: database/seeders/DevelTestDataSeeder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$storage_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: database/seeders/ExternalDemoSeeder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 1
+			path: database/seeders/ExternalDemoSeeder.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: routes/web.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$team\.$#'
+			identifier: property.notFound
+			count: 1
+			path: routes/web.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			identifier: property.notFound
+			count: 3
+			path: routes/web.php
