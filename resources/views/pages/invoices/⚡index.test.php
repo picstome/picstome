@@ -122,7 +122,7 @@ it('shows the payment status of an issued invoice', function () {
         ->assertSee('Pagada');
 });
 
-it('shows the rectificative and issued tags without a payment status', function () {
+it('shows the payment status only on the corrective, not on the rectified invoice', function () {
     $this->team->update(['monthly_invoice_limit' => 10]);
 
     $original = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team));
@@ -141,7 +141,9 @@ it('shows the rectificative and issued tags without a payment status', function 
         ->test('pages::invoices')
         ->assertSee('Rectificativa')
         ->assertSee('Emitida')
-        ->assertDontSee('Pago pendiente');
+        ->assertSee('Rectificada')
+        ->assertSee('Pago pendiente')
+        ->assertDontSee('Pagada');
 });
 
 it('does not show the view action of an invoice of another team', function () {

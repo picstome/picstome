@@ -189,3 +189,22 @@ it('renders the reminders table without overflowing on mobile', function () {
             ->toBeTrue();
     }
 })->group('browser');
+
+it('lists the unpaid corrective invoice instead of the rectified one', function () {
+    $original = issuedInvoice($this->team, [
+        'status' => Invoice::STATUS_RECTIFIED,
+        'due_date' => now()->addDays(3)->toDateString(),
+    ]);
+
+    $corrective = issuedInvoice($this->team, [
+        'series' => 'R',
+        'due_date' => now()->addDays(3)->toDateString(),
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+    ]);
+
+    Livewire::actingAs($this->user)->test('pages::dashboard')
+        ->assertSee($corrective->full_number)
+        ->assertDontSee($original->full_number);
+});
