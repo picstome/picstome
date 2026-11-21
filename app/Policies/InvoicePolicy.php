@@ -75,12 +75,14 @@ class InvoicePolicy
 
     /**
      * Determine whether the user can change the internal paid status.
+     *
+     * Only the invoice in force carries a payment status: an issued invoice or
+     * an issued corrective. A rectified invoice was replaced by its corrective,
+     * so the payment is recorded on the corrective, never on both.
      */
     public function markAsPaid(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam)
-            && ! $invoice->isRectificative()
-            && in_array($invoice->status, [Invoice::STATUS_ISSUED, Invoice::STATUS_RECTIFIED], true);
+        return $invoice->team->is($user->currentTeam) && $invoice->isIssued();
     }
 
     /**

@@ -263,7 +263,7 @@ new class extends Component
                                             {{ $invoice->status_label }}
                                         </x-ts-badge>
 
-                                        @if (! $invoice->isDraft() && ! $invoice->isRectificative())
+                                        @if ($invoice->isIssued())
                                             <x-ts-badge
                                                 size="sm"
                                                 :color="$invoice->isPaid() ? 'lime' : 'yellow'"

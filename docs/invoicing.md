@@ -321,6 +321,14 @@ Otherwise it is displayed as payment pending. The manual flag can be undone,
 and every change is recorded in the audit trail as `marked_paid` or
 `marked_unpaid`.
 
+Only the invoice in force has a payment status: an issued invoice or an issued
+corrective. Rectifying an invoice does not mean the client paid the new amount,
+so the corrective starts as payment pending and the team marks it as paid when
+the money arrives. The rectified invoice cannot be marked as paid, and its
+payment status is no longer shown, so a payment is never recorded twice. A
+paid flag set before the invoice was rectified stays in the database (and in
+the audit trail), but it is neither shown nor counted in the revenue.
+
 ## Invoicing a client
 
 The client record has its own **Invoices** block, below the payments, with the
@@ -367,14 +375,9 @@ during the last 30 days, from both ways a photographer gets paid:
   is what the app records when the team marks an invoice as paid manually.
 
 An invoice settled by a linked payment is never counted twice: the payment is
-the money that actually entered the account. A draft is never counted.
-
-A rectified invoice is replaced by its corrective invoice, so it never counts
-with its own amount. When the team marked the original as paid and the
-corrective is not paid on its own, the paid original counts with the amount of
-the invoice in force (the last issued corrective of the chain), in the period
-the original was paid. When a corrective is marked as paid or settled by a
-payment, only the corrective counts.
+the money that actually entered the account. Rectified invoices are skipped,
+because their amount was replaced by the corrective invoice, which counts once
+it is marked as paid. A draft is never counted.
 
 Amounts are expressed in the currency of the team (`teams.stripe_currency`).
 Payments always use that currency. An invoice issued in another currency is

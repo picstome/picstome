@@ -119,72 +119,19 @@ it('ignores an invoice in another currency without an exchange rate', function (
     expect($this->revenue->lastDays($this->team, 30))->toBe(0.0);
 });
 
-/**
- * Issue a corrective invoice for the original and mark the original as rectified.
- */
-function correctiveInvoice(Team $team, Invoice $original, float $total, array $attributes = []): Invoice
-{
-    $corrective = draftInvoice($team, [
-        'total' => $total,
+it('does not count a paid invoice rectified afterwards until its corrective is marked as paid', function () {
+    $original = paidInvoice($this->team, 205.70);
+
+    $corrective = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team, [
+        'total' => 181.50,
         'rectifies_invoice_id' => $original->id,
         'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
         'rectification_reason' => 'Wrong amount',
-    ]);
-
-    $corrective->forceFill(['status' => Invoice::STATUS_ISSUED, ...$attributes])->saveQuietly();
-    $original->forceFill(['status' => Invoice::STATUS_RECTIFIED])->saveQuietly();
-
-    return $corrective;
-}
-
-it('counts a paid invoice rectified afterwards with the amount of its corrective', function () {
-    $original = paidInvoice($this->team, 205.70);
-
-    correctiveInvoice($this->team, $original, 181.50);
-
-    expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
-});
-
-it('does not count twice a rectified invoice when the corrective is paid too', function () {
-    $original = paidInvoice($this->team, 205.70);
-
-    correctiveInvoice($this->team, $original, 181.50, ['paid_at' => now()]);
-
-    expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
-});
-
-it('does not count a paid rectified invoice whose corrective is settled by a payment', function () {
-    $original = paidInvoice($this->team, 205.70);
-    $corrective = correctiveInvoice($this->team, $original, 181.50);
-
-    Payment::factory()->for($this->team)->create([
-        'invoice_id' => $corrective->id,
-        'amount' => 18150,
-        'completed_at' => now(),
-    ]);
-
-    expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
-});
-
-it('follows a chain of corrective invoices up to the one in force', function () {
-    $original = paidInvoice($this->team, 300);
-    $first = correctiveInvoice($this->team, $original, 250);
-
-    correctiveInvoice($this->team, $first, 200);
-
-    expect($this->revenue->lastDays($this->team, 30))->toBe(200.0);
-});
-
-it('ignores a paid rectified invoice when the corrective is still a draft', function () {
-    $original = paidInvoice($this->team, 300);
-
-    draftInvoice($this->team, [
-        'total' => 250,
-        'rectifies_invoice_id' => $original->id,
-        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
-        'rectification_reason' => 'Wrong amount',
-    ]);
-    $original->forceFill(['status' => Invoice::STATUS_RECTIFIED])->saveQuietly();
+    ]));
 
     expect($this->revenue->lastDays($this->team, 30))->toBe(0.0);
+
+    $corrective->update(['paid_at' => now()]);
+
+    expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
 });
