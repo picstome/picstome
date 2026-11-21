@@ -1,28 +1,11 @@
 <?php
 
-use App\Events\PhotoAdded;
-use App\Jobs\DeleteFromDisk;
-use App\Jobs\ProcessPhoto;
-use App\Models\FtpAccount;
 use App\Models\Gallery;
-use App\Models\Photo;
-use App\Models\PhotoComment;
-use App\Models\Photoshoot;
-use App\Models\PhotoVersion;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Subscription;
 use Livewire\Livewire;
 
-use function Pest\Laravel\actingAs;
-use function Pest\Laravel\get;
 use function Pest\Laravel\withoutDefer;
 
 uses(RefreshDatabase::class);

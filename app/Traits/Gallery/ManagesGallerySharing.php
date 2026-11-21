@@ -5,6 +5,7 @@ namespace App\Traits\Gallery;
 use App\Models\FtpAccount;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 
 /**
  * Gallery sharing, public visibility and camera (FTP) upload settings.

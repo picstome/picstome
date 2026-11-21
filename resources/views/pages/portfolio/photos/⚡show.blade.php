@@ -19,7 +19,8 @@ class extends Component
     public function mount(string $handle, Gallery $gallery, Photo $photo)
     {
         abort_unless($photo->gallery_id === $gallery->id, 404);
-        abort_unless($gallery->team?->handle === $handle, 404);
+        // Handles are stored lowercase; match the URL case-insensitively.
+        abort_unless(strcasecmp((string) $gallery->team?->handle, $handle) === 0, 404);
 
         abort_unless($photo->gallery->is_public, 404);
 

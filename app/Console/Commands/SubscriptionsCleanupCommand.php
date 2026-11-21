@@ -18,16 +18,15 @@ class SubscriptionsCleanupCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        // Notifications are harmless and must keep working even when the
-        // destructive part is skipped.
-        $this->notifyExpiringSoon();
-        $this->notifyExpired();
-
+        // A dry run only reports: it must not email customers either.
         if ($dryRun) {
-            $this->line('Dry run: expired data was not deleted.');
+            $this->line('Dry run: no notifications were sent and expired data was not deleted.');
 
             return self::SUCCESS;
         }
+
+        $this->notifyExpiringSoon();
+        $this->notifyExpired();
 
         if (! $force) {
             $this->warn('Skipped deleting expired data. Use --force to delete it.');

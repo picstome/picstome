@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\GalleryTab;
+use App\Services\GalleryPhotoQuery;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,7 +22,7 @@ use Illuminate\Support\Collection;
  */
 trait RevealsGalleryPhoto
 {
-    public const PHOTO_PAGE_SIZE = 60;
+    public const PHOTO_PAGE_SIZE = GalleryPhotoQuery::PAGE_SIZE;
 
     protected function revealRequestedPhoto(): void
     {

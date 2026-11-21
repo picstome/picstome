@@ -515,3 +515,19 @@ it('returns upload statuses only for photos in the current gallery', function ()
     expect($component->call('uploadStatuses', [$photo->id, $other->id])->effects['returns'][0])
         ->toBe([$photo->id => 'warming']);
 });
+
+it('refreshes the remaining storage when camera uploads are paused for quota', function () {
+    $this->team->update(['custom_storage_limit' => 1000]);
+    $gallery = Gallery::factory()->for($this->team)->create();
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::galleries.show', ['gallery' => $gallery]);
+
+    expect($component->get('remainingStorageBytes'))->toBe(1000);
+
+    $this->team->update(['custom_storage_limit' => 10]);
+
+    $component->dispatch('ftp-quota-paused');
+
+    expect($component->get('remainingStorageBytes'))->toBe(10);
+});

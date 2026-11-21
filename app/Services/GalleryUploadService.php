@@ -197,16 +197,6 @@ class GalleryUploadService
 
     protected function looksLikeAPdf(UploadedFile $file): bool
     {
-        $stream = @fopen($file->getRealPath(), 'rb');
-
-        if (! is_resource($stream)) {
-            return false;
-        }
-
-        try {
-            return fread($stream, 5) === '%PDF-';
-        } finally {
-            fclose($stream);
-        }
+        return UploadContent::headerBytes($file, 5) === '%PDF-';
     }
 }

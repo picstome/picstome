@@ -85,8 +85,7 @@ class InvoicePolicy
      */
     public function markAsPaid(User $user, Invoice $invoice): bool
     {
-        return $this->belongsToCurrentTeam($user, $invoice->team)
-            && $invoice->isIssued();
+        return $this->belongsToCurrentTeam($user, $invoice->team) && $invoice->isIssued();
     }
 
     /**

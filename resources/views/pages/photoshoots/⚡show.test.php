@@ -244,3 +244,18 @@ it('creates the draft invoice of a payment of the session', function () {
 
     $component->assertRedirect(route('invoices.create', ['invoice' => $invoice->ulid]));
 });
+
+it('keeps the contract signature counters after a request', function () {
+    $photoshoot = Photoshoot::factory()->for($this->team)->create();
+    $contract = Contract::factory()->for($this->team)->create(['photoshoot_id' => $photoshoot->id]);
+    $contract->addSignatures(2);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
+        ->call('$refresh');
+
+    $listed = $component->instance()->contracts->first();
+
+    expect($listed->signatures_count)->toBe(2)
+        ->and($listed->signed_signatures_count)->toBe(0);
+});

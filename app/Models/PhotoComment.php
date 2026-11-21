@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\PhotoCommentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 
 class PhotoComment extends Model
@@ -39,7 +40,10 @@ class PhotoComment extends Model
         });
     }
 
-    public function photo()
+    /**
+     * @return BelongsTo<Photo, $this>
+     */
+    public function photo(): BelongsTo
     {
         return $this->belongsTo(Photo::class);
     }

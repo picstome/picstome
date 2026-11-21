@@ -248,11 +248,14 @@ class GalleryArchiveService
         return $base.($variant === 'favorites' ? '-favorites' : '').'.zip';
     }
 
+    /**
+     * Archived photos are never shipped: the customer ZIP is exactly the
+     * selection the photographer wants them to see. The rule is shared with
+     * the legacy streamed download through `Gallery::downloadablePhotos()`.
+     */
     protected function photosQuery(Gallery $gallery, string $variant): HasMany
     {
-        // Archived photos are never shipped: the customer ZIP is exactly the
-        // selection the photographer wants them to see.
-        return ($variant === 'favorites' ? $gallery->favorites() : $gallery->photos())->ready()->notArchived();
+        return $gallery->downloadablePhotos($variant === 'favorites');
     }
 
     protected function normalizeVariant(string $variant): string

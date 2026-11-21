@@ -168,3 +168,24 @@ it('returns 404 for an unknown gallery', function () {
         ->assertNotFound()
         ->assertJsonPath('code', 'unknown_gallery');
 });
+
+it('accepts an mp4 whose first box is not ftyp', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    // QuickTime-style layout: a `wide` box before `mdat`.
+    $bytes = "\x00\x00\x00\x08wide".str_repeat("\x00", 64);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'clip.mp4',
+        'file' => UploadedFile::fake()->createWithContent('clip.mp4', $bytes),
+    ], ['Accept' => 'application/json'])
+        ->assertSuccessful();
+
+    expect($gallery->photos()->count())->toBe(1);
+});

@@ -6,6 +6,7 @@ use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use TallStackUi\Traits\Interactions;
 
@@ -24,13 +25,25 @@ new class extends Component
     {
         $this->authorize('view', $this->contract);
 
-        $this->contract->loadCount([
-            'signatures',
-            'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
-        ]);
-
         $this->photoshoots = Auth::user()?->currentTeam->photoshoots()->latest()->get();
         $this->photoshoot_id = $this->contract->photoshoot_id;
+    }
+
+    /**
+     * Signed and total signatures, queried once per render.
+     *
+     * Counts loaded in `mount()` do not survive Livewire hydration, and this
+     * page refreshes itself on window focus, so they are computed per request.
+     *
+     * @return array{signed: int, total: int}
+     */
+    #[Computed]
+    public function signatureCounts(): array
+    {
+        return [
+            'signed' => $this->contract->signatures()->signed()->count(),
+            'total' => $this->contract->signatures()->count(),
+        ];
     }
 
     public function execute()
@@ -53,9 +66,12 @@ new class extends Component
      * Request the PDF again when a previous generation attempt failed. The
      * contract is already executed, so this only re-runs the renderer.
      */
-    public function retryPdf()
+    public function retryPdf(): void
     {
         $this->authorize('execute', $this->contract);
+
+        // The first generation may have finished since the page was loaded.
+        $this->contract->refresh();
 
         abort_unless($this->contract->isExecuted(), 403);
         abort_if(filled($this->contract->pdf_file_path), 409);
@@ -121,7 +137,7 @@ new class extends Component
                         class="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500"
                     />
                     <span>
-                        {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
+                        {{ $this->signatureCounts['signed'] }}/{{ $this->signatureCounts['total'] }}
                         {{ __('signatures') }}
                     </span>
                 </span>
@@ -178,7 +194,7 @@ new class extends Component
 
             <x-description.term>{{ __('Signatures required') }}</x-description.term>
             <x-description.details>
-                {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
+                {{ $this->signatureCounts['signed'] }}/{{ $this->signatureCounts['total'] }}
             </x-description.details>
         </x-description.list>
     </div>

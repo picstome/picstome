@@ -72,3 +72,12 @@ it('rejects a photo served under another photographer handle', function () {
         'photo' => $photo,
     ])->assertStatus(404);
 });
+
+it('opens a portfolio photo when the handle in the url uses other casing', function () {
+    $this->team->update(['handle' => 'studio']);
+    $gallery = Gallery::factory()->public()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    get("/@Studio/portfolio/{$gallery->ulid}/photos/{$photo->id}")->assertOk();
+    get("/@other/portfolio/{$gallery->ulid}/photos/{$photo->id}")->assertNotFound();
+});

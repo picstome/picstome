@@ -3,6 +3,7 @@
 namespace App\Traits\Concerns;
 
 use App\Models\PhotoComment;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 
 /**
@@ -31,9 +32,9 @@ trait ManagesPhotoViewer
     }
 
     #[Computed]
-    public function comments()
+    public function comments(): Collection
     {
-        return $this->photo->comments()->latest()->with('user')->limit(200)->get();
+        return $this->photo->comments()->latest()->with('user')->get();
     }
 
     /**
