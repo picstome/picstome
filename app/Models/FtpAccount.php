@@ -8,6 +8,7 @@ use Database\Factories\FtpAccountFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -30,12 +31,12 @@ class FtpAccount extends Model
         ];
     }
 
-    public function team()
+    public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
-    public function activeGallery()
+    public function activeGallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class, 'active_gallery_id');
     }

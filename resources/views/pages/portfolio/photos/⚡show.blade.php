@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Gallery;
 use App\Models\Photo;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
@@ -15,8 +16,12 @@ class extends Component
 
     public ?Photo $previous;
 
-    public function mount(Photo $photo)
+    public function mount(string $handle, Gallery $gallery, Photo $photo)
     {
+        abort_unless($photo->gallery_id === $gallery->id, 404);
+        // Handles are stored lowercase; match the URL case-insensitively.
+        abort_unless(strcasecmp((string) $gallery->team?->handle, $handle) === 0, 404);
+
         abort_unless($photo->gallery->is_public, 404);
 
         // Archived photos are hidden from clients, so their public page must

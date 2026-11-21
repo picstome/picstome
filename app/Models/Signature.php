@@ -8,6 +8,7 @@ use Database\Factories\SignatureFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -36,7 +37,10 @@ class Signature extends Model
         });
     }
 
-    public function contract()
+    /**
+     * @return BelongsTo<Contract, $this>
+     */
+    public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
     }
@@ -70,13 +74,47 @@ class Signature extends Model
         ]);
     }
 
+    /**
+     * Authorised route that streams the stored signature bytes.
+     *
+     * The storage URL used to be public, so anyone with the path could open
+     * the signature. Only the owning team can reach this route.
+     */
     protected function signatureImageUrl(): Attribute
     {
         return Attribute::get(function () {
-            return $this->signature_image_path
-                    ? Storage::disk(config('picstome.disk'))->url($this->signature_image_path)
-                    : null;
+            return $this->signature_image_path ? route('signatures.image', $this) : null;
         });
+    }
+
+    /**
+     * The signature image as a data URI.
+     *
+     * The contract PDF used to render the remote storage URL, which forced
+     * dompdf to fetch it from the worker network (an SSRF vector). Embedding
+     * the bytes keeps the signature visible while remote loading stays off.
+     */
+    public function signatureImageDataUri(): ?string
+    {
+        if (blank($this->signature_image_path)) {
+            return null;
+        }
+
+        $disk = Storage::disk(config('picstome.disk'));
+
+        if (! $disk->exists($this->signature_image_path)) {
+            return null;
+        }
+
+        $contents = $disk->get($this->signature_image_path);
+
+        if ($contents === null || $contents === '') {
+            return null;
+        }
+
+        $mimeType = $disk->mimeType($this->signature_image_path) ?: 'image/png';
+
+        return 'data:'.$mimeType.';base64,'.base64_encode($contents);
     }
 
     protected function storagePath(): Attribute

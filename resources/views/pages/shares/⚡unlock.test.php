@@ -122,3 +122,18 @@ test('unlocking a second gallery keeps the first unlocked', function () {
     get('shares/AAA111/'.$galleryA->slug)->assertStatus(200);
     get('shares/BBB222/'.$galleryB->slug)->assertStatus(200);
 });
+
+test('throttles repeated wrong passwords', function () {
+    RateLimiter::clear('gallery-unlock:'.request()->ip().':0123ABC');
+
+    $gallery = Gallery::factory()->shared()->protected(password: 'secret')->create(['ulid' => '0123ABC']);
+    $component = Livewire::test('pages::shares.unlock', ['gallery' => $gallery]);
+
+    foreach (range(1, 5) as $attempt) {
+        $component->set('password', 'wrong-password')->call('unlock')->assertHasErrors('password');
+    }
+
+    $component->set('password', 'secret')->call('unlock')->assertHasErrors('password');
+
+    expect(session()->get('unlocked_gallery_ulids'))->toBeNull();
+});

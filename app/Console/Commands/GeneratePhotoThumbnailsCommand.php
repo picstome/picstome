@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\MediaType;
 use App\Jobs\DeleteFromDisk;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
@@ -64,7 +65,7 @@ class GeneratePhotoThumbnailsCommand extends Command
     {
         return $query
             ->where(function ($query) {
-                foreach (['jpg', 'jpeg', 'png', 'tiff'] as $extension) {
+                foreach (MediaType::IMAGE_EXTENSIONS as $extension) {
                     $query->orWhere('path', 'like', '%.'.$extension);
                 }
             })
@@ -128,7 +129,7 @@ class GeneratePhotoThumbnailsCommand extends Command
     {
         $extension = strtolower(pathinfo((string) $media->path, PATHINFO_EXTENSION));
 
-        return in_array($extension, ['jpg', 'jpeg', 'png', 'tiff'], true);
+        return in_array($extension, MediaType::IMAGE_EXTENSIONS, true);
     }
 
     protected function storedSize(Model $media, string $disk, string $newThumbPath): int

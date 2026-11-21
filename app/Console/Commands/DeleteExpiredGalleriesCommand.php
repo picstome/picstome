@@ -12,7 +12,7 @@ class DeleteExpiredGalleriesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'galleries:delete-expired';
+    protected $signature = 'galleries:delete-expired {--dry-run} {--force}';
 
     /**
      * The console command description.
@@ -24,13 +24,32 @@ class DeleteExpiredGalleriesCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
-        Gallery::expired()->get()->each(function ($gallery) {
+        $dryRun = (bool) $this->option('dry-run');
+        $force = (bool) $this->option('force');
+
+        if (! $dryRun && ! $force) {
+            $this->warn('Use --dry-run to inspect the scope or --force to delete expired galleries.');
+
+            return self::FAILURE;
+        }
+
+        $this->line('Expired galleries: '.Gallery::expired()->count());
+
+        if ($dryRun) {
+            $this->info('Dry run: nothing was deleted.');
+
+            return self::SUCCESS;
+        }
+
+        Gallery::expired()->cursor()->each(function (Gallery $gallery) {
             $gallery->deletePhotos();
             $gallery->delete();
         });
 
         $this->info('Completed deleting expired galleries.');
+
+        return self::SUCCESS;
     }
 }

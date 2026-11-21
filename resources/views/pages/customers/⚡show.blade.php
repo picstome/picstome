@@ -44,6 +44,8 @@ new class extends Component
 
     public function update()
     {
+        $this->authorize('update', $this->customer);
+
         $this->form->update();
 
         $this->customer = $this->customer->fresh();
@@ -59,6 +61,8 @@ new class extends Component
 
     public function saveNotes()
     {
+        $this->authorize('update', $this->customer);
+
         $this->customer->notes = $this->editedNotes;
         $this->customer->save();
         $this->editingNotes = false;
@@ -72,6 +76,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->customer);
+
         $this->customer->delete();
         $this->redirect(route('customers'));
     }
@@ -79,13 +85,11 @@ new class extends Component
     #[Computed]
     public function galleries()
     {
-        $galleries = $this->customer->photoshoots->flatMap->galleries;
-
-        // The card below renders a thumbnail per gallery, and PhotoUrlService
-        // needs the gallery to resolve `keep_original_size`.
-        $galleries->each(fn (Gallery $gallery) => $gallery->loadMissing('firstImagePhoto.gallery'));
-
-        return $galleries;
+        return Gallery::query()
+            ->whereIn('photoshoot_id', $this->customer->photoshoots()->select('id'))
+            ->with('firstImagePhoto.gallery')
+            ->withCount('photos')
+            ->get();
     }
 
     #[Computed]
@@ -100,7 +104,13 @@ new class extends Component
     #[Computed]
     public function contracts()
     {
-        return $this->customer->photoshoots->flatMap->contracts;
+        return $this->customer->photoshoots()
+            ->with(['contracts' => fn ($query) => $query->withCount([
+                'signatures',
+                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+            ])])
+            ->get()
+            ->flatMap->contracts;
     }
 
     #[Computed]
@@ -113,8 +123,7 @@ new class extends Component
     public function stats()
     {
         $photoshoots = $this->customer->photoshoots;
-        $galleries = $photoshoots->flatMap->galleries;
-        $photos = $galleries->flatMap->photos;
+        $galleries = $this->galleries;
         $payments = $photoshoots->flatMap->payments->whereNotNull('completed_at');
         $totalPayments = $payments->sum('amount');
 
@@ -129,7 +138,7 @@ new class extends Component
             ],
             [
                 'title' => __('Photos'),
-                'value' => $photos->count(),
+                'value' => $galleries->sum('photos_count'),
             ],
             [
                 'title' => __('Payments'),
@@ -375,7 +384,7 @@ new class extends Component
                                 wire:navigate
                                 class="absolute inset-0 focus:outline-hidden"
                             ></a>
-                            {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                            {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
                         </x-data-table.cell>
                     </x-data-table.row>
                 @endforeach

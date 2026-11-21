@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Events\PhotoAdded;
 use App\Exceptions\GalleryUploadException;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Models\Gallery;
 use App\Models\Photo;
+use App\Support\UploadContent;
 use Illuminate\Http\UploadedFile;
 
 /**
@@ -59,16 +61,12 @@ class GalleryUploadService
                     default => $gallery->addPhoto($file),
                 };
             });
+        } catch (StorageQuotaExceededException) {
+            throw new GalleryUploadException(
+                GalleryUploadException::STORAGE_QUOTA,
+                __('You do not have enough storage space to upload this photo.'),
+            );
         } catch (\Exception $exception) {
-            // `Gallery::addPhoto()` and friends signal quota problems with a
-            // plain exception so this service can translate them.
-            if ($exception->getMessage() === 'Not enough storage') {
-                throw new GalleryUploadException(
-                    GalleryUploadException::STORAGE_QUOTA,
-                    __('You do not have enough storage space to upload this photo.'),
-                );
-            }
-
             throw $exception;
         }
 
@@ -84,9 +82,7 @@ class GalleryUploadService
     {
         $team = $gallery->team;
 
-        return $team->storage_limit === null
-            ? null
-            : max(0, $team->storage_limit - StorageUsageService::forTeamFresh($team));
+        return $team->remainingStorageBytes(fresh: true);
     }
 
     /**
@@ -166,6 +162,20 @@ class GalleryUploadService
             );
         }
 
+        if (in_array($extension, UploadContent::IMAGE_EXTENSIONS, true) && ! UploadContent::isReadableImage($file)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::INVALID_IMAGE,
+                __('This file is not a readable image.'),
+            );
+        }
+
+        if (in_array($extension, UploadContent::VIDEO_EXTENSIONS, true) && ! UploadContent::isReadableVideo($file)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::INVALID_VIDEO,
+                __('This file is not a readable video.'),
+            );
+        }
+
         if ($existing !== null && $action === self::ACTION_VERSION && ! config('picstome.file_versions_enabled')) {
             throw new GalleryUploadException(
                 GalleryUploadException::VERSIONS_DISABLED,
@@ -187,16 +197,6 @@ class GalleryUploadService
 
     protected function looksLikeAPdf(UploadedFile $file): bool
     {
-        $stream = @fopen($file->getRealPath(), 'rb');
-
-        if (! is_resource($stream)) {
-            return false;
-        }
-
-        try {
-            return fread($stream, 5) === '%PDF-';
-        } finally {
-            fclose($stream);
-        }
+        return UploadContent::headerBytes($file, 5) === '%PDF-';
     }
 }

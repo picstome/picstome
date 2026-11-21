@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use App\Models\FtpAccount;
 use App\Traits\FormatsFileSize;
 use Illuminate\Console\Command;
@@ -18,6 +19,7 @@ use Illuminate\Console\Command;
 class CleanupFtpInboxCommand extends Command
 {
     use FormatsFileSize;
+    use RequiresDryRunOrForce;
 
     protected $signature = 'ftp:cleanup-inbox
         {--dry-run : Show what would be removed without changing anything}
@@ -30,10 +32,8 @@ class CleanupFtpInboxCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        if (! $dryRun && ! $force) {
-            $this->warn('Use --dry-run to inspect the scope or --force to delete inbox files.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect the scope or --force to delete inbox files.')) !== null) {
+            return $failure;
         }
 
         $disk = FtpAccount::disk();

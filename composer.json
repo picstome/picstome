@@ -24,6 +24,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.15",
         "laravel/boost": "^2.0",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
@@ -68,11 +69,44 @@
         ],
         "test": [
             "@test:unit",
-            "@test:browser"
+            "@test:browser:groups"
         ],
         "test:unit": "@php vendor/bin/pest --parallel --processes=2 --compact --exclude-group=browser --default-time-limit=60",
         "test:feature": "@php vendor/bin/pest tests/Feature --parallel --processes=2 --compact --exclude-group=browser --default-time-limit=60",
-        "test:browser": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120"
+        "test:browser": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120",
+        "test:browser:groups": [
+            "@test:browser:galleries",
+            "@test:browser:shares",
+            "@test:browser:admin",
+            "@test:browser:features",
+            "@test:browser:misc"
+        ],
+        "test:browser:galleries": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/galleries/⚡show.test.php resources/views/pages/galleries/⚡show-browser.test.php resources/views/pages/galleries/⚡show-photos.test.php resources/views/pages/galleries/⚡show-sharing.test.php resources/views/pages/galleries/photos/⚡show.test.php",
+        "test:browser:shares": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/shares/⚡show.test.php resources/views/pages/shares/photos/⚡show.test.php",
+        "test:browser:admin": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/admin/⚡emails.test.php resources/views/pages/admin/⚡queue.test.php resources/views/pages/admin/⚡stats.test.php resources/views/pages/admin/⚡translations.test.php",
+        "test:browser:features": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 tests/Feature/BlackScreenPageTest.php tests/Feature/DashboardUpcomingEventsTest.php tests/Feature/GalleryMasonryLayoutTest.php",
+        "test:browser:misc": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/branding/⚡watermark.test.php resources/views/pages/portfolio/⚡show.test.php resources/views/pages/⚡contracts.test.php resources/views/pages/⚡galleries.test.php resources/views/pages/⚡register.test.php resources/views/pages/⚡search.test.php resources/views/pages/⚡users.test.php",
+        "test:dirty": "@php vendor/bin/pest --dirty --parallel --processes=2 --compact --exclude-group=browser --default-time-limit=60",
+        "test:dirty:browser": "@php vendor/bin/pest --dirty --compact --group=browser --default-time-limit=120",
+        "test:profile": "@php vendor/bin/pest --parallel --processes=2 --compact --exclude-group=browser --default-time-limit=60 --profile",
+        "test:browser:file": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120",
+        "analyse": [
+            "@php tests/PHPStan/extract-sfc-components.php",
+            "@php vendor/bin/phpstan analyse --memory-limit=1G --no-progress"
+        ],
+        "coverage": "@php vendor/bin/pest --compact --exclude-group=browser --default-time-limit=120 --coverage --coverage-clover=coverage.xml",
+        "preflight": [
+            "@php vendor/bin/pint --dirty",
+            "@php artisan optimize:clear",
+            "@php artisan config:cache",
+            "@php artisan route:cache",
+            "@php artisan view:cache",
+            "@php artisan optimize:clear",
+            "npm run build",
+            "@php artisan migrate:status",
+            "@analyse",
+            "@test"
+        ]
     },
     "extra": {
         "laravel": {

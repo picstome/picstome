@@ -41,7 +41,10 @@
                     </tr><tr>
                 @endif
                 <td width="33%">
-                    <img src="{{ $signature->signature_image_url }}" style="max-width: 200px;" />
+                    @php $signatureImage = $signature->signatureImageDataUri(); @endphp
+                    @if ($signatureImage)
+                        <img src="{{ $signatureImage }}" style="max-width: 200px;" />
+                    @endif
 
                     <dl>
                         <dt style="color: #555; font-weight: bold;">{{ __('Legal name') }}</dt>

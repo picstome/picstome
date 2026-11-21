@@ -22,7 +22,7 @@ it('lists only the galleries of the current team', function () {
     Gallery::factory()->for($team)->create(['name' => 'Also mine']);
     Gallery::factory()->create(['name' => 'Someone else']);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $response = $this->getJson('/api/v1/galleries');
 
@@ -47,7 +47,7 @@ it('filters galleries by name for the current team only', function () {
     Gallery::factory()->for($team)->create(['name' => 'Corporativo']);
     Gallery::factory()->create(['name' => 'MiBoda de otro equipo']);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $response = $this->getJson('/api/v1/galleries?search=boda');
 
@@ -69,7 +69,7 @@ it('paginates galleries and exposes the next page', function () {
 
     Gallery::factory()->count(30)->for($team)->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/galleries')
         ->assertOk()
@@ -94,7 +94,7 @@ it('paginates galleries and exposes the next page', function () {
 it('validates the gallery list filters', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/galleries?per_page=101')
         ->assertStatus(422)
@@ -115,7 +115,7 @@ it('validates the gallery list filters', function () {
 it('returns the connected account details', function () {
     $user = User::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/me')
         ->assertOk()

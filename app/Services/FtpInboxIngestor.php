@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\IngestFtpUpload;
 use App\Models\FtpAccount;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 /**
  * Lists the camera inbox and queues stable uploads for ingestion.

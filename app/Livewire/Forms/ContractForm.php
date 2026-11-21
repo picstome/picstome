@@ -2,15 +2,18 @@
 
 namespace App\Livewire\Forms;
 
+use App\Livewire\Forms\Concerns\ConvertsBodyToMarkdown;
+use App\Models\Contract;
 use App\Models\Photoshoot;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use League\HTMLToMarkdown\HtmlConverter;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class ContractForm extends Form
 {
+    use ConvertsBodyToMarkdown;
+
     public ?Photoshoot $photoshoot = null;
 
     #[Validate(['required', 'string', 'max:255'])]
@@ -31,7 +34,7 @@ class ContractForm extends Form
     #[Validate('required|integer|min:1')]
     public $signature_quantity = 1;
 
-    public function setPhotoshoot(Photoshoot $photoshoot)
+    public function setPhotoshoot(Photoshoot $photoshoot): void
     {
         $this->photoshoot = $photoshoot;
 
@@ -42,7 +45,7 @@ class ContractForm extends Form
         $this->shootingDate = Carbon::now()->isoFormat('YYYY-MM-DD');
     }
 
-    public function store()
+    public function store(): Contract
     {
         $this->validate();
 
@@ -58,11 +61,5 @@ class ContractForm extends Form
         $contract->addSignatures($this->signature_quantity);
 
         return $contract;
-    }
-
-    protected function convertBodyToMarkdown()
-    {
-        return (new HtmlConverter(['header_style' => 'atx', 'strip_tags' => true]))
-            ->convert($this->body);
     }
 }

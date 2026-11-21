@@ -23,13 +23,13 @@ class PaymentForm extends Form
         ];
     }
 
-    public function setPayment(Payment $payment)
+    public function setPayment(Payment $payment): void
     {
         $this->payment = $payment;
         $this->photoshoot_id = $payment->photoshoot_id;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

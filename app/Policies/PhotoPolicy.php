@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Photo;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class PhotoPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class PhotoPolicy
      */
     public function view(User $user, Photo $photo): bool
     {
-        return $photo->gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**
@@ -36,7 +39,7 @@ class PhotoPolicy
      */
     public function update(User $user, Photo $photo): bool
     {
-        return $photo->gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**
@@ -44,7 +47,7 @@ class PhotoPolicy
      */
     public function delete(User $user, Photo $photo): bool
     {
-        return $photo->gallery->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $photo->gallery?->team);
     }
 
     /**

@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\MediaType;
 use App\Events\PhotoAdded;
+use App\Exceptions\StorageQuotaExceededException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\UploadPhotoRequest;
 use App\Models\Gallery;
 use App\Models\Photo as GalleryPhoto;
 use App\Services\ExternalGalleryRevisionService;
+use App\Support\UploadContent;
+use App\Traits\Concerns\FindsAuthorizedGallery;
 use App\Traits\Concerns\RespondsWithApiErrors;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
@@ -15,22 +19,17 @@ use Throwable;
 
 class PhotoUploadController extends Controller
 {
+    use FindsAuthorizedGallery;
     use RespondsWithApiErrors;
 
     public function __invoke(
         UploadPhotoRequest $request,
         ExternalGalleryRevisionService $revisions,
     ): JsonResponse {
-        $gallery = Gallery::query()
-            ->where('ulid', (string) $request->string('gallery_id'))
-            ->first();
+        $gallery = $this->findAuthorizedGallery($request);
 
-        if (! $gallery) {
-            return $this->apiError('unknown_gallery', __('The gallery does not exist.'), 404);
-        }
-
-        if (! $request->user()->can('view', $gallery)) {
-            return $this->apiError('not_member', __('You do not have access to this gallery.'), 403);
+        if ($gallery instanceof JsonResponse) {
+            return $gallery;
         }
 
         $file = $request->file('file');
@@ -72,6 +71,10 @@ class PhotoUploadController extends Controller
             return $this->apiError('invalid_image', __('The uploaded file is not a readable image.'), 422);
         }
 
+        if (UploadContent::isVideo($filename) && ! UploadContent::isReadableVideo($file)) {
+            return $this->apiError('invalid_video', __('The uploaded file is not a readable video.'), 422);
+        }
+
         $upload = new UploadedFile(
             $file->getRealPath(),
             $filename,
@@ -104,7 +107,7 @@ class PhotoUploadController extends Controller
                 return $gallery->addPhoto($upload);
             });
         } catch (Throwable $exception) {
-            if ($exception->getMessage() === 'Not enough storage') {
+            if ($exception instanceof StorageQuotaExceededException) {
                 return $this->apiError('storage_quota_exceeded', __('There is not enough storage available.'), 413);
             }
 
@@ -162,7 +165,7 @@ class PhotoUploadController extends Controller
     {
         return in_array(
             strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
-            ['jpg', 'jpeg', 'png', 'tiff', 'tif'],
+            MediaType::UPLOAD_IMAGE_EXTENSIONS,
             true,
         );
     }

@@ -26,6 +26,15 @@ class SftpgoWebhookController
         $status = $request->input('status');
         $fileSize = $request->input('file_size');
 
+        // Reject traversal segments before they reach the inbox or a delete.
+        if (preg_match('#(^|[/\\\\])\.\.([/\\\\]|$)#', $path) === 1) {
+            Log::warning('SFTPGo webhook ignored a path with traversal segments.', [
+                'path' => $path,
+            ]);
+
+            return response()->noContent();
+        }
+
         // Only ingest successful, non-empty uploads. Both fields are optional
         // so older webhook templates without them keep working.
         $failed = $status !== null && (int) $status !== 1;

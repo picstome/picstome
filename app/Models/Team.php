@@ -9,6 +9,7 @@ use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -54,6 +55,22 @@ class Team extends Model
         // value: an upload accepted on a ten-minute-old total can overflow
         // the plan.
         return (StorageUsageService::forTeamFresh($this) + $size) <= $this->storage_limit;
+    }
+
+    /**
+     * Remaining storage in bytes, or null when the plan is unlimited.
+     */
+    public function remainingStorageBytes(bool $fresh = false): ?int
+    {
+        if ($this->storage_limit === null) {
+            return null;
+        }
+
+        $used = $fresh
+            ? StorageUsageService::forTeamFresh($this)
+            : StorageUsageService::forTeam($this);
+
+        return max(0, $this->storage_limit - $used);
     }
 
     protected function casts()
@@ -109,7 +126,10 @@ class Team extends Model
         return $this->instagram_url || $this->youtube_url || $this->facebook_url || $this->x_url || $this->tiktok_url || $this->twitch_url || $this->website_url || $this->other_social_links;
     }
 
-    public function owner()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }

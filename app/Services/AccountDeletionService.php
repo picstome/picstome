@@ -3,11 +3,14 @@
 namespace App\Services;
 
 use App\Jobs\RemoveFromAcumbamailList;
+use App\Models\Contract;
+use App\Models\Customer;
 use App\Models\ExternalAuthorization;
 use App\Models\FtpAccount;
 use App\Models\Gallery;
 use App\Models\GalleryArchive;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
 use App\Models\Team;
@@ -75,15 +78,15 @@ class AccountDeletionService
         return [
             'galleries' => $galleries,
             'photos' => $photos,
-            'storage_bytes' => (int) $teams->sum(fn (Team $team) => StorageUsageService::forTeamFresh($team)),
-            'contracts' => (int) $teams->sum(fn (Team $team) => $team->contracts()->count()),
+            'storage_bytes' => (int) array_sum(StorageUsageService::forTeams($teamIds)),
+            'contracts' => Contract::query()->whereIn('team_id', $teamIds)->count(),
             'invoices' => Invoice::query()->whereIn('team_id', $teamIds)->count(),
             'issued_invoices' => Invoice::query()
                 ->whereIn('team_id', $teamIds)
                 ->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_RECTIFIED])
                 ->count(),
-            'customers' => (int) $teams->sum(fn (Team $team) => $team->customers()->count()),
-            'payments' => (int) $teams->sum(fn (Team $team) => $team->payments()->count()),
+            'customers' => Customer::query()->whereIn('team_id', $teamIds)->count(),
+            'payments' => Payment::query()->whereIn('team_id', $teamIds)->count(),
             'subscribed' => $subscription !== null && $subscription->valid(),
             'subscription_ends_at' => $subscription?->ends_at?->toDateString(),
             'lifetime' => $teams->contains(fn (Team $team) => $team->lifetime_at !== null),

@@ -78,7 +78,7 @@ class ShareGalleryForm extends Form
      * Seed the form from the gallery when it is already shared, otherwise from
      * the authenticated user's remembered defaults.
      */
-    public function setGallery(Gallery $gallery)
+    public function setGallery(Gallery $gallery): void
     {
         $this->gallery = $gallery;
         $this->password = null;
@@ -119,7 +119,7 @@ class ShareGalleryForm extends Form
     /**
      * Update the gallery and remember the selected booleans as defaults.
      */
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

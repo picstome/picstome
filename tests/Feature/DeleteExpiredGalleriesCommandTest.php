@@ -31,7 +31,7 @@ describe('DeleteExpiredGalleriesCommand', function () {
             'disk' => $this->disk,
         ]);
 
-        artisan('galleries:delete-expired')->assertExitCode(0);
+        artisan('galleries:delete-expired --force')->assertExitCode(0);
 
         expect(Gallery::find($gallery->id))->toBeNull();
         expect(Photo::find($photo->id))->toBeNull();
@@ -49,7 +49,7 @@ describe('DeleteExpiredGalleriesCommand', function () {
             'disk' => $this->disk,
         ]);
 
-        artisan('galleries:delete-expired')->assertExitCode(0);
+        artisan('galleries:delete-expired --force')->assertExitCode(0);
 
         expect(Gallery::find($gallery->id))->not->toBeNull();
         expect(Photo::find($photo->id))->not->toBeNull();
@@ -67,7 +67,7 @@ describe('DeleteExpiredGalleriesCommand', function () {
             'disk' => $this->disk,
         ]);
 
-        artisan('galleries:delete-expired')->assertExitCode(0);
+        artisan('galleries:delete-expired --force')->assertExitCode(0);
 
         expect(Gallery::find($gallery->id))->not->toBeNull();
         expect(Photo::find($photo->id))->not->toBeNull();
@@ -85,10 +85,30 @@ describe('DeleteExpiredGalleriesCommand', function () {
             'disk' => $this->disk,
         ]);
 
-        artisan('galleries:delete-expired')->assertExitCode(0);
+        artisan('galleries:delete-expired --force')->assertExitCode(0);
 
         expect(Gallery::find($gallery->id))->not->toBeNull();
         expect(Photo::find($photo->id))->not->toBeNull();
         expect(Storage::disk($photo->disk)->exists($photo->path))->toBeTrue();
+    });
+
+    it('refuses to run without --dry-run or --force', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'expiration_date' => now()->subDays(2),
+        ]);
+
+        artisan('galleries:delete-expired')->assertExitCode(1);
+
+        expect(Gallery::find($gallery->id))->not->toBeNull();
+    });
+
+    it('does not delete galleries in dry-run mode', function () {
+        $gallery = Gallery::factory()->for($this->team)->create([
+            'expiration_date' => now()->subDays(2),
+        ]);
+
+        artisan('galleries:delete-expired --dry-run')->assertExitCode(0);
+
+        expect(Gallery::find($gallery->id))->not->toBeNull();
     });
 });

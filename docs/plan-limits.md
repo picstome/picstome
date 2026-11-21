@@ -69,6 +69,18 @@ month from now if that already passed, so nothing is deleted overnight.
   never again.
 - `galleries:delete-expired` runs daily at 00:00 and deletes galleries whose
   date is more than one day in the past.
+- `subscriptions:cleanup` runs daily at 00:10: it emails teams whose
+  subscription ends soon or has ended, and deletes the galleries of canceled
+  subscriptions past the grace period.
+
+Both commands are destructive, so they refuse to delete without an explicit
+flag. The scheduler (`App\Console\ScheduledTasks`) already passes `--force`;
+any cron entry or manual run outside it must pass it too:
+
+| Command | No flag | `--dry-run` | `--force` |
+| --- | --- | --- | --- |
+| `galleries:delete-expired` | Refuses (exit 1), deletes nothing | Counts the expired galleries | Deletes them |
+| `subscriptions:cleanup` | Sends the emails, deletes nothing | Reports only: no emails, no deletion | Sends the emails and deletes expired data |
 
 ## Payments
 

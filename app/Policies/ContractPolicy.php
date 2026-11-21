@@ -4,9 +4,15 @@ namespace App\Policies;
 
 use App\Models\Contract;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
+use App\Services\ContractPlanLimitService;
 
 class ContractPolicy
 {
+    use BelongsToCurrentTeam;
+
+    public function __construct(private readonly ContractPlanLimitService $limits) {}
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +26,7 @@ class ContractPolicy
      */
     public function view(User $user, Contract $contract): bool
     {
-        return $contract->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $contract->team);
     }
 
     /**
@@ -28,17 +34,7 @@ class ContractPolicy
      */
     public function create(User $user): bool
     {
-        $team = $user->currentTeam;
-
-        if ($team->has_unlimited_contracts || $team->subscribed()) {
-            return true;
-        }
-
-        $contractsThisMonth = $team->contracts()
-            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->count();
-
-        return $contractsThisMonth < $team->monthly_contract_limit;
+        return $this->limits->canUse($user->currentTeam);
     }
 
     /**
@@ -46,7 +42,15 @@ class ContractPolicy
      */
     public function update(User $user, Contract $contract): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $contract->team);
+    }
+
+    /**
+     * Determine whether the user can execute the model once signed.
+     */
+    public function execute(User $user, Contract $contract): bool
+    {
+        return $this->belongsToCurrentTeam($user, $contract->team);
     }
 
     /**
@@ -54,7 +58,7 @@ class ContractPolicy
      */
     public function delete(User $user, Contract $contract): bool
     {
-        return false;
+        return $this->belongsToCurrentTeam($user, $contract->team);
     }
 
     /**

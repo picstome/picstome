@@ -9,17 +9,34 @@ use Illuminate\Console\Command;
 
 class SubscriptionsCleanupCommand extends Command
 {
-    protected $signature = 'subscriptions:cleanup';
+    protected $signature = 'subscriptions:cleanup {--dry-run} {--force}';
 
     protected $description = 'Clean up expired subscriptions and send notifications';
 
-    public function handle()
+    public function handle(): int
     {
+        $dryRun = (bool) $this->option('dry-run');
+        $force = (bool) $this->option('force');
+
+        // A dry run only reports: it must not email customers either.
+        if ($dryRun) {
+            $this->line('Dry run: no notifications were sent and expired data was not deleted.');
+
+            return self::SUCCESS;
+        }
+
         $this->notifyExpiringSoon();
         $this->notifyExpired();
+
+        if (! $force) {
+            $this->warn('Skipped deleting expired data. Use --force to delete it.');
+
+            return self::SUCCESS;
+        }
+
         $this->deleteExpiredData();
 
-        return 0;
+        return self::SUCCESS;
     }
 
     private function notifyExpiringSoon()

@@ -333,3 +333,21 @@ function waitForAlpine(Webpage|PendingAwaitablePage $page, string $selector, int
         $timeoutMs,
     );
 }
+
+/**
+ * Wait until Alpine has initialised the component rooted at the selector.
+ *
+ * Dispatch custom drag/drop events only after this point: the listeners are
+ * registered by Alpine during initialisation, so firing earlier silently does
+ * nothing and made the upload-dock tests flaky under load.
+ */
+function waitForAlpineRoot(Webpage|PendingAwaitablePage $page, string $selector = '[x-data]', int $timeoutMs = 10000): void
+{
+    $selector = json_encode($selector);
+
+    waitForBrowserValue(
+        $page,
+        "const element = document.querySelector({$selector}); return window.Alpine && element?._x_dataStack ? 1 : null;",
+        $timeoutMs,
+    );
+}

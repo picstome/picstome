@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Enums\GalleryTab;
+use App\Services\GalleryPhotoQuery;
 use Illuminate\Support\Collection;
 
 /**
@@ -20,6 +22,8 @@ use Illuminate\Support\Collection;
  */
 trait RevealsGalleryPhoto
 {
+    public const PHOTO_PAGE_SIZE = GalleryPhotoQuery::PAGE_SIZE;
+
     protected function revealRequestedPhoto(): void
     {
         $photoId = filter_var(request()->query('photo'), FILTER_VALIDATE_INT, [
@@ -38,11 +42,11 @@ trait RevealsGalleryPhoto
             return;
         }
 
-        $requiredLimit = (intdiv($index, 60) + 1) * 60;
+        $requiredLimit = (intdiv($index, self::PHOTO_PAGE_SIZE) + 1) * self::PHOTO_PAGE_SIZE;
 
         match ($this->activeTab) {
-            'favorited' => $this->favoritePhotoLimit = max($this->favoritePhotoLimit, $requiredLimit),
-            'commented' => $this->commentedPhotoLimit = max($this->commentedPhotoLimit, $requiredLimit),
+            GalleryTab::Favorited->value => $this->favoritePhotoLimit = max($this->favoritePhotoLimit, $requiredLimit),
+            GalleryTab::Commented->value => $this->commentedPhotoLimit = max($this->commentedPhotoLimit, $requiredLimit),
             default => $this->allPhotoLimit = max($this->allPhotoLimit, $requiredLimit),
         };
     }
@@ -57,8 +61,8 @@ trait RevealsGalleryPhoto
     protected function revealIds(string $tab): Collection
     {
         return match ($tab) {
-            'favorited' => $this->favoriteIds,
-            'commented' => $this->commentedIds,
+            GalleryTab::Favorited->value => $this->favoriteIds,
+            GalleryTab::Commented->value => $this->commentedIds,
             default => $this->photoIds,
         };
     }

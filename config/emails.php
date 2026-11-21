@@ -3,6 +3,7 @@
 use App\Notifications\BookingCreated;
 use App\Notifications\CameraUploadsPaused;
 use App\Notifications\ContractExecuted;
+use App\Notifications\ContractPdfFailed;
 use App\Notifications\GalleryArchiveFailed;
 use App\Notifications\GalleryArchiveReady;
 use App\Notifications\GalleryExpirationReminder;
@@ -289,6 +290,37 @@ return [
             ['key' => 'Contract signed', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'Download the signed contract for your records. All relevant parties have been notified by email.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'Download contract', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'contract_pdf_failed' => [
+        'notification' => ContractPdfFailed::class,
+        'label' => [
+            'en' => 'Contract PDF failed',
+            'es' => 'Error al generar el PDF del contrato',
+        ],
+        'description' => [
+            'en' => 'Warns the owner when the signed contract PDF could not be generated.',
+            'es' => 'Avisa al dueño cuando no se pudo generar el PDF del contrato firmado.',
+        ],
+        'trigger' => [
+            'en' => 'PDF generation fails after every retry. The signatures stay valid and the PDF can be requested again.',
+            'es' => 'La generación del PDF falla tras todos los reintentos. Las firmas siguen siendo válidas y el PDF se puede volver a solicitar.',
+        ],
+        'when' => [
+            'en' => 'After the last retry fails, queued',
+            'es' => 'Tras fallar el último reintento, en cola',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'The contract PDF could not be generated: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello :name,', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'We could not generate the PDF for contract :name. Open the contract and request it again.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'View contract', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
         ],
     ],
 

@@ -31,13 +31,53 @@ it('skips non-image photos in portfolio navigation', function () {
     $imageB = Photo::factory()->for($gallery)->create(['name' => 'b.jpg']);
     $imageC = Photo::factory()->for($gallery)->create(['name' => 'c.jpg']);
 
-    $component = Livewire::test('pages::portfolio.photos.show', ['photo' => $imageB]);
+    $component = Livewire::test('pages::portfolio.photos.show', [
+        'handle' => $this->team->handle,
+        'gallery' => $gallery,
+        'photo' => $imageB,
+    ]);
 
     expect($component->previous)->toBeNull();
     expect($component->next->id)->toBe($imageC->id);
 
-    $component = Livewire::test('pages::portfolio.photos.show', ['photo' => $pdf]);
+    $component = Livewire::test('pages::portfolio.photos.show', [
+        'handle' => $this->team->handle,
+        'gallery' => $gallery,
+        'photo' => $pdf,
+    ]);
 
     expect($component->previous)->toBeNull();
     expect($component->next)->toBeNull();
+});
+
+it('rejects a photo that does not belong to the gallery in the url', function () {
+    $gallery = Gallery::factory()->public()->for($this->team)->create();
+    $otherGallery = Gallery::factory()->public()->for($this->team)->create();
+    $photo = Photo::factory()->for($otherGallery)->create();
+
+    Livewire::test('pages::portfolio.photos.show', [
+        'handle' => $this->team->handle,
+        'gallery' => $gallery,
+        'photo' => $photo,
+    ])->assertStatus(404);
+});
+
+it('rejects a photo served under another photographer handle', function () {
+    $gallery = Gallery::factory()->public()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    Livewire::test('pages::portfolio.photos.show', [
+        'handle' => 'someone-else',
+        'gallery' => $gallery,
+        'photo' => $photo,
+    ])->assertStatus(404);
+});
+
+it('opens a portfolio photo when the handle in the url uses other casing', function () {
+    $this->team->update(['handle' => 'studio']);
+    $gallery = Gallery::factory()->public()->for($this->team)->create();
+    $photo = Photo::factory()->for($gallery)->create();
+
+    get("/@Studio/portfolio/{$gallery->ulid}/photos/{$photo->id}")->assertOk();
+    get("/@other/portfolio/{$gallery->ulid}/photos/{$photo->id}")->assertNotFound();
 });

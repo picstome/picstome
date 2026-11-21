@@ -51,6 +51,39 @@ test('guests can sign a contract', function () {
     });
 });
 
+test('signing page strips raw html and unsafe links from the contract body', function () {
+    $contract = Contract::factory()->create([
+        'markdown_body' => '<img src=x onerror="alert(1)"> [click](javascript:alert(1)) **safe**',
+    ]);
+    Signature::factory()->unsigned()->for($contract)->create(['ulid' => 'SAFE123']);
+
+    get('/signatures/SAFE123/sign')
+        ->assertOk()
+        ->assertDontSee('onerror', false)
+        ->assertDontSee('<img', false)
+        ->assertDontSee('javascript:', false)
+        ->assertSee('<strong>safe</strong>', false);
+});
+
+test('signature images are embedded as data uris for the pdf', function () {
+    Storage::fake('s3');
+
+    $contract = Contract::factory()->create();
+    $signature = Signature::factory()->for($contract)->create([
+        'signature_image_path' => 'signatures/signature.png',
+    ]);
+    Storage::disk('s3')->put('signatures/signature.png', 'fake-image-bytes');
+
+    expect($signature->signatureImageDataUri())
+        ->toStartWith('data:')
+        ->toContain(base64_encode('fake-image-bytes'));
+
+    $html = view('pdf.contract', ['contract' => $contract->load('signatures')])->render();
+
+    expect($html)->toContain('data:')
+        ->and($html)->not->toContain($signature->signature_image_url);
+});
+
 test('contract is executed once the final signature is submitted', function () {
     Storage::fake('s3');
     Notification::fake();

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MediaType;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Storage;
 
@@ -195,16 +196,12 @@ class PhotoUrlService
 
     protected function isImage(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff'], true);
+        return MediaType::isImagePath($this->path);
     }
 
     protected function isVideo(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['mp4', 'webm', 'ogg'], true);
+        return MediaType::isVideoPath($this->path);
     }
 
     /**
@@ -224,7 +221,7 @@ class PhotoUrlService
      * Resolve a disk URL using the configured public/CDN base before falling
      * back to the filesystem adapter (which is what fake disks expose).
      */
-    protected function storageUrl(string $path): string
+    public function storageUrl(string $path): string
     {
         $diskConfig = config("filesystems.disks.{$this->disk}", []);
         $baseUrl = $diskConfig['url'] ?? null;

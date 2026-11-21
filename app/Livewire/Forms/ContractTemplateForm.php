@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Forms;
 
+use App\Livewire\Forms\Concerns\ConvertsBodyToMarkdown;
 use App\Models\ContractTemplate;
 use Illuminate\Support\Facades\Auth;
-use League\HTMLToMarkdown\HtmlConverter;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class ContractTemplateForm extends Form
 {
+    use ConvertsBodyToMarkdown;
+
     public ?ContractTemplate $contractTemplate;
 
     #[Validate('required')]
@@ -24,7 +26,7 @@ class ContractTemplateForm extends Form
     #[Validate(['nullable', 'string', 'in:en,es'])]
     public $locale;
 
-    public function setContractTemplate(ContractTemplate $contractTemplate)
+    public function setContractTemplate(ContractTemplate $contractTemplate): void
     {
         $this->contractTemplate = $contractTemplate;
 
@@ -37,7 +39,7 @@ class ContractTemplateForm extends Form
         $this->locale = $contractTemplate->locale ?? app()->getLocale();
     }
 
-    public function store()
+    public function store(): ContractTemplate
     {
         $this->validate();
 
@@ -51,7 +53,7 @@ class ContractTemplateForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 
@@ -84,11 +86,5 @@ class ContractTemplateForm extends Form
         $locales = config('translation_overrides.locales', ['en', 'es']);
 
         return in_array($this->locale, $locales, true) ? $this->locale : app()->getLocale();
-    }
-
-    protected function convertBodyToMarkdown()
-    {
-        return (new HtmlConverter(['header_style' => 'atx', 'strip_tags' => true]))
-            ->convert($this->body);
     }
 }

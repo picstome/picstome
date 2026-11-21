@@ -1,15 +1,20 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
+use App\Jobs\ProcessPdfContract;
 use App\Models\Contract;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
+use TallStackUi\Traits\Interactions;
 
 new class extends Component
 {
+    use Interactions;
     use InteractsWithTallStackModals;
+
     public Contract $contract;
 
     public ?Collection $photoshoots = null;
@@ -24,8 +29,27 @@ new class extends Component
         $this->photoshoot_id = $this->contract->photoshoot_id;
     }
 
+    /**
+     * Signed and total signatures, queried once per render.
+     *
+     * Counts loaded in `mount()` do not survive Livewire hydration, and this
+     * page refreshes itself on window focus, so they are computed per request.
+     *
+     * @return array{signed: int, total: int}
+     */
+    #[Computed]
+    public function signatureCounts(): array
+    {
+        return [
+            'signed' => $this->contract->signatures()->signed()->count(),
+            'total' => $this->contract->signatures()->count(),
+        ];
+    }
+
     public function execute()
     {
+        $this->authorize('execute', $this->contract);
+
         abort_if($this->contract->signaturesRemaining() > 0, 401);
 
         $this->contract->execute();
@@ -38,8 +62,29 @@ new class extends Component
         }
     }
 
+    /**
+     * Request the PDF again when a previous generation attempt failed. The
+     * contract is already executed, so this only re-runs the renderer.
+     */
+    public function retryPdf(): void
+    {
+        $this->authorize('execute', $this->contract);
+
+        // The first generation may have finished since the page was loaded.
+        $this->contract->refresh();
+
+        abort_unless($this->contract->isExecuted(), 403);
+        abort_if(filled($this->contract->pdf_file_path), 409);
+
+        ProcessPdfContract::dispatch($this->contract);
+
+        $this->toast()->success(__('Generating the PDF. This can take a moment.'))->send();
+    }
+
     public function delete()
     {
+        $this->authorize('delete', $this->contract);
+
         $this->contract
             ->deleteFromDisk()
             ->deleteSignatures()
@@ -50,6 +95,8 @@ new class extends Component
 
     public function assignToPhotoshoot()
     {
+        $this->authorize('update', $this->contract);
+
         $this->validate([
             'photoshoot_id' => [
                 'nullable',
@@ -90,7 +137,7 @@ new class extends Component
                         class="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500"
                     />
                     <span>
-                        {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                        {{ $this->signatureCounts['signed'] }}/{{ $this->signatureCounts['total'] }}
                         {{ __('signatures') }}
                     </span>
                 </span>
@@ -124,6 +171,8 @@ new class extends Component
 
                 @if ($contract->isExecuted() && $contract->pdf_file_path)
                     <x-ts-button wire:click="download" variant="primary">{{ __('Download') }}</x-ts-button>
+                @elseif ($contract->isExecuted())
+                    <x-ts-button wire:click="retryPdf" variant="primary">{{ __('Generate PDF') }}</x-ts-button>
                 @endif
 
                 @if (! $contract->isExecuted() && $contract->signaturesRemaining() === 0)
@@ -145,7 +194,7 @@ new class extends Component
 
             <x-description.term>{{ __('Signatures required') }}</x-description.term>
             <x-description.details>
-                {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                {{ $this->signatureCounts['signed'] }}/{{ $this->signatureCounts['total'] }}
             </x-description.details>
         </x-description.list>
     </div>

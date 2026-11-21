@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\BioLink;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class BioLinkPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class BioLinkPolicy
      */
     public function view(User $user, BioLink $bioLink): bool
     {
-        return $bioLink->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $bioLink->team);
     }
 
     /**
@@ -36,7 +39,7 @@ class BioLinkPolicy
      */
     public function update(User $user, BioLink $bioLink): bool
     {
-        return $bioLink->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $bioLink->team);
     }
 
     /**
@@ -44,7 +47,7 @@ class BioLinkPolicy
      */
     public function delete(User $user, BioLink $bioLink): bool
     {
-        return $bioLink->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $bioLink->team);
     }
 
     /**

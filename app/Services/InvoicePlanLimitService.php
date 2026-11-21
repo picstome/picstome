@@ -11,7 +11,7 @@ use App\Models\Team;
  * invoices never consume the limit, so a free team can always correct the
  * invoice it already issued.
  */
-class InvoicePlanLimitService
+class InvoicePlanLimitService extends MonthlyPlanLimitService
 {
     /**
      * Number of invoices issued by the team during the current month.
@@ -32,22 +32,21 @@ class InvoicePlanLimitService
             ->count();
     }
 
+    public function countThisMonth(Team $team): int
+    {
+        return $this->issuedThisMonth($team);
+    }
+
+    protected function limitField(): string
+    {
+        return 'monthly_invoice_limit';
+    }
+
     /**
      * Whether the team can issue another invoice.
-     *
-     * A null limit means unlimited, mirroring the monthly contract limit.
-     * Paid and lifetime teams are never limited.
      */
     public function canIssue(Team $team): bool
     {
-        if ($team->subscribed() || is_null($team->monthly_invoice_limit)) {
-            return true;
-        }
-
-        if ($team->monthly_invoice_limit <= 0) {
-            return false;
-        }
-
-        return $this->issuedThisMonth($team) < $team->monthly_invoice_limit;
+        return $this->canUse($team);
     }
 }

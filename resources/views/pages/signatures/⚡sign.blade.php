@@ -1,7 +1,7 @@
 <?php
 
-use App\Traits\InteractsWithTallStackModals;
 use App\Models\Signature;
+use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -180,7 +180,7 @@ new #[Layout('layouts.guest')] class extends Component
             <x-description.term>{{ __('Contract terms') }}</x-description.term>
             <x-description.details>
                 <div class="prose prose-sm">
-                    {!! str()->of($signature->contract->markdown_body)->markdown() !!}
+                    {!! $signature->contract->formatted_markdown_body !!}
                 </div>
             </x-description.details>
         </x-description.list>

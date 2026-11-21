@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\ContractTemplate;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class ContractTemplatePolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -24,7 +27,7 @@ class ContractTemplatePolicy
             return true;
         }
 
-        return $contractTemplate->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $contractTemplate->team);
     }
 
     /**
@@ -45,7 +48,7 @@ class ContractTemplatePolicy
             return (bool) $user->is_admin;
         }
 
-        return $contractTemplate->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $contractTemplate->team);
     }
 
     /**
@@ -57,7 +60,7 @@ class ContractTemplatePolicy
             return (bool) $user->is_admin;
         }
 
-        return $contractTemplate->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $contractTemplate->team);
     }
 
     /**

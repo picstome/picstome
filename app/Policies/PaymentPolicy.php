@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Payment;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 
 class PaymentPolicy
 {
+    use BelongsToCurrentTeam;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -20,7 +23,7 @@ class PaymentPolicy
      */
     public function view(User $user, Payment $payment): bool
     {
-        return $payment->team_id === $user->currentTeam->id;
+        return $this->belongsToCurrentTeamId($user, $payment->team_id);
     }
 
     /**
@@ -36,7 +39,7 @@ class PaymentPolicy
      */
     public function update(User $user, Payment $payment): bool
     {
-        return $payment->team_id === $user->currentTeam->id;
+        return $this->belongsToCurrentTeamId($user, $payment->team_id);
     }
 
     /**
@@ -44,7 +47,7 @@ class PaymentPolicy
      */
     public function delete(User $user, Payment $payment): bool
     {
-        return $payment->team_id === $user->currentTeam->id;
+        return $this->belongsToCurrentTeamId($user, $payment->team_id);
     }
 
     /**

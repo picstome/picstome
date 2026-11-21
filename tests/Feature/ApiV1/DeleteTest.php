@@ -24,7 +24,7 @@ it('deletes photos in the gallery and reports unknown ids', function () {
     $otherGallery = Gallery::factory()->for($user->personalTeam())->create();
     $otherPhoto = Photo::factory()->for($otherGallery)->create(['disk' => 's3']);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $before = $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)->json('rev');
 
@@ -55,7 +55,7 @@ it('logs the deletion for audit purposes', function () {
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
     $photo = Photo::factory()->for($gallery)->create(['disk' => 's3']);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->deleteJson('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -79,7 +79,7 @@ it('denies deleting photos from another team gallery', function () {
     $gallery = Gallery::factory()->create();
     $photo = Photo::factory()->for($gallery)->create(['disk' => 's3']);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->deleteJson('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -95,7 +95,7 @@ it('validates the photo id list', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->deleteJson('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,

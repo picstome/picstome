@@ -75,8 +75,27 @@ new class extends Component
         $this->templates = Auth::user()?->currentTeam->contractTemplates()->orderBy('title')->get();
     }
 
+    /**
+     * Contracts with their signature counters.
+     *
+     * Counts eager loaded in `mount()` are lost when Livewire hydrates the
+     * photoshoot on the next request, so they are queried per render.
+     */
+    #[Computed]
+    public function contracts(): Collection
+    {
+        return $this->photoshoot->contracts()
+            ->withCount([
+                'signatures',
+                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+            ])
+            ->get();
+    }
+
     public function update()
     {
+        $this->authorize('update', $this->photoshoot);
+
         $this->form->update();
 
         $this->photoshoot = $this->photoshoot->fresh();
@@ -86,6 +105,8 @@ new class extends Component
 
     public function delete()
     {
+        $this->authorize('delete', $this->photoshoot);
+
         $this->photoshoot->deleteGalleries()->delete();
 
         $this->redirect(route('photoshoots'));
@@ -93,6 +114,8 @@ new class extends Component
 
     public function deletePreservingGalleries()
     {
+        $this->authorize('delete', $this->photoshoot);
+
         $this->photoshoot->delete();
 
         $this->redirect(route('photoshoots'));
@@ -100,6 +123,8 @@ new class extends Component
 
     public function addGallery()
     {
+        $this->authorize('update', $this->photoshoot);
+
         tap($this->galleryForm->store(), function ($gallery) {
             $this->redirect(route('galleries.show', ['gallery' => $gallery]));
         });
@@ -123,6 +148,8 @@ new class extends Component
 
     public function generatePaymentLink()
     {
+        $this->authorize('update', $this->photoshoot);
+
         $this->generatedPaymentLink = $this->paymentLinkForm->generatePaymentLink();
 
         $this->closeModal('generate-payment-link');
@@ -355,7 +382,7 @@ new class extends Component
         </div>
     @endif
 
-    @if ($photoshoot->contracts?->isNotEmpty())
+    @if ($this->contracts->isNotEmpty())
         <x-data-table class="mt-12">
             <x-data-table.columns>
                 <x-data-table.column class="w-full">{{ __('Contract') }}</x-data-table.column>
@@ -366,7 +393,7 @@ new class extends Component
             </x-data-table.columns>
 
             <x-data-table.rows>
-                @foreach ($photoshoot->contracts as $contract)
+                @foreach ($this->contracts as $contract)
                     <x-data-table.row>
                         <x-data-table.cell variant="strong" class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
@@ -391,7 +418,7 @@ new class extends Component
                         </x-data-table.cell>
                         <x-data-table.cell class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>
-                            {{ $contract->signatures()->signed()->count() }}/{{ $contract->signatures()->count() }}
+                            {{ $contract->signed_signatures_count }}/{{ $contract->signatures_count }}
                         </x-data-table.cell>
                         <x-data-table.cell class="text-end">
                             @if ($contract->isExecuted() && $contract->pdf_file_path)

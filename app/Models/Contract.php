@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Jobs\DeleteFromDisk;
 use App\Jobs\ProcessPdfContract;
+use App\Support\SafeMarkdown;
 use Barryvdh\DomPDF\PDF;
 use Carbon\Carbon;
 use Database\Factories\ContractFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -37,7 +39,10 @@ class Contract extends Model
         });
     }
 
-    public function team()
+    /**
+     * @return BelongsTo<Team, $this>
+     */
+    public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
@@ -122,12 +127,7 @@ class Contract extends Model
 
     protected function formattedMarkdownBody(): Attribute
     {
-        return Attribute::get(function () {
-            return Str::of($this->markdown_body)->markdown([
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]);
-        });
+        return Attribute::get(fn (): string => SafeMarkdown::render($this->markdown_body));
     }
 
     public function deleteFromDisk()

@@ -4,10 +4,13 @@ namespace App\Policies;
 
 use App\Models\Invoice;
 use App\Models\User;
+use App\Policies\Concerns\BelongsToCurrentTeam;
 use App\Services\InvoicePlanLimitService;
 
 class InvoicePolicy
 {
+    use BelongsToCurrentTeam;
+
     public function __construct(private readonly InvoicePlanLimitService $limits) {}
 
     /**
@@ -23,7 +26,7 @@ class InvoicePolicy
      */
     public function view(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $invoice->team);
     }
 
     /**
@@ -39,7 +42,7 @@ class InvoicePolicy
      */
     public function update(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam) && $invoice->isDraft();
+        return $this->belongsToCurrentTeam($user, $invoice->team) && $invoice->isDraft();
     }
 
     /**
@@ -47,7 +50,7 @@ class InvoicePolicy
      */
     public function delete(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam) && $invoice->isDraft();
+        return $this->belongsToCurrentTeam($user, $invoice->team) && $invoice->isDraft();
     }
 
     /**
@@ -58,7 +61,7 @@ class InvoicePolicy
      */
     public function issue(User $user, Invoice $invoice): bool
     {
-        if (! $invoice->team->is($user->currentTeam)) {
+        if (! $this->belongsToCurrentTeam($user, $invoice->team)) {
             return false;
         }
 
@@ -70,7 +73,7 @@ class InvoicePolicy
      */
     public function managePublicLink(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam);
+        return $this->belongsToCurrentTeam($user, $invoice->team);
     }
 
     /**
@@ -82,7 +85,7 @@ class InvoicePolicy
      */
     public function markAsPaid(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam) && $invoice->isIssued();
+        return $this->belongsToCurrentTeam($user, $invoice->team) && $invoice->isIssued();
     }
 
     /**
@@ -90,7 +93,7 @@ class InvoicePolicy
      */
     public function rectify(User $user, Invoice $invoice): bool
     {
-        return $invoice->team->is($user->currentTeam) && $invoice->isIssued();
+        return $this->belongsToCurrentTeam($user, $invoice->team) && $invoice->isIssued();
     }
 
     /**

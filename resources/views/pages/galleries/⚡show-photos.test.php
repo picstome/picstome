@@ -1,0 +1,732 @@
+<?php
+
+use App\Events\PhotoAdded;
+use App\Models\Gallery;
+use App\Models\Photo;
+use App\Models\Photoshoot;
+use App\Models\Team;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Cashier\Subscription;
+use Livewire\Livewire;
+
+use function Pest\Laravel\withoutDefer;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    withoutDefer();
+
+    $this->user = User::factory()->withPersonalTeam()->create();
+    $this->team = $this->user->currentTeam;
+});
+
+describe('Favorites', function () {
+    it('allows users to view their team gallery favorites', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $favorite = Photo::factory()->for($gallery)->favorited()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
+
+        expect($component->allPhotos->contains($favorite))->toBeTrue();
+    });
+
+    it('refreshes the favorites tab count after rating five stars in the viewer', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->unfavorited()->create();
+
+        // Warm the cached favorites list with the old (empty) value.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+        expect($component->totalFavorites)->toBe(0);
+
+        Livewire::actingAs($this->user)
+            ->test('pages::galleries.photos.show', ['photo' => $photo])
+            ->call('setRating', 5);
+
+        // The gallery page is a fresh request after the viewer action.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery]);
+
+        expect($component->totalFavorites)->toBe(1)
+            ->and($photo->fresh()->isFavorited())->toBeTrue();
+    });
+
+    it('refreshes the favorites list after marking photos as favorites', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->favorited()->create(['name' => '1Z8A6190.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('showFavorites');
+
+        expect($component->allPhotos->count())->toBe(1);
+
+        $component->set('favoriteFileNames', '1Z8A6159')
+            ->call('markFavorites');
+
+        expect($component->allPhotos->pluck('name')->sort()->values()->all())->toBe(['1Z8A6159.jpg', '1Z8A6190.jpg'])
+            ->and($gallery->photos()->where('name', '1Z8A6159.jpg')->first()->rating)->toBe(5);
+    });
+
+    it('allows users to favorite a photo', function () {
+        $photo = Photo::factory()->unfavorited()->create();
+        expect($photo->isFavorited())->toBeFalse();
+
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('favorite', $photo->id);
+
+        $component->assertDispatched('photo-favorited');
+        expect($photo->fresh()->isFavorited())->toBeTrue()
+            ->and($photo->fresh()->rating)->toBe(5);
+    });
+
+    it('marks photos as favorites by filenames with extensions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6159.jpg\n1Z8A6190.CR3")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(4);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.jpg', '1Z8A6190.CR3');
+    });
+
+    it('marks photos as favorites by base names without extensions', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6159\n1Z8A6190")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(4);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.jpg', '1Z8A6190.CR3');
+    });
+
+    it('only marks previously unfavorited photos', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->favorited()->create(['name' => '1Z8A6198.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "1Z8A6198\n1Z8A6255")
+            ->call('markFavorites');
+
+        expect($gallery->photos()->favorited()->count())->toBe(2);
+    });
+
+    it('does not mark photos from other galleries', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherGallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($otherGallery)->create(['name' => '1Z8A6159.jpg']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', '1Z8A6159')
+            ->call('markFavorites');
+
+        expect($gallery->photos()->favorited()->count())->toBe(1);
+        expect($otherGallery->photos()->favorited()->count())->toBe(0);
+    });
+
+    it('clears the input after marking favorites', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', '1Z8A6159.jpg')
+            ->call('markFavorites');
+
+        $component->assertSet('favoriteFileNames', '');
+    });
+
+    it('validates that favoriteFileNames is required', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('markFavorites');
+
+        $component->assertHasErrors(['favoriteFileNames' => 'required']);
+    });
+
+    it('handles empty lines and whitespace gracefully', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.CR3']);
+        Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('favoriteFileNames', "\n  1Z8A6159.jpg  \n\n  \n1Z8A6190.CR3\n")
+            ->call('markFavorites');
+
+        $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
+        expect($favorites->count())->toBe(3);
+        expect($favorites)->toContain('1Z8A6159.jpg', '1Z8A6159.CR3', '1Z8A6190.CR3');
+    });
+});
+
+describe('Photo Deletion', function () {
+    it('allows users to delete a photo', function () {
+        Storage::fake('public');
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create([
+            'name' => 'photo1.jpg',
+            'disk' => 's3',
+            'path' => UploadedFile::fake()
+                ->image('photo1.jpg')
+                ->storeAs('galleries/1/photos', 'photo1.jpg', 's3'),
+        ]);
+        expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeTrue();
+        expect(Photo::count())->toBe(1);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('deletePhoto', $photo->id);
+
+        expect($gallery->photos()->count())->toBe(0);
+        expect(Storage::disk('s3')->exists('galleries/1/photos/photo1.jpg'))->toBeFalse();
+    });
+
+    it('asks for confirmation before deleting a photo', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create([
+            'name' => 'photo1.jpg',
+            'disk' => 's3',
+            'path' => UploadedFile::fake()
+                ->image('photo1.jpg')
+                ->storeAs('galleries/1/photos', 'photo1.jpg', 's3'),
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('requestDeletePhoto', $photo->id);
+
+        expect($component->get('pendingPhotoId'))->toBe($photo->id);
+        expect($gallery->photos()->count())->toBe(1);
+    });
+
+    it('removes the deleted photo from the grid after confirmation', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]:first-of-type');
+
+        waitForBrowserValue($page, <<<'JS'
+            const button = document.querySelector('[data-photo-card]:first-of-type [data-photo-delete]');
+            const dock = button?.closest('.rounded-full');
+
+            return dock && parseFloat(getComputedStyle(dock).opacity) > 0 ? 1 : null;
+        JS, 10000);
+
+        $page->click('[data-photo-card]:first-of-type [data-photo-delete]');
+
+        waitForBrowserValue($page, <<<'JS'
+            return [...document.querySelectorAll('[role="dialog"]')]
+                .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                    && dialog.innerText.includes('Delete photo?')) ? 1 : null;
+        JS, 10000);
+
+        $page->click('#delete-photo button[wire\\:click]');
+
+        $remaining = waitForBrowserValue($page, <<<'JS'
+            return document.querySelectorAll('[data-photo-card]').length === 1 ? 1 : null;
+        JS, 10000);
+
+        expect($remaining)->toBe(1);
+        expect($gallery->photos()->count())->toBe(1);
+    })->group('browser');
+
+    it('offers a quick delete button next to the favorite action on the photo tile', function () {
+        Storage::fake('s3');
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+        $this->actingAs($this->user);
+
+        $page = visit("/galleries/{$gallery->id}");
+        $page->hover('[data-photo-card]');
+
+        waitForBrowserValue($page, <<<'JS'
+            const button = document.querySelector('[data-photo-delete]');
+            const dock = button?.closest('.rounded-full');
+
+            return dock && parseFloat(getComputedStyle(dock).opacity) > 0 ? 1 : null;
+        JS, 10000);
+
+        $page->click('[data-photo-delete]');
+
+        $opened = waitForBrowserValue($page, <<<'JS'
+            return [...document.querySelectorAll('[role="dialog"]')]
+                .some((dialog) => getComputedStyle(dialog).display !== 'none'
+                    && dialog.innerText.includes('Delete photo?')) ? 1 : null;
+        JS, 10000);
+
+        expect($opened)->toBe(1);
+
+        expect($gallery->photos()->count())->toBe(1);
+    })->group('browser');
+
+    it('prevents users from deleting another team\'s photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for(Gallery::factory()->for(Team::factory()))->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('deletePhoto', $photo->id);
+
+        $component->assertStatus(403);
+    });
+
+    it('allows users to delete their team gallery', function () {
+        Storage::fake('s3');
+
+        $photos = collect([
+            UploadedFile::fake()->image('photo1.jpg'),
+            UploadedFile::fake()->image('photo2.jpg'),
+        ]);
+        $gallery = Gallery::factory()->for($this->team)->create(['name' => 'Example Gallery']);
+        $photos->each(function ($photo) use ($gallery) {
+            $gallery->addPhoto($photo);
+        });
+        $gallery->photos->each(function ($photo) {
+            expect(Storage::disk('s3')->exists($photo->path))->toBeTrue();
+        });
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])->call('delete');
+        $component->assertRedirect('/galleries');
+        expect(Gallery::count())->toBe(0);
+        expect(Photo::count())->toBe(0);
+        $gallery->photos->each(function ($photo) {
+            expect(Storage::disk('s3')->exists($photo->path))->toBeFalse();
+        });
+    });
+});
+
+describe('Gallery Photoshoot Association', function () {
+    it('allows assigning a gallery to a photoshoot', function () {
+        $photoshoot = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshoot->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBe($photoshoot->id);
+    });
+
+    it('allows changing a gallery\'s photoshoot', function () {
+        $photoshootA = Photoshoot::factory()->for($this->team)->create();
+        $photoshootB = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create([
+            'photoshoot_id' => $photoshootA->id,
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshootB->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBe($photoshootB->id);
+    });
+
+    it('prevents assigning a photoshoot from another team', function () {
+        $otherTeam = Team::factory()->create();
+        $photoshoot = Photoshoot::factory()->for($otherTeam)->create();
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', $photoshoot->id)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBeNull();
+        $component->assertHasErrors(['form.photoshoot_id' => 'exists']);
+    });
+
+    it('allows removing a gallery from a photoshoot', function () {
+        $photoshoot = Photoshoot::factory()->for($this->team)->create();
+        $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create([
+            'photoshoot_id' => $photoshoot->id,
+        ]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.photoshoot_id', null)
+            ->call('update');
+
+        $gallery->refresh();
+        expect($gallery->photoshoot_id)->toBeNull();
+    });
+});
+
+describe('Gallery Editing', function () {
+    it('allows editing a team gallery', function () {
+        $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.name', 'Edited Gallery')
+            ->call('update');
+
+        expect($gallery->fresh()->name)->toBe('Edited Gallery');
+    });
+
+    it('sets the gallery expiration date', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $expirationDate = now()->addDays(10)->toDateString();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', $expirationDate)
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date->toDateString())->toBe($expirationDate);
+    });
+
+    it('changes the gallery expiration date', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+        $newExpiration = now()->addDays(20)->toDateString();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', $newExpiration)
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
+    });
+
+    it('removes the gallery expiration date when subscribed', function () {
+        Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update');
+        $gallery->refresh();
+        expect($gallery->expiration_date)->toBeNull();
+    });
+
+    it('cannot remove the gallery expiration date when not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update');
+
+        $component->assertHasErrors(['form.expirationDate' => 'required']);
+        $gallery->refresh();
+        expect($gallery->expiration_date)->not->toBeNull();
+    });
+
+    it('does not require expiration date when gallery is public, even if not subscribed', function () {
+        $gallery = Gallery::factory()->for($this->team)->public()->create(['expiration_date' => now()->addDays(5)]);
+        expect($gallery->is_public)->toBeTrue();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('form.expirationDate', '')
+            ->call('update')
+            ->assertHasNoErrors('form.expirationDate');
+
+        $gallery->refresh();
+
+        expect($gallery->expiration_date)->toBeNull();
+    });
+});
+
+describe('Storage Limits', function () {
+    it('increments storage_used when team uploads photo and has enough storage', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
+        ]);
+        // Add a photo to simulate 10 MB used
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEOK']);
+        Photo::factory()->for($gallery)->create(['size' => 10 * 1024 * 1024]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEOK']);
+
+        $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
+        $photoSize = $photoFile->getSize();
+        $initialStorageUsed = $this->team->calculateStorageUsed();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(1);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed + $photoSize);
+    });
+
+    it('blocks photo upload when team storage limit would be exceeded', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 20 * 1024, // 20 KB
+        ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 18 * 1024]); // 18 KB
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
+        $initialStorageUsed = $this->team->calculateStorageUsed();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+
+    it('blocks photo upload when team is exactly at the storage limit', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 20 * 1024, // 20 KB
+        ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 20 * 1024]); // 20 KB
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEFULL']);
+
+        $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 KB
+        $initialStorageUsed = $this->team->calculateStorageUsed();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+
+    it('blocks photo upload when team is just under the storage limit', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 20 * 1024, // 20 KB
+        ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 19 * 1024]); // 19 KB
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEALMOSTFULL']);
+
+        $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(2 * 1024); // 2 KB
+        $initialStorageUsed = $this->team->calculateStorageUsed();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(0);
+        expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+
+    it('does not count deleted photos towards storage usage', function () {
+        Storage::fake('s3');
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 100 * 1024 * 1024, // 100 MB
+        ]);
+        // No photos yet, so storage used is 0
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'STORAGEDELETE']);
+
+        $photoFile = UploadedFile::fake()->image('photo_delete.jpg', 1200, 800)->size(5 * 1024); // 5 KB
+        $photoSize = $photoFile->getSize();
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        $storageAfterUpload = $this->team->calculateStorageUsed();
+        expect($storageAfterUpload)->toBe($photoSize);
+
+        $photo = $gallery->fresh()->photos()->first();
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('deletePhoto', $photo->id);
+
+        expect($this->team->calculateStorageUsed())->toBe(0);
+    });
+
+    it('does not block photo upload for teams with unlimited storage regardless of usage', function () {
+        Storage::fake('s3');
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => null, // Unlimited storage
+        ]);
+
+        Photo::factory()->for(
+            Gallery::factory()->for($this->team)
+        )->create(['size' => 999999999]); // 999 MB
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'UNLIMITED']);
+
+        $photoFile = UploadedFile::fake()->image('photo_upload.jpg', 1200, 800)->size(5 * 1024); // 5 MB
+        $initialStorageUsed = $this->team->calculateStorageUsed();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', $photoFile)
+            ->call('save', 0);
+
+        expect($gallery->fresh()->photos()->count())->toBe(1);
+        expect($this->team->calculateStorageUsed())->toBeGreaterThanOrEqual($initialStorageUsed);
+        $component->assertHasNoErrors();
+    });
+
+    it('charges only the size difference when replacing the current version', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 3 * 1024, // 3 KB
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'REPLACEKB']);
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'source_name' => 'photo1.jpg', 'size' => 2 * 1024]); // 2 KB
+
+        // Replacing 2 KB with 2 KB needs no additional storage.
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(2))
+            ->call('save', 0, 'replace')
+            ->assertHasNoErrors();
+
+        // A 10 KB replacement exceeds the 3 KB limit.
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(10))
+            ->call('save', 0, 'replace');
+
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+
+    it('requires full storage when adding a new version', function () {
+        Storage::fake('s3');
+
+        Event::fake(PhotoAdded::class);
+
+        $this->team->update([
+            'custom_storage_limit' => 3 * 1024, // 3 KB
+        ]);
+
+        $gallery = Gallery::factory()->for($this->team)->create(['ulid' => 'VERSIONKB']);
+        Photo::factory()->for($gallery)->create(['name' => 'photo1.jpg', 'source_name' => 'photo1.jpg', 'size' => 2 * 1024]);
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->set('photos.0', UploadedFile::fake()->image('photo1.jpg', 100, 100)->size(2))
+            ->call('save', 0, 'version');
+
+        $component->assertHasErrors(['photos.0' => 'You do not have enough storage space to upload this photo.']);
+    });
+});
+
+describe('Cover Photo', function () {
+    it('allows setting a photo as the gallery cover', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo->id);
+    });
+
+    it('allows changing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo1 = Photo::factory()->for($gallery)->create();
+        $photo2 = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo1->id]);
+
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo2])
+            ->call('setAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBe($photo2->id);
+    });
+
+    it('allows removing the cover photo', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+        $gallery->update(['cover_photo_id' => $photo->id]);
+
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('removeAsCover');
+
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+
+    it('prevents setting cover photo from another team', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $otherTeam = Team::factory()->create();
+        $otherGallery = Gallery::factory()->for($otherTeam)->create();
+        $photo = Photo::factory()->for($otherGallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('photo-item', ['photo' => $photo])
+            ->call('setAsCover');
+
+        $component->assertStatus(403);
+        expect($gallery->fresh()->cover_photo_id)->toBeNull();
+    });
+
+    it('stores the cover focal point clamped to the image bounds', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+        $gallery->setCoverPhoto($photo);
+
+        Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('setCoverFocalPoint', 0.25, 1.5);
+
+        expect($gallery->fresh()->cover_focal_x)->toBe(0.25)
+            ->and($gallery->fresh()->cover_focal_y)->toBe(1.0);
+    });
+
+    it('opens the cover focus overlay after selecting a cover', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $photo = Photo::factory()->for($gallery)->create();
+
+        $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
+            ->call('setAsCover', $photo);
+
+        expect($component->get('adjustingCover'))->toBeTrue()
+            ->and($component->html())->toContain('Adjust cover focus')
+            ->and($component->html())->toContain(str_replace('&', '&amp;', $photo->large_thumbnail_url));
+    });
+});

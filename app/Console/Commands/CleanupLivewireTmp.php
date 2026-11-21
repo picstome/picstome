@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,8 @@ use Throwable;
  */
 class CleanupLivewireTmp extends Command
 {
+    use RequiresDryRunOrForce;
+
     /**
      * The name and signature of the console command.
      *
@@ -41,10 +44,8 @@ class CleanupLivewireTmp extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        if (! $dryRun && ! $force) {
-            $this->warn('Use --dry-run to inspect the scope or --force to delete stale temporary uploads.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect the scope or --force to delete stale temporary uploads.')) !== null) {
+            return $failure;
         }
 
         if (! config('livewire.temporary_file_upload.cleanup', true)) {

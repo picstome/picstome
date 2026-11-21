@@ -155,3 +155,18 @@ test('unlocking a second password keeps the first galleries unlocked', function 
     get('/shares/'.$galleryA->ulid.'/'.$galleryA->slug)->assertStatus(200);
     get('/shares/'.$galleryB->ulid.'/'.$galleryB->slug)->assertStatus(200);
 });
+
+test('throttles repeated wrong passwords', function () {
+    RateLimiter::clear('customer-unlock:'.request()->ip().':'.$this->customer->ulid);
+
+    Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create();
+    $component = Livewire::test('pages::clients.show', ['customer' => $this->customer]);
+
+    foreach (range(1, 5) as $attempt) {
+        $component->set('password', 'wrong-password')->call('unlock')->assertHasErrors('password');
+    }
+
+    $component->set('password', 'secret')->call('unlock')->assertHasErrors('password');
+
+    expect(session()->get('unlocked_gallery_ulids'))->toBeNull();
+});

@@ -6,7 +6,6 @@ use App\Models\GalleryArchive;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 /**
  * Deletes an archive object after its row was invalidated or removed.
@@ -35,14 +34,8 @@ class DeleteGalleryArchive implements ShouldQueue
     {
         $disk = Storage::disk($this->disk);
 
-        try {
-            if ($disk->exists($this->path)) {
-                $disk->delete($this->path);
-            }
-        } catch (Throwable $exception) {
-            report($exception);
-
-            throw $exception;
+        if ($disk->exists($this->path)) {
+            $disk->delete($this->path);
         }
 
         GalleryArchive::query()

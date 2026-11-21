@@ -17,7 +17,7 @@ it('requires authentication', function () {
 it('returns 404 for an unknown gallery', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/manifest?gallery='.Str::ulid())
         ->assertNotFound()
@@ -28,7 +28,7 @@ it('denies galleries from another team', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)
         ->assertForbidden()
@@ -54,7 +54,7 @@ it('returns the full manifest with stable ids and signed urls', function () {
 
     Storage::fake('s3');
     $urls = fakeTemporaryUrls();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $response = $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid.'&since=anything');
 
@@ -85,7 +85,7 @@ it('returns favorite and rating state for the companion app', function () {
 
     Storage::fake('s3');
     fakeTemporaryUrls();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)
         ->assertOk()
@@ -104,7 +104,7 @@ it('reports a null hash when the server has not computed it', function () {
 
     Storage::fake('s3');
     fakeTemporaryUrls();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $response = $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid);
 

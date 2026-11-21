@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Services\GalleryUnlockService;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -59,13 +60,42 @@ class extends Component
 
     public function unlock()
     {
-        if (! app(GalleryUnlockService::class)->unlockCustomerGalleries($this->customer, $this->password)) {
+        $this->ensureIsNotRateLimited();
+
+        $validated = $this->validate(['password' => ['required', 'string']]);
+
+        if (! app(GalleryUnlockService::class)->unlockCustomerGalleries($this->customer, $validated['password'])) {
+            RateLimiter::hit($this->throttleKey(), 60);
+
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
             ]);
         }
 
+        RateLimiter::clear($this->throttleKey());
+
         $this->reset('password');
+    }
+
+    /**
+     * Limit password guesses per visitor and customer.
+     */
+    protected function ensureIsNotRateLimited(): void
+    {
+        $key = $this->throttleKey();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'password' => __('Too many attempts. Please try again in :seconds seconds.', [
+                    'seconds' => RateLimiter::availableIn($key),
+                ]),
+            ]);
+        }
+    }
+
+    protected function throttleKey(): string
+    {
+        return 'customer-unlock:'.request()->ip().':'.$this->customer->ulid;
     }
 }; ?>
 
@@ -89,7 +119,7 @@ class extends Component
                     <x-ts-heading size="lg">{{ __('Protected galleries') }}</x-ts-heading>
                     <x-ts-subheading>{{ __('Enter a password to view protected galleries.') }}</x-ts-subheading>
                 </div>
-                <x-ts-input wire:model="password" :label="__('Password')" type="text" />
+                <x-ts-input wire:model="password" :label="__('Password')" type="password" />
                 <div class="flex">
                     <x-ts-spacer />
                     <x-ts-button type="submit" variant="primary">{{ __('Unlock') }}</x-ts-button>

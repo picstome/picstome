@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MediaType;
 use App\Jobs\DeleteFromDisk;
 use App\Services\GalleryArchiveService;
 use App\Services\PhotoUrlService;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -243,7 +245,10 @@ class Photo extends Model
         }
     }
 
-    public function gallery()
+    /**
+     * @return BelongsTo<Gallery, $this>
+     */
+    public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
     }
@@ -363,7 +368,7 @@ class Photo extends Model
     protected function images(Builder $query): void
     {
         $query->where(function (Builder $query) {
-            foreach (['jpg', 'jpeg', 'png', 'tiff'] as $extension) {
+            foreach (MediaType::IMAGE_EXTENSIONS as $extension) {
                 $query->orWhere('path', 'like', '%.'.$extension);
             }
         });
@@ -602,7 +607,9 @@ class Photo extends Model
      */
     public function deleteFromDisk()
     {
-        foreach ($this->versions()->get() as $version) {
+        $this->loadMissing('versions');
+
+        foreach ($this->versions as $version) {
             $version->deleteFromDisk($this->id);
         }
 
@@ -655,19 +662,7 @@ class Photo extends Model
                 return null;
             }
 
-            $disk = $this->diskOrDefault();
-            $diskConfig = config("filesystems.disks.$disk");
-            $baseUrl = $diskConfig['url'] ?? null;
-
-            if (! $baseUrl && isset($diskConfig['origin'], $diskConfig['bucket'])) {
-                $baseUrl = rtrim($diskConfig['origin'], '/').'/'.$diskConfig['bucket'];
-            }
-
-            if ($baseUrl) {
-                return rtrim($baseUrl, '/').'/'.ltrim($this->path, '/');
-            }
-
-            return Storage::disk($disk)->url($this->path);
+            return PhotoUrlService::make($this)->storageUrl($this->path);
         });
     }
 
@@ -789,19 +784,15 @@ class Photo extends Model
      */
     public function isImage(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['jpg', 'jpeg', 'png', 'tiff']);
+        return MediaType::isImagePath($this->path);
     }
 
     /**
-     * Determine if the photo is a video (mp4, mkv, avi)
+     * Determine if the photo is a video (mp4, webm, ogg)
      */
     public function isVideo(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return in_array($ext, ['mp4', 'webm', 'ogg']);
+        return MediaType::isVideoPath($this->path);
     }
 
     /**
@@ -809,9 +800,7 @@ class Photo extends Model
      */
     public function isPdf(): bool
     {
-        $ext = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
-
-        return $ext === 'pdf';
+        return MediaType::isPdfPath($this->path);
     }
 
     /**

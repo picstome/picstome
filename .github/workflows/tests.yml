@@ -12,10 +12,213 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
+  unit:
+    name: Unit shard ${{ matrix.shard }}/4
     runs-on: ubuntu-latest
     environment: Testing
-    timeout-minutes: 30
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+          ini-values: opcache.enable_cli=1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy Environment File
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Build Assets
+        run: npm run build
+
+      - name: Verify migrations can be rolled back
+        if: matrix.shard == 1
+        run: |
+          touch database/database.sqlite
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=1 --force
+          php artisan migrate --force
+
+      # Each shard runs on a separate runner, so the full unit suite is split
+      # across four machines instead of one 6-minute job. Pest balances shards
+      # by the timings in tests/.pest/shards.json; `--update-shards` can refresh
+      # that data later without changing this workflow.
+      #
+      # Keep shards sequential: Pest's shard plugin passes `--processes` through
+      # to `--list-tests`, which rejects it, so sharding and `--processes`
+      # cannot be combined. Four parallel jobs are faster than one parallel job.
+      - name: Run Unit Tests
+        run: >-
+          php vendor/bin/pest
+          --compact
+          --exclude-group=browser
+          --default-time-limit=60
+          --shard=${{ matrix.shard }}/4
+
+  static:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    environment: Testing
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+          ini-values: opcache.enable_cli=1
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy Environment File
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Run PHPStan
+        run: composer analyse
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    environment: Testing
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: pcov
+          ini-values: opcache.enable_cli=1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy Environment File
+        run: cp .env.example .env
+
+      - name: Generate Application Key
+        run: php artisan key:generate
+
+      - name: Build Assets
+        run: npm run build
+
+      # Report-only for now. Once the baseline is known, add
+      # `--min=<percentage>` to turn this into a gate. Sequential on purpose:
+      # coverage collection across parallel workers is fragile.
+      - name: Run Coverage
+        run: >-
+          php vendor/bin/pest
+          --compact
+          --exclude-group=browser
+          --default-time-limit=120
+          --coverage
+          --coverage-clover=coverage.xml
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          if-no-files-found: ignore
+
+  browser:
+    name: Browser ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    environment: Testing
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: galleries
+            script: test:browser:galleries
+          - name: shares
+            script: test:browser:shares
+          - name: admin
+            script: test:browser:admin
+          - name: features
+            script: test:browser:features
+          - name: misc
+            script: test:browser:misc
 
     steps:
       - name: Checkout
@@ -71,29 +274,14 @@ jobs:
       - name: Build Assets
         run: npm run build
 
-      - name: Verify migrations can be rolled back
-        run: |
-          touch database/database.sqlite
-          php artisan migrate:fresh --force
-          php artisan migrate:rollback --step=1 --force
-          php artisan migrate --force
-
       # Browser tests boot a real page per test and do not behave well inside
-      # parallel workers: they hang instead of failing, which used to eat the
-      # whole job timeout with no output. They are tagged `browser` and run in
-      # their own sequential step, so a stuck page fails fast and cannot leave a
-      # parallel worker waiting forever.
-      - name: Run Tests
-        run: composer test:unit
-
+      # parallel workers: they hang instead of failing. Each matrix entry gets
+      # its own runner, so a stuck page only costs that group. The retry loop
+      # keeps the known Playwright hang from failing the whole workflow.
       - name: Run Browser Tests
         run: |
-          # The Playwright driver occasionally hangs instead of failing, and a
-          # few page tests are timing-sensitive under CI load. Bound each
-          # attempt and retry so a transient failure does not cost a
-          # 30-minute job timeout.
           for attempt in 1 2 3; do
             echo "Browser tests attempt ${attempt}"
-            timeout 300 composer test:browser && exit 0
+            timeout 300 composer ${{ matrix.script }} && exit 0
           done
           exit 1

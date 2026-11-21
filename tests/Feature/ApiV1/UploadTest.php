@@ -15,6 +15,13 @@ it('requires authentication', function () {
     $this->postJson('/api/v1/photos')->assertUnauthorized();
 });
 
+it('rejects tokens without the sync ability', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+    Sanctum::actingAs($user, ['other']);
+
+    $this->getJson('/api/v1/me')->assertForbidden();
+});
+
 it('uploads a photo, recomputes its hash and moves the revision', function () {
     Storage::fake('s3');
     Event::fake([PhotoAdded::class]);
@@ -22,7 +29,7 @@ it('uploads a photo, recomputes its hash and moves the revision', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $before = $this->getJson('/api/v1/manifest?gallery='.$gallery->ulid)->json('rev');
 
@@ -53,13 +60,32 @@ it('uploads a photo, recomputes its hash and moves the revision', function () {
         ->and($response->json('rev'))->toBe($after);
 });
 
+it('returns the storage quota error when the team is out of space', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $user->currentTeam->update(['custom_storage_limit' => 1]);
+
+    $gallery = Gallery::factory()->for($user->currentTeam)->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'quota.jpg',
+        'file' => UploadedFile::fake()->image('quota.jpg', 10, 20),
+    ], ['Accept' => 'application/json'])
+        ->assertStatus(413)
+        ->assertJsonPath('code', 'storage_quota_exceeded');
+});
+
 it('denies uploading to another team gallery', function () {
     Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -76,7 +102,7 @@ it('rejects unsupported file extensions', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -90,13 +116,32 @@ it('rejects unsupported file extensions', function () {
     expect($gallery->photos()->count())->toBe(0);
 });
 
+it('rejects a video whose bytes are not a video', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'broken.mp4',
+        'file' => UploadedFile::fake()->createWithContent('broken.mp4', 'this is not a video container'),
+    ], ['Accept' => 'application/json'])
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'invalid_video');
+
+    expect($gallery->photos()->count())->toBe(0);
+});
+
 it('rejects a file that is not a readable image before storing it', function () {
     Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
     $gallery = Gallery::factory()->for($user->personalTeam())->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) $gallery->ulid,
@@ -113,7 +158,7 @@ it('returns 404 for an unknown gallery', function () {
     Storage::fake('s3');
 
     $user = User::factory()->withPersonalTeam()->create();
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['sync']);
 
     $this->post('/api/v1/photos', [
         'gallery_id' => (string) str()->ulid(),
@@ -122,4 +167,25 @@ it('returns 404 for an unknown gallery', function () {
     ], ['Accept' => 'application/json'])
         ->assertNotFound()
         ->assertJsonPath('code', 'unknown_gallery');
+});
+
+it('accepts an mp4 whose first box is not ftyp', function () {
+    Storage::fake('s3');
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $gallery = Gallery::factory()->for($user->personalTeam())->create();
+
+    Sanctum::actingAs($user, ['sync']);
+
+    // QuickTime-style layout: a `wide` box before `mdat`.
+    $bytes = "\x00\x00\x00\x08wide".str_repeat("\x00", 64);
+
+    $this->post('/api/v1/photos', [
+        'gallery_id' => (string) $gallery->ulid,
+        'filename' => 'clip.mp4',
+        'file' => UploadedFile::fake()->createWithContent('clip.mp4', $bytes),
+    ], ['Accept' => 'application/json'])
+        ->assertSuccessful();
+
+    expect($gallery->photos()->count())->toBe(1);
 });

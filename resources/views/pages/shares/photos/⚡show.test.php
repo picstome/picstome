@@ -477,13 +477,26 @@ test('annotation pins are positioned after the image loads', function () {
 
     $page = visit("/shares/{$gallery->ulid}/photos/{$photo->id}");
     $page->script("const image = document.querySelector('#photo img'); image.removeAttribute('srcset'); image.src = '/favicon-96x96.png';");
-    $page->wait(0.6);
 
     expect($page->script("document.querySelectorAll('button[title=\"Photo annotation\"]').length"))
         ->toBeGreaterThan(0);
 
-    expect($page->script("(() => { const pin = document.querySelector('button[title=\"Photo annotation\"]'); const image = document.querySelector('#photo img'); const p = pin.getBoundingClientRect(); const i = image.getBoundingClientRect(); return p.left >= i.left - 2 && p.right <= i.right + 2 && p.top >= i.top - 2 && p.bottom <= i.bottom + 2; })()"))
-        ->toBeTrue();
+    $positioned = waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('button[title="Photo annotation"]');
+        const image = document.querySelector('#photo img');
+
+        if (! pin || ! image) return null;
+
+        const p = pin.getBoundingClientRect();
+        const i = image.getBoundingClientRect();
+
+        return p.left >= i.left - 2 && p.right <= i.right + 2
+            && p.top >= i.top - 2 && p.bottom <= i.bottom + 2
+            ? 1
+            : null;
+    JS, 10000);
+
+    expect($positioned)->toBe(1);
 
     $page->assertNoJavaScriptErrors();
 })->group('browser');
@@ -713,13 +726,24 @@ test('the hidden annotations state is kept while moving between photos', functio
 
     expect($pinIsVisible())->toBeTrue();
 
-    $page->script("document.querySelector('[data-annotations-hide]')?.click()");
-    $page->wait(0.2);
+    // The click can land before Alpine binds the toggle, so keep clicking the
+    // hide button until the pin is actually hidden instead of a fixed sleep.
+    waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('#photo button[title="Photo annotation"]');
+
+        if (pin && pin.offsetParent === null) return 1;
+
+        document.querySelector('[data-annotations-hide]')?.click();
+
+        return null;
+    JS, 10000);
     expect($pinIsVisible())->toBeFalse();
 
     // Navigate to the next photo the same way the arrow keys do.
     $page->script("Livewire.navigate(document.querySelector('[data-viewer-dock] a[aria-label=\"Next photo (→)\"]').href)");
-    $page->wait(0.8);
+
+    $nextPath = json_encode('/photos/'.$second->id);
+    waitForBrowserValue($page, "return window.location.pathname.includes({$nextPath}) && document.querySelector('[data-annotations-show]') ? 1 : null;", 10000);
 
     expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id)
         ->and($page->script("localStorage.getItem('picstome-annotations-visible')"))->toBe('0');

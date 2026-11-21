@@ -27,7 +27,7 @@ class PhotoshootForm extends Form
 
     public $customer = '';
 
-    public function setPhotoshoot(Photoshoot $photoshoot)
+    public function setPhotoshoot(Photoshoot $photoshoot): void
     {
         $this->photoshoot = $photoshoot;
 
@@ -49,7 +49,7 @@ class PhotoshootForm extends Form
         return Auth::user()->currentTeam;
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
             'name' => 'required',
@@ -72,7 +72,7 @@ class PhotoshootForm extends Form
         ];
     }
 
-    public function store()
+    public function store(): Photoshoot
     {
         $this->validate();
 
@@ -93,7 +93,7 @@ class PhotoshootForm extends Form
         ]);
     }
 
-    public function update()
+    public function update(): bool
     {
         $this->validate();
 

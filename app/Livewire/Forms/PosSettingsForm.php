@@ -17,7 +17,7 @@ class PosSettingsForm extends Form
 
     public $stripe_test_mode = false;
 
-    public function rules()
+    public function rules(): array
     {
         $currencies = array_map('strtolower', StripeConnectService::supportedCurrencies());
 
@@ -28,7 +28,7 @@ class PosSettingsForm extends Form
         ];
     }
 
-    public function setTeam(Team $team)
+    public function setTeam(Team $team): void
     {
         $this->team = $team;
 
@@ -37,7 +37,7 @@ class PosSettingsForm extends Form
         $this->stripe_test_mode = $team->stripe_test_mode ?? false;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

@@ -16,12 +16,12 @@ class LogosForm extends Form
     #[Validate(['nullable', 'image'])]
     public $logoIcon;
 
-    public function setTeam(Team $team)
+    public function setTeam(Team $team): void
     {
         $this->team = $team;
     }
 
-    public function update()
+    public function update(): void
     {
         $this->validate();
 

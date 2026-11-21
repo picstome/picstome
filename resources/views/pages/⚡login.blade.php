@@ -25,7 +25,7 @@ new #[Layout('layouts.guest')] class extends Component
 
     public function mount(): void
     {
-        $this->redirect = $this->safeRedirect(request()->get('redirect', ''));
+        $this->redirect = SafeRedirect::sanitize((string) request()->get('redirect', '')) ?? '';
 
         if ($this->redirect === '') {
             $this->redirect = $this->intendedRedirect();
@@ -52,17 +52,6 @@ new #[Layout('layouts.guest')] class extends Component
         }
 
         return SafeRedirect::sanitize($path.($query ? '?'.$query : '')) ?? '';
-    }
-
-    private function safeRedirect(?string $redirect): string
-    {
-        if (! is_string($redirect) || $redirect === '') {
-            return '';
-        }
-
-        return str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')
-            ? $redirect
-            : '';
     }
 
     /**

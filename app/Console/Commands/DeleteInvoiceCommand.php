@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\RequiresDryRunOrForce;
 use App\Models\Invoice;
 use App\Models\InvoiceEvent;
 use App\Models\InvoiceSetting;
@@ -29,6 +30,8 @@ use Illuminate\Support\Facades\Storage;
  */
 class DeleteInvoiceCommand extends Command
 {
+    use RequiresDryRunOrForce;
+
     /**
      * The name and signature of the console command.
      *
@@ -52,10 +55,8 @@ class DeleteInvoiceCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        if (! $dryRun && ! $force) {
-            $this->warn('Use --dry-run to inspect the scope or --force to delete the invoices.');
-
-            return self::FAILURE;
+        if (($failure = $this->guardDestructiveOperation('Use --dry-run to inspect the scope or --force to delete the invoices.')) !== null) {
+            return $failure;
         }
 
         $root = $this->resolveInvoice();

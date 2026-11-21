@@ -16,6 +16,7 @@ new class extends Component
     public function birthdaySoonCustomers()
     {
         return $this->team->customers()
+            ->birthdaySoon()
             ->get()
             ->filter(fn ($customer) => $customer->isBirthdaySoon())
             ->sortBy(function ($customer) {

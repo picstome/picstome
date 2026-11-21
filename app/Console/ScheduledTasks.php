@@ -21,7 +21,7 @@ class ScheduledTasks
     {
         // Stagger the daily maintenance jobs so they do not all start at
         // midnight on the same worker.
-        $schedule->command('galleries:delete-expired')
+        $schedule->command('galleries:delete-expired --force')
             ->dailyAt('00:00')
             ->name('galleries:delete-expired');
 
@@ -29,7 +29,7 @@ class ScheduledTasks
             ->dailyAt('09:00')
             ->name('galleries:send-expiration-reminders');
 
-        $schedule->command('subscriptions:cleanup')
+        $schedule->command('subscriptions:cleanup --force')
             ->dailyAt('00:10')
             ->name('subscriptions:cleanup');
 
