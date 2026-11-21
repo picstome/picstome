@@ -173,3 +173,16 @@ it('does not delete galleries in dry-run mode', function () {
 
     expect(Gallery::find($gallery->id))->not->toBeNull();
 });
+
+it('does not email anyone in dry-run mode', function () {
+    $this->team->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test',
+        'stripe_status' => 'active',
+        'ends_at' => now()->addDays(15),
+    ]);
+
+    artisan('subscriptions:cleanup --dry-run')->assertExitCode(0);
+
+    Notification::assertNothingSent();
+});

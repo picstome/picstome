@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
@@ -244,7 +245,10 @@ class Photo extends Model
         }
     }
 
-    public function gallery()
+    /**
+     * @return BelongsTo<Gallery, $this>
+     */
+    public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
     }

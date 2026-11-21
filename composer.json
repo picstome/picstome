@@ -90,7 +90,10 @@
         "test:dirty:browser": "@php vendor/bin/pest --dirty --compact --group=browser --default-time-limit=120",
         "test:profile": "@php vendor/bin/pest --parallel --processes=2 --compact --exclude-group=browser --default-time-limit=60 --profile",
         "test:browser:file": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120",
-        "analyse": "@php vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
+        "analyse": [
+            "@php tests/PHPStan/extract-sfc-components.php",
+            "@php vendor/bin/phpstan analyse --memory-limit=1G --no-progress"
+        ],
         "coverage": "@php vendor/bin/pest --compact --exclude-group=browser --default-time-limit=120 --coverage --coverage-clover=coverage.xml",
         "preflight": [
             "@php vendor/bin/pint --dirty",

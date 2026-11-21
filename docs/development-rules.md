@@ -212,7 +212,10 @@ migration before restarting queue workers.
    `php artisan db:seed --class=ContractTemplateSeeder --force` (idempotent:
    it never overwrites templates an admin has edited).
 8. Run `npm ci && npm run build` when assets changed.
-9. Clear/rebuild caches as appropriate.
+9. Clear/rebuild caches as appropriate. If a server runs the daily cleanup
+   commands from its own cron instead of `schedule:run`, add `--force` to
+   `galleries:delete-expired` and `subscriptions:cleanup` (see
+   `docs/plan-limits.md`); without it they no longer delete anything.
 10. Restart queue workers after job-code changes.
 11. Run smoke tests for the changed flow.
 12. Record the deployed commit/tag and rollback commit.

@@ -726,13 +726,24 @@ test('the hidden annotations state is kept while moving between photos', functio
 
     expect($pinIsVisible())->toBeTrue();
 
-    $page->script("document.querySelector('[data-annotations-hide]')?.click()");
-    $page->wait(0.2);
+    // The click can land before Alpine binds the toggle, so keep clicking the
+    // hide button until the pin is actually hidden instead of a fixed sleep.
+    waitForBrowserValue($page, <<<'JS'
+        const pin = document.querySelector('#photo button[title="Photo annotation"]');
+
+        if (pin && pin.offsetParent === null) return 1;
+
+        document.querySelector('[data-annotations-hide]')?.click();
+
+        return null;
+    JS, 10000);
     expect($pinIsVisible())->toBeFalse();
 
     // Navigate to the next photo the same way the arrow keys do.
     $page->script("Livewire.navigate(document.querySelector('[data-viewer-dock] a[aria-label=\"Next photo (→)\"]').href)");
-    $page->wait(0.8);
+
+    $nextPath = json_encode('/photos/'.$second->id);
+    waitForBrowserValue($page, "return window.location.pathname.includes({$nextPath}) && document.querySelector('[data-annotations-show]') ? 1 : null;", 10000);
 
     expect($page->script('window.location.pathname'))->toContain('/photos/'.$second->id)
         ->and($page->script("localStorage.getItem('picstome-annotations-visible')"))->toBe('0');

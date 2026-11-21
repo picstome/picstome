@@ -110,31 +110,33 @@ class Customer extends Model
      * It deliberately adds a small margin so the exact `isBirthdaySoon()`
      * check can run on a much smaller set instead of every customer. Month/day
      * comparison keeps it portable between SQLite (tests) and MySQL.
+     *
+     * `isBirthdaySoon()` moves a 29 February birthday to 1 March in non-leap
+     * years, so that day also matches `02-29` when it falls in the window.
      */
     #[Scope]
     protected function birthdaySoon(Builder $query, int $days = 30): void
     {
-        $today = now()->startOfDay();
-        $end = $today->copy()->addDays($days + 2);
+        $day = now()->startOfDay();
+        $end = $day->copy()->addDays($days + 2);
+        $monthDays = [];
 
-        $driver = $query->getConnection()->getDriverName();
-        $expression = $driver === 'sqlite'
+        for (; $day->lte($end); $day->addDay()) {
+            $monthDays[] = $day->format('m-d');
+
+            if ($day->format('m-d') === '03-01' && ! $day->isLeapYear()) {
+                $monthDays[] = '02-29';
+            }
+        }
+
+        $monthDays = array_values(array_unique($monthDays));
+
+        $expression = $query->getConnection()->getDriverName() === 'sqlite'
             ? "strftime('%m-%d', birthdate)"
             : "DATE_FORMAT(birthdate, '%m-%d')";
 
-        $start = $today->format('m-d');
-        $endDate = $end->format('m-d');
-
-        $query->whereNotNull('birthdate');
-
-        if ($start <= $endDate) {
-            $query->whereRaw("{$expression} BETWEEN ? AND ?", [$start, $endDate]);
-        } else {
-            $query->where(function (Builder $query) use ($expression, $start, $endDate) {
-                $query->whereRaw("{$expression} >= ?", [$start])
-                    ->orWhereRaw("{$expression} <= ?", [$endDate]);
-            });
-        }
+        $query->whereNotNull('birthdate')
+            ->whereRaw($expression.' IN ('.implode(', ', array_fill(0, count($monthDays), '?')).')', $monthDays);
     }
 
     protected function formattedWhatsappPhone(): Attribute

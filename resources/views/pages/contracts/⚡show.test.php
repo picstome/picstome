@@ -183,3 +183,15 @@ test('can delete team contract', function () {
     Storage::disk('s3')->assertMissing('signatures/signatureA.png');
     Storage::disk('s3')->assertMissing('signatures/signatureA.png');
 });
+
+it('keeps the signature counters after the page refreshes itself', function () {
+    $contract = Contract::factory()->for($this->team)->create();
+    $contract->addSignatures(2);
+    $contract->signatures()->first()->update(['signed_at' => now()]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test('pages::contracts.show', ['contract' => $contract])
+        ->call('$refresh');
+
+    expect($component->instance()->signatureCounts)->toBe(['signed' => 1, 'total' => 2]);
+});

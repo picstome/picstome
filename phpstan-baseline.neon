@@ -181,12 +181,6 @@ parameters:
 			path: app/Console/Commands/UpdatePhotoSizes.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/Api/V1/GalleryIndexController.php
-
-		-
 			message: '#^Relation ''photos'' is not found in App\\Models\\Gallery model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -229,12 +223,6 @@ parameters:
 			path: app/Http/Controllers/PublicInvoicePdfController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/SharedGalleryDownloadController.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
 			identifier: property.notFound
 			count: 1
@@ -247,10 +235,10 @@ parameters:
 			path: app/Http/Middleware/PasswordProtectGallery.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$small_thumbnail_url\.$#'
 			identifier: property.notFound
-			count: 2
-			path: app/Http/Middleware/RedirectToCanonicalSharedGallerySlug.php
+			count: 1
+			path: app/Http/Resources/Api/V1/GalleryResource.php
 
 		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\Api\\V1\\ManifestResource\:\:\$photos\.$#'
@@ -295,12 +283,6 @@ parameters:
 			path: app/Jobs/NotifyContractExecuted.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Jobs/ProcessPhoto.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -331,12 +313,6 @@ parameters:
 			path: app/Jobs/ProcessPhoto.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Listeners/NotifyStorageAlmostFull.php
-
-		-
 			message: '#^Cannot call method diffInMilliseconds\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -355,27 +331,9 @@ parameters:
 			path: app/Livewire/Concerns/HandlesPricingPage.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Livewire/Forms/BioLinkForm.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Livewire/Forms/ContractForm.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\ContractTemplate\:\:\$formatted_markdown_body\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Livewire/Forms/ContractTemplateForm.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
 			path: app/Livewire/Forms/ContractTemplateForm.php
 
 		-
@@ -391,12 +349,6 @@ parameters:
 			path: app/Livewire/Forms/CustomerForm.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Livewire/Forms/CustomerForm.php
-
-		-
 			message: '#^Cannot call method format\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -409,12 +361,6 @@ parameters:
 			path: app/Livewire/Forms/CustomerForm.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Livewire/Forms/GalleryForm.php
-
-		-
 			message: '#^Cannot call method format\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -422,12 +368,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Team\:\:\$invoiceSetting\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Livewire/Forms/InvoiceForm.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Livewire/Forms/InvoiceForm.php
@@ -451,18 +391,6 @@ parameters:
 			path: app/Livewire/Forms/InvoiceForm.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Livewire/Forms/InvoiceSettingsForm.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Livewire/Forms/PaymentLinkForm.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -470,12 +398,6 @@ parameters:
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Photoshoot\:\:\$customer\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Livewire/Forms/PhotoshootForm.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
 			identifier: property.notFound
 			count: 1
 			path: app/Livewire/Forms/PhotoshootForm.php
@@ -619,12 +541,6 @@ parameters:
 			path: app/Models/Gallery.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/Gallery.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Team\:\:\$storage_limit\.$#'
 			identifier: property.notFound
 			count: 5
@@ -667,12 +583,6 @@ parameters:
 			path: app/Models/Gallery.php
 
 		-
-			message: '#^Relation ''photo'' is not found in App\\Models\\PhotoComment model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
-			path: app/Models/Gallery.php
-
-		-
 			message: '#^Cannot call method isPast\(\) on string\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -707,12 +617,6 @@ parameters:
 			identifier: method.nonObject
 			count: 1
 			path: app/Models/MagicLoginToken.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 11
-			path: app/Models/Photo.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$versions\.$#'
@@ -853,28 +757,10 @@ parameters:
 			path: app/Notifications/GalleryExpirationReminder.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Notifications/GuestPhotoCommented.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/BioLinkPolicy.php
-
-		-
 			message: '#^Parameter \#2 \$team of method App\\Policies\\BioLinkPolicy\:\:belongsToCurrentTeam\(\) expects App\\Models\\Team\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
 			identifier: argument.type
 			count: 3
 			path: app/Policies/BioLinkPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Policies/ContractPolicy.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\ContractTemplate\:\:\$team\.$#'
@@ -883,34 +769,10 @@ parameters:
 			path: app/Policies/ContractTemplatePolicy.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/ContractTemplatePolicy.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
 			identifier: property.notFound
 			count: 2
 			path: app/Policies/ContractTemplatePolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/CustomerPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/GalleryPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Policies/InvoicePolicy.php
 
 		-
 			message: '#^Parameter \#1 \$team of method App\\Services\\InvoicePlanLimitService\:\:canIssue\(\) expects App\\Models\\Team, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
@@ -923,30 +785,6 @@ parameters:
 			identifier: argument.type
 			count: 7
 			path: app/Policies/InvoicePolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/PaymentPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Photo\:\:\$gallery\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Policies/PhotoPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/PhotoPolicy.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Policies/PhotoshootPolicy.php
 
 		-
 			message: '#^Left side of && is always true\.$#'
@@ -1012,12 +850,6 @@ parameters:
 			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:active\(\)\.$#'
 			identifier: method.notFound
 			count: 2
-			path: app/Services/AdminUsageStatsService.php
-
-		-
-			message: '#^Relation ''gallery'' is not found in App\\Models\\Photo model\.$#'
-			identifier: larastan.relationExistence
-			count: 1
 			path: app/Services/AdminUsageStatsService.php
 
 		-
@@ -1459,72 +1291,6 @@ parameters:
 			path: app/Services/SystemInfoService.php
 
 		-
-			message: '#^Trait App\\Traits\\Concerns\\ManagesPhotoViewer is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Concerns/ManagesPhotoViewer.php
-
-		-
-			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryPhotoWall is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Gallery/ManagesGalleryPhotoWall.php
-
-		-
-			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryPhotos is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Gallery/ManagesGalleryPhotos.php
-
-		-
-			message: '#^Trait App\\Traits\\Gallery\\ManagesGallerySharing is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Gallery/ManagesGallerySharing.php
-
-		-
-			message: '#^Trait App\\Traits\\Gallery\\ManagesGalleryUploads is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Gallery/ManagesGalleryUploads.php
-
-		-
-			message: '#^Trait App\\Traits\\InteractsWithTallStackModals is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/InteractsWithTallStackModals.php
-
-		-
-			message: '#^Trait App\\Traits\\Queue\\FormatsQueueMetrics is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Queue/FormatsQueueMetrics.php
-
-		-
-			message: '#^Trait App\\Traits\\Queue\\ManagesQueueActions is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Queue/ManagesQueueActions.php
-
-		-
-			message: '#^Trait App\\Traits\\Queue\\MonitorsQueueHealth is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/Queue/MonitorsQueueHealth.php
-
-		-
-			message: '#^Trait App\\Traits\\RevealsGalleryPhoto is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/RevealsGalleryPhoto.php
-
-		-
-			message: '#^Trait App\\Traits\\SummarizesGalleryTabs is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Traits/SummarizesGalleryTabs.php
-
-		-
 			message: '#^Call to an undefined method Faker\\Generator\:\:state\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -1549,43 +1315,31 @@ parameters:
 			path: database/factories/UserFactory.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 1
-			path: database/seeders/DatabaseSeeder.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
-			identifier: property.notFound
-			count: 2
-			path: database/seeders/DevelTestDataSeeder.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 2
-			path: database/seeders/DevelTestDataSeeder.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$storage_path\.$#'
 			identifier: property.notFound
 			count: 1
 			path: database/seeders/ExternalDemoSeeder.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
 			identifier: property.notFound
 			count: 1
-			path: database/seeders/ExternalDemoSeeder.php
+			path: storage/framework/phpstan-sfc/Sfc_pages_admin_queue.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\:\:\$slug\.$#'
+			message: '#^Method PHPStanSfc\\Sfc_pages_admin_queue\:\:failedJobs\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{uuid\: string, class\: string, name\: string, queue\: string, connection\: string, exception\: string, exception_summary\: string, failed_at\: Carbon\\CarbonInterface, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: storage/framework/phpstan-sfc/Sfc_pages_admin_queue.php
+
+		-
+			message: '#^Method PHPStanSfc\\Sfc_pages_admin_queue\:\:queuedJobs\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, array\{id\: int, uuid\: string\|null, class\: string, name\: string, queue\: string, attempts\: int, max_tries\: mixed, timeout\: mixed, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: storage/framework/phpstan-sfc/Sfc_pages_admin_queue.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$is_admin\.$#'
 			identifier: property.notFound
 			count: 1
-			path: routes/web.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\User\:\:\$currentTeam\.$#'
-			identifier: property.notFound
-			count: 3
-			path: routes/web.php
+			path: storage/framework/phpstan-sfc/Sfc_pages_shares_photos_show.php

@@ -161,6 +161,8 @@ class Gallery extends Model
     /**
      * First displayable image in the gallery, exposed as a relation so it can
      * be eager loaded without hydrating every photo in the gallery.
+     *
+     * @return HasOne<Photo, $this>
      */
     public function firstImagePhoto(): HasOne
     {
@@ -183,7 +185,10 @@ class Gallery extends Model
         return $this->belongsTo(Photoshoot::class);
     }
 
-    public function coverPhoto()
+    /**
+     * @return BelongsTo<Photo, $this>
+     */
+    public function coverPhoto(): BelongsTo
     {
         return $this->belongsTo(Photo::class, 'cover_photo_id');
     }
@@ -370,7 +375,7 @@ class Gallery extends Model
      * ZIP used to iterate every row, so a client with the link could receive
      * photos the photographer had archived or had not finished processing.
      */
-    public function downloadablePhotos(bool $favorites = false): Builder|HasMany
+    public function downloadablePhotos(bool $favorites = false): HasMany
     {
         $photos = $favorites ? $this->favorites() : $this->photos();
 
@@ -1153,6 +1158,9 @@ class Gallery extends Model
         });
     }
 
+    /**
+     * @return Attribute<string, never>
+     */
     #[Attribute]
     protected function slug(): Attribute
     {

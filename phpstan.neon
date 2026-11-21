@@ -8,12 +8,15 @@ parameters:
         - config
         - database
         - routes
+        # Livewire single-file components that use the page traits, copied
+        # into plain classes by tests/PHPStan/extract-sfc-components.php so
+        # the trait bodies are analysed (see `composer analyse`).
+        - storage/framework/phpstan-sfc
 
     level: 5
 
     excludePaths:
         - bootstrap/cache
-        - storage
         - vendor
         # Stale config for an optional local translation tool that is not
         # installed in this project.

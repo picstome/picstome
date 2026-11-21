@@ -124,10 +124,10 @@ trait ManagesGalleryPhotoWall
 
     protected function resetPhotoLimits(): void
     {
-        $this->allPhotoLimit = self::PHOTO_PAGE_SIZE;
-        $this->favoritePhotoLimit = self::PHOTO_PAGE_SIZE;
-        $this->commentedPhotoLimit = self::PHOTO_PAGE_SIZE;
-        $this->archivedPhotoLimit = self::PHOTO_PAGE_SIZE;
+        $this->allPhotoLimit = GalleryPhotoQuery::PAGE_SIZE;
+        $this->favoritePhotoLimit = GalleryPhotoQuery::PAGE_SIZE;
+        $this->commentedPhotoLimit = GalleryPhotoQuery::PAGE_SIZE;
+        $this->archivedPhotoLimit = GalleryPhotoQuery::PAGE_SIZE;
 
         $this->forgetPhotoCollections();
     }
@@ -319,9 +319,9 @@ trait ManagesGalleryPhotoWall
     public function loadMore(string $tab = 'all'): void
     {
         match ($tab) {
-            'commented' => $this->commentedPhotoLimit += self::PHOTO_PAGE_SIZE,
-            'archived' => $this->archivedPhotoLimit += self::PHOTO_PAGE_SIZE,
-            default => $this->allPhotoLimit += self::PHOTO_PAGE_SIZE,
+            'commented' => $this->commentedPhotoLimit += GalleryPhotoQuery::PAGE_SIZE,
+            'archived' => $this->archivedPhotoLimit += GalleryPhotoQuery::PAGE_SIZE,
+            default => $this->allPhotoLimit += GalleryPhotoQuery::PAGE_SIZE,
         };
 
         $this->forgetPhotoCollections();

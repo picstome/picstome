@@ -61,15 +61,8 @@ new class extends Component
 
         // The Galleries block renders a thumbnail per gallery; eager loading
         // the photo and its gallery keeps PhotoUrlService from resolving both
-        // lazily (one pair of queries per card). Contracts carry their
-        // signature counters so the list does not run two COUNTs per row.
-        $this->photoshoot->loadMissing([
-            'galleries.firstImagePhoto.gallery',
-            'contracts' => fn ($query) => $query->withCount([
-                'signatures',
-                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
-            ]),
-        ]);
+        // lazily (one pair of queries per card).
+        $this->photoshoot->loadMissing('galleries.firstImagePhoto.gallery');
 
         $this->form->setPhotoshoot($this->photoshoot);
 
@@ -80,6 +73,23 @@ new class extends Component
         $this->contractForm->setPhotoshoot($this->photoshoot);
 
         $this->templates = Auth::user()?->currentTeam->contractTemplates()->orderBy('title')->get();
+    }
+
+    /**
+     * Contracts with their signature counters.
+     *
+     * Counts eager loaded in `mount()` are lost when Livewire hydrates the
+     * photoshoot on the next request, so they are queried per render.
+     */
+    #[Computed]
+    public function contracts(): Collection
+    {
+        return $this->photoshoot->contracts()
+            ->withCount([
+                'signatures',
+                'signatures as signed_signatures_count' => fn ($query) => $query->signed(),
+            ])
+            ->get();
     }
 
     public function update()
@@ -372,7 +382,7 @@ new class extends Component
         </div>
     @endif
 
-    @if ($photoshoot->contracts?->isNotEmpty())
+    @if ($this->contracts->isNotEmpty())
         <x-data-table class="mt-12">
             <x-data-table.columns>
                 <x-data-table.column class="w-full">{{ __('Contract') }}</x-data-table.column>
@@ -383,7 +393,7 @@ new class extends Component
             </x-data-table.columns>
 
             <x-data-table.rows>
-                @foreach ($photoshoot->contracts as $contract)
+                @foreach ($this->contracts as $contract)
                     <x-data-table.row>
                         <x-data-table.cell variant="strong" class="relative">
                             <a href="/contracts/{{ $contract->id }}" class="absolute inset-0 focus:outline-hidden"></a>

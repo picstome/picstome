@@ -30,6 +30,9 @@ final readonly class GalleryPhotoQuery
 
     public const DIRECTIONS = ['asc', 'desc'];
 
+    /** Cards rendered per photo-wall page; "load more" adds another page. */
+    public const PAGE_SIZE = 60;
+
     private function __construct(
         public ?int $rating = null,
         public bool $favoritesOnly = false,

@@ -1508,3 +1508,12 @@ test('deleting a version invalidates the cached gallery listing', function () {
 
     expect(Photo::galleryCacheVersion($gallery->id))->toBeGreaterThan($before);
 });
+
+it('lists every comment of a photo, not only the latest 200', function () {
+    $photo = Photo::factory()->for(Gallery::factory()->for($this->team))->create();
+    PhotoComment::factory()->count(205)->for($photo)->create();
+
+    $component = Livewire::actingAs($this->user)->test('pages::galleries.photos.show', ['photo' => $photo]);
+
+    expect($component->instance()->comments)->toHaveCount(205);
+});
