@@ -181,8 +181,9 @@ new class extends Component
      *
      * An invoice counts as paid either when the team marks it as paid or when
      * its linked payments settle the total, so the check runs in PHP over the
-     * eager-loaded payments. Rectified invoices and their replacements are
-     * skipped: the original is no longer collectable.
+     * eager-loaded payments. Rectified invoices are skipped because the
+     * original is no longer collectable; their issued corrective is listed
+     * instead, since it carries its own payment status.
      *
      * The rows are fetched before the paid ones are dropped because the amount
      * settled by the linked payments is not a column we can filter on; the
@@ -194,7 +195,6 @@ new class extends Component
         return $this->team->invoices()
             ->where('status', Invoice::STATUS_ISSUED)
             ->whereNull('paid_at')
-            ->whereNull('rectifies_invoice_id')
             ->with(['customer', 'payments'])
             ->orderByRaw('coalesce(due_date, issue_date) asc')
             ->orderBy('id')
