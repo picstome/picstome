@@ -45,7 +45,61 @@ class RevenueService
             ->get(['currency', 'total', 'exchange_rate'])
             ->sum(fn (Invoice $invoice) => $this->inTeamCurrency($invoice, $currency));
 
-        return round($payments + $invoices, 2);
+        return round($payments + $invoices + $this->paidRectifiedInvoices($team, $start, $currency), 2);
+    }
+
+    /**
+     * Revenue of the invoices that were marked as paid and then rectified.
+     *
+     * Rectifying an invoice replaces its amount with the corrective one, but the
+     * team usually keeps the paid flag on the original, which is the invoice the
+     * client actually paid. In that case the money counts once, with the amount
+     * of the invoice that is in force now (the last issued corrective of the
+     * chain). When any corrective of the chain is marked as paid itself, or is
+     * settled by a payment, it is already counted on its own and the original
+     * is skipped.
+     */
+    private function paidRectifiedInvoices(Team $team, mixed $start, string $currency): float
+    {
+        return $team->invoices()
+            ->whereNotNull('paid_at')
+            ->where('paid_at', '>=', $start)
+            ->where('status', Invoice::STATUS_RECTIFIED)
+            ->whereDoesntHave('payments', fn ($query) => $query->whereNotNull('completed_at'))
+            ->get()
+            ->sum(function (Invoice $original) use ($currency): float {
+                $current = $this->invoiceInForce($original);
+
+                return $current === null ? 0.0 : $this->inTeamCurrency($current, $currency);
+            });
+    }
+
+    /**
+     * Last issued corrective that replaces the invoice, or null when there is
+     * none or a corrective of the chain is already paid on its own.
+     */
+    private function invoiceInForce(Invoice $invoice): ?Invoice
+    {
+        $current = null;
+
+        while ($corrective = $this->issuedCorrective($invoice)) {
+            $settledByPayment = $corrective->payments()->whereNotNull('completed_at')->exists();
+
+            if ($corrective->isMarkedPaid() || $settledByPayment) {
+                return null;
+            }
+
+            $current = $invoice = $corrective;
+        }
+
+        return $current;
+    }
+
+    private function issuedCorrective(Invoice $invoice): ?Invoice
+    {
+        return $invoice->rectifications()
+            ->whereIn('status', [Invoice::STATUS_ISSUED, Invoice::STATUS_RECTIFIED])
+            ->first();
     }
 
     /**
