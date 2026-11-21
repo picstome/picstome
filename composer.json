@@ -81,7 +81,7 @@
             "@test:browser:features",
             "@test:browser:misc"
         ],
-        "test:browser:galleries": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/galleries/⚡show.test.php resources/views/pages/galleries/⚡show-browser.test.php resources/views/pages/galleries/⚡show-sharing.test.php resources/views/pages/galleries/photos/⚡show.test.php",
+        "test:browser:galleries": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/galleries/⚡show.test.php resources/views/pages/galleries/⚡show-browser.test.php resources/views/pages/galleries/⚡show-photos.test.php resources/views/pages/galleries/⚡show-sharing.test.php resources/views/pages/galleries/photos/⚡show.test.php",
         "test:browser:shares": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/shares/⚡show.test.php resources/views/pages/shares/photos/⚡show.test.php",
         "test:browser:admin": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 resources/views/pages/admin/⚡emails.test.php resources/views/pages/admin/⚡queue.test.php resources/views/pages/admin/⚡stats.test.php resources/views/pages/admin/⚡translations.test.php",
         "test:browser:features": "@php vendor/bin/pest --compact --group=browser --default-time-limit=120 tests/Feature/BlackScreenPageTest.php tests/Feature/DashboardUpcomingEventsTest.php tests/Feature/GalleryMasonryLayoutTest.php",

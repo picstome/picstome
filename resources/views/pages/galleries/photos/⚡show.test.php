@@ -1432,7 +1432,7 @@ test('the video comparison opens with two players and one control bar', function
         'rightSrc' => 'https://cdn.example.test/bucket/galleries/old.mp4',
         'rightMuted' => true,
     ]);
-});
+})->group('browser');
 
 /*
  * Regression: the version badge showed `version_count`, a monotonically

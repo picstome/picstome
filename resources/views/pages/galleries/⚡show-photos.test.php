@@ -256,7 +256,7 @@ describe('Photo Deletion', function () {
 
         expect($remaining)->toBe(1);
         expect($gallery->photos()->count())->toBe(1);
-    });
+    })->group('browser');
 
     it('offers a quick delete button next to the favorite action on the photo tile', function () {
         Storage::fake('s3');
@@ -287,7 +287,7 @@ describe('Photo Deletion', function () {
         expect($opened)->toBe(1);
 
         expect($gallery->photos()->count())->toBe(1);
-    });
+    })->group('browser');
 
     it('prevents users from deleting another team\'s photo', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
