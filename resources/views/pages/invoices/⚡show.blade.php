@@ -279,7 +279,7 @@ new class extends Component
                     {{ $this->invoice->status_label }}
                 </x-ts-badge>
 
-                @if (! $this->invoice->isDraft() && ! $this->invoice->isRectificative())
+                @if ($this->invoice->isIssued())
                     <x-ts-badge :color="$this->isPaid ? 'lime' : 'yellow'" inset>
                         {{ $this->isPaid ? __('Paid invoice') : __('Payment pending') }}
                     </x-ts-badge>
@@ -287,7 +287,7 @@ new class extends Component
             </div>
         </div>
 
-        @if (! $this->invoice->isDraft() && ! $this->invoice->isRectificative())
+        @if ($this->invoice->isIssued())
             <div class="ms-auto flex items-center">
                 @if (! $this->isPaid)
                     <x-ts-button variant="primary" wire:click="markAsPaid">

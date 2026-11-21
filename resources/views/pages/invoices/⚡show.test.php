@@ -358,7 +358,7 @@ it('marks an issued invoice as paid and back as pending', function () {
         ->and($invoice->events()->pluck('event'))->toContain(InvoiceEvent::MARKED_UNPAID);
 });
 
-it('does not offer the paid action for a rectificative invoice', function () {
+it('marks a rectificative invoice as paid', function () {
     $original = $this->issuance->issue(draftInvoice($this->team));
 
     $rectificative = $this->issuance->issue(draftInvoice($this->team, [
@@ -369,11 +369,34 @@ it('does not offer the paid action for a rectificative invoice', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $rectificative])
+        ->assertSee('Mark as paid')
+        ->assertSee('Payment pending')
+        ->call('markAsPaid')
+        ->assertHasNoErrors()
+        ->assertSee('Paid')
+        ->assertDontSee('Payment pending');
+
+    expect($rectificative->fresh()->paid_at)->not->toBeNull()
+        ->and($rectificative->events()->pluck('event'))->toContain(InvoiceEvent::MARKED_PAID);
+});
+
+it('does not offer the paid action for a rectified invoice', function () {
+    $original = $this->issuance->issue(draftInvoice($this->team));
+
+    $this->issuance->issue(draftInvoice($this->team, [
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+    ]));
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices.show', ['invoice' => $original->fresh()])
         ->assertDontSee('Mark as paid')
         ->assertDontSee('Payment pending')
-        ->assertDontSee('Paid invoice')
         ->call('markAsPaid')
         ->assertStatus(403);
+
+    expect($original->fresh()->paid_at)->toBeNull();
 });
 
 it('does not offer the paid action for a draft invoice', function () {

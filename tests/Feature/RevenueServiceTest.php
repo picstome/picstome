@@ -118,3 +118,20 @@ it('ignores an invoice in another currency without an exchange rate', function (
 
     expect($this->revenue->lastDays($this->team, 30))->toBe(0.0);
 });
+
+it('does not count a paid invoice rectified afterwards until its corrective is marked as paid', function () {
+    $original = paidInvoice($this->team, 205.70);
+
+    $corrective = app(InvoiceIssuanceService::class)->issue(draftInvoice($this->team, [
+        'total' => 181.50,
+        'rectifies_invoice_id' => $original->id,
+        'rectification_type' => Invoice::RECTIFICATION_SUBSTITUTION,
+        'rectification_reason' => 'Wrong amount',
+    ]));
+
+    expect($this->revenue->lastDays($this->team, 30))->toBe(0.0);
+
+    $corrective->update(['paid_at' => now()]);
+
+    expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
+});
