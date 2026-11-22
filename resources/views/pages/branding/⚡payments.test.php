@@ -22,8 +22,9 @@ it('updates stripe currency with valid value', function () {
     expect($team->stripe_currency)->not->toBe('mxn');
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.stripe_currency', 'mxn')
-        ->call('save');
+        ->submit([
+            'form.stripe_currency' => 'mxn',
+        ], 'save');
 
     $component->assertHasNoErrors();
 
@@ -38,8 +39,9 @@ it('shows error for invalid stripe currency', function () {
     $invalidCurrency = 'xxx';
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.stripe_currency', $invalidCurrency)
-        ->call('save')
+        ->submit([
+            'form.stripe_currency' => $invalidCurrency,
+        ], 'save')
         ->assertHasErrors(['form.stripe_currency' => 'in']);
 
     $team->refresh();
@@ -53,8 +55,9 @@ it('can update the show_pay_button setting', function () {
     expect($team->show_pay_button)->toBeTrue();
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.show_pay_button', false)
-        ->call('save');
+        ->submit([
+            'form.show_pay_button' => false,
+        ], 'save');
 
     $component->assertHasNoErrors();
 
@@ -62,8 +65,9 @@ it('can update the show_pay_button setting', function () {
     expect($team->show_pay_button)->toBeFalse();
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.show_pay_button', true)
-        ->call('save');
+        ->submit([
+            'form.show_pay_button' => true,
+        ], 'save');
 
     $component->assertHasNoErrors();
 
@@ -119,16 +123,18 @@ it('can toggle stripe_test_mode', function () {
     expect($team->stripe_test_mode)->toBeFalse();
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.stripe_test_mode', true)
-        ->call('save');
+        ->submit([
+            'form.stripe_test_mode' => true,
+        ], 'save');
 
     $component->assertHasNoErrors();
     $team->refresh();
     expect($team->stripe_test_mode)->toBeTrue();
 
     $component = Livewire::actingAs($user)->test('pages::branding.payments')
-        ->set('form.stripe_test_mode', false)
-        ->call('save');
+        ->submit([
+            'form.stripe_test_mode' => false,
+        ], 'save');
 
     $component->assertHasNoErrors();
     $team->refresh();

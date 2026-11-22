@@ -27,8 +27,9 @@ test('protected gallery can be unlocked with correct password', function () {
     get('shares/0123ABC/'.$gallery->slug)->assertRedirect('/shares/0123ABC/unlock');
 
     $component = Livewire::test('pages::shares.unlock', ['gallery' => $gallery])
-        ->set('password', 'secret')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock');
 
     expect(session()->get('unlocked_gallery_ulids'))->toBe(['0123ABC']);
     $component->assertRedirect('/shares/0123ABC/'.$gallery->slug);
@@ -50,8 +51,9 @@ test('protected gallery remains locked with incorrect password', function () {
     $gallery = Gallery::factory()->shared()->protected(password: 'secret')->create(['ulid' => '0123ABC']);
 
     $component = Livewire::test('pages::shares.unlock', ['gallery' => $gallery])
-        ->set('password', 'incorrect-password')
-        ->call('unlock');
+        ->submit([
+            'password' => 'incorrect-password',
+        ], 'unlock');
 
     $component->assertHasErrors(['password' => trans('auth.failed')]);
     expect(session()->get('unlocked_gallery_ulids'))->toBeNull();
@@ -72,8 +74,9 @@ test('unlocking a gallery also unlocks same-customer galleries sharing the passw
     $galleryB = Gallery::factory()->shared()->protected(password: 'secret')->for($photoshoot)->create(['ulid' => 'BBB222']);
 
     Livewire::test('pages::shares.unlock', ['gallery' => $galleryA])
-        ->set('password', 'secret')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock');
 
     expect(session()->get('unlocked_gallery_ulids'))->toContain('AAA111', 'BBB222');
     get('shares/BBB222/'.$galleryB->slug)->assertStatus(200);
@@ -85,8 +88,9 @@ test('unlocking a gallery keeps different-password galleries locked', function (
     $galleryB = Gallery::factory()->shared()->protected(password: 'other')->for($photoshoot)->create(['ulid' => 'BBB222']);
 
     Livewire::test('pages::shares.unlock', ['gallery' => $galleryA])
-        ->set('password', 'secret')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock');
 
     expect(session()->get('unlocked_gallery_ulids'))->toContain('AAA111');
     get('shares/BBB222/'.$galleryB->slug)->assertRedirect('/shares/BBB222/unlock');
@@ -99,8 +103,9 @@ test('unlocking a gallery does not unlock other customers galleries sharing the 
     $galleryB = Gallery::factory()->shared()->protected(password: 'secret')->for($otherPhotoshoot)->create(['ulid' => 'BBB222']);
 
     Livewire::test('pages::shares.unlock', ['gallery' => $galleryA])
-        ->set('password', 'secret')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock');
 
     expect(session()->get('unlocked_gallery_ulids'))->toContain('AAA111');
     get('shares/BBB222/'.$galleryB->slug)->assertRedirect('/shares/BBB222/unlock');
@@ -112,12 +117,14 @@ test('unlocking a second gallery keeps the first unlocked', function () {
     $galleryB = Gallery::factory()->shared()->protected(password: 'secretB')->for($photoshoot)->create(['ulid' => 'BBB222']);
 
     Livewire::test('pages::shares.unlock', ['gallery' => $galleryA])
-        ->set('password', 'secretA')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secretA',
+        ], 'unlock');
 
     Livewire::test('pages::shares.unlock', ['gallery' => $galleryB])
-        ->set('password', 'secretB')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secretB',
+        ], 'unlock');
 
     get('shares/AAA111/'.$galleryA->slug)->assertStatus(200);
     get('shares/BBB222/'.$galleryB->slug)->assertStatus(200);

@@ -21,9 +21,10 @@ test('profile information can be updated', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Livewire::actingAs($user)->test('pages::settings.profile')
-        ->set('name', 'Test User')
-        ->set('email', 'test@example.com')
-        ->call('updateProfileInformation');
+        ->submit([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ], 'updateProfileInformation');
 
     $response->assertHasNoErrors();
 

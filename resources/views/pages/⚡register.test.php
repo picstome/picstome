@@ -17,10 +17,11 @@ it('allows guests to view the registration page', function () {
 it('requires email verification after registering and keeps the return URL', function () {
     Livewire::withQueryParams(['redirect' => '/subscribe?plan=pro&ps_from=bf2026'])
         ->test('pages::register')
-        ->set('name', 'Verify First')
-        ->set('email', 'verify-first@example.com')
-        ->set('terms', true)
-        ->call('register')
+        ->submit([
+            'name' => 'Verify First',
+            'email' => 'verify-first@example.com',
+            'terms' => true,
+        ], 'register')
         ->assertRedirect(route('verification.notice'));
 
     expect(session('verification.redirect'))->toBe('/subscribe?plan=pro&ps_from=bf2026');
@@ -50,9 +51,10 @@ it('returns to the subscribe page with its tracking parameters after logging in 
 
     Livewire::withQueryParams(['redirect' => $redirect])
         ->test('pages::login')
-        ->set('form.email', 'login-from-register@example.com')
-        ->set('form.password', 'password')
-        ->call('login')
+        ->submit([
+            'form.email' => 'login-from-register@example.com',
+            'form.password' => 'password',
+        ], 'login')
         ->assertRedirect($redirect);
 });
 
@@ -106,10 +108,11 @@ it('aligns the terms checkbox with its label', function () {
 
 it('creates passwordless accounts by default', function () {
     Livewire::test('pages::register')
-        ->set('name', 'No Password')
-        ->set('email', 'nopassword@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'No Password',
+            'email' => 'nopassword@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'nopassword@example.com')->first();
 
@@ -118,20 +121,22 @@ it('creates passwordless accounts by default', function () {
 
 it('allows guests to register with valid data', function () {
     $component = Livewire::test('pages::register')
-        ->set('name', 'Test User')
-        ->set('email', 'test@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'terms' => true,
+        ], 'register');
 
     expect(User::count())->toBe(1);
 });
 
 it('authenticates the user after successful registration', function () {
     $component = Livewire::test('pages::register')
-        ->set('name', 'Auth User')
-        ->set('email', 'authuser@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Auth User',
+            'email' => 'authuser@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'authuser@example.com')->first();
 
@@ -146,10 +151,11 @@ it('redirects authenticated users away from the registration page', function () 
 
 it('creates a personal team for the user upon registration', function () {
     $component = Livewire::test('pages::register')
-        ->set('name', 'Team User')
-        ->set('email', 'teamuser@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Team User',
+            'email' => 'teamuser@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'teamuser@example.com')->first();
     $team = $user->currentTeam;
@@ -161,10 +167,11 @@ it('creates a personal team for the user upon registration', function () {
 
 it('gives the personal team 1GB of storage upon creation', function () {
     $component = Livewire::test('pages::register')
-        ->set('name', 'Storage User')
-        ->set('email', 'storageuser@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Storage User',
+            'email' => 'storageuser@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'storageuser@example.com')->first();
     $team = $user->currentTeam;
@@ -173,10 +180,11 @@ it('gives the personal team 1GB of storage upon creation', function () {
 
 it('creates a personal team with a handle upon registration', function () {
     $component = Livewire::test('pages::register')
-        ->set('name', 'Handle User')
-        ->set('email', 'handleuser@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Handle User',
+            'email' => 'handleuser@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'handleuser@example.com')->first();
     $team = $user->currentTeam;
@@ -187,16 +195,18 @@ it('creates a personal team with a handle upon registration', function () {
 
 it('generates unique handles when registering users with similar names', function () {
     Livewire::test('pages::register')
-        ->set('name', 'Test User')
-        ->set('email', 'testuser1@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Test User',
+            'email' => 'testuser1@example.com',
+            'terms' => true,
+        ], 'register');
 
     Livewire::test('pages::register')
-        ->set('name', 'Test User')
-        ->set('email', 'testuser2@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Test User',
+            'email' => 'testuser2@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user1 = User::where('email', 'testuser1@example.com')->first();
     $user2 = User::where('email', 'testuser2@example.com')->first();
@@ -207,10 +217,11 @@ it('generates unique handles when registering users with similar names', functio
 
 it('stores referral code when provided during registration', function () {
     Livewire::test('pages::register')
-        ->set('name', 'Referral User')
-        ->set('email', 'referral@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Referral User',
+            'email' => 'referral@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'referral@example.com')->first();
 
@@ -219,11 +230,12 @@ it('stores referral code when provided during registration', function () {
 
 it('stores referral code from query parameter', function () {
     Livewire::test('pages::register')
-        ->set('referral_code', 'CHEMA')
-        ->set('name', 'Referral User 2')
-        ->set('email', 'referral2@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'referral_code' => 'CHEMA',
+            'name' => 'Referral User 2',
+            'email' => 'referral2@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'referral2@example.com')->first();
 

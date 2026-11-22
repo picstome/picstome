@@ -96,8 +96,9 @@ it('opens the corrective invoice on the line items so the amounts can be changed
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong amount')
-        ->call('rectify')
+        ->submit([
+            'rectificationReason' => 'Wrong amount',
+        ], 'rectify')
         ->assertHasNoErrors()
         ->assertRedirect(route('invoices.create', [
             'invoice' => $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first()->ulid,
@@ -119,8 +120,9 @@ it('opens a corrective draft on the line items step', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong amount')
-        ->call('rectify');
+        ->submit([
+            'rectificationReason' => 'Wrong amount',
+        ], 'rectify');
 
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
 
@@ -137,16 +139,18 @@ it('issues the corrective invoice with a changed amount', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong amount')
-        ->call('rectify');
+        ->submit([
+            'rectificationReason' => 'Wrong amount',
+        ], 'rectify');
 
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
 
     Livewire::withQueryParams(['invoice' => $rectificative->ulid])
         ->actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.lineItems.0.unit_price', 50)
-        ->call('nextStep')
+        ->submit([
+            'form.lineItems.0.unit_price' => 50,
+        ], 'nextStep')
         ->assertSet('step', 3)
         ->assertSee('Difference')
         ->call('issue')
@@ -168,8 +172,9 @@ it('issues the corrective invoice with the same amounts on demand', function () 
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong client name')
-        ->call('rectifyWithoutChanges')
+        ->submit([
+            'rectificationReason' => 'Wrong client name',
+        ], 'rectifyWithoutChanges')
         ->assertHasNoErrors();
 
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
@@ -185,8 +190,9 @@ it('lets the user edit the full number of a corrective invoice', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong amount')
-        ->call('rectify')
+        ->submit([
+            'rectificationReason' => 'Wrong amount',
+        ], 'rectify')
         ->assertHasNoErrors();
 
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
@@ -196,8 +202,9 @@ it('lets the user edit the full number of a corrective invoice', function () {
     Livewire::withQueryParams(['invoice' => $rectificative->ulid])
         ->actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.full_number', 'R-'.now()->year.'-0099')
-        ->call('issue')
+        ->submit([
+            'form.full_number' => 'R-'.now()->year.'-0099',
+        ], 'issue')
         ->assertHasNoErrors();
 
     expect($rectificative->fresh()->full_number)->toBe('R-'.now()->year.'-0099')
@@ -213,8 +220,9 @@ it('copies the exchange rate to the corrective invoice', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong amount')
-        ->call('rectify')
+        ->submit([
+            'rectificationReason' => 'Wrong amount',
+        ], 'rectify')
         ->assertHasNoErrors();
 
     $rectificative = $this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->first();
@@ -228,8 +236,9 @@ it('does not offer to rectify an invoice that is already rectified', function ()
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong client name')
-        ->call('rectifyWithoutChanges')
+        ->submit([
+            'rectificationReason' => 'Wrong client name',
+        ], 'rectifyWithoutChanges')
         ->assertHasNoErrors();
 
     expect($invoice->fresh()->status)->toBe(Invoice::STATUS_RECTIFIED)
@@ -241,20 +250,23 @@ it('does not rectify an invoice twice while a corrective draft is pending', func
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice])
-        ->set('rectificationReason', 'Wrong client name')
-        ->call('rectify')
+        ->submit([
+            'rectificationReason' => 'Wrong client name',
+        ], 'rectify')
         ->assertHasNoErrors();
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice->fresh()])
-        ->set('rectificationReason', 'Another correction')
-        ->call('rectify')
+        ->submit([
+            'rectificationReason' => 'Another correction',
+        ], 'rectify')
         ->assertHasErrors(['invoice' => 'This invoice has already been rectified.']);
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.show', ['invoice' => $invoice->fresh()])
-        ->set('rectificationReason', 'Another correction')
-        ->call('rectifyWithoutChanges')
+        ->submit([
+            'rectificationReason' => 'Another correction',
+        ], 'rectifyWithoutChanges')
         ->assertHasErrors(['invoice' => 'This invoice has already been rectified.']);
 
     expect($this->team->invoices()->where('rectifies_invoice_id', $invoice->id)->count())->toBe(1);

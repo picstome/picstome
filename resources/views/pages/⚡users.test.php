@@ -47,9 +47,10 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.custom_storage_limit', 12)
-            ->set('userForm.monthly_contract_limit', 5)
-            ->call('saveUser')
+            ->submit([
+                'userForm.custom_storage_limit' => 12,
+                'userForm.monthly_contract_limit' => 5,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         $user->refresh();
@@ -66,8 +67,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.monthly_invoice_limit', 10)
-            ->call('saveUser')
+            ->submit([
+                'userForm.monthly_invoice_limit' => 10,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         expect($user->personalTeam()->monthly_invoice_limit)->toBe(10);
@@ -82,8 +84,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.monthly_payment_limit', 3)
-            ->call('saveUser')
+            ->submit([
+                'userForm.monthly_payment_limit' => 3,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         expect($user->personalTeam()->monthly_payment_limit)->toBe(3);
@@ -100,8 +103,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.monthly_payment_limit', null)
-            ->call('saveUser')
+            ->submit([
+                'userForm.monthly_payment_limit' => null,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         expect($team->fresh()->monthly_payment_limit)->toBeNull();
@@ -118,8 +122,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.monthly_invoice_limit', null)
-            ->call('saveUser')
+            ->submit([
+                'userForm.monthly_invoice_limit' => null,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         expect($team->fresh()->monthly_invoice_limit)->toBeNull();
@@ -151,9 +156,10 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.custom_storage_limit', null)
-            ->set('userForm.monthly_contract_limit', null)
-            ->call('saveUser')
+            ->submit([
+                'userForm.custom_storage_limit' => null,
+                'userForm.monthly_contract_limit' => null,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         $team->refresh();
@@ -171,9 +177,10 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.custom_storage_limit', 0)
-            ->set('userForm.monthly_contract_limit', 0)
-            ->call('saveUser')
+            ->submit([
+                'userForm.custom_storage_limit' => 0,
+                'userForm.monthly_contract_limit' => 0,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         $team->refresh();
@@ -207,8 +214,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.lifetime', true)
-            ->call('saveUser')
+            ->submit([
+                'userForm.lifetime' => true,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         $team->refresh();
@@ -227,8 +235,9 @@ describe('Users Page', function () {
         Livewire::actingAs($admin)
             ->test('pages::users')
             ->call('editUser', $user->id)
-            ->set('userForm.lifetime', false)
-            ->call('saveUser')
+            ->submit([
+                'userForm.lifetime' => false,
+            ], 'saveUser')
             ->assertHasNoErrors();
 
         $team->refresh();
@@ -362,8 +371,9 @@ describe('Users Page', function () {
 
         Livewire::actingAs($admin)
             ->test('pages::users')
-            ->set('filter', 'unverified')
-            ->call('openDeleteUnverifiedModal')
+            ->submit([
+                'filter' => 'unverified',
+            ], 'openDeleteUnverifiedModal')
             ->assertSee('Esto elimina permanentemente 1 cuenta vacía sin verificar creada hace más de 7 días.')
             ->assertSee('1 cuenta sin verificar tiene galerías o datos de facturación y no se borrará.')
             ->assertSee('Borrar 1 cuenta')
@@ -390,8 +400,9 @@ describe('Users Page', function () {
 
         Livewire::actingAs($admin)
             ->test('pages::users')
-            ->set('filter', 'unverified')
-            ->call('deleteUnverifiedUsers');
+            ->submit([
+                'filter' => 'unverified',
+            ], 'deleteUnverifiedUsers');
 
         Queue::assertPushed(PurgeUserAccount::class, 1);
         Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $eligible->id);

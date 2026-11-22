@@ -400,8 +400,9 @@ it('falls back to All photos in the grid when the last archived one is restored'
 
     $component = Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('activeTab', 'archived')
-        ->call('toggleArchive', $only->id);
+        ->submit([
+            'activeTab' => 'archived',
+        ], 'toggleArchive', $only->id);
 
     // The Archived tab disappears with its last photo, so the grid must not
     // stay on an empty panel.

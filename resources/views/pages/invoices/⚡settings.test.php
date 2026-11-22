@@ -27,13 +27,14 @@ it('creates the settings with the defaults on the first visit', function () {
 it('saves the issuer fiscal data', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.settings')
-        ->set('form.legal_name', 'Acme Studio SL')
-        ->set('form.tax_id', 'B12345678')
-        ->set('form.address', 'Calle Mayor 1')
-        ->set('form.city', 'Madrid')
-        ->set('form.postal_code', '28001')
-        ->set('form.country', 'ES')
-        ->call('save')
+        ->submit([
+            'form.legal_name' => 'Acme Studio SL',
+            'form.tax_id' => 'B12345678',
+            'form.address' => 'Calle Mayor 1',
+            'form.city' => 'Madrid',
+            'form.postal_code' => '28001',
+            'form.country' => 'ES',
+        ], 'save')
         ->assertHasNoErrors();
 
     $settings = $this->team->invoiceSetting->fresh();
@@ -47,22 +48,24 @@ it('saves the issuer fiscal data', function () {
 it('requires the fiscal data of the issuer', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.settings')
-        ->set('form.legal_name', '')
-        ->call('save')
+        ->submit([
+            'form.legal_name' => '',
+        ], 'save')
         ->assertHasErrors(['form.legal_name' => 'required']);
 });
 
 it('rejects an invalid series', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.settings')
-        ->set('form.legal_name', 'Acme Studio SL')
-        ->set('form.tax_id', 'B12345678')
-        ->set('form.address', 'Calle Mayor 1')
-        ->set('form.city', 'Madrid')
-        ->set('form.postal_code', '28001')
-        ->set('form.country', 'ES')
-        ->set('form.series', 'F 2026')
-        ->call('save')
+        ->submit([
+            'form.legal_name' => 'Acme Studio SL',
+            'form.tax_id' => 'B12345678',
+            'form.address' => 'Calle Mayor 1',
+            'form.city' => 'Madrid',
+            'form.postal_code' => '28001',
+            'form.country' => 'ES',
+            'form.series' => 'F 2026',
+        ], 'save')
         ->assertHasErrors(['form.series' => 'regex']);
 });
 

@@ -61,11 +61,12 @@ test('admins can publish a template in a chosen language', function () {
     config(['picstome.admin_emails' => [$this->user->email]]);
 
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
-        ->set('form.title', 'Licencia de marca')
-        ->set('form.body', '<h3>Cuerpo en HTML</h3>')
-        ->set('form.isPublic', true)
-        ->set('form.locale', 'es')
-        ->call('save');
+        ->submit([
+            'form.title' => 'Licencia de marca',
+            'form.body' => '<h3>Cuerpo en HTML</h3>',
+            'form.isPublic' => true,
+            'form.locale' => 'es',
+        ], 'save');
 
     $component->assertRedirect('/contract-templates/1');
 
@@ -79,10 +80,11 @@ test('admins can publish a template in a chosen language', function () {
 
 test('regular users cannot publish a template', function () {
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
-        ->set('form.title', 'Sneaky public template')
-        ->set('form.body', '<h3>Body</h3>')
-        ->set('form.isPublic', true)
-        ->call('save');
+        ->submit([
+            'form.title' => 'Sneaky public template',
+            'form.body' => '<h3>Body</h3>',
+            'form.isPublic' => true,
+        ], 'save');
 
     $component->assertStatus(403);
     expect(ContractTemplate::count())->toBe(0);
@@ -103,9 +105,10 @@ test('users can start a new template from a Picstome template', function () {
 
 test('can add new contract', function () {
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates')
-        ->set('form.title', 'A contract title')
-        ->set('form.body', '<h3>Body in HTML</h3>')
-        ->call('save');
+        ->submit([
+            'form.title' => 'A contract title',
+            'form.body' => '<h3>Body in HTML</h3>',
+        ], 'save');
 
     $component->assertRedirect('/contract-templates/1');
     expect(ContractTemplate::count())->toBe(1);

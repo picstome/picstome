@@ -88,8 +88,9 @@ it('edits a translation', function () {
         ->call('edit', 'Hello!')
         ->assertSet('enValue', 'Hello!')
         ->assertSet('esValue', '¡Hola!')
-        ->set('esValue', '¡Hola admin!')
-        ->call('save')
+        ->submit([
+            'esValue' => '¡Hola admin!',
+        ], 'save')
         ->assertHasNoErrors();
 
     expect(app(TranslationOverrideService::class)->value('es', 'Hello!'))
@@ -114,8 +115,9 @@ it('rejects translations that drop a placeholder', function () {
     Livewire::actingAs($this->admin)
         ->test('pages::admin.translations')
         ->call('edit', 'Booking Confirmed: :name')
-        ->set('esValue', 'Reserva confirmada')
-        ->call('save')
+        ->submit([
+            'esValue' => 'Reserva confirmada',
+        ], 'save')
         ->assertHasErrors('esValue');
 });
 
@@ -123,9 +125,10 @@ it('rejects placeholders that the application does not provide', function () {
     Livewire::actingAs($this->admin)
         ->test('pages::admin.translations')
         ->call('edit', 'Hello!')
-        ->set('enValue', 'Hello :unknown!')
-        ->set('esValue', '¡Hola :unknown!')
-        ->call('save')
+        ->submit([
+            'enValue' => 'Hello :unknown!',
+            'esValue' => '¡Hola :unknown!',
+        ], 'save')
         ->assertHasErrors('enValue');
 });
 

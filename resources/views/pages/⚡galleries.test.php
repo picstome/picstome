@@ -43,8 +43,9 @@ test('opens the create gallery modal from a query parameter', function () {
 
 test('can create a team gallery', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Just a Photo Gallery')
-        ->call('save');
+        ->submit([
+            'form.name' => 'Just a Photo Gallery',
+        ], 'save');
 
     $component->assertRedirect('/galleries/1');
     expect($this->team->galleries()->count())->toBe(1);
@@ -54,9 +55,10 @@ test('can create a team gallery', function () {
 
 test('can create a team gallery that does not keep photos at their original size', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Just a Photo Gallery')
-        ->set('form.keepOriginalSize', false)
-        ->call('save');
+        ->submit([
+            'form.name' => 'Just a Photo Gallery',
+            'form.keepOriginalSize' => false,
+        ], 'save');
 
     expect(Gallery::count())->toBe(1);
     expect(Gallery::first()->name)->toBe('Just a Photo Gallery');
@@ -65,9 +67,10 @@ test('can create a team gallery that does not keep photos at their original size
 
 test('remembers the keep original size option for new galleries', function () {
     Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'First Gallery')
-        ->set('form.keepOriginalSize', true)
-        ->call('save');
+        ->submit([
+            'form.name' => 'First Gallery',
+            'form.keepOriginalSize' => true,
+        ], 'save');
 
     $component = Livewire::actingAs($this->user)->test('pages::galleries');
 
@@ -78,9 +81,10 @@ test('can create a team gallery with no expiration date when subscribed', functi
     Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'No Expiration Gallery')
-        ->set('form.expirationDate', '')
-        ->call('save');
+        ->submit([
+            'form.name' => 'No Expiration Gallery',
+            'form.expirationDate' => '',
+        ], 'save');
 
     $gallery = $this->team->galleries()->first();
 
@@ -91,9 +95,10 @@ test('can create a team gallery with no expiration date when subscribed', functi
 
 test('cannot create a team gallery with no expiration date when not subscribed', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'No Expiration Gallery')
-        ->set('form.expirationDate', '')
-        ->call('save');
+        ->submit([
+            'form.name' => 'No Expiration Gallery',
+            'form.expirationDate' => '',
+        ], 'save');
 
     $component->assertHasErrors(['form.expirationDate' => 'required']);
     expect($this->team->galleries()->count())->toBe(0);
@@ -103,9 +108,10 @@ test('can create a team gallery with an expiration date', function () {
     $expiration = now()->addDays(7)->toDateString();
 
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Expiring Gallery')
-        ->set('form.expirationDate', $expiration)
-        ->call('save');
+        ->submit([
+            'form.name' => 'Expiring Gallery',
+            'form.expirationDate' => $expiration,
+        ], 'save');
 
     $gallery = $this->team->galleries()->first();
 
@@ -116,27 +122,30 @@ test('can create a team gallery with an expiration date', function () {
 
 test('cannot create a gallery with an invalid expiration date', function () {
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Invalid Expiration Gallery')
-        ->set('form.expirationDate', 'not-a-date')
-        ->call('save');
+        ->submit([
+            'form.name' => 'Invalid Expiration Gallery',
+            'form.expirationDate' => 'not-a-date',
+        ], 'save');
 
     $component->assertHasErrors(['form.expirationDate' => 'date']);
     expect($this->team->galleries()->count())->toBe(0);
 
     $pastDate = now()->subDay()->toDateString();
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Past Expiration Gallery')
-        ->set('form.expirationDate', $pastDate)
-        ->call('save');
+        ->submit([
+            'form.name' => 'Past Expiration Gallery',
+            'form.expirationDate' => $pastDate,
+        ], 'save');
 
     $component->assertHasErrors(['form.expirationDate' => 'after_or_equal']);
     expect($this->team->galleries()->count())->toBe(0);
 
     $futureDateOverOneYear = now()->addYear()->addDay()->toDateString();
     $component = Livewire::actingAs($this->user)->test('pages::galleries')
-        ->set('form.name', 'Too Far Future Gallery')
-        ->set('form.expirationDate', $futureDateOverOneYear)
-        ->call('save');
+        ->submit([
+            'form.name' => 'Too Far Future Gallery',
+            'form.expirationDate' => $futureDateOverOneYear,
+        ], 'save');
 
     $component->assertHasErrors(['form.expirationDate' => 'before_or_equal']);
     expect($this->team->galleries()->count())->toBe(0);

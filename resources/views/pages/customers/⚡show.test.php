@@ -60,8 +60,9 @@ it('can edit customer notes via Livewire', function () {
 
     Livewire::actingAs($this->user)->test('pages::customers.show', ['customer' => $customer])
         ->call('startEditingNotes')
-        ->set('editedNotes', 'New notes with **markdown**')
-        ->call('saveNotes')
+        ->submit([
+            'editedNotes' => 'New notes with **markdown**',
+        ], 'saveNotes')
         ->assertSet('editingNotes', false);
 
     $customer->refresh();

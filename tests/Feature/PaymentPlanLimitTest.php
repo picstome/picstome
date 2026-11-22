@@ -69,9 +69,10 @@ it('blocks generating a payment link once the monthly limit is reached', functio
 
     Livewire::actingAs($this->user)
         ->test('pages::payments')
-        ->set('linkForm.amount', 100)
-        ->set('linkForm.description', 'Session')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 100,
+            'linkForm.description' => 'Session',
+        ], 'generatePaymentLink')
         ->assertSet('paymentLink', null);
 });
 
@@ -80,9 +81,10 @@ it('generates a payment link while the team still has quota', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::payments')
-        ->set('linkForm.amount', 100)
-        ->set('linkForm.description', 'Session')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 100,
+            'linkForm.description' => 'Session',
+        ], 'generatePaymentLink')
         ->assertNotSet('paymentLink', null);
 });
 

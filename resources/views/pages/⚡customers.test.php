@@ -33,9 +33,10 @@ it('shows only customers belonging to users team', function () {
 it('allows a user to create a customer', function () {
     $component = Livewire::actingAs($this->user)
         ->test('pages::customers')
-        ->set('form.name', 'Jane Doe')
-        ->set('form.email', 'jane@example.com')
-        ->call('save');
+        ->submit([
+            'form.name' => 'Jane Doe',
+            'form.email' => 'jane@example.com',
+        ], 'save');
 
     expect($this->team->customers()->count())->toBe(1);
 });
@@ -43,12 +44,13 @@ it('allows a user to create a customer', function () {
 it('allows a user to create a customer with optional fields', function () {
     Livewire::actingAs($this->user)
         ->test('pages::customers')
-        ->set('form.name', 'Jane Doe')
-        ->set('form.email', 'jane@example.com')
-        ->set('form.phone', '1234567890')
-        ->set('form.birthdate', '1990-01-01')
-        ->set('form.notes', 'VIP customer')
-        ->call('save');
+        ->submit([
+            'form.name' => 'Jane Doe',
+            'form.email' => 'jane@example.com',
+            'form.phone' => '1234567890',
+            'form.birthdate' => '1990-01-01',
+            'form.notes' => 'VIP customer',
+        ], 'save');
 
     $customer = $this->team->customers()->first();
     expect($customer->phone)->toBe('1234567890');
@@ -61,9 +63,10 @@ it('enforces unique email per team', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::customers')
-        ->set('form.name', 'Another')
-        ->set('form.email', 'unique@example.com')
-        ->call('save')
+        ->submit([
+            'form.name' => 'Another',
+            'form.email' => 'unique@example.com',
+        ], 'save')
         ->assertHasErrors(['form.email' => 'unique']);
 });
 

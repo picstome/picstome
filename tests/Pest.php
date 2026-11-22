@@ -5,7 +5,9 @@ use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Models\Team;
 use App\Services\InvoiceService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportTesting\Testable;
 use Pest\Browser\Api\PendingAwaitablePage;
 use Pest\Browser\Api\Webpage;
 use Tests\TestCase;
@@ -351,3 +353,39 @@ function waitForAlpineRoot(Webpage|PendingAwaitablePage $page, string $selector 
         $timeoutMs,
     );
 }
+
+/*
+|--------------------------------------------------------------------------
+| Livewire
+|--------------------------------------------------------------------------
+|
+| `->submit([fields], 'action', ...$params)` sends the fields and the action
+| in one Livewire request. In the browser, fields bound with a plain
+| `wire:model` are only sent with the next action, so filling a form and
+| pressing its button is one request and one render. Chaining `->set()` makes
+| a request (and a full page render) per field, which is slower and not what
+| users do. Updates are applied in order, with their `updating`/`updated`
+| hooks, before the action runs.
+|
+*/
+
+Testable::macro('submit', function (array $fields, string $method, mixed ...$params): Testable {
+    /** @var Testable $this */
+
+    // Files are uploaded as soon as they are picked, before the form is
+    // submitted, so they keep going through Livewire's upload flow.
+    foreach ($fields as $name => $value) {
+        $isUpload = $value instanceof UploadedFile
+            || (is_array($value) && isset($value[0]) && $value[0] instanceof UploadedFile);
+
+        if ($isUpload) {
+            $this->set($name, $value);
+            unset($fields[$name]);
+        }
+    }
+
+    return $this->update(
+        calls: [['method' => $method, 'params' => $params, 'path' => '']],
+        updates: $fields,
+    );
+});

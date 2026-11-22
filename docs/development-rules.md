@@ -121,6 +121,17 @@ legacy migrations that are not fully reversible.
   or `./vendor/bin/pest --compact --filter=testName` for a single test.
 - `composer test:profile` prints the ten slowest unit tests, which is the
   starting point before optimising a slow area.
+- Enable OPcache for the PHP CLI (`opcache.enable_cli=1`,
+  `opcache.jit=tracing`, `opcache.jit_buffer_size=128M` in `php.ini`). CI
+  already does; locally it cuts the suite by about 30%, because every Livewire
+  render includes hundreds of compiled Blade views. Passing `-d` to Pest does
+  not reach the parallel workers.
+- In Livewire tests, send form fields together with the action that submits
+  them: `->submit(['form.name' => 'Ana', 'form.email' => '…'], 'save')`
+  instead of one `->set()` per field followed by `->call('save')`. That is
+  what the browser sends for plain `wire:model` fields, and every `->set()`
+  is a full page render. Keep `->set()` when the test asserts something
+  between two updates. The macro lives in `tests/Pest.php`.
 - `composer analyse` runs Larastan/PHPStan. Existing findings live in
   `phpstan-baseline.neon`; new code must not add errors. Regenerate the
   baseline with

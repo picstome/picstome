@@ -20,9 +20,10 @@ it('allows users to add a new bio link', function () {
     $team = $user->currentTeam;
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->set('addForm.title', 'Twitter')
-        ->set('addForm.url', 'https://twitter.com/testuser')
-        ->call('addLink');
+        ->submit([
+            'addForm.title' => 'Twitter',
+            'addForm.url' => 'https://twitter.com/testuser',
+        ], 'addLink');
 
     $response->assertHasNoErrors();
 
@@ -43,9 +44,10 @@ it('allows users to update an existing bio link', function () {
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
         ->call('editLink', $bioLink->id)
-        ->set('editForm.title', 'New Title')
-        ->set('editForm.url', 'https://new-url.com')
-        ->call('updateLink', $bioLink);
+        ->submit([
+            'editForm.title' => 'New Title',
+            'editForm.url' => 'https://new-url.com',
+        ], 'updateLink', $bioLink);
 
     $response->assertHasNoErrors();
 
@@ -131,9 +133,10 @@ it('requires bio link title', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->set('addForm.title', '')
-        ->set('addForm.url', 'https://example.com')
-        ->call('addLink');
+        ->submit([
+            'addForm.title' => '',
+            'addForm.url' => 'https://example.com',
+        ], 'addLink');
 
     $response->assertHasErrors(['addForm.title' => 'required']);
 });
@@ -142,16 +145,18 @@ it('requires bio link url and validates format', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->set('addForm.title', 'Test Link')
-        ->set('addForm.url', '')
-        ->call('addLink');
+        ->submit([
+            'addForm.title' => 'Test Link',
+            'addForm.url' => '',
+        ], 'addLink');
 
     $response->assertHasErrors(['addForm.url' => 'required']);
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->set('addForm.title', 'Test Link')
-        ->set('addForm.url', 'invalid-url')
-        ->call('addLink');
+        ->submit([
+            'addForm.title' => 'Test Link',
+            'addForm.url' => 'invalid-url',
+        ], 'addLink');
 
     $response->assertHasErrors(['addForm.url' => 'url']);
 });
@@ -160,9 +165,10 @@ it('validates bio link title maximum length', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $response = Livewire::actingAs($user)->test('pages::public-profile')
-        ->set('addForm.title', str_repeat('a', 256))
-        ->set('addForm.url', 'https://example.com')
-        ->call('addLink');
+        ->submit([
+            'addForm.title' => str_repeat('a', 256),
+            'addForm.url' => 'https://example.com',
+        ], 'addLink');
 
     $response->assertHasErrors(['addForm.title' => 'max']);
 });

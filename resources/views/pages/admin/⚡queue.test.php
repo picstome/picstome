@@ -187,8 +187,9 @@ it('retries all failed jobs for the selected queue', function () {
 
     Livewire::actingAs($this->admin)
         ->test('pages::admin.queue')
-        ->set('queue', 'default')
-        ->call('confirmRetryAllFailed')
+        ->submit([
+            'queue' => 'default',
+        ], 'confirmRetryAllFailed')
         ->call('executeConfirmed')
         ->assertHasNoErrors();
 

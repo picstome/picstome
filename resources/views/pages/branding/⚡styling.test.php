@@ -25,8 +25,9 @@ it('can change brand color', function () {
     expect($this->team->brand_color)->not()->toBe('red');
 
     Livewire::actingAs($this->user)->test('pages::branding.styling')
-        ->set('form.color', 'red')
-        ->call('save');
+        ->submit([
+            'form.color' => 'red',
+        ], 'save');
 
     expect($this->team->fresh()->brand_color)->toBe('red');
 });
@@ -35,8 +36,9 @@ it('can change brand font', function () {
     expect($this->team->brand_font)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::branding.styling')
-        ->set('form.font', 'Montserrat')
-        ->call('save');
+        ->submit([
+            'form.font' => 'Montserrat',
+        ], 'save');
 
     expect($this->team->fresh()->brand_font)->toBe('Montserrat');
 });

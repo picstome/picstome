@@ -119,9 +119,10 @@ describe('Email Verification', function () {
             ->assertRedirect(route('login', ['redirect' => $redirect], absolute: false));
 
         Livewire::test('pages::login')
-            ->set('form.email', 'verify-after-login@example.com')
-            ->set('form.password', 'password')
-            ->call('login')
+            ->submit([
+                'form.email' => 'verify-after-login@example.com',
+                'form.password' => 'password',
+            ], 'login')
             ->assertRedirect($verificationUrl);
 
         $this->get($verificationUrl)->assertRedirect($redirect);
@@ -135,10 +136,11 @@ it('includes the return URL in the verification email', function () {
 
     Livewire::withQueryParams(['redirect' => '/subscribe?plan=pro&ps_from=bf2026'])
         ->test('pages::register')
-        ->set('name', 'Return URL')
-        ->set('email', 'return-url@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Return URL',
+            'email' => 'return-url@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'return-url@example.com')->firstOrFail();
 

@@ -59,9 +59,10 @@ it('keeps the existing watermark path available to the save button', function ()
 
 it('does not save settings when there is no watermark', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkPosition', 'bottom')
-        ->set('form.watermarkTransparency', 30)
-        ->call('save')
+        ->submit([
+            'form.watermarkPosition' => 'bottom',
+            'form.watermarkTransparency' => 30,
+        ], 'save')
         ->assertNotDispatched('ts-ui:toast');
 
     expect($this->team->fresh()->brand_watermark_position)->toBe('top');
@@ -88,9 +89,10 @@ it('can save settings when a watermark already exists', function () {
     $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkPosition', 'bottom')
-        ->set('form.watermarkTransparency', 25)
-        ->call('save')
+        ->submit([
+            'form.watermarkPosition' => 'bottom',
+            'form.watermarkTransparency' => 25,
+        ], 'save')
         ->assertDispatched('ts-ui:toast');
 
     expect($this->team->fresh()->brand_watermark_position)->toBe('bottom');
@@ -105,8 +107,9 @@ it('can change watermark position', function () {
     expect($this->team->fresh()->brand_watermark_position)->not()->toBe('bottom');
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkPosition', 'bottom')
-        ->call('save');
+        ->submit([
+            'form.watermarkPosition' => 'bottom',
+        ], 'save');
 
     expect($this->team->fresh()->brand_watermark_position)->toBe('bottom');
 });
@@ -119,19 +122,21 @@ it('can change watermark transparency', function () {
     expect($this->team->fresh()->brand_watermark_transparency)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkTransparency', 50)
-        ->call('save');
+        ->submit([
+            'form.watermarkTransparency' => 50,
+        ], 'save');
 
     expect($this->team->fresh()->brand_watermark_transparency)->toBe(50);
 });
 
 it('can save a text watermark', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', 'Acme Studio')
-        ->set('form.watermarkPosition', 'bottom')
-        ->set('form.watermarkTransparency', 30)
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => 'Acme Studio',
+            'form.watermarkPosition' => 'bottom',
+            'form.watermarkTransparency' => 30,
+        ], 'save')
         ->assertHasNoErrors()
         ->assertDispatched('ts-ui:toast');
 
@@ -148,11 +153,12 @@ it('can save a text watermark', function () {
 
 it('can save a text watermark with a custom font and size', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', 'Acme Studio')
-        ->set('form.watermarkFont', 'Montserrat')
-        ->set('form.watermarkSize', 'xl')
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => 'Acme Studio',
+            'form.watermarkFont' => 'Montserrat',
+            'form.watermarkSize' => 'xl',
+        ], 'save')
         ->assertHasNoErrors()
         ->assertDispatched('ts-ui:toast');
 
@@ -164,10 +170,11 @@ it('can save a text watermark with a custom font and size', function () {
 
 it('rejects an unsupported watermark font', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', 'Acme Studio')
-        ->set('form.watermarkFont', 'Comic Sans MS')
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => 'Acme Studio',
+            'form.watermarkFont' => 'Comic Sans MS',
+        ], 'save')
         ->assertHasErrors(['form.watermarkFont' => 'in']);
 
     expect($this->team->fresh()->brand_watermark_font)->toBeNull();
@@ -175,9 +182,10 @@ it('rejects an unsupported watermark font', function () {
 
 it('does not save an empty text watermark', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', '')
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => '',
+        ], 'save')
         ->assertNotDispatched('ts-ui:toast');
 
     $team = $this->team->fresh();
@@ -188,9 +196,10 @@ it('does not save an empty text watermark', function () {
 
 it('rejects a text watermark longer than 100 characters', function () {
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', str_repeat('a', 101))
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => str_repeat('a', 101),
+        ], 'save')
         ->assertHasErrors(['form.watermarkText' => 'max']);
 
     expect($this->team->fresh()->brand_watermark_text)->toBeNull();
@@ -203,9 +212,10 @@ it('can save settings when a text watermark already exists', function () {
     ]);
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkPosition', 'bottom')
-        ->set('form.watermarkTransparency', 25)
-        ->call('save')
+        ->submit([
+            'form.watermarkPosition' => 'bottom',
+            'form.watermarkTransparency' => 25,
+        ], 'save')
         ->assertDispatched('ts-ui:toast');
 
     $team = $this->team->fresh();
@@ -223,9 +233,10 @@ it('keeps the image available when switching to text', function () {
     $path = $this->team->fresh()->brand_watermark_path;
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', 'Acme Studio')
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => 'Acme Studio',
+        ], 'save')
         ->assertDispatched('ts-ui:toast');
 
     $team = $this->team->fresh();
@@ -261,13 +272,15 @@ it('can switch back to the image watermark', function () {
     $this->team->updateBrandWatermark(UploadedFile::fake()->image('watermark.png'));
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'text')
-        ->set('form.watermarkText', 'Acme Studio')
-        ->call('save');
+        ->submit([
+            'form.watermarkType' => 'text',
+            'form.watermarkText' => 'Acme Studio',
+        ], 'save');
 
     Livewire::actingAs($this->user)->test('pages::branding.watermark')
-        ->set('form.watermarkType', 'image')
-        ->call('save')
+        ->submit([
+            'form.watermarkType' => 'image',
+        ], 'save')
         ->assertDispatched('ts-ui:toast');
 
     $team = $this->team->fresh();

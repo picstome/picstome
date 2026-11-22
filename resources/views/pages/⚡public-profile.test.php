@@ -48,16 +48,18 @@ it('allows user to update handle successfully', function () {
     $newHandle = 'newhandle';
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', $newHandle)
-        ->call('save');
+        ->submit([
+            'form.handle' => $newHandle,
+        ], 'save');
 
     expect($this->team->fresh()->handle)->toBe($newHandle);
 });
 
 it('validates handle must be lowercase', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', 'MixedCaseHandle')
-        ->call('save')
+        ->submit([
+            'form.handle' => 'MixedCaseHandle',
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
@@ -65,22 +67,25 @@ it('prevents duplicate handles with uniqueness validation', function () {
     Team::factory()->create(['handle' => 'existinghandle']);
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', 'existinghandle')
-        ->call('save')
+        ->submit([
+            'form.handle' => 'existinghandle',
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents special characters in handles', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', 'invalid@handle!')
-        ->call('save')
+        ->submit([
+            'form.handle' => 'invalid@handle!',
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('enforces minimum length for handles', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', 'a')
-        ->call('save')
+        ->submit([
+            'form.handle' => 'a',
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
@@ -88,15 +93,17 @@ it('enforces maximum length for handles', function () {
     $longHandle = str_repeat('a', 100);
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', $longHandle)
-        ->call('save')
+        ->submit([
+            'form.handle' => $longHandle,
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
 it('prevents empty string handles', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.handle', '')
-        ->call('save')
+        ->submit([
+            'form.handle' => '',
+        ], 'save')
         ->assertHasErrors(['form.handle']);
 });
 
@@ -104,8 +111,9 @@ it('can save a bio description', function () {
     expect($this->team->bio)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.bio', 'This is my bio description')
-        ->call('save');
+        ->submit([
+            'form.bio' => 'This is my bio description',
+        ], 'save');
 
     expect($this->team->fresh()->bio)->toBe('This is my bio description');
 });
@@ -120,8 +128,9 @@ it('validates bio description maximum length', function () {
     $longBio = str_repeat('a', 1001);
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.bio', $longBio)
-        ->call('save')
+        ->submit([
+            'form.bio' => $longBio,
+        ], 'save')
         ->assertHasErrors(['form.bio']);
 });
 
@@ -129,8 +138,9 @@ it('allows empty bio description', function () {
     $this->team->update(['bio' => 'Existing bio']);
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.bio', '')
-        ->call('save');
+        ->submit([
+            'form.bio' => '',
+        ], 'save');
 
     expect($this->team->fresh()->bio)->toBe('');
 });
@@ -139,8 +149,9 @@ it('sanitizes html content in bio', function () {
     $htmlContent = '<p>This is <strong>bold</strong> and <em>italic</em> text.</p><script>alert("xss")</script>';
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.bio', $htmlContent)
-        ->call('save');
+        ->submit([
+            'form.bio' => $htmlContent,
+        ], 'save');
 
     $savedBio = $this->team->fresh()->bio;
     expect($savedBio)->toContain('<strong>bold</strong>')
@@ -153,8 +164,9 @@ it('adds nofollow to links in bio', function () {
     $htmlContent = '<p>Check out my <a href="https://example.com">website</a> and <a href="https://google.com" rel="noopener">google</a>.</p>';
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('form.bio', $htmlContent)
-        ->call('save');
+        ->submit([
+            'form.bio' => $htmlContent,
+        ], 'save');
 
     $savedBio = $this->team->fresh()->bio;
 
@@ -167,8 +179,9 @@ it('can save instagram link', function () {
     expect($this->team->instagram_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.instagram', 'username')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.instagram' => 'username',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->instagram_handle)->toBe('username');
@@ -179,8 +192,9 @@ it('can save youtube link', function () {
     expect($this->team->youtube_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.youtube', 'channel/UC123')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.youtube' => 'channel/UC123',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->youtube_handle)->toBe('channel/UC123');
@@ -191,8 +205,9 @@ it('can save facebook link', function () {
     expect($this->team->facebook_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.facebook', 'username')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.facebook' => 'username',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->facebook_handle)->toBe('username');
@@ -203,8 +218,9 @@ it('can save x link', function () {
     expect($this->team->x_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.x', 'username')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.x' => 'username',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->x_handle)->toBe('username');
@@ -215,8 +231,9 @@ it('can save tiktok link', function () {
     expect($this->team->tiktok_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.tiktok', 'username')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.tiktok' => 'username',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->tiktok_handle)->toBe('username');
@@ -227,8 +244,9 @@ it('can save twitch link', function () {
     expect($this->team->twitch_handle)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.twitch', 'username')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.twitch' => 'username',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->twitch_handle)->toBe('username');
@@ -239,8 +257,9 @@ it('can save website link', function () {
     expect($this->team->website_url)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.website', 'https://example.com')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.website' => 'https://example.com',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->website_url)->toBe('https://example.com');
@@ -250,65 +269,74 @@ it('can save other social link', function () {
     expect($this->team->other_social_links)->toBeNull();
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.other', ['label' => 'MySite', 'url' => 'https://mysite.com'])
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.other' => ['label' => 'MySite', 'url' => 'https://mysite.com'],
+        ], 'saveSocialLinks');
 
     expect($this->team->fresh()->other_social_links)->toBe(['label' => 'MySite', 'url' => 'https://mysite.com']);
 });
 
 it('validates instagram handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.instagram', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.instagram' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.instagram']);
 });
 
 it('validates youtube handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.youtube', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.youtube' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.youtube']);
 });
 
 it('validates facebook handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.facebook', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.facebook' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.facebook']);
 });
 
 it('validates x handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.x', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.x' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.x']);
 });
 
 it('validates tiktok handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.tiktok', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.tiktok' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.tiktok']);
 });
 
 it('validates twitch handle length', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.twitch', str_repeat('a', 256))
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.twitch' => str_repeat('a', 256),
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.twitch']);
 });
 
 it('validates website url format', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.website', 'invalid-url')
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.website' => 'invalid-url',
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.website']);
 });
 
 it('validates other social link url format', function () {
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.other', ['label' => 'MySite', 'url' => 'invalid-url'])
-        ->call('saveSocialLinks')
+        ->submit([
+            'socialLinksForm.other' => ['label' => 'MySite', 'url' => 'invalid-url'],
+        ], 'saveSocialLinks')
         ->assertHasErrors(['socialLinksForm.other.url']);
 });
 
@@ -316,8 +344,9 @@ it('allows empty social links', function () {
     $this->team->update(['instagram_handle' => 'old']);
 
     Livewire::actingAs($this->user)->test('pages::public-profile')
-        ->set('socialLinksForm.instagram', '')
-        ->call('saveSocialLinks');
+        ->submit([
+            'socialLinksForm.instagram' => '',
+        ], 'saveSocialLinks');
 
     $team = $this->team->fresh();
     expect($team->instagram_handle)->toBeNull();

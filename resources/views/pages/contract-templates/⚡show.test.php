@@ -66,8 +66,9 @@ test('regular users cannot update or delete a Picstome template', function () {
     ]);
 
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
-        ->set('form.title', 'Changed by a user')
-        ->call('save');
+        ->submit([
+            'form.title' => 'Changed by a user',
+        ], 'save');
 
     $component->assertStatus(403);
 
@@ -88,9 +89,10 @@ test('admins can update a Picstome template', function () {
     ]);
 
     Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
-        ->set('form.title', 'Título actualizado')
-        ->set('form.body', '<h3>Nuevo cuerpo</h3>')
-        ->call('save');
+        ->submit([
+            'form.title' => 'Título actualizado',
+            'form.body' => '<h3>Nuevo cuerpo</h3>',
+        ], 'save');
 
     tap($template->fresh(), function (ContractTemplate $template) {
         expect($template->title)->toBe('Título actualizado');
@@ -104,9 +106,10 @@ test('user can edit a template', function () {
     $template = ContractTemplate::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::contract-templates.show', ['contractTemplate' => $template])
-        ->set('form.title', 'New contract title')
-        ->set('form.body', '<h3>New body in HTML</h3>')
-        ->call('save');
+        ->submit([
+            'form.title' => 'New contract title',
+            'form.body' => '<h3>New body in HTML</h3>',
+        ], 'save');
 
     tap($template->fresh(), function (ContractTemplate $template) {
         expect($template->title)->toBe('New contract title');

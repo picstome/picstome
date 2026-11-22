@@ -39,9 +39,10 @@ it('creates and issues an invoice from the guided flow', function () {
         ->assertSet('step', 2);
 
     $component->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 2)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
+        ->submit([
+            'form.lineItems.0.quantity' => 2,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
         ->assertSet('step', 3);
 
     $component->call('issue')->assertHasNoErrors();
@@ -62,12 +63,14 @@ it('issues an invoice with a custom full number', function () {
 
     $component->set('form.customer_id', $this->customer->id)
         ->call('nextStep')
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
-        ->set('form.full_number', 'INV-0042')
-        ->call('issue')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
+        ->submit([
+            'form.full_number' => 'INV-0042',
+        ], 'issue')
         ->assertHasNoErrors();
 
     $invoice = $this->team->invoices()->first();
@@ -84,10 +87,11 @@ it('shows the suggested full number and the last generated invoice', function ()
 
     $component->set('form.customer_id', $this->customer->id)
         ->call('nextStep')
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
         ->assertSee('Suggested: INV-0043')
         ->assertSee('Last invoice: INV-0042')
         ->assertSee('edit-invoice-number', false)
@@ -102,10 +106,11 @@ it('warns about lower numbers and gaps without blocking the issuance', function 
 
     $component->set('form.customer_id', $this->customer->id)
         ->call('nextStep')
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
         ->set('form.full_number', 'INV-0040')
         ->assertSee('This number is lower than the last generated invoice. You can still issue it.')
         ->call('issue')
@@ -122,10 +127,11 @@ it('warns about gaps without blocking the issuance', function () {
 
     $component->set('form.customer_id', $this->customer->id)
         ->call('nextStep')
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
         ->set('form.full_number', 'INV-0044')
         ->assertSee('This number leaves a gap after the last generated invoice. You can still issue it.')
         ->call('issue')
@@ -142,12 +148,14 @@ it('rejects a duplicated full number', function () {
 
     $component->set('form.customer_id', $this->customer->id)
         ->call('nextStep')
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('nextStep')
-        ->set('form.full_number', 'INV-0042')
-        ->call('issue')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
+        ->submit([
+            'form.full_number' => 'INV-0042',
+        ], 'issue')
         ->assertHasErrors(['form.full_number' => 'This invoice number is already used by another invoice.']);
 });
 
@@ -155,10 +163,11 @@ it('saves a draft without consuming a number', function () {
     $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
 
     $component->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->call('saveDraft')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'saveDraft')
         ->assertHasNoErrors();
 
     $invoice = $this->team->invoices()->first();
@@ -175,11 +184,12 @@ it('does not block saving a draft with a full number that is already used', func
     $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
 
     $component->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', 'Photo session')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 150)
-        ->set('form.full_number', 'INV-0042')
-        ->call('saveDraft')
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+            'form.full_number' => 'INV-0042',
+        ], 'saveDraft')
         ->assertHasNoErrors();
 
     $draft = $this->team->invoices()->where('status', Invoice::STATUS_DRAFT)->first();
@@ -210,17 +220,19 @@ it('requires a client', function () {
 it('requires at least one line item', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', '')
-        ->call('saveDraft')
+        ->submit([
+            'form.customer_id' => $this->customer->id,
+            'form.lineItems.0.description' => '',
+        ], 'saveDraft')
         ->assertHasErrors(['form.lineItems.0.description' => 'required']);
 });
 
 it('does not leave the line items step with an invalid line', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $this->customer->id)
-        ->call('nextStep')
+        ->submit([
+            'form.customer_id' => $this->customer->id,
+        ], 'nextStep')
         ->assertSet('step', 2)
         ->call('nextStep')
         ->assertHasErrors(['form.lineItems.0.description' => 'required'])
@@ -231,11 +243,12 @@ it('does not leave the line items step with an invalid line', function () {
 it('asks for the exemption reason when the VAT is zero', function () {
     $component = Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', 'Sesión de fotos')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 100)
-        ->call('nextStep')
+        ->submit([
+            'form.customer_id' => $this->customer->id,
+            'form.lineItems.0.description' => 'Sesión de fotos',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 100,
+        ], 'nextStep')
         ->call('nextStep')
         ->assertSet('step', 3);
 
@@ -250,12 +263,13 @@ it('asks for the exemption reason when the VAT is zero', function () {
 it('requires the exemption reason when the VAT is zero', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', 'Sesión de fotos')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 100)
-        ->set('form.vat_percent', '0')
-        ->call('saveDraft')
+        ->submit([
+            'form.customer_id' => $this->customer->id,
+            'form.lineItems.0.description' => 'Sesión de fotos',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 100,
+            'form.vat_percent' => '0',
+        ], 'saveDraft')
         ->assertHasErrors(['form.vat_exemption_reason' => 'required']);
 });
 
@@ -264,8 +278,9 @@ it('does not allow a client from another team', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $otherCustomer->id)
-        ->call('nextStep')
+        ->submit([
+            'form.customer_id' => $otherCustomer->id,
+        ], 'nextStep')
         ->assertHasErrors(['form.customer_id' => 'exists']);
 });
 
@@ -273,14 +288,15 @@ it('creates a client from the invoice', function () {
     Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
         ->call('addCustomer')
-        ->set('customerForm.name', 'Nova Studio SL')
-        ->set('customerForm.legal_name', 'Nova Studio SL')
-        ->set('customerForm.tax_id', 'B87654321')
-        ->set('customerForm.address', 'Calle Sol 2')
-        ->set('customerForm.city', 'Valencia')
-        ->set('customerForm.postal_code', '46001')
-        ->set('customerForm.country', 'ES')
-        ->call('saveCustomer')
+        ->submit([
+            'customerForm.name' => 'Nova Studio SL',
+            'customerForm.legal_name' => 'Nova Studio SL',
+            'customerForm.tax_id' => 'B87654321',
+            'customerForm.address' => 'Calle Sol 2',
+            'customerForm.city' => 'Valencia',
+            'customerForm.postal_code' => '46001',
+            'customerForm.country' => 'ES',
+        ], 'saveCustomer')
         ->assertHasNoErrors();
 
     expect($this->team->customers()->count())->toBe(2)
@@ -321,8 +337,9 @@ it('updates a draft invoice without consuming a number', function () {
     Livewire::withQueryParams(['invoice' => $draft->ulid])
         ->actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.lineItems.0.unit_price', 200)
-        ->call('saveDraft')
+        ->submit([
+            'form.lineItems.0.unit_price' => 200,
+        ], 'saveDraft')
         ->assertHasNoErrors();
 
     $draft = $draft->fresh();
@@ -364,17 +381,19 @@ it('completes the fiscal data of the client from the invoice', function () {
 
     $component = Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $customer->id)
-        ->call('editCustomer');
+        ->submit([
+            'form.customer_id' => $customer->id,
+        ], 'editCustomer');
 
     $component
-        ->set('customerForm.legal_name', 'Nova Studio SL')
-        ->set('customerForm.tax_id', 'B87654321')
-        ->set('customerForm.address', 'Calle Sol 2')
-        ->set('customerForm.city', 'Valencia')
-        ->set('customerForm.postal_code', '46001')
-        ->set('customerForm.country', 'ES')
-        ->call('saveCustomer')
+        ->submit([
+            'customerForm.legal_name' => 'Nova Studio SL',
+            'customerForm.tax_id' => 'B87654321',
+            'customerForm.address' => 'Calle Sol 2',
+            'customerForm.city' => 'Valencia',
+            'customerForm.postal_code' => '46001',
+            'customerForm.country' => 'ES',
+        ], 'saveCustomer')
         ->assertHasNoErrors();
 
     $customer = $customer->fresh();
@@ -387,11 +406,12 @@ it('completes the fiscal data of the client from the invoice', function () {
 it('records the creation and the update of a draft in the audit trail', function () {
     $component = Livewire::actingAs($this->user)
         ->test('pages::invoices.create')
-        ->set('form.customer_id', $this->customer->id)
-        ->set('form.lineItems.0.description', 'Sesión de fotos')
-        ->set('form.lineItems.0.quantity', 1)
-        ->set('form.lineItems.0.unit_price', 100)
-        ->call('saveDraft');
+        ->submit([
+            'form.customer_id' => $this->customer->id,
+            'form.lineItems.0.description' => 'Sesión de fotos',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 100,
+        ], 'saveDraft');
 
     $draft = $this->team->invoices()->first();
 
@@ -474,8 +494,9 @@ it('lets a corrective invoice be issued after reaching the monthly limit', funct
         ->actingAs($this->user)
         ->test('pages::invoices.create')
         ->assertSet('canIssue', true)
-        ->set('form.lineItems.0.unit_price', 50)
-        ->call('issue')
+        ->submit([
+            'form.lineItems.0.unit_price' => 50,
+        ], 'issue')
         ->assertHasNoErrors();
 
     expect($rectificative->fresh()->status)->toBe(Invoice::STATUS_ISSUED)
