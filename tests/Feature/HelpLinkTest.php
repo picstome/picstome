@@ -40,6 +40,14 @@ it('keeps exact matches ahead of the prefix fallback', function () {
         ->toBe('https://docs.picstome.com/brand/watermark/');
 });
 
+it('sends the account settings to the account article', function () {
+    $help = app(HelpLink::class);
+
+    expect($help->url('settings.profile'))->toBe('https://docs.picstome.com/start/account/')
+        ->and($help->url('settings.password'))->toBe('https://docs.picstome.com/start/account/')
+        ->and($help->url('settings.appearance'))->toBe('https://docs.picstome.com/start/account/');
+});
+
 it('opens the help home for an unknown route', function () {
     expect(app(HelpLink::class)->url('photoshoots'))
         ->toBe('https://docs.picstome.com/');

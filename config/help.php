@@ -56,6 +56,10 @@ return [
         'branding.payments' => 'money/stripe',
 
         'subscribe' => 'start/plans-and-storage',
+
+        'settings' => 'start/account',
+        'settings.profile' => 'start/account',
+        'settings.password' => 'start/account',
     ],
 
 ];
