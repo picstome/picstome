@@ -5,12 +5,16 @@ use App\Models\Gallery;
 use App\Models\Photo;
 use App\Models\PhotoVersion;
 use App\Models\User;
+use App\Services\GalleryUploadService;
+use App\Support\PendingDirectUpload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
+use Livewire\Features\SupportFileUploads\GenerateSignedUploadUrl;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 uses(RefreshDatabase::class);
 
@@ -235,4 +239,141 @@ it('replaces a version from a regular HTTP upload when Livewire uses an S3 tempo
 
     expect($photo->fresh()->path)->toBe('old/current.jpg')
         ->and(Storage::disk('s3')->exists('old/current.jpg'))->toBeTrue();
+});
+
+describe('direct S3 uploads', function () {
+    beforeEach(function () {
+        config(['livewire.temporary_file_upload.disk' => 's3']);
+
+        $this->app->instance(GenerateSignedUploadUrl::class, new class extends GenerateSignedUploadUrl
+        {
+            public function forS3($file, $visibility = 'private')
+            {
+                $name = TemporaryUploadedFile::generateHashNameWithOriginalNameEmbedded($file);
+
+                return [
+                    'path' => TemporaryUploadedFile::signPath($name),
+                    'url' => 'https://bucket.test/livewire-tmp/'.$name,
+                    'headers' => ['Host' => ['bucket.test'], 'Content-Type' => $file->getMimeType()],
+                ];
+            }
+        });
+    });
+
+    /**
+     * Put a file in Livewire's temporary area (the S3 bucket in production,
+     * Livewire's fake disk in tests) as the browser would, and return
+     * the signed path the sign endpoint hands out for it.
+     */
+    function putDirectUpload(string $name, string $contents): string
+    {
+        $hashName = TemporaryUploadedFile::generateHashNameWithOriginalNameEmbedded(new PendingDirectUpload($name));
+        FileUploadConfiguration::storage()->put(FileUploadConfiguration::path($hashName), $contents);
+
+        return TemporaryUploadedFile::signPath($hashName);
+    }
+
+    it('signs a direct S3 upload without the Host header', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.sign', $gallery),
+            ['name' => 'clip.mp4', 'size' => 4 * 1024 * 1024 * 1024],
+        )->assertOk()
+            ->assertJsonPath('direct', true)
+            ->assertJsonPath('headers.Content-Type', 'video/mp4')
+            ->assertJsonMissingPath('headers.Host')
+            ->assertJsonStructure(['path', 'url']);
+    });
+
+    it('tells the uploader to post the file when uploads are not on S3', function () {
+        config(['livewire.temporary_file_upload.disk' => null]);
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.sign', $gallery),
+            ['name' => 'clip.mp4', 'size' => 100],
+        )->assertOk()->assertExactJson(['direct' => false]);
+    });
+
+    it('refuses to sign files that break the upload rules', function (string $name, int $size, int $status, string $code) {
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.sign', $gallery),
+            ['name' => $name, 'size' => $size],
+        )->assertStatus($status)->assertJsonPath('code', $code);
+    })->with([
+        'unsupported type' => ['evil.exe', 100, 422, 'unsupported_type'],
+        'over 5 GB' => ['clip.mp4', GalleryUploadService::MAX_FILE_BYTES + 1, 413, 'file_too_large'],
+    ]);
+
+    it('refuses to sign when the team has no storage left', function () {
+        $this->team->update(['custom_storage_limit' => 0]);
+        $gallery = Gallery::factory()->for($this->team)->create();
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.sign', $gallery),
+            ['name' => 'clip.mp4', 'size' => 100],
+        )->assertStatus(413)->assertJsonPath('code', 'storage_quota');
+    });
+
+    it('stores a video the browser uploaded straight to S3', function () {
+        Event::fake(PhotoAdded::class);
+
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $video = "\x00\x00\x00\x18ftypmp42".str_repeat('video-bytes-', 1000);
+        $path = putDirectUpload('clip.mp4', $video);
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.complete', $gallery),
+            ['path' => $path],
+        )->assertOk()->assertJsonStructure(['photo_id', 'status', 'remaining_storage_bytes']);
+
+        $photo = $gallery->photos()->sole();
+
+        expect($photo->name)->toBe('clip.mp4')
+            ->and($photo->size)->toBe(strlen($video))
+            ->and(Storage::disk('s3')->get($photo->path))->toBe($video)
+            ->and(FileUploadConfiguration::storage()->files(FileUploadConfiguration::path()))->toBe([]);
+
+        Event::assertDispatched(PhotoAdded::class);
+    });
+
+    it('rejects a tampered temporary path', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $path = putDirectUpload('clip.mp4', "\x00\x00\x00\x18ftypmp42");
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.complete', $gallery),
+            ['path' => 'deadbeef:'.explode(':', $path, 2)[1]],
+        )->assertUnprocessable();
+
+        expect($gallery->photos()->count())->toBe(0);
+    });
+
+    it('deletes the temporary object when the uploaded file is rejected', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $path = putDirectUpload('clip.mp4', '<html>not a video</html>');
+
+        $this->actingAs($this->user)->postJson(
+            route('galleries.uploads.complete', $gallery),
+            ['path' => $path],
+        )->assertUnprocessable()->assertJsonPath('code', 'invalid_video');
+
+        expect($gallery->photos()->count())->toBe(0)
+            ->and(FileUploadConfiguration::storage()->files(FileUploadConfiguration::path()))->toBe([]);
+    });
+
+    it('forbids signing or completing uploads to another team gallery', function () {
+        $gallery = Gallery::factory()->for($this->team)->create();
+        $path = putDirectUpload('clip.mp4', "\x00\x00\x00\x18ftypmp42");
+
+        $this->actingAs(User::factory()->withPersonalTeam()->create());
+
+        $this->postJson(route('galleries.uploads.sign', $gallery), ['name' => 'clip.mp4', 'size' => 100])
+            ->assertForbidden();
+        $this->postJson(route('galleries.uploads.complete', $gallery), ['path' => $path])
+            ->assertForbidden();
+    });
 });

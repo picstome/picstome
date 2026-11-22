@@ -34,6 +34,7 @@ class GalleryUploadService
      * Returns null only when the caller asked to skip a file.
      *
      * @throws GalleryUploadException
+     * @throws \RuntimeException when the file cannot be written to storage
      */
     public function store(Gallery $gallery, UploadedFile $file, string|bool $action = self::ACTION_VERSION): ?Photo
     {
@@ -126,34 +127,29 @@ class GalleryUploadService
     }
 
     /**
+     * Checks that only need the name and size, so they can run before any
+     * bytes are sent (direct-to-S3 uploads are signed only when they pass).
+     *
+     * @throws GalleryUploadException
+     */
+    public function assertCanUpload(Gallery $gallery, string $fileName, int $size, string|bool $action = self::ACTION_VERSION): void
+    {
+        $action = $this->normalizeAction($action);
+        $existing = $gallery->findLogicalPhotoBySourceName($fileName);
+
+        $this->assertNameAndSizeAreAllowed($gallery, $fileName, $size, $action, $existing);
+    }
+
+    /**
      * Apply the same rules the Livewire uploader always enforced.
      *
      * @throws GalleryUploadException
      */
     protected function assertFileIsAllowed(Gallery $gallery, UploadedFile $file, string $action, ?Photo $existing): void
     {
+        $this->assertNameAndSizeAreAllowed($gallery, $file->getClientOriginalName(), (int) $file->getSize(), $action, $existing);
+
         $extension = strtolower($file->getClientOriginalExtension());
-
-        if (! in_array($extension, config('picstome.upload_extensions'), true)) {
-            throw new GalleryUploadException(
-                GalleryUploadException::UNSUPPORTED_TYPE,
-                __('This file type is not supported.'),
-            );
-        }
-
-        if (preg_match('#[/\\\\\x00-\x1F\x7F]#', $file->getClientOriginalName())) {
-            throw new GalleryUploadException(
-                GalleryUploadException::INVALID_FILENAME,
-                __('The file name contains invalid characters.'),
-            );
-        }
-
-        if ($file->getSize() > self::MAX_FILE_BYTES) {
-            throw new GalleryUploadException(
-                GalleryUploadException::FILE_TOO_LARGE,
-                __('The file exceeds the 5 GB upload limit.'),
-            );
-        }
 
         if ($extension === 'pdf' && ! $this->looksLikeAPdf($file)) {
             throw new GalleryUploadException(
@@ -175,6 +171,35 @@ class GalleryUploadService
                 __('This file is not a readable video.'),
             );
         }
+    }
+
+    /**
+     * @throws GalleryUploadException
+     */
+    protected function assertNameAndSizeAreAllowed(Gallery $gallery, string $fileName, int $size, string $action, ?Photo $existing): void
+    {
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if (! in_array($extension, config('picstome.upload_extensions'), true)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::UNSUPPORTED_TYPE,
+                __('This file type is not supported.'),
+            );
+        }
+
+        if (preg_match('#[/\\\\\x00-\x1F\x7F]#', $fileName)) {
+            throw new GalleryUploadException(
+                GalleryUploadException::INVALID_FILENAME,
+                __('The file name contains invalid characters.'),
+            );
+        }
+
+        if ($size > self::MAX_FILE_BYTES) {
+            throw new GalleryUploadException(
+                GalleryUploadException::FILE_TOO_LARGE,
+                __('The file exceeds the 5 GB upload limit.'),
+            );
+        }
 
         if ($existing !== null && $action === self::ACTION_VERSION && ! config('picstome.file_versions_enabled')) {
             throw new GalleryUploadException(
@@ -187,7 +212,7 @@ class GalleryUploadService
             ? ($existing->stored_size ?: $existing->size)
             : 0;
 
-        if (! $gallery->team->canStoreFile(max(0, $file->getSize() - $replacedSize))) {
+        if (! $gallery->team->canStoreFile(max(0, $size - $replacedSize))) {
             throw new GalleryUploadException(
                 GalleryUploadException::STORAGE_QUOTA,
                 __('You do not have enough storage space to upload this photo.'),

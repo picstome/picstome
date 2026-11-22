@@ -25,6 +25,8 @@
         <script data-navigate-once>
             window.PicstomeUploadsConfig = {
                 uploadUrl: @js(route('galleries.uploads.store', ['gallery' => '__gallery__'])),
+                signUrl: @js(route('galleries.uploads.sign', ['gallery' => '__gallery__'])),
+                completeUrl: @js(route('galleries.uploads.complete', ['gallery' => '__gallery__'])),
                 checkUrl: @js(route('galleries.uploads.check', ['gallery' => '__gallery__'])),
                 statusUrl: @js(route('galleries.uploads.status', ['gallery' => '__gallery__'])),
                 galleryUrl: @js(route('galleries.show', ['gallery' => '__gallery__'])),
@@ -62,6 +64,7 @@
                     'allReady' => __('All files ready'),
                     'storageQuota' => __('You do not have enough storage space to upload this photo.'),
                     'uploadFailed' => __('The file could not be uploaded. Please try again.'),
+                    'fileTooLargeForServer' => __('The file is too large for the server to accept.'),
                     'sessionExpired' => __('Your session expired. Reload the page and try again.'),
                     'processingFailed' => __('Processing failed'),
                 ]),

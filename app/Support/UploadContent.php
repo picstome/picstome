@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Enums\MediaType;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
@@ -115,6 +117,14 @@ final class UploadContent
      */
     public static function headerBytes(UploadedFile $file, int $length): string
     {
+        if ($file instanceof TemporaryUploadedFile && self::localPath($file) === null) {
+            $ranged = self::rangedRemoteBytes($file, $length);
+
+            if ($ranged !== null) {
+                return $ranged;
+            }
+        }
+
         $stream = $file instanceof TemporaryUploadedFile && self::localPath($file) === null
             ? $file->readStream()
             : @fopen($file->getRealPath(), 'rb');
@@ -139,6 +149,44 @@ final class UploadContent
             return $bytes;
         } finally {
             fclose($stream);
+        }
+    }
+
+    /**
+     * First `$length` bytes of an upload stored on S3, with a ranged GET.
+     *
+     * `readStream()` on the S3 disk buffers the whole object before returning
+     * (122 s for a 3.6 GB video), which made registering big direct uploads
+     * outlive the proxy timeout. Returns null when the disk is not S3.
+     */
+    protected static function rangedRemoteBytes(TemporaryUploadedFile $file, int $length): ?string
+    {
+        $disk = (function (): mixed {
+            return $this->disk;
+        })->call($file);
+
+        if (! is_string($disk)) {
+            return null;
+        }
+
+        $storage = Storage::disk($disk);
+
+        if (! $storage instanceof AwsS3V3Adapter) {
+            return null;
+        }
+
+        try {
+            $result = $storage->getClient()->getObject([
+                'Bucket' => $storage->getConfig()['bucket'] ?? '',
+                'Key' => $file->getRealPath(),
+                'Range' => 'bytes=0-'.max(0, $length - 1),
+            ]);
+
+            return substr((string) $result['Body'], 0, $length);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return '';
         }
     }
 

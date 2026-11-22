@@ -533,76 +533,175 @@ function createUploader() {
             this.uploadTimestamps.push(Date.now());
             this.startSampling();
 
+            this.sendDirect(entry, file, entry.conflictAction || 'version')
+                .then((result) => this.completeUpload(entry, result));
+        },
+
+        /**
+         * Production uploads go straight from the browser to S3, like the old
+         * Livewire uploader: sign -> PUT to the bucket -> register the file.
+         * The bytes never pass through PHP, so big videos are not limited by
+         * `post_max_size` or the proxy timeout. When the server answers that
+         * uploads are not on S3 (local dev), the file is POSTed instead.
+         */
+        async sendDirect(entry, file, action) {
+            const signed = await this.send(entry, {
+                url: this.url('sign', entry.galleryId),
+                body: JSON.stringify({ name: entry.name, size: file.size, action }),
+                json: true,
+            });
+
+            if (signed.aborted || signed.networkError || signed.status < 200 || signed.status >= 300) {
+                return signed;
+            }
+
+            if (! signed.payload.direct) {
+                return this.sendWhole(entry, file, action);
+            }
+
+            const put = await this.send(entry, {
+                url: signed.payload.url,
+                method: 'PUT',
+                body: file,
+                headers: signed.payload.headers ?? {},
+                external: true,
+                onProgress: (loaded, total) => {
+                    entry.progress = Math.min(99, Math.round((loaded / total) * 100));
+                },
+            });
+
+            if (put.aborted || put.networkError || put.status < 200 || put.status >= 300) {
+                // S3 answers with XML; never surface its body to the user.
+                return { ...put, payload: {} };
+            }
+
+            return this.send(entry, {
+                url: this.url('complete', entry.galleryId),
+                body: JSON.stringify({ path: signed.payload.path, action }),
+                json: true,
+            });
+        },
+
+        sendWhole(entry, file, action) {
             const form = new FormData();
             form.append('file', file, entry.name);
-            form.append('action', entry.conflictAction || 'version');
+            form.append('action', action);
 
-            const xhr = new XMLHttpRequest();
-            xhrs.set(entry.id, xhr);
-
-            xhr.open('POST', this.url('upload', entry.galleryId));
-            xhr.setRequestHeader('Accept', 'application/json');
-            xhr.setRequestHeader('X-CSRF-TOKEN', config().csrfToken ?? '');
-
-            xhr.upload.addEventListener('progress', (event) => {
-                if (! event.lengthComputable) {
-                    return;
-                }
-
-                entry.progress = Math.min(99, Math.round((event.loaded / event.total) * 100));
+            return this.send(entry, {
+                url: this.url('upload', entry.galleryId),
+                body: form,
+                onProgress: (loaded, total) => {
+                    entry.progress = Math.min(99, Math.round((loaded / total) * 100));
+                },
             });
+        },
 
-            xhr.addEventListener('load', () => {
-                let payload = {};
-
-                try {
-                    payload = JSON.parse(xhr.responseText || '{}');
-                } catch (error) {
-                    payload = {};
-                }
-
-                this.finishUpload(entry);
-
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    entry.progress = 100;
-                    entry.status = 'completed';
-                    entry.photoId = payload.photo_id ?? null;
-                    entry.photoStatus = payload.status ?? null;
-                    entry.error = null;
-
-                    if (payload.remaining_storage_bytes !== undefined) {
-                        this.remainingByGallery[entry.galleryId] = payload.remaining_storage_bytes;
-                    }
-
-                    if (! entry.photoId) {
-                        entry.status = 'processed';
-                        entry.photoStatus = 'processed';
-                    }
-
-                    this.startPolling();
-                    this.maybeFinish();
+        /**
+         * One XHR, kept in `xhrs` so remove/cancel can abort it. Resolves with
+         * the HTTP status and parsed JSON body; never rejects. `external`
+         * requests (the S3 PUT) get no app headers so CORS stays simple.
+         */
+        send(entry, { url, method = 'POST', body, headers = {}, json = false, external = false, onProgress = null }) {
+            return new Promise((resolve) => {
+                if (entry.status !== 'uploading') {
+                    resolve({ aborted: true, payload: {} });
 
                     return;
                 }
 
-                const message = xhr.status === 419
-                    ? label('sessionExpired')
-                    : payload.errors?.file?.[0] || payload.message || label('uploadFailed');
+                const xhr = new XMLHttpRequest();
+                xhrs.set(entry.id, xhr);
 
-                this.failEntry(entry, message);
+                xhr.open(method, url);
+
+                if (! external) {
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', config().csrfToken ?? '');
+                }
+
+                if (json) {
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                }
+
+                Object.entries(headers).forEach(([name, value]) => xhr.setRequestHeader(name, value));
+
+                if (onProgress) {
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable) {
+                            onProgress(event.loaded, event.total);
+                        }
+                    });
+                }
+
+                xhr.addEventListener('load', () => {
+                    let payload = {};
+
+                    try {
+                        payload = JSON.parse(xhr.responseText || '{}');
+                    } catch (error) {
+                        payload = {};
+                    }
+
+                    resolve({ status: xhr.status, payload });
+                });
+
+                xhr.addEventListener('error', () => resolve({ networkError: true, payload: {} }));
+                xhr.addEventListener('timeout', () => resolve({ networkError: true, payload: {} }));
+                xhr.addEventListener('abort', () => resolve({ aborted: true, payload: {} }));
+
+                xhr.send(body);
             });
+        },
 
-            xhr.addEventListener('error', () => {
-                this.finishUpload(entry);
+        completeUpload(entry, result) {
+            // remove()/cancel already released the slot of an aborted upload.
+            if (result.aborted) {
+                return;
+            }
+
+            this.finishUpload(entry);
+
+            if (result.networkError) {
                 this.failEntry(entry, label('uploadFailed'));
-            });
 
-            xhr.addEventListener('timeout', () => {
-                this.finishUpload(entry);
-                this.failEntry(entry, label('uploadFailed'));
-            });
+                return;
+            }
 
-            xhr.send(form);
+            const payload = result.payload ?? {};
+
+            if (result.status >= 200 && result.status < 300) {
+                entry.progress = 100;
+                entry.status = 'completed';
+                entry.photoId = payload.photo_id ?? null;
+                entry.photoStatus = payload.status ?? null;
+                entry.error = null;
+
+                if (payload.remaining_storage_bytes !== undefined) {
+                    this.remainingByGallery[entry.galleryId] = payload.remaining_storage_bytes;
+                }
+
+                if (! entry.photoId) {
+                    entry.status = 'processed';
+                    entry.photoStatus = 'processed';
+                }
+
+                this.startPolling();
+                this.maybeFinish();
+
+                return;
+            }
+
+            const firstError = Object.values(payload.errors ?? {})[0]?.[0];
+            let message = payload.errors?.file?.[0] || firstError || payload.message || label('uploadFailed');
+
+            if (result.status === 419) {
+                message = label('sessionExpired');
+            } else if (result.status === 413 && ! payload.code) {
+                // Rejected by PHP or the web server before reaching the app.
+                message = label('fileTooLargeForServer');
+            }
+
+            this.failEntry(entry, message);
         },
 
         finishUpload(entry) {
