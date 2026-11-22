@@ -1090,6 +1090,7 @@
     "You can now start working on the selected photos.": "Ya puedes comenzar a trabajar en las fotos seleccionadas.",
     "You do not have enough storage space to upload this photo.": "No tienes suficiente espacio de almacenamiento para subir esta foto.",
     "The file could not be uploaded. Please try again.": "No se pudo subir el archivo. Inténtalo de nuevo.",
+    "The file is too large for the server to accept.": "El archivo es demasiado grande para el servidor.",
     "You have :count issued invoice(s). They are your fiscal records: once deleted you will not be able to recover or re-download them.": "Tienes :count factura(s) emitida(s). Son tus registros fiscales: una vez eliminadas no podrás recuperarlas ni volver a descargarlas.",
     "You have less than 5% storage remaining. ": "Te queda menos del 5% de almacenamiento. ",
     "You have reached the limit for photo selection.": "Has alcanzado el límite para la selección de fotos.",

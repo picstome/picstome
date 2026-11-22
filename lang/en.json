@@ -1010,6 +1010,7 @@
     "You are using a Picstome template. Review and adapt it before saving. It is not legal advice.": "You are using a Picstome template. Review and adapt it before saving. It is not legal advice.",
     "You do not have enough storage space to upload this photo.": "You do not have enough storage space to upload this photo.",
     "The file could not be uploaded. Please try again.": "The file could not be uploaded. Please try again.",
+    "The file is too large for the server to accept.": "The file is too large for the server to accept.",
     "You have :count issued invoice(s). They are your fiscal records: once deleted you will not be able to recover or re-download them.": "You have :count issued invoice(s). They are your fiscal records: once deleted you will not be able to recover or re-download them.",
     "You have less than 5% storage remaining. ": "You have less than 5% storage remaining. ",
     "You have reached the limit for photo selection.": "You have reached the limit for photo selection.",

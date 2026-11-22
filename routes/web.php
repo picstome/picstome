@@ -149,6 +149,12 @@ Route::post('/galleries/{gallery}/uploads/check', [GalleryUploadController::clas
 Route::post('/galleries/{gallery}/uploads', [GalleryUploadController::class, 'store'])
     ->name('galleries.uploads.store')
     ->middleware(['auth', 'verified', 'throttle:300,1']);
+Route::post('/galleries/{gallery}/uploads/sign', [GalleryUploadController::class, 'sign'])
+    ->name('galleries.uploads.sign')
+    ->middleware(['auth', 'verified', 'throttle:300,1']);
+Route::post('/galleries/{gallery}/uploads/complete', [GalleryUploadController::class, 'complete'])
+    ->name('galleries.uploads.complete')
+    ->middleware(['auth', 'verified', 'throttle:300,1']);
 Route::get('/galleries/{gallery}/uploads/status', [GalleryUploadController::class, 'statuses'])
     ->name('galleries.uploads.status')
     ->middleware(['auth', 'verified']);
