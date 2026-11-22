@@ -142,13 +142,14 @@ describe('Contract templates', function () {
 describe('Creating contracts', function () {
     it('allows a user to add a new contract with all required fields', function () {
         $component = Livewire::actingAs($this->user)->test('pages::contracts')
-            ->set('form.title', 'A contract title')
-            ->set('form.description', 'A contract description')
-            ->set('form.location', 'A location')
-            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
-            ->set('form.body', '<h3>Body in HTML</h3>')
-            ->set('form.signature_quantity', 3)
-            ->call('save');
+            ->submit([
+                'form.title' => 'A contract title',
+                'form.description' => 'A contract description',
+                'form.location' => 'A location',
+                'form.shootingDate' => Carbon::parse('12-12-2025'),
+                'form.body' => '<h3>Body in HTML</h3>',
+                'form.signature_quantity' => 3,
+            ], 'save');
 
         $component->assertRedirect('/contracts/1');
         expect(Contract::count())->toBe(1);
@@ -179,13 +180,14 @@ describe('Contract limits', function () {
         Contract::factory()->count(5)->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::contracts')
-            ->set('form.title', 'Contract 6')
-            ->set('form.description', 'Desc')
-            ->set('form.location', 'Loc')
-            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
-            ->set('form.body', '<h3>Body</h3>')
-            ->set('form.signature_quantity', 1)
-            ->call('save');
+            ->submit([
+                'form.title' => 'Contract 6',
+                'form.description' => 'Desc',
+                'form.location' => 'Loc',
+                'form.shootingDate' => Carbon::parse('12-12-2025'),
+                'form.body' => '<h3>Body</h3>',
+                'form.signature_quantity' => 1,
+            ], 'save');
 
         $component->assertStatus(403);
         expect($this->team->contracts()->count())->toBe(5);
@@ -203,13 +205,14 @@ describe('Contract limits', function () {
         Contract::factory()->count(4)->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::contracts')
-            ->set('form.title', 'Contract 5 this month')
-            ->set('form.description', 'Desc')
-            ->set('form.location', 'Loc')
-            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
-            ->set('form.body', '<h3>Body</h3>')
-            ->set('form.signature_quantity', 1)
-            ->call('save');
+            ->submit([
+                'form.title' => 'Contract 5 this month',
+                'form.description' => 'Desc',
+                'form.location' => 'Loc',
+                'form.shootingDate' => Carbon::parse('12-12-2025'),
+                'form.body' => '<h3>Body</h3>',
+                'form.signature_quantity' => 1,
+            ], 'save');
 
         $component->assertRedirect('/contracts/10');
         expect($this->team->contracts()->count())->toBe(10);
@@ -223,13 +226,14 @@ describe('Contract limits', function () {
         Contract::factory()->count(6)->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::contracts')
-            ->set('form.title', 'Contract 7')
-            ->set('form.description', 'Desc')
-            ->set('form.location', 'Loc')
-            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
-            ->set('form.body', '<h3>Body</h3>')
-            ->set('form.signature_quantity', 1)
-            ->call('save');
+            ->submit([
+                'form.title' => 'Contract 7',
+                'form.description' => 'Desc',
+                'form.location' => 'Loc',
+                'form.shootingDate' => Carbon::parse('12-12-2025'),
+                'form.body' => '<h3>Body</h3>',
+                'form.signature_quantity' => 1,
+            ], 'save');
 
         $component->assertRedirect('/contracts/7');
         expect($this->team->contracts()->count())->toBe(7);
@@ -241,13 +245,14 @@ describe('Contract limits', function () {
         Contract::factory()->count(6)->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::contracts')
-            ->set('form.title', 'Contract 7')
-            ->set('form.description', 'Desc')
-            ->set('form.location', 'Loc')
-            ->set('form.shootingDate', Carbon::parse('12-12-2025'))
-            ->set('form.body', '<h3>Body</h3>')
-            ->set('form.signature_quantity', 1)
-            ->call('save');
+            ->submit([
+                'form.title' => 'Contract 7',
+                'form.description' => 'Desc',
+                'form.location' => 'Loc',
+                'form.shootingDate' => Carbon::parse('12-12-2025'),
+                'form.body' => '<h3>Body</h3>',
+                'form.signature_quantity' => 1,
+            ], 'save');
 
         $component->assertRedirect('/contracts/7');
         expect($this->team->contracts()->count())->toBe(7);

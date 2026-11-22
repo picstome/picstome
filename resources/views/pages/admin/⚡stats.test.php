@@ -134,7 +134,8 @@ it('switches periods and refreshes the cached stats', function () {
             now()->subMonths(2)->toDateString(),
             now()->subMonth()->toDateString(),
         ])
-        ->set('preset', 'custom')
-        ->call('refreshStats')
+        ->submit([
+            'preset' => 'custom',
+        ], 'refreshStats')
         ->assertHasNoErrors();
 });

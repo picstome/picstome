@@ -71,8 +71,9 @@ it('does not persist the shared versions option when disabled', function () {
 
     Livewire::actingAs($user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('shareForm.versionsVisible', true)
-        ->call('share')
+        ->submit([
+            'shareForm.versionsVisible' => true,
+        ], 'share')
         ->assertHasNoErrors();
 
     expect($gallery->fresh()->is_share_versions_visible)->toBeFalse();

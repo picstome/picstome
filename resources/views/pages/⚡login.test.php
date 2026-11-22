@@ -45,9 +45,10 @@ test('returns to the intended URL with its query string after login', function (
     get('/galleries?foo=bar&utm_source=newsletter')->assertRedirect('/login');
 
     Livewire::test('pages::login')
-        ->set('form.email', 'intended@example.com')
-        ->set('form.password', 'password')
-        ->call('login')
+        ->submit([
+            'form.email' => 'intended@example.com',
+            'form.password' => 'password',
+        ], 'login')
         ->assertRedirect('/galleries?foo=bar&utm_source=newsletter');
 
     assertAuthenticated();
@@ -61,9 +62,10 @@ test('unverified users must verify their email after login', function () {
 
     Livewire::withQueryParams(['redirect' => '/subscribe?plan=pro&ps_from=bf2026'])
         ->test('pages::login')
-        ->set('form.email', 'unverified@example.com')
-        ->set('form.password', 'password')
-        ->call('login')
+        ->submit([
+            'form.email' => 'unverified@example.com',
+            'form.password' => 'password',
+        ], 'login')
         ->assertRedirect(route('verification.notice'));
 
     assertAuthenticated();

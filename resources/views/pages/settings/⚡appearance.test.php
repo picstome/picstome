@@ -20,8 +20,9 @@ test('appearance information can be updated', function () {
     expect($user->language)->toBeNull();
 
     $response = Livewire::actingAs($user)->test('pages::settings.appearance')
-        ->set('form.language', 'es')
-        ->call('save');
+        ->submit([
+            'form.language' => 'es',
+        ], 'save');
 
     $response->assertHasNoErrors();
 

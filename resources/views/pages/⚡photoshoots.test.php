@@ -88,10 +88,11 @@ it('paginates photoshoots', function () {
 it('allows a user to create a photoshoot with a customer email', function () {
     $component = Livewire::actingAs($this->user)
         ->test('pages::photoshoots')
-        ->set('form.name', 'John\'s Photoshoot')
-        ->set('form.customerName', 'John Doe')
-        ->set('form.customerEmail', 'john@example.com')
-        ->call('save');
+        ->submit([
+            'form.name' => 'John\'s Photoshoot',
+            'form.customerName' => 'John Doe',
+            'form.customerEmail' => 'john@example.com',
+        ], 'save');
 
     $customer = $this->team->photoshoots()->first()->customer;
     expect($customer->name)->toBe('John Doe');
@@ -103,9 +104,10 @@ it('allows a user to create a photoshoot with an existing customer', function ()
 
     $component = Livewire::actingAs($this->user)
         ->test('pages::photoshoots')
-        ->set('form.name', 'Jane Photoshoot')
-        ->set('form.customer', $customer->id)
-        ->call('save');
+        ->submit([
+            'form.name' => 'Jane Photoshoot',
+            'form.customer' => $customer->id,
+        ], 'save');
 
     $photoshoot = $this->team->photoshoots()->first();
     expect($photoshoot->customer->is($customer))->toBeTrue();

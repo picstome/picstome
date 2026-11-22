@@ -52,8 +52,9 @@ test('can add a gallery', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery for a photoshoot')
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery for a photoshoot',
+        ], 'addGallery');
 
     expect($photoshoot->galleries()->count())->toBe(1);
     $gallery = $photoshoot->galleries()->first();
@@ -67,9 +68,10 @@ test('can add a gallery with custom expiration date', function () {
     $expiration = now()->addDays(7)->toDateString();
 
     Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery with custom expiration')
-        ->set('galleryForm.expirationDate', $expiration)
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery with custom expiration',
+            'galleryForm.expirationDate' => $expiration,
+        ], 'addGallery');
 
     $gallery = $photoshoot->galleries()->first();
     expect($gallery->name)->toBe('Gallery with custom expiration');
@@ -81,9 +83,10 @@ test('can add a gallery with no expiration date when subscribed', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery with no expiration')
-        ->set('galleryForm.expirationDate', '')
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery with no expiration',
+            'galleryForm.expirationDate' => '',
+        ], 'addGallery');
 
     $gallery = $photoshoot->galleries()->first();
     expect($gallery->name)->toBe('Gallery with no expiration');
@@ -94,9 +97,10 @@ test('cannot add a gallery with no expiration date when not subscribed', functio
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery with no expiration')
-        ->set('galleryForm.expirationDate', '')
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery with no expiration',
+            'galleryForm.expirationDate' => '',
+        ], 'addGallery');
 
     $component->assertHasErrors(['galleryForm.expirationDate' => 'required']);
     expect($photoshoot->galleries()->count())->toBe(0);
@@ -106,18 +110,20 @@ test('cannot add a gallery with invalid expiration date', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery with invalid date')
-        ->set('galleryForm.expirationDate', 'not-a-date')
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery with invalid date',
+            'galleryForm.expirationDate' => 'not-a-date',
+        ], 'addGallery');
 
     $component->assertHasErrors(['galleryForm.expirationDate' => 'date']);
     expect($photoshoot->galleries()->count())->toBe(0);
 
     $pastDate = now()->subDay()->toDateString();
     $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('galleryForm.name', 'Gallery with past date')
-        ->set('galleryForm.expirationDate', $pastDate)
-        ->call('addGallery');
+        ->submit([
+            'galleryForm.name' => 'Gallery with past date',
+            'galleryForm.expirationDate' => $pastDate,
+        ], 'addGallery');
 
     $component->assertHasErrors(['galleryForm.expirationDate' => 'after_or_equal']);
     expect($photoshoot->galleries()->count())->toBe(0);
@@ -167,12 +173,13 @@ test('can edit a team photoshoot', function () {
 
     $component = Livewire::actingAs($this->user)
         ->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('form.name', 'Edited photoshoot')
-        ->set('form.date', Carbon::parse('2025-12-12'))
-        ->set('form.price', '400')
-        ->set('form.location', 'Fake City')
-        ->set('form.comment', 'Edited comment')
-        ->call('update');
+        ->submit([
+            'form.name' => 'Edited photoshoot',
+            'form.date' => Carbon::parse('2025-12-12'),
+            'form.price' => '400',
+            'form.location' => 'Fake City',
+            'form.comment' => 'Edited comment',
+        ], 'update');
 
     tap($photoshoot->fresh(), function (Photoshoot $photoshoot) {
         expect($photoshoot->name)->toBe('Edited photoshoot');
@@ -201,13 +208,14 @@ test('can add new contract', function () {
     $photoshoot = Photoshoot::factory()->for($this->team)->create();
 
     $component = Livewire::actingAs($this->user)->test('pages::photoshoots.show', ['photoshoot' => $photoshoot])
-        ->set('contractForm.title', 'A contract title')
-        ->set('contractForm.description', 'A contract description')
-        ->set('contractForm.location', 'A location')
-        ->set('contractForm.shootingDate', Carbon::parse('12-12-2025'))
-        ->set('contractForm.body', '<h3>Body in HTML</h3>')
-        ->set('contractForm.signature_quantity', 3)
-        ->call('addContract');
+        ->submit([
+            'contractForm.title' => 'A contract title',
+            'contractForm.description' => 'A contract description',
+            'contractForm.location' => 'A location',
+            'contractForm.shootingDate' => Carbon::parse('12-12-2025'),
+            'contractForm.body' => '<h3>Body in HTML</h3>',
+            'contractForm.signature_quantity' => 3,
+        ], 'addContract');
 
     $component->assertRedirect('/contracts/1');
     expect(Contract::count())->toBe(1);

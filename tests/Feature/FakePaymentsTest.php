@@ -25,8 +25,9 @@ it('creates the payment without Stripe when the fake mode is enabled', function 
         'description' => 'Sesión de prueba',
     ])
         ->assertOk()
-        ->set('email', 'cliente@example.com')
-        ->call('pay')
+        ->submit([
+            'email' => 'cliente@example.com',
+        ], 'pay')
         ->assertRedirect(route('handle.pay.success', [
             'handle' => $this->team->handle,
             'fake' => 1,
@@ -59,9 +60,10 @@ it('creates a payment for the team when paying from the public profile', functio
 
     Livewire::test('pages::handle.show', ['handle' => $this->team->handle])
         ->assertOk()
-        ->set('amount', 80)
-        ->set('description', 'Bono')
-        ->call('checkout')
+        ->submit([
+            'amount' => 80,
+            'description' => 'Bono',
+        ], 'checkout')
         ->assertRedirect(route('handle.pay.success', [
             'handle' => $this->team->handle,
             'fake' => 1,

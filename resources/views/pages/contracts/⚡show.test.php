@@ -105,8 +105,9 @@ test('user can assign a contract to a photoshoot', function () {
 
     $component = Livewire::actingAs($this->user)->actingAs($this->team->owner)
         ->test('pages::contracts.show', ['contract' => $contract])
-        ->set('photoshoot_id', $photoshoot->id)
-        ->call('assignToPhotoshoot');
+        ->submit([
+            'photoshoot_id' => $photoshoot->id,
+        ], 'assignToPhotoshoot');
 
     expect($contract->fresh()->photoshoot->is($photoshoot))->toBeTrue();
 });
@@ -118,8 +119,9 @@ test('user cannot assign a contract to a photoshoot from another team', function
 
     $component = Livewire::actingAs($this->team->owner)
         ->test('pages::contracts.show', ['contract' => $contract])
-        ->set('photoshoot_id', $photoshoot->id)
-        ->call('assignToPhotoshoot')
+        ->submit([
+            'photoshoot_id' => $photoshoot->id,
+        ], 'assignToPhotoshoot')
         ->assertHasErrors(['photoshoot_id' => 'exists']);
 
     expect($contract->fresh()->photoshoot_id)->toBeNull();
@@ -132,8 +134,9 @@ test('user can re-assign a contract to a different photoshoot', function () {
 
     $component = Livewire::actingAs($this->team->owner)
         ->test('pages::contracts.show', ['contract' => $contract])
-        ->set('photoshoot_id', $photoshootB->id)
-        ->call('assignToPhotoshoot');
+        ->submit([
+            'photoshoot_id' => $photoshootB->id,
+        ], 'assignToPhotoshoot');
 
     expect($contract->fresh()->photoshoot->is($photoshootB))->toBeTrue();
 });
@@ -145,8 +148,9 @@ test('user can re-assign a contract null photoshoot', function () {
 
     $component = Livewire::actingAs($this->team->owner)
         ->test('pages::contracts.show', ['contract' => $contract])
-        ->set('photoshoot_id', null)
-        ->call('assignToPhotoshoot');
+        ->submit([
+            'photoshoot_id' => null,
+        ], 'assignToPhotoshoot');
 
     expect($contract->fresh()->photoshoot_id)->toBeNull();
 });

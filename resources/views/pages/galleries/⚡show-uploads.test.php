@@ -166,8 +166,9 @@ describe('Photo Upload', function () {
         };
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $file)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $file,
+            ], 'save', 0);
 
         $component->assertHasNoErrors();
         expect($gallery->fresh()->photos()->count())->toBe(1);
@@ -357,8 +358,9 @@ describe('Live Session Original Size', function () {
         ]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.keepOriginalSize', false)
-            ->call('update')
+            ->submit([
+                'form.keepOriginalSize' => false,
+            ], 'update')
             ->assertHasNoErrors();
 
         expect($gallery->fresh()->keep_original_size)->toBeFalse();

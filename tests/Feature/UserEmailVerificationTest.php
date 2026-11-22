@@ -55,8 +55,9 @@ it('lets an admin mark the email as verified or unverified', function () {
         ->test('pages::users')
         ->call('editUser', $user->id)
         ->assertSet('userForm.emailVerified', false)
-        ->set('userForm.emailVerified', true)
-        ->call('saveUser')
+        ->submit([
+            'userForm.emailVerified' => true,
+        ], 'saveUser')
         ->assertHasNoErrors()
         ->assertSee('Verified');
 
@@ -66,8 +67,9 @@ it('lets an admin mark the email as verified or unverified', function () {
         ->test('pages::users')
         ->call('editUser', $user->id)
         ->assertSet('userForm.emailVerified', true)
-        ->set('userForm.emailVerified', false)
-        ->call('saveUser')
+        ->submit([
+            'userForm.emailVerified' => false,
+        ], 'saveUser')
         ->assertHasNoErrors();
 
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
@@ -81,8 +83,9 @@ it('saves verification of users without a team', function () {
     Livewire::actingAs($this->admin)
         ->test('pages::users')
         ->call('editUser', $user->id)
-        ->set('userForm.emailVerified', true)
-        ->call('saveUser')
+        ->submit([
+            'userForm.emailVerified' => true,
+        ], 'saveUser')
         ->assertHasNoErrors();
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();

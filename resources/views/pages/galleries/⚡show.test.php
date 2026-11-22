@@ -552,8 +552,9 @@ describe('Rating filters and sorting', function () {
         Photo::factory()->for($gallery)->rated(5)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('allPhotoLimit', 120)
-            ->call('filterByRating', 4)
+            ->submit([
+                'allPhotoLimit' => 120,
+            ], 'filterByRating', 4)
             ->call('showFavorites')
             ->call('clearFilters');
 

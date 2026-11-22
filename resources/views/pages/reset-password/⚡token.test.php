@@ -28,10 +28,11 @@ test('resetting the password logs out existing sessions', function () {
     ]);
 
     $response = Livewire::test('pages::reset-password.token', ['token' => $token])
-        ->set('email', $user->email)
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('resetPassword');
+        ->submit([
+            'email' => $user->email,
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'resetPassword');
 
     $response->assertHasNoErrors();
 

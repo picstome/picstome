@@ -92,8 +92,9 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', "1Z8A6159.jpg\n1Z8A6190.CR3")
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => "1Z8A6159.jpg\n1Z8A6190.CR3",
+            ], 'markFavorites');
 
         $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
         expect($favorites->count())->toBe(4);
@@ -109,8 +110,9 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', "1Z8A6159\n1Z8A6190")
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => "1Z8A6159\n1Z8A6190",
+            ], 'markFavorites');
 
         $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
         expect($favorites->count())->toBe(4);
@@ -123,8 +125,9 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6255.jpg']);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', "1Z8A6198\n1Z8A6255")
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => "1Z8A6198\n1Z8A6255",
+            ], 'markFavorites');
 
         expect($gallery->photos()->favorited()->count())->toBe(2);
     });
@@ -136,8 +139,9 @@ describe('Favorites', function () {
         Photo::factory()->for($otherGallery)->create(['name' => '1Z8A6159.jpg']);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', '1Z8A6159')
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => '1Z8A6159',
+            ], 'markFavorites');
 
         expect($gallery->photos()->favorited()->count())->toBe(1);
         expect($otherGallery->photos()->favorited()->count())->toBe(0);
@@ -148,8 +152,9 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6159.jpg']);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', '1Z8A6159.jpg')
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => '1Z8A6159.jpg',
+            ], 'markFavorites');
 
         $component->assertSet('favoriteFileNames', '');
     });
@@ -170,8 +175,9 @@ describe('Favorites', function () {
         Photo::factory()->for($gallery)->create(['name' => '1Z8A6190.CR3']);
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('favoriteFileNames', "\n  1Z8A6159.jpg  \n\n  \n1Z8A6190.CR3\n")
-            ->call('markFavorites');
+            ->submit([
+                'favoriteFileNames' => "\n  1Z8A6159.jpg  \n\n  \n1Z8A6190.CR3\n",
+            ], 'markFavorites');
 
         $favorites = $gallery->photos()->favorited()->pluck('name')->sort()->values();
         expect($favorites->count())->toBe(3);
@@ -330,8 +336,9 @@ describe('Gallery Photoshoot Association', function () {
         $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.photoshoot_id', $photoshoot->id)
-            ->call('update');
+            ->submit([
+                'form.photoshoot_id' => $photoshoot->id,
+            ], 'update');
 
         $gallery->refresh();
         expect($gallery->photoshoot_id)->toBe($photoshoot->id);
@@ -345,8 +352,9 @@ describe('Gallery Photoshoot Association', function () {
         ]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.photoshoot_id', $photoshootB->id)
-            ->call('update');
+            ->submit([
+                'form.photoshoot_id' => $photoshootB->id,
+            ], 'update');
 
         $gallery->refresh();
         expect($gallery->photoshoot_id)->toBe($photoshootB->id);
@@ -358,8 +366,9 @@ describe('Gallery Photoshoot Association', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.photoshoot_id', $photoshoot->id)
-            ->call('update');
+            ->submit([
+                'form.photoshoot_id' => $photoshoot->id,
+            ], 'update');
 
         $gallery->refresh();
         expect($gallery->photoshoot_id)->toBeNull();
@@ -373,8 +382,9 @@ describe('Gallery Photoshoot Association', function () {
         ]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.photoshoot_id', null)
-            ->call('update');
+            ->submit([
+                'form.photoshoot_id' => null,
+            ], 'update');
 
         $gallery->refresh();
         expect($gallery->photoshoot_id)->toBeNull();
@@ -386,8 +396,9 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->withExpirationDate()->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.name', 'Edited Gallery')
-            ->call('update');
+            ->submit([
+                'form.name' => 'Edited Gallery',
+            ], 'update');
 
         expect($gallery->fresh()->name)->toBe('Edited Gallery');
     });
@@ -397,8 +408,9 @@ describe('Gallery Editing', function () {
         $expirationDate = now()->addDays(10)->toDateString();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', $expirationDate)
-            ->call('update');
+            ->submit([
+                'form.expirationDate' => $expirationDate,
+            ], 'update');
         $gallery->refresh();
         expect($gallery->expiration_date->toDateString())->toBe($expirationDate);
     });
@@ -408,8 +420,9 @@ describe('Gallery Editing', function () {
         $newExpiration = now()->addDays(20)->toDateString();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', $newExpiration)
-            ->call('update');
+            ->submit([
+                'form.expirationDate' => $newExpiration,
+            ], 'update');
         $gallery->refresh();
         expect($gallery->expiration_date->toDateString())->toBe($newExpiration);
     });
@@ -419,8 +432,9 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', '')
-            ->call('update');
+            ->submit([
+                'form.expirationDate' => '',
+            ], 'update');
         $gallery->refresh();
         expect($gallery->expiration_date)->toBeNull();
     });
@@ -429,8 +443,9 @@ describe('Gallery Editing', function () {
         $gallery = Gallery::factory()->for($this->team)->create(['expiration_date' => now()->addDays(5)]);
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', '')
-            ->call('update');
+            ->submit([
+                'form.expirationDate' => '',
+            ], 'update');
 
         $component->assertHasErrors(['form.expirationDate' => 'required']);
         $gallery->refresh();
@@ -442,8 +457,9 @@ describe('Gallery Editing', function () {
         expect($gallery->is_public)->toBeTrue();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('form.expirationDate', '')
-            ->call('update')
+            ->submit([
+                'form.expirationDate' => '',
+            ], 'update')
             ->assertHasNoErrors('form.expirationDate');
 
         $gallery->refresh();
@@ -472,8 +488,9 @@ describe('Storage Limits', function () {
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(1);
         expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed + $photoSize);
@@ -498,8 +515,9 @@ describe('Storage Limits', function () {
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
         expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
@@ -525,8 +543,9 @@ describe('Storage Limits', function () {
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
         expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
@@ -552,8 +571,9 @@ describe('Storage Limits', function () {
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(0);
         expect($this->team->calculateStorageUsed())->toBe($initialStorageUsed);
@@ -574,8 +594,9 @@ describe('Storage Limits', function () {
         $photoSize = $photoFile->getSize();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         $storageAfterUpload = $this->team->calculateStorageUsed();
         expect($storageAfterUpload)->toBe($photoSize);
@@ -605,8 +626,9 @@ describe('Storage Limits', function () {
         $initialStorageUsed = $this->team->calculateStorageUsed();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('photos.0', $photoFile)
-            ->call('save', 0);
+            ->submit([
+                'photos.0' => $photoFile,
+            ], 'save', 0);
 
         expect($gallery->fresh()->photos()->count())->toBe(1);
         expect($this->team->calculateStorageUsed())->toBeGreaterThanOrEqual($initialStorageUsed);

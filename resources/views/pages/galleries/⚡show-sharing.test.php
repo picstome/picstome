@@ -31,8 +31,9 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.versionsVisible', true)
-            ->call('share')
+            ->submit([
+                'shareForm.versionsVisible' => true,
+            ], 'share')
             ->assertHasNoErrors();
 
         expect($gallery->fresh()->is_share_versions_visible)->toBeTrue();
@@ -59,8 +60,9 @@ describe('Gallery Sharing', function () {
         Subscription::factory()->for($this->user->currentTeam, 'owner')->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.selectable', true)
-            ->call('share');
+            ->submit([
+                'shareForm.selectable' => true,
+            ], 'share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
         expect($gallery->fresh()->is_share_selectable)->toBeTrue();
@@ -70,8 +72,9 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.downloadable', true)
-            ->call('share');
+            ->submit([
+                'shareForm.downloadable' => true,
+            ], 'share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
         expect($gallery->fresh()->is_share_downloadable)->toBeTrue();
@@ -81,9 +84,10 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.limitedSelection', true)
-            ->set('shareForm.selectionLimit', 10)
-            ->call('share');
+            ->submit([
+                'shareForm.limitedSelection' => true,
+                'shareForm.selectionLimit' => 10,
+            ], 'share');
 
         expect($gallery->fresh()->share_selection_limit)->toBe(10);
     });
@@ -102,9 +106,10 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_password)->toBeNull();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.passwordProtected', true)
-            ->set('shareForm.password', 'secret')
-            ->call('share');
+            ->submit([
+                'shareForm.passwordProtected' => true,
+                'shareForm.password' => 'secret',
+            ], 'share');
 
         expect($gallery->fresh()->share_password)->not->toBeNull();
     });
@@ -114,8 +119,9 @@ describe('Gallery Sharing', function () {
         expect($gallery->fresh()->is_share_watermarked)->toBeFalse();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.watermarked', true)
-            ->call('share');
+            ->submit([
+                'shareForm.watermarked' => true,
+            ], 'share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
         expect($gallery->fresh()->is_share_watermarked)->toBeTrue();
@@ -126,8 +132,9 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_password)->not->toBeNull();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.passwordProtected', false)
-            ->call('share');
+            ->submit([
+                'shareForm.passwordProtected' => false,
+            ], 'share');
 
         expect($gallery->fresh()->share_password)->toBeNull();
     });
@@ -137,16 +144,18 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.commentsEnabled', true)
-            ->call('share');
+            ->submit([
+                'shareForm.commentsEnabled' => true,
+            ], 'share');
 
         $gallery->refresh();
 
         expect($gallery->are_comments_enabled)->toBeTrue();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.commentsEnabled', false)
-            ->call('share');
+            ->submit([
+                'shareForm.commentsEnabled' => false,
+            ], 'share');
 
         $gallery->refresh();
 
@@ -158,8 +167,9 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.annotationsEnabled', true)
-            ->call('share');
+            ->submit([
+                'shareForm.annotationsEnabled' => true,
+            ], 'share');
 
         $gallery->refresh();
 
@@ -167,8 +177,9 @@ describe('Gallery Sharing', function () {
         expect($gallery->are_comments_enabled)->toBeTrue();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.annotationsEnabled', false)
-            ->call('share');
+            ->submit([
+                'shareForm.annotationsEnabled' => false,
+            ], 'share');
 
         expect($gallery->fresh()->are_annotations_enabled)->toBeFalse();
     });
@@ -220,9 +231,10 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.commentsEnabled', true)
-            ->set('shareForm.annotationsEnabled', true)
-            ->call('share');
+            ->submit([
+                'shareForm.commentsEnabled' => true,
+                'shareForm.annotationsEnabled' => true,
+            ], 'share');
 
         expect($gallery->fresh()->are_annotations_enabled)->toBeTrue();
     });
@@ -233,9 +245,10 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBeNull();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', true)
-            ->set('shareForm.description', 'This is a beautiful wedding gallery')
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => true,
+                'shareForm.description' => 'This is a beautiful wedding gallery',
+            ], 'share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
         expect($gallery->fresh()->share_description)->toBe('This is a beautiful wedding gallery');
@@ -247,9 +260,10 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBe('Old description');
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', true)
-            ->set('shareForm.description', 'Updated description')
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => true,
+                'shareForm.description' => 'Updated description',
+            ], 'share');
 
         expect($gallery->fresh()->share_description)->toBe('Updated description');
     });
@@ -258,8 +272,9 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', false)
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => false,
+            ], 'share');
 
         expect($gallery->fresh()->is_shared)->toBeTrue();
         expect($gallery->fresh()->share_description)->toBeNull();
@@ -270,8 +285,9 @@ describe('Gallery Sharing', function () {
         expect($gallery->share_description)->toBe('Some description');
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', false)
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => false,
+            ], 'share');
 
         expect($gallery->fresh()->share_description)->toBeNull();
     });
@@ -281,9 +297,10 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', true)
-            ->set('shareForm.description', '')
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => true,
+                'shareForm.description' => '',
+            ], 'share');
 
         $component->assertHasErrors('shareForm.description');
     });
@@ -292,9 +309,10 @@ describe('Gallery Sharing', function () {
         $gallery = Gallery::factory()->for($this->team)->create();
 
         $component = Livewire::actingAs($this->user)->test('pages::galleries.show', ['gallery' => $gallery])
-            ->set('shareForm.descriptionEnabled', false)
-            ->set('shareForm.description', '')
-            ->call('share');
+            ->submit([
+                'shareForm.descriptionEnabled' => false,
+                'shareForm.description' => '',
+            ], 'share');
 
         $component->assertHasNoErrors('shareForm.description');
         expect($gallery->fresh()->share_description)->toBeNull();

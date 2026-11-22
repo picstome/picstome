@@ -173,19 +173,21 @@ it('captures the attribution during registration', function () {
     });
 
     Livewire::test('pages::register')
-        ->set('name', 'Wired User')
-        ->set('email', 'wired@example.com')
-        ->set('terms', true)
-        ->call('register')
+        ->submit([
+            'name' => 'Wired User',
+            'email' => 'wired@example.com',
+            'terms' => true,
+        ], 'register')
         ->assertDispatched('analytics:event');
 });
 
 it('falls back to direct when there is no attribution', function () {
     Livewire::test('pages::register')
-        ->set('name', 'Direct User')
-        ->set('email', 'direct@example.com')
-        ->set('terms', true)
-        ->call('register');
+        ->submit([
+            'name' => 'Direct User',
+            'email' => 'direct@example.com',
+            'terms' => true,
+        ], 'register');
 
     $user = User::where('email', 'direct@example.com')->first();
 

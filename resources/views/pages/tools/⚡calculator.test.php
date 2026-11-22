@@ -59,9 +59,10 @@ it('adds and deletes a fixed expense', function () {
     $team = $user->currentTeam;
 
     $component = Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newFixedName', 'New expense')
-        ->set('newFixedAmount', '99.50')
-        ->call('addFixedExpense')
+        ->submit([
+            'newFixedName' => 'New expense',
+            'newFixedAmount' => '99.50',
+        ], 'addFixedExpense')
         ->assertHasNoErrors();
 
     expect($component->get('fixed_expenses'))->toHaveCount(5);
@@ -96,9 +97,10 @@ it('validates new fixed expenses', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newFixedName', '')
-        ->set('newFixedAmount', '')
-        ->call('addFixedExpense')
+        ->submit([
+            'newFixedName' => '',
+            'newFixedAmount' => '',
+        ], 'addFixedExpense')
         ->assertHasErrors(['newFixedName', 'newFixedAmount']);
 });
 
@@ -107,11 +109,12 @@ it('adds equipment with resale value and useful life', function () {
     $team = $user->currentTeam;
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newEquipmentName', 'Backup camera')
-        ->set('newEquipmentPrice', '1000')
-        ->set('newEquipmentResale', '200')
-        ->set('newEquipmentLife', '5')
-        ->call('addEquipment')
+        ->submit([
+            'newEquipmentName' => 'Backup camera',
+            'newEquipmentPrice' => '1000',
+            'newEquipmentResale' => '200',
+            'newEquipmentLife' => '5',
+        ], 'addEquipment')
         ->assertHasNoErrors();
 
     $equipment = collect($team->fresh()->calculatorState->state['equipment'])->last();
@@ -127,9 +130,10 @@ it('includes monthly tasks in the calculated summary', function () {
     $team = $user->currentTeam;
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newMonthlyTaskName', 'Networking')
-        ->set('newMonthlyTaskHours', '10')
-        ->call('addMonthlyTask')
+        ->submit([
+            'newMonthlyTaskName' => 'Networking',
+            'newMonthlyTaskHours' => '10',
+        ], 'addMonthlyTask')
         ->assertHasNoErrors();
 
     $summary = CalculatorService::summary($team->fresh()->calculatorState->state);
@@ -145,9 +149,10 @@ it('resets the calculator to defaults', function () {
     $team = $user->currentTeam;
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newFixedName', 'Temporary')
-        ->set('newFixedAmount', '10')
-        ->call('addFixedExpense')
+        ->submit([
+            'newFixedName' => 'Temporary',
+            'newFixedAmount' => '10',
+        ], 'addFixedExpense')
         ->call('resetCalculator')
         ->assertHasNoErrors();
 
@@ -164,9 +169,10 @@ it('keeps calculator data isolated per team', function () {
     $secondUser = User::factory()->withPersonalTeam()->create();
 
     Livewire::actingAs($firstUser)->test('pages::tools.calculator')
-        ->set('newFixedName', 'First team only')
-        ->set('newFixedAmount', '10')
-        ->call('addFixedExpense');
+        ->submit([
+            'newFixedName' => 'First team only',
+            'newFixedAmount' => '10',
+        ], 'addFixedExpense');
 
     Livewire::actingAs($secondUser)->test('pages::tools.calculator');
 
@@ -200,11 +206,12 @@ it('validates equipment resale value against the price', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newEquipmentName', 'Invalid equipment')
-        ->set('newEquipmentPrice', '100')
-        ->set('newEquipmentResale', '200')
-        ->set('newEquipmentLife', '5')
-        ->call('addEquipment')
+        ->submit([
+            'newEquipmentName' => 'Invalid equipment',
+            'newEquipmentPrice' => '100',
+            'newEquipmentResale' => '200',
+            'newEquipmentLife' => '5',
+        ], 'addEquipment')
         ->assertHasErrors(['newEquipmentResale']);
 });
 
@@ -213,13 +220,15 @@ it('adds session expenses and session time', function () {
     $team = $user->currentTeam;
 
     Livewire::actingAs($user)->test('pages::tools.calculator')
-        ->set('newSessionName', 'Makeup')
-        ->set('newSessionAmount', '40')
-        ->call('addSessionExpense')
+        ->submit([
+            'newSessionName' => 'Makeup',
+            'newSessionAmount' => '40',
+        ], 'addSessionExpense')
         ->assertHasNoErrors()
-        ->set('newSessionTaskName', 'Retouching')
-        ->set('newSessionTaskHours', '2')
-        ->call('addSessionTask')
+        ->submit([
+            'newSessionTaskName' => 'Retouching',
+            'newSessionTaskHours' => '2',
+        ], 'addSessionTask')
         ->assertHasNoErrors();
 
     $state = $team->fresh()->calculatorState->state;

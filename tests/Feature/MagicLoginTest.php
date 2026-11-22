@@ -27,8 +27,9 @@ it('emails a login link to existing users', function () {
     $user = User::factory()->create(['email' => 'magic@example.com']);
 
     Livewire::test('pages::login')
-        ->set('form.email', 'magic@example.com')
-        ->call('sendMagicLink')
+        ->submit([
+            'form.email' => 'magic@example.com',
+        ], 'sendMagicLink')
         ->assertHasNoErrors()
         ->assertSet('linkSent', true)
         ->assertSet('sentTo', 'magic@example.com')
@@ -48,8 +49,9 @@ it('does not reveal whether an email belongs to an account', function () {
     Notification::fake();
 
     Livewire::test('pages::login')
-        ->set('form.email', 'missing@example.com')
-        ->call('sendMagicLink')
+        ->submit([
+            'form.email' => 'missing@example.com',
+        ], 'sendMagicLink')
         ->assertHasNoErrors()
         ->assertSet('linkSent', true)
         ->assertSet('sentTo', 'missing@example.com');
@@ -72,14 +74,16 @@ it('throttles login link requests per email', function () {
 
     foreach (range(1, 3) as $attempt) {
         Livewire::test('pages::login')
-            ->set('form.email', 'magic@example.com')
-            ->call('sendMagicLink')
+            ->submit([
+                'form.email' => 'magic@example.com',
+            ], 'sendMagicLink')
             ->assertHasNoErrors();
     }
 
     Livewire::test('pages::login')
-        ->set('form.email', 'magic@example.com')
-        ->call('sendMagicLink')
+        ->submit([
+            'form.email' => 'magic@example.com',
+        ], 'sendMagicLink')
         ->assertHasErrors('form.email');
 });
 
@@ -158,8 +162,9 @@ it('keeps the intended URL and its query string in the login link', function () 
         ->assertRedirect('/login');
 
     Livewire::test('pages::login')
-        ->set('form.email', $user->email)
-        ->call('sendMagicLink');
+        ->submit([
+            'form.email' => $user->email,
+        ], 'sendMagicLink');
 
     $token = MagicLoginToken::query()
         ->where('user_id', $user->id)

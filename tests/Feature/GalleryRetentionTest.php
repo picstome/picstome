@@ -28,8 +28,9 @@ it('caps a free gallery at one year from its creation', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.expirationDate', $beyondCap)
-        ->call('update')
+        ->submit([
+            'form.expirationDate' => $beyondCap,
+        ], 'update')
         ->assertHasErrors(['form.expirationDate' => 'before_or_equal']);
 
     expect($gallery->fresh()->expiration_date->toDateString())
@@ -46,8 +47,9 @@ it('lets a free team shorten the expiration and move it inside the cap', functio
 
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.expirationDate', $insideCap)
-        ->call('update')
+        ->submit([
+            'form.expirationDate' => $insideCap,
+        ], 'update')
         ->assertHasNoErrors();
 
     expect($gallery->fresh()->expiration_date->toDateString())->toBe($insideCap);
@@ -62,8 +64,9 @@ it('does not let a lifetime team clear the expiration date', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.expirationDate', '')
-        ->call('update')
+        ->submit([
+            'form.expirationDate' => '',
+        ], 'update')
         ->assertHasErrors(['form.expirationDate' => 'required']);
 
     expect($gallery->fresh()->expiration_date)->not->toBeNull();
@@ -78,8 +81,9 @@ it('lets a subscribed team clear the expiration date', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.expirationDate', '')
-        ->call('update')
+        ->submit([
+            'form.expirationDate' => '',
+        ], 'update')
         ->assertHasNoErrors();
 
     expect($gallery->fresh()->expiration_date)->toBeNull();
@@ -98,8 +102,9 @@ it('does not cap a subscribed team at the creation date', function () {
     // applied to every plan remains.
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.expirationDate', now()->addMonths(10)->toDateString())
-        ->call('update')
+        ->submit([
+            'form.expirationDate' => now()->addMonths(10)->toDateString(),
+        ], 'update')
         ->assertHasNoErrors();
 
     expect($gallery->fresh()->expiration_date->toDateString())
@@ -115,8 +120,9 @@ it('keeps an over-cap date instead of forcing a destructive edit', function () {
 
     Livewire::actingAs($this->user)
         ->test('pages::galleries.show', ['gallery' => $gallery])
-        ->set('form.name', 'Renamed')
-        ->call('update')
+        ->submit([
+            'form.name' => 'Renamed',
+        ], 'update')
         ->assertHasNoErrors();
 
     expect($gallery->fresh()->expiration_date->toDateString())

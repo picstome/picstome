@@ -84,8 +84,9 @@ it('fails validation if amount is missing', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
     Livewire::test('pages::handle.show', ['handle' => $team->handle])
-        ->set('description', 'Test public payment')
-        ->call('checkout')
+        ->submit([
+            'description' => 'Test public payment',
+        ], 'checkout')
         ->assertHasErrors(['amount' => 'required']);
 });
 
@@ -93,9 +94,10 @@ it('fails validation if amount is not integer or < 1', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
     $component = Livewire::test('pages::handle.show', ['handle' => $team->handle])
-        ->set('amount', 0)
-        ->set('description', 'Test public payment')
-        ->call('checkout')
+        ->submit([
+            'amount' => 0,
+            'description' => 'Test public payment',
+        ], 'checkout')
         ->assertHasErrors(['amount' => 'min']);
 
     $component->set('amount', 'abc')
@@ -107,8 +109,9 @@ it('fails validation if description is missing', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
     Livewire::test('pages::handle.show', ['handle' => $team->handle])
-        ->set('amount', 1500)
-        ->call('checkout')
+        ->submit([
+            'amount' => 1500,
+        ], 'checkout')
         ->assertHasErrors(['description' => 'required']);
 });
 
@@ -116,8 +119,9 @@ it('fails validation if description is too long', function () {
     $team = Team::factory()->create(['handle' => 'publicteam', 'name' => 'Public Team']);
 
     Livewire::test('pages::handle.show', ['handle' => $team->handle])
-        ->set('amount', 1500)
-        ->set('description', str_repeat('a', 256))
-        ->call('checkout')
+        ->submit([
+            'amount' => 1500,
+            'description' => str_repeat('a', 256),
+        ], 'checkout')
         ->assertHasErrors(['description' => 'max']);
 });

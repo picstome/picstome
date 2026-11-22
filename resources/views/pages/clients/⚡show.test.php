@@ -90,8 +90,9 @@ test('one unlock on the index reveals the gallery and a same-password sibling', 
     Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create(['name' => 'Gallery B']);
 
     Livewire::test('pages::clients.show', ['customer' => $this->customer])
-        ->set('password', 'secret')
-        ->call('unlock')
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock')
         ->assertHasNoErrors();
 
     get('/clients/'.$this->customer->ulid)
@@ -104,8 +105,9 @@ test('wrong password shows a validation error and keeps galleries hidden', funct
     Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create(['name' => 'Locked Gallery']);
 
     Livewire::test('pages::clients.show', ['customer' => $this->customer])
-        ->set('password', 'wrong-password')
-        ->call('unlock')
+        ->submit([
+            'password' => 'wrong-password',
+        ], 'unlock')
         ->assertHasErrors(['password' => trans('auth.failed')]);
 
     expect(session()->get('unlocked_gallery_ulids'))->toBeNull();
@@ -119,8 +121,9 @@ test('index unlock then direct share url visit is allowed', function () {
     $gallery = Gallery::factory()->shared()->protected(password: 'secret')->for($this->photoshoot)->for($this->team)->create();
 
     Livewire::test('pages::clients.show', ['customer' => $this->customer])
-        ->set('password', 'secret')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secret',
+        ], 'unlock');
 
     get('/shares/'.$gallery->ulid.'/'.$gallery->slug)->assertStatus(200);
 });
@@ -140,12 +143,14 @@ test('unlocking a second password keeps the first galleries unlocked', function 
     $galleryB = Gallery::factory()->shared()->protected(password: 'secretB')->for($this->photoshoot)->for($this->team)->create(['name' => 'Gallery B']);
 
     Livewire::test('pages::clients.show', ['customer' => $this->customer])
-        ->set('password', 'secretA')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secretA',
+        ], 'unlock');
 
     Livewire::test('pages::clients.show', ['customer' => $this->customer])
-        ->set('password', 'secretB')
-        ->call('unlock');
+        ->submit([
+            'password' => 'secretB',
+        ], 'unlock');
 
     get('/clients/'.$this->customer->ulid)
         ->assertStatus(200)

@@ -21,10 +21,11 @@ test('password can be updated', function () {
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.password')
-        ->set('current_password', 'password')
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('updatePassword');
+        ->submit([
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'updatePassword');
 
     $response->assertHasNoErrors();
 
@@ -41,9 +42,10 @@ test('passwordless users can create their first password', function () {
     Livewire::test('pages::settings.password')
         ->assertSee('Create password')
         ->assertDontSee('Current password')
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('updatePassword')
+        ->submit([
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'updatePassword')
         ->assertHasNoErrors();
 
     expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
@@ -60,10 +62,11 @@ test('changing the password revokes pending login links', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::settings.password')
-        ->set('current_password', 'password')
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('updatePassword')
+        ->submit([
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'updatePassword')
         ->assertHasNoErrors();
 
     expect(MagicLoginToken::query()->where('user_id', $user->id)->count())->toBe(0);
@@ -77,10 +80,11 @@ test('correct password must be provided to update password', function () {
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.password')
-        ->set('current_password', 'wrong-password')
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('updatePassword');
+        ->submit([
+            'current_password' => 'wrong-password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'updatePassword');
 
     $response->assertHasErrors(['current_password']);
 });
@@ -104,10 +108,11 @@ test('updating the password logs out other sessions', function () {
     ]);
 
     $response = Livewire::test('pages::settings.password')
-        ->set('current_password', 'password')
-        ->set('password', 'new-password')
-        ->set('password_confirmation', 'new-password')
-        ->call('updatePassword');
+        ->submit([
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ], 'updatePassword');
 
     $response->assertHasNoErrors();
 

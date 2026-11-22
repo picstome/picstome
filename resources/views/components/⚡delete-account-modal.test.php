@@ -63,9 +63,10 @@ it('requires the current password', function () {
 
     Livewire::actingAs($this->user)
         ->test('delete-account-modal')
-        ->set('password', 'wrong-password')
-        ->set('confirmation', 'owner@example.com')
-        ->call('delete')
+        ->submit([
+            'password' => 'wrong-password',
+            'confirmation' => 'owner@example.com',
+        ], 'delete')
         ->assertHasErrors(['password']);
 
     expect(User::query()->whereKey($this->user->id)->exists())->toBeTrue();
@@ -82,8 +83,9 @@ it('lets passwordless users delete their account with the typed email', function
 
     Livewire::actingAs($user)
         ->test('delete-account-modal')
-        ->set('confirmation', 'passwordless@example.com')
-        ->call('delete')
+        ->submit([
+            'confirmation' => 'passwordless@example.com',
+        ], 'delete')
         ->assertRedirect(route('login'));
 
     Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $user->id);
@@ -94,9 +96,10 @@ it('requires typing the account email', function () {
 
     Livewire::actingAs($this->user)
         ->test('delete-account-modal')
-        ->set('password', 'secret-password')
-        ->set('confirmation', 'someone-else@example.com')
-        ->call('delete')
+        ->submit([
+            'password' => 'secret-password',
+            'confirmation' => 'someone-else@example.com',
+        ], 'delete')
         ->assertHasErrors(['confirmation']);
 
     expect(User::query()->whereKey($this->user->id)->exists())->toBeTrue();
@@ -110,9 +113,10 @@ it('deletes the account, logs out and queues the purge', function () {
 
     Livewire::actingAs($this->user)
         ->test('delete-account-modal')
-        ->set('password', 'secret-password')
-        ->set('confirmation', 'OWNER@example.com')
-        ->call('delete')
+        ->submit([
+            'password' => 'secret-password',
+            'confirmation' => 'OWNER@example.com',
+        ], 'delete')
         ->assertRedirect(route('login'));
 
     Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $this->user->id);
@@ -126,15 +130,17 @@ it('throttles password guessing', function () {
 
     foreach (range(1, 5) as $attempt) {
         Livewire::test('delete-account-modal')
-            ->set('password', 'wrong-password')
-            ->set('confirmation', 'owner@example.com')
-            ->call('delete');
+            ->submit([
+                'password' => 'wrong-password',
+                'confirmation' => 'owner@example.com',
+            ], 'delete');
     }
 
     Livewire::test('delete-account-modal')
-        ->set('password', 'secret-password')
-        ->set('confirmation', 'owner@example.com')
-        ->call('delete')
+        ->submit([
+            'password' => 'secret-password',
+            'confirmation' => 'owner@example.com',
+        ], 'delete')
         ->assertHasErrors(['password']);
 });
 
@@ -150,8 +156,9 @@ it('lets an admin delete another account with the typed email', function () {
         ->test('delete-account-modal', ['user' => $target])
         ->assertSee('target@example.com')
         ->assertDontSee('Your current password')
-        ->set('confirmation', 'target@example.com')
-        ->call('delete')
+        ->submit([
+            'confirmation' => 'target@example.com',
+        ], 'delete')
         ->assertDispatched('user-deleted', userId: $target->id);
 
     Queue::assertPushed(PurgeUserAccount::class, fn (PurgeUserAccount $job) => $job->userId === $target->id);
@@ -168,8 +175,9 @@ it('rejects a mismatched email in admin mode', function () {
 
     Livewire::actingAs($admin)
         ->test('delete-account-modal', ['user' => $target])
-        ->set('confirmation', 'wrong@example.com')
-        ->call('delete')
+        ->submit([
+            'confirmation' => 'wrong@example.com',
+        ], 'delete')
         ->assertHasErrors(['confirmation']);
 
     Queue::assertNothingPushed();
@@ -198,8 +206,9 @@ it('never deletes the acting admin through admin mode', function () {
     // Passing yourself keeps the owner path: the password is required.
     Livewire::actingAs($admin)
         ->test('delete-account-modal', ['user' => $admin])
-        ->set('confirmation', 'admin@example.com')
-        ->call('delete')
+        ->submit([
+            'confirmation' => 'admin@example.com',
+        ], 'delete')
         ->assertHasErrors(['password']);
 
     Queue::assertNothingPushed();

@@ -39,8 +39,9 @@ it('can edit a payment to assign a photoshoot', function () {
 
     $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
-        ->set('paymentForm.photoshoot_id', $photoshoot->id)
-        ->call('savePayment');
+        ->submit([
+            'paymentForm.photoshoot_id' => $photoshoot->id,
+        ], 'savePayment');
 
     $payment->refresh();
 
@@ -54,24 +55,27 @@ it('can change or remove the assigned photoshoot', function () {
 
     $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
-        ->set('paymentForm.photoshoot_id', $photoshootA->id)
-        ->call('savePayment');
+        ->submit([
+            'paymentForm.photoshoot_id' => $photoshootA->id,
+        ], 'savePayment');
 
     $payment->refresh();
 
     expect($payment->photoshoot_id)->toBe($photoshootA->id);
 
     $component->call('editPayment', $payment->id)
-        ->set('paymentForm.photoshoot_id', $photoshootB->id)
-        ->call('savePayment');
+        ->submit([
+            'paymentForm.photoshoot_id' => $photoshootB->id,
+        ], 'savePayment');
 
     $payment->refresh();
 
     expect($payment->photoshoot_id)->toBe($photoshootB->id);
 
     $component->call('editPayment', $payment->id)
-        ->set('paymentForm.photoshoot_id', null)
-        ->call('savePayment');
+        ->submit([
+            'paymentForm.photoshoot_id' => null,
+        ], 'savePayment');
 
     $payment->refresh();
 
@@ -85,17 +89,19 @@ it('cannot assign a photoshoot from another team', function () {
 
     $component = Livewire::actingAs($this->user)->test('pages::payments')
         ->call('editPayment', $payment->id)
-        ->set('paymentForm.photoshoot_id', $otherPhotoshoot->id)
-        ->call('savePayment')
+        ->submit([
+            'paymentForm.photoshoot_id' => $otherPhotoshoot->id,
+        ], 'savePayment')
         ->assertHasErrors(['paymentForm.photoshoot_id' => 'exists']);
 });
 
 it('generates a payment link with valid data', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 1000)
-        ->set('linkForm.description', 'Test payment')
-        ->set('linkForm.booking', false)
-        ->call('generatePaymentLink');
+        ->submit([
+            'linkForm.amount' => 1000,
+            'linkForm.description' => 'Test payment',
+            'linkForm.booking' => false,
+        ], 'generatePaymentLink');
 
     $link = $component->paymentLink;
     expect($link)->not->toBeNull();
@@ -107,16 +113,18 @@ it('generates a payment link with valid data', function () {
 
 it('fails validation if amount is missing', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.description', 'Test payment')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.description' => 'Test payment',
+        ], 'generatePaymentLink')
         ->assertHasErrors(['linkForm.amount' => 'required']);
 });
 
 it('fails validation if amount is not integer or < 1', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 0)
-        ->set('linkForm.description', 'Test payment')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 0,
+            'linkForm.description' => 'Test payment',
+        ], 'generatePaymentLink')
         ->assertHasErrors(['linkForm.amount' => 'min']);
 
     $component->set('linkForm.amount', 'abc')
@@ -126,29 +134,32 @@ it('fails validation if amount is not integer or < 1', function () {
 
 it('fails validation if description is missing', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 1000)
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 1000,
+        ], 'generatePaymentLink')
         ->assertHasErrors(['linkForm.description' => 'required']);
 });
 
 it('fails validation if description is too long', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 1000)
-        ->set('linkForm.description', str_repeat('a', 256))
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 1000,
+            'linkForm.description' => str_repeat('a', 256),
+        ], 'generatePaymentLink')
         ->assertHasErrors(['linkForm.description' => 'max']);
 });
 
 it('generates a booking payment link with 24-hour times', function () {
     $component = Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 213)
-        ->set('linkForm.description', 'Sesión Bea')
-        ->set('linkForm.booking', true)
-        ->set('linkForm.booking_date', '2026-11-20')
-        ->set('linkForm.booking_start_time', '10:32')
-        ->set('linkForm.booking_end_time', '12:00')
-        ->set('linkForm.timezone', 'Europe/Madrid')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 213,
+            'linkForm.description' => 'Sesión Bea',
+            'linkForm.booking' => true,
+            'linkForm.booking_date' => '2026-11-20',
+            'linkForm.booking_start_time' => '10:32',
+            'linkForm.booking_end_time' => '12:00',
+            'linkForm.timezone' => 'Europe/Madrid',
+        ], 'generatePaymentLink')
         ->assertHasNoErrors();
 
     $link = urldecode((string) $component->paymentLink);
@@ -182,14 +193,15 @@ it('normalizes 12-hour booking times received from the time picker', function ()
 
 it('still rejects invalid booking times', function () {
     Livewire::actingAs($this->user)->test('pages::payments')
-        ->set('linkForm.amount', 213)
-        ->set('linkForm.description', 'Sesión Bea')
-        ->set('linkForm.booking', true)
-        ->set('linkForm.booking_date', '2026-11-20')
-        ->set('linkForm.booking_start_time', '25:99')
-        ->set('linkForm.booking_end_time', '12:00')
-        ->set('linkForm.timezone', 'Europe/Madrid')
-        ->call('generatePaymentLink')
+        ->submit([
+            'linkForm.amount' => 213,
+            'linkForm.description' => 'Sesión Bea',
+            'linkForm.booking' => true,
+            'linkForm.booking_date' => '2026-11-20',
+            'linkForm.booking_start_time' => '25:99',
+            'linkForm.booking_end_time' => '12:00',
+            'linkForm.timezone' => 'Europe/Madrid',
+        ], 'generatePaymentLink')
         ->assertHasErrors(['linkForm.booking_start_time' => 'date_format']);
 });
 
