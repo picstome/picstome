@@ -141,6 +141,14 @@ return [
      *
      * @var array<string, string>
      */
+    /**
+     * Absolute URL of the Picstome logo shown in emails to photographers.
+     * Defaults to this app's own `app-logo.png`. Set it when the app is not
+     * publicly reachable, e.g. devel behind HTTP basic auth, where mail
+     * clients cannot download the image and show it broken.
+     */
+    'mail_logo_url' => env('MAIL_LOGO_URL'),
+
     'brand_fonts' => [
         'Roboto Flex' => 'Roboto',
         'Raleway' => 'Raleway',

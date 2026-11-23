@@ -35,6 +35,22 @@
             />
         @endif
 
+        {{-- Shared galleries that are save-protected turn off the browser's
+             pinch and double-tap zoom (see Gallery::isShareSaveProtected()).
+             `touch-action` on <body> covers Chrome and Safari 13+; older iOS
+             Safari also needs its proprietary gesture events cancelled. The
+             listener reads <body> each time because wire:navigate swaps it. --}}
+        <script>
+            if (! window.picstomeZoomLockListener) {
+                window.picstomeZoomLockListener = true
+                document.addEventListener('gesturestart', (event) => {
+                    if (document.body?.dataset.lockZoom === 'true') {
+                        event.preventDefault()
+                    }
+                })
+            }
+        </script>
+
         <tallstackui:script />
         @vite('resources/css/app.css')
         @include('partials.analytics.ga4')
@@ -78,11 +94,16 @@
 
         @stack('head')
     </head>
+    @php
+        $lockZoom = filled((string) ($lockZoom ?? ''));
+    @endphp
     <body
+        data-lock-zoom="{{ $lockZoom ? 'true' : 'false' }}"
         x-data="tallstackui_darkTheme({ name: 'dark-theme', default: 'system' })"
         x-bind:class="{ 'dark': darkTheme }"
         @class([
             'min-h-screen',
+            'touch-pan-x touch-pan-y' => $lockZoom,
             'bg-brand-paper dark:bg-brand-night' => empty($accentColor),
             'bg-white dark:bg-zinc-800' => ! empty($accentColor),
         ])

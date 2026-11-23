@@ -231,6 +231,16 @@ new class extends Component
         </x-ts-modal-trigger>
 
         <x-ts-modal name="photo-versions-{{ $photo->id }}" class="w-full max-w-6xl">
+            @php
+                $showWatermark = ! $manageable
+                    && $photo->gallery->is_share_watermarked
+                    && $photo->gallery->team->hasBrandWatermark();
+
+                // The watermark overlay does not move with the zoomed image;
+                // see Gallery::isShareSaveProtected().
+                $zoomLocked = ! $manageable && $photo->gallery->isShareSaveProtected();
+            @endphp
+
             <div
                 class="space-y-4"
                 x-data="{
@@ -240,6 +250,7 @@ new class extends Component
                     scale: 1,
                     x: 0,
                     y: 0,
+                    zoomLocked: @js($zoomLocked),
                     dragging: false,
                     startX: 0,
                     startY: 0,
@@ -271,23 +282,18 @@ new class extends Component
                     leftLabel() { return this.find(this.left)?.label || ''; },
                     rightLabel() { return this.find(this.right)?.label || ''; },
                     zoom(event) {
+                        if (this.zoomLocked) { return; }
                         const factor = event.deltaY < 0 ? 1.12 : 0.88;
                         this.scale = Math.min(5, Math.max(1, this.scale * factor));
                         if (this.scale === 1) { this.x = 0; this.y = 0; }
                     },
-                    startPan(event) { this.dragging = true; this.startX = event.clientX - this.x; this.startY = event.clientY - this.y; },
+                    startPan(event) { if (this.zoomLocked) { return; } this.dragging = true; this.startX = event.clientX - this.x; this.startY = event.clientY - this.y; },
                     pan(event) { if (this.dragging) { this.x = event.clientX - this.startX; this.y = event.clientY - this.startY; } },
                     stopPan() { this.dragging = false; },
                 }"
                 data-versions="{{ json_encode($this->versions->values()) }}"
                 @version-deleted.window="$nextTick(() => { versions = JSON.parse($el.dataset.versions || '[]'); left = 'current'; right = versions[1]?.id || left; scale = 1; x = 0; y = 0; })"
             >
-                @php
-                    $showWatermark = ! $manageable
-                        && $photo->gallery->is_share_watermarked
-                        && $photo->gallery->team->hasBrandWatermark();
-                @endphp
-
                 <x-ts-heading size="lg">{{ __('Compare versions') }}</x-ts-heading>
 
                 <div class="flex gap-3 overflow-x-auto pb-2">
@@ -431,12 +437,14 @@ new class extends Component
                         </p>
                     </div>
                 @else
-                    <div class="flex items-center gap-2">
-                        <x-ts-button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</x-ts-button>
-                        <x-ts-button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</x-ts-button>
-                        <x-ts-button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</x-ts-button>
-                        <span class="text-sm text-zinc-500" x-text="Math.round(scale * 100) + '%'"></span>
-                    </div>
+                    @unless ($zoomLocked)
+                        <div class="flex items-center gap-2" data-versions-zoom>
+                            <x-ts-button size="sm" @click="scale = Math.min(5, scale * 1.15)">+</x-ts-button>
+                            <x-ts-button size="sm" @click="scale = Math.max(1, scale / 1.15); if (scale === 1) { x = 0; y = 0; }">-</x-ts-button>
+                            <x-ts-button size="sm" @click="scale = 1; x = 0; y = 0">{{ __('Reset') }}</x-ts-button>
+                            <span class="text-sm text-zinc-500" x-text="Math.round(scale * 100) + '%'"></span>
+                        </div>
+                    @endunless
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="relative min-h-[320px] overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900" @wheel.prevent="zoom($event)" @mousedown="startPan($event)" @mousemove="pan($event)" @mouseup="stopPan()" @mouseleave="stopPan()">

@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Contract;
 use App\Notifications\Concerns\IncludesMagicLoginLink;
+use App\Support\MailBranding;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -40,6 +41,9 @@ class ContractExecuted extends Notification
             ->line(__('Contract signed'))
             ->line(__('Download the signed contract for your records. All relevant parties have been notified by email.'))
             ->action(__('Download contract'), $this->contract->pdf_file_url);
+
+        // Sent to every signer on the photographer's behalf.
+        MailBranding::forTeam($this->contract->team)->applyTo($mail);
 
         if ($this->contract->team->subscribed()) {
             $mail->salutation($this->contract->team->name);

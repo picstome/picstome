@@ -354,6 +354,23 @@ class Gallery extends Model
         $this->save();
     }
 
+    /**
+     * Whether guests must not be able to keep a clean copy of the photos.
+     *
+     * True when the photographer turned downloads off or a watermark is drawn
+     * over the shared photos. The watermark is an overlay, not part of the
+     * pixels, so zooming (in-app or the browser's pinch zoom) could enlarge an
+     * unmarked area for a clean screenshot. Protected galleries therefore turn
+     * off zoom, skip loading the full-resolution original, and block saving
+     * the image by long-press, right-click or drag. These are deterrents only:
+     * a web page cannot block screenshots.
+     */
+    public function isShareSaveProtected(): bool
+    {
+        return ! $this->is_share_downloadable
+            || ($this->is_share_watermarked && $this->team?->hasBrandWatermark());
+    }
+
     public function isSelectionLimitReached(): bool
     {
         return $this->photos()->favorited()->count() === $this->share_selection_limit;

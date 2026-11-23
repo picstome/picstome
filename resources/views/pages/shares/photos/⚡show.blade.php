@@ -245,6 +245,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         : 'ui-sans-serif, system-ui, sans-serif';
     $watermarkLightboxFontSize = 'clamp('.(int) round($watermarkFontPx * 0.75).'px, '.round($watermarkFontPx / 12, 4).'vw, '.(int) round($watermarkFontPx * 2.5).'px)';
     $watermarkRepeatedFontPx = (int) round($watermarkFontPx * 1.75);
+
+    // See Gallery::isShareSaveProtected(). In-app zoom only scales and pans the
+    // photo, so it could even push the photo out from under the watermark.
+    $zoomLocked = ! $photo->isPdf() && $photo->gallery->isShareSaveProtected();
 @endphp
 
 <x-slot name="font">{{ $photo->gallery->team->brand_font }}</x-slot>
@@ -253,6 +257,8 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
 
 <x-slot name="watermarkFont">{{ $watermarkTeam->isTextWatermark() ? $watermarkTeam->brand_watermark_font : '' }}</x-slot>
 
+<x-slot name="lockZoom">{{ $photo->gallery->isShareSaveProtected() ? '1' : '' }}</x-slot>
+
 <div
     x-data="{
         previousThumbnailUrl: '{{ $previous?->thumbnail_url }}',
@@ -260,11 +266,13 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
         previousLargeThumbnailUrl: '{{ $previous?->large_thumbnail_url }}',
         nextLargeThumbnailUrl: '{{ $next?->large_thumbnail_url }}',
         zoom: false,
+        zoomLocked: @js($zoomLocked),
         scale: 1,
         translateX: 0,
         translateY: 0,
         thumbnailUrl: '{{ $photo->thumbnail_url }}',
-        photoUrl: '{{ $photo->url }}',
+        // Only needed for zoom, so it stays empty while zoom is locked.
+        photoUrl: '{{ $zoomLocked ? '' : $photo->url }}',
         navigating: false,
         gestureActive: false,
         gestureBlocked: false,
@@ -301,6 +309,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                 this.gestureHadMultipleTouches = true
                 this.swipeStartX = null
                 this.swipeStartY = null
+
+                if (this.zoomLocked) {
+                    return
+                }
 
                 const first = event.touches[0]
                 const second = event.touches[1]
@@ -423,6 +435,10 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
             this.translateY = 0
         },
         toggleZoom() {
+            if (this.zoomLocked) {
+                return
+            }
+
             if (this.scale > 1.01) {
                 this.resetZoom()
 
@@ -611,9 +627,17 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     @click="if (!isMobile()) toggleZoom()"
                     @contextmenu.prevent
                     :class="loaded || errored ? '' : 'animate-pulse bg-black/60 dark:bg-white/60'"
-                    class="mx-auto h-full w-full max-w-full object-contain hover:cursor-zoom-in"
+                    @dragstart="if (zoomLocked) $event.preventDefault()"
+                    draggable="{{ $zoomLocked ? 'false' : 'true' }}"
+                    @class([
+                        'mx-auto h-full w-full max-w-full object-contain',
+                        'hover:cursor-zoom-in' => ! $zoomLocked,
+                        'select-none [-webkit-touch-callout:none]' => $zoomLocked,
+                    ])
                     alt="{{ $photo->name }}"
+                    data-zoom-locked="{{ $zoomLocked ? 'true' : 'false' }}"
                 />
+                @unless ($zoomLocked)
                 <img
                     src="{{ $photo->url }}"
                     style="background-image: url('{{ $photo->small_thumbnail_url }}'); background-size: cover; background-repeat: no-repeat; background-position: center;"
@@ -632,6 +656,7 @@ new #[Layout('layouts.guest', ['fullScreen' => true])] class extends Component
                     x-cloak
                     data-full-image
                 />
+                @endunless
                 @if ($photo->gallery->are_comments_enabled)
                     <x-photo-annotations
                         :photo="$photo"

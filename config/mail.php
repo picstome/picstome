@@ -108,6 +108,24 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |--------------------------------------------------------------------------
+    |
+    | The theme is a Blade view (resources/views/mail/picstome.blade.php) so
+    | it can apply the brand passed to each email; see App\Support\MailBranding.
+    |
+    */
+
+    'markdown' => [
+        'theme' => 'picstome',
+
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),

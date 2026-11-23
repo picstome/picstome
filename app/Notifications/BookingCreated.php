@@ -5,8 +5,10 @@ namespace App\Notifications;
 use App\Models\Payment;
 use App\Models\Photoshoot;
 use App\Notifications\Concerns\IncludesMagicLoginLink;
+use App\Support\MailBranding;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -49,6 +51,12 @@ class BookingCreated extends Notification
             ->line(__('Customer: :customer', ['customer' => $customer]))
             ->line(__('Amount: :amount', ['amount' => $amount]))
             ->action(__('Add to Google Calendar'), $calendarUrl);
+
+        // The payer is the photographer's client, so their copy carries the
+        // photographer's brand; the photographer's own copy stays Picstome.
+        if ($notifiable instanceof AnonymousNotifiable) {
+            MailBranding::forTeam($this->photoshoot->team)->applyTo($mail);
+        }
 
         if ($this->photoshoot->team->subscribed()) {
             $mail->salutation($this->photoshoot->team->name);

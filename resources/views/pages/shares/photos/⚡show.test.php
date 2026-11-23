@@ -1034,3 +1034,63 @@ test('the player resumes from the position remembered in this browser', function
 
     expect($state['time'])->toBe(45);
 })->group('browser');
+
+/**
+ * Shared gallery whose team has a text watermark, so a watermarked gallery
+ * actually draws one, plus a photo with an older version to compare.
+ */
+function zoomLockPhoto(bool $watermarked, bool $downloadable): Photo
+{
+    $gallery = Gallery::factory()->shared()->create([
+        'ulid' => '0123ABC',
+        'is_share_watermarked' => $watermarked,
+        'is_share_downloadable' => $downloadable,
+        'is_share_versions_visible' => true,
+    ]);
+
+    $gallery->team->update([
+        'brand_watermark_type' => 'text',
+        'brand_watermark_text' => 'Acme Watermark',
+    ]);
+
+    $photo = Photo::factory()->for($gallery)->create(['version_count' => 2]);
+    PhotoVersion::factory()->for($photo)->create(['version_number' => 1, 'path' => 'galleries/old.jpg']);
+
+    return $photo;
+}
+
+test('zoom is locked and the original is not loaded when the watermark is shown or downloads are off', function (bool $watermarked, bool $downloadable) {
+    $photo = zoomLockPhoto($watermarked, $downloadable);
+
+    $response = get("/shares/0123ABC/photos/{$photo->id}")->assertOk();
+
+    $response->assertSee('zoomLocked: true', false);
+    $response->assertSee('data-zoom-locked="true"', false);
+    $response->assertSee('[-webkit-touch-callout:none]', false);
+    $response->assertSee('draggable="false"', false);
+    $response->assertSee('data-lock-zoom="true"', false);
+    $response->assertDontSee('data-full-image', false);
+    $response->assertDontSee('hover:cursor-zoom-in', false);
+    $response->assertDontSee($photo->url, false);
+    // The versions comparison cannot zoom either.
+    $response->assertSee('Compare versions');
+    $response->assertDontSee('data-versions-zoom', false);
+})->with([
+    'watermarked and downloadable' => [true, true],
+    'watermarked, downloads off' => [true, false],
+    'no watermark, downloads off' => [false, false],
+]);
+
+test('zoom is available when downloads are allowed and no watermark is shown', function () {
+    $photo = zoomLockPhoto(watermarked: false, downloadable: true);
+
+    $response = get("/shares/0123ABC/photos/{$photo->id}")->assertOk();
+
+    $response->assertSee('zoomLocked: false', false);
+    $response->assertSee('data-zoom-locked="false"', false);
+    $response->assertDontSee('[-webkit-touch-callout:none]', false);
+    $response->assertSee('data-lock-zoom="false"', false);
+    $response->assertSee('data-full-image', false);
+    $response->assertSee('hover:cursor-zoom-in', false);
+    $response->assertSee('data-versions-zoom', false);
+});
