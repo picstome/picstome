@@ -28,6 +28,7 @@
         <server name="DB_CONNECTION" value="sqlite"/>
         <server name="DB_DATABASE" value=":memory:"/>
         <server name="MAIL_MAILER" value="array"/>
+        <server name="MAIL_LOGO_URL" value=""/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
         <server name="LIVEWIRE_TEMP_UPLOAD_DISK" value="null"/>
