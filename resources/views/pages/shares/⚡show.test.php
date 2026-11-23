@@ -672,3 +672,29 @@ test('shared gallery hides photos that are still processing', function () {
 
     expect($component->allPhotos)->toHaveCount(1);
 });
+
+test('gallery thumbnails cannot be saved by long-press or drag when downloads are off or watermarked', function (bool $watermarked, bool $downloadable, bool $protected) {
+    $this->team->update([
+        'brand_watermark_type' => 'text',
+        'brand_watermark_text' => 'Acme Watermark',
+    ]);
+    $gallery = Gallery::factory()->shared()->for($this->team)->create([
+        'is_share_watermarked' => $watermarked,
+        'is_share_downloadable' => $downloadable,
+    ]);
+    Photo::factory()->for($gallery)->create(['status' => 'processed']);
+
+    $html = get(route('shares.show', ['gallery' => $gallery, 'slug' => $gallery->slug]))
+        ->assertOk()
+        ->getContent();
+
+    expect(str_contains($html, 'data-save-protected'))->toBe($protected)
+        ->and(str_contains($html, '[-webkit-touch-callout:none]'))->toBe($protected)
+        // The browser's own pinch and double-tap zoom is turned off as well.
+        ->and(str_contains($html, 'data-lock-zoom="'.($protected ? 'true' : 'false').'"'))->toBeTrue()
+        ->and(str_contains($html, 'touch-pan-x touch-pan-y'))->toBe($protected);
+})->with([
+    'watermarked and downloadable' => [true, true, true],
+    'no watermark, downloads off' => [false, false, true],
+    'no watermark, downloadable' => [false, true, false],
+]);

@@ -211,6 +211,8 @@ new #[Layout('layouts.guest')] class extends Component
 
 <x-slot name="fullScreen">{{ true }}</x-slot>
 
+<x-slot name="lockZoom">{{ $gallery->isShareSaveProtected() ? '1' : '' }}</x-slot>
+
 @php
     $heroHasCover = $this->totalPhotos > 0 && $gallery->coverPhoto;
 @endphp

@@ -20,6 +20,9 @@
     $hasWatermark = $isShared
         && $gallery->is_share_watermarked
         && $gallery->team?->hasBrandWatermark();
+    // Long-press (iOS "Save to Photos"), right-click and drag are blocked; see
+    // Gallery::isShareSaveProtected().
+    $isSaveProtected = $isShared && $gallery->isShareSaveProtected();
     $imageSizes = $isOwner
         ? '(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw'
         : '(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1536px) 25vw, 20vw';
@@ -90,7 +93,8 @@
             id="{{ $htmlId }}"
             href="{{ $link }}"
             wire:navigate
-            class="block w-full"
+            {{-- iOS opens its save menu from the link too, not only the image. --}}
+            @class(['block w-full', '[-webkit-touch-callout:none]' => $isSaveProtected])
         >
             @if ($photo->isImage())
                 @if ($photo->small_thumbnail_url)
@@ -106,7 +110,11 @@
                         @if ($isShared) @contextmenu.prevent @endif
                         x-on:load="loaded = true"
                         x-on:error="errored = true; if ($el.src !== fallback) $el.src = fallback"
-                        class="block h-auto w-full bg-zinc-300 object-contain dark:bg-white/10"
+                        @if ($isSaveProtected) draggable="false" data-save-protected @endif
+                        @class([
+                            'block h-auto w-full bg-zinc-300 object-contain dark:bg-white/10',
+                            'select-none [-webkit-touch-callout:none]' => $isSaveProtected,
+                        ])
                         :class="{
                             'animate-pulse': ! loaded && ! errored,
                             'aspect-[3/4]': ! loaded || errored,
