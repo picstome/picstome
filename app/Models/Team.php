@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -182,6 +183,46 @@ class Team extends Model
     public function invoiceSetting()
     {
         return $this->hasOne(InvoiceSetting::class);
+    }
+
+    /**
+     * @return HasOne<BookingSetting, $this>
+     */
+    public function bookingSetting(): HasOne
+    {
+        return $this->hasOne(BookingSetting::class);
+    }
+
+    /**
+     * @return HasMany<Product, $this>
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /**
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * @return HasMany<AvailabilityWindow, $this>
+     */
+    public function availabilityWindows(): HasMany
+    {
+        return $this->hasMany(AvailabilityWindow::class);
+    }
+
+    /**
+     * @return HasMany<CalendarBlock, $this>
+     */
+    public function calendarBlocks(): HasMany
+    {
+        return $this->hasMany(CalendarBlock::class);
     }
 
     public function bioLinks()

@@ -262,6 +262,15 @@ new class extends Component
         </x-ts-button>
     </div>
 
+    @if (request()->boolean('created'))
+        <x-ts-callout variant="secondary" icon="document-text" class="mb-6">
+            <x-ts-callout-heading>{{ __('Invoice created from a booking') }}</x-ts-callout-heading>
+            <x-ts-callout-text>
+                {{ __('Review the data and issue it when it is ready. If you do not need it, you can delete the draft.') }}
+            </x-ts-callout-text>
+        </x-ts-callout>
+    @endif
+
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
             <x-ts-heading level="1" size="xl">
@@ -279,7 +288,7 @@ new class extends Component
                     {{ $this->invoice->status_label }}
                 </x-ts-badge>
 
-                @if ($this->invoice->isIssued())
+                @if ($this->invoice->isIssued() || $this->isPaid)
                     <x-ts-badge :color="$this->isPaid ? 'lime' : 'yellow'" inset>
                         {{ $this->isPaid ? __('Paid invoice') : __('Payment pending') }}
                     </x-ts-badge>

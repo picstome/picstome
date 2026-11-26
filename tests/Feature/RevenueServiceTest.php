@@ -135,3 +135,14 @@ it('does not count a paid invoice rectified afterwards until its corrective is m
 
     expect($this->revenue->lastDays($this->team, 30))->toBe(181.5);
 });
+
+it('counts only the revenue between two moments', function () {
+    $from = now()->subDays(50);
+    $to = now()->subDays(10);
+
+    Payment::factory()->for($this->team)->create(['amount' => 10000, 'completed_at' => $from->copy()->addDay()]);
+    Payment::factory()->for($this->team)->create(['amount' => 20000, 'completed_at' => $from->copy()->subDay()]);
+    Payment::factory()->for($this->team)->create(['amount' => 30000, 'completed_at' => $to->copy()->addDay()]);
+
+    expect($this->revenue->between($this->team, $from, $to))->toBe(100.0);
+});

@@ -128,6 +128,23 @@ return [
     'sync_feature_admin_only' => (bool) env('PICSTOME_SYNC_FEATURE_ADMIN_ONLY', true),
 
     /**
+     * Booking system feature flag. It ships admin-only so it can be reviewed
+     * in production; setting ADMIN_ONLY to false publishes it to every
+     * photographer without another code change. ENABLED=false is the kill
+     * switch and hides it from everyone, admins included.
+     */
+    'bookings_feature_enabled' => (bool) env('PICSTOME_BOOKINGS_FEATURE_ENABLED', true),
+
+    'bookings_feature_admin_only' => (bool) env('PICSTOME_BOOKINGS_FEATURE_ADMIN_ONLY', true),
+
+    /**
+     * Show the booking products on the public biolink. It stays off while the
+     * tool is being tested in production; the booking page is still reachable
+     * by its direct URL for the photographer.
+     */
+    'bookings_public_profile' => (bool) env('PICSTOME_BOOKINGS_PUBLIC_PROFILE', false),
+
+    /**
      * File extensions accepted by the gallery upload dialog. Single source of
      * truth for the dialog's accept attribute, the uploader's client-side
      * pre-filter, and the server-side extension gate.

@@ -166,6 +166,17 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Whether the account belongs to a platform administrator.
+     *
+     * `is_admin` is an accessor, not a column, so the raw property access is
+     * kept in one place.
+     */
+    public function isAdministrator(): bool
+    {
+        return (bool) $this->is_admin;
+    }
+
+    /**
      * Whether the user can see the Picstome Sync integration while it is in
      * testing. The feature flag lets us hide it everywhere later.
      */
@@ -176,7 +187,21 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return ! config('picstome.sync_feature_admin_only', true)
-            || (bool) $this->is_admin;
+            || $this->isAdministrator();
+    }
+
+    /**
+     * Whether the user can see the booking tool while it is being tested.
+     * The feature flag hides it everywhere and `ADMIN_ONLY` publishes it.
+     */
+    public function canSeeBookingsFeature(): bool
+    {
+        if (! config('picstome.bookings_feature_enabled', true)) {
+            return false;
+        }
+
+        return ! config('picstome.bookings_feature_admin_only', true)
+            || $this->isAdministrator();
     }
 
     /**

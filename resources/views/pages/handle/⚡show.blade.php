@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Team;
+use App\Services\Booking\BookingPageGate;
 use App\Services\FakePaymentService;
 use App\Services\PaymentPlanLimitService;
 use Facades\App\Services\StripeConnectService;
@@ -36,6 +37,14 @@ class extends Component
      */
     public bool $paymentsAvailable = true;
 
+    /**
+     * Products the visitor can book, empty when the booking page is not
+     * available for this team.
+     */
+    public $bookingProducts;
+
+    public bool $bookingsAvailable = false;
+
     public function mount(string $handle)
     {
         $this->team = Team::where('handle', strtolower($handle))->firstOrFail();
@@ -44,6 +53,13 @@ class extends Component
 
         $this->hasPublicGalleries = $this->team->galleries()->public()->exists();
         $this->paymentsAvailable = app(PaymentPlanLimitService::class)->canReceive($this->team);
+
+        $this->bookingsAvailable = config('picstome.bookings_public_profile', false)
+            && app(BookingPageGate::class)->canBook($this->team);
+
+        $this->bookingProducts = $this->bookingsAvailable
+            ? $this->team->products()->active()->orderBy('sort_order')->orderBy('name')->get()
+            : collect();
     }
 
     public function rendering(View $view): void
@@ -130,6 +146,19 @@ class extends Component
                         wire:navigate
                     >
                          {{ __('View Portfolio') }}
+                    </x-ts-button>
+                </div>
+            @endif
+
+            @if ($this->bookingsAvailable && $this->bookingProducts->isNotEmpty())
+                <div class="mt-6 flex justify-center">
+                    <x-ts-button
+                        variant="primary"
+                        :color="$team->brand_color ?? null"
+                        :href="route('handle.products', ['handle' => $team->handle])"
+                        wire:navigate
+                    >
+                        {{ __('Book a session') }}
                     </x-ts-button>
                 </div>
             @endif

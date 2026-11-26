@@ -221,7 +221,8 @@ new class extends Component
             <x-data-table id="table">
                 <x-data-table.columns class="border-b border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
                     <x-data-table.column>{{ __('Number') }}</x-data-table.column>
-                    <x-data-table.column class="hidden w-full sm:table-cell">{{ __('Client') }}</x-data-table.column>
+                    <x-data-table.column class="hidden sm:table-cell">{{ __('Client') }}</x-data-table.column>
+                    <x-data-table.column class="hidden w-full lg:table-cell">{{ __('Concept') }}</x-data-table.column>
                     <x-data-table.column class="hidden xl:table-cell">{{ __('Issue date') }}</x-data-table.column>
                     <x-data-table.column class="group/right-align">{{ __('Total') }}</x-data-table.column>
                     <x-data-table.column class="group/right-align"></x-data-table.column>
@@ -263,7 +264,7 @@ new class extends Component
                                             {{ $invoice->status_label }}
                                         </x-ts-badge>
 
-                                        @if ($invoice->isIssued())
+                                        @if (($invoice->isIssued() || $invoice->isPaid()) && ! $invoice->isRectified())
                                             <x-ts-badge
                                                 size="sm"
                                                 :color="$invoice->isPaid() ? 'lime' : 'yellow'"
@@ -298,6 +299,9 @@ new class extends Component
                                 @else
                                     —
                                 @endif
+                            </x-data-table.cell>
+                            <x-data-table.cell variant="muted" class="hidden max-w-64 truncate lg:table-cell">
+                                {{ \Illuminate\Support\Str::limit((string) ($invoice->invoice_data['line_items'][0]['description'] ?? '—'), 60) }}
                             </x-data-table.cell>
                             <x-data-table.cell variant="muted" class="hidden xl:table-cell">
                                 {{ $invoice->issue_date?->format('Y-m-d') ?? '—' }}

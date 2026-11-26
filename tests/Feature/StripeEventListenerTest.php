@@ -461,3 +461,40 @@ it('ignores invoice payments without a payment intent', function () {
 
     expect(true)->toBeTrue();
 });
+
+it('keeps Cashier handling the platform webhook route', function () {
+    config(['cashier.webhook.secret' => 'whsec_platform_test']);
+
+    $team = Team::factory()->create([
+        'stripe_id' => 'cus_platform_1',
+        'custom_storage_limit' => config('picstome.subscription_storage_limit'),
+        'monthly_payment_limit' => 50,
+    ]);
+
+    $payload = json_encode([
+        'id' => 'evt_platform_1',
+        'object' => 'event',
+        'type' => 'customer.subscription.deleted',
+        'data' => [
+            'object' => [
+                'id' => 'sub_platform_1',
+                'customer' => 'cus_platform_1',
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+
+    $timestamp = time();
+    $signature = sprintf(
+        't=%d,v1=%s',
+        $timestamp,
+        hash_hmac('sha256', $timestamp.'.'.$payload, 'whsec_platform_test'),
+    );
+
+    $this->call('POST', '/stripe/webhook', [], [], [], [
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+        'CONTENT_TYPE' => 'application/json',
+    ], $payload)->assertSuccessful();
+
+    expect($team->fresh()->monthly_payment_limit)
+        ->toBe(config('picstome.personal_team_monthly_payment_limit'));
+});

@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\Invoice;
+use App\Models\BookingSetting;
+use App\Services\FinanceOverviewService;
 use App\Services\RevenueService;
 use App\Traits\FormatsMoney;
 use Illuminate\Support\Facades\Auth;
@@ -152,6 +153,39 @@ new class extends Component
         return Auth::user()->currentTeam;
     }
 
+    /**
+     * The booking tool is still admin-only, so the agenda is hidden for
+     * everyone else until the flag is published.
+     */
+    #[Computed]
+    public function canSeeBookings(): bool
+    {
+        return (bool) Auth::user()?->canSeeBookingsFeature();
+    }
+
+    #[Computed]
+    public function bookingTimezone(): string
+    {
+        return BookingSetting::forTeam($this->team)->timezone;
+    }
+
+    /**
+     * Unpaid bookings, shown on the dashboard as a follow-up reminder.
+     * Confirmed sessions already appear as photoshoots, so listing them here
+     * would duplicate the information.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Booking>
+     */
+    #[Computed]
+    public function pendingBookings()
+    {
+        if (! $this->canSeeBookings) {
+            return collect();
+        }
+
+        return app(FinanceOverviewService::class)->pendingBookings($this->team, 5);
+    }
+
     #[Computed]
     public function totalGb()
     {
@@ -179,31 +213,11 @@ new class extends Component
 
     /**
      * Issued invoices that still have money pending.
-     *
-     * An invoice counts as paid either when the team marks it as paid or when
-     * its linked payments settle the total, so the check runs in PHP over the
-     * eager-loaded payments. Rectified invoices are skipped because the
-     * original is no longer collectable; their issued corrective is listed
-     * instead, since it carries its own payment status.
-     *
-     * The rows are fetched before the paid ones are dropped because the amount
-     * settled by the linked payments is not a column we can filter on; the
-     * query is bounded so a long-lived team cannot load an unbounded list.
      */
     #[Computed]
     public function unpaidInvoices()
     {
-        return $this->team->invoices()
-            ->where('status', Invoice::STATUS_ISSUED)
-            ->whereNull('paid_at')
-            ->with(['customer', 'payments'])
-            ->orderByRaw('coalesce(due_date, issue_date) asc')
-            ->orderBy('id')
-            ->limit(200)
-            ->get()
-            ->reject(fn (Invoice $invoice) => $invoice->isPaid())
-            ->take(25)
-            ->values();
+        return app(FinanceOverviewService::class)->unpaidInvoices($this->team, 25);
     }
 
     #[Computed]
@@ -560,7 +574,7 @@ new class extends Component
                                   'label' => __('Revenue (30d)'),
                                   'value' => $this->revenue30Days,
                                   'icon' => 'banknotes',
-                                  'route' => route('payments'),
+                                  'route' => route('finance'),
                                   'tone' => 'bg-brand-ink text-brand-cream',
                               ],
                           ] as $card)
@@ -645,6 +659,63 @@ new class extends Component
             </div>
         </div>
     </section>
+
+    @if ($this->canSeeBookings && $this->pendingBookings->isNotEmpty())
+        <section class="mt-8">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <x-ts-heading size="lg" class="text-brand-green dark:text-brand-cream font-semibold">
+                        {{ __('Pending payments') }}
+                    </x-ts-heading>
+                    <x-ts-text class="text-brand-ink/70 dark:text-brand-sage/80 mt-0.5 text-sm font-medium">
+                        {{ __('Unpaid bookings that need a follow-up. Confirmed sessions already appear as photoshoots.') }}
+                    </x-ts-text>
+                </div>
+
+                <x-ts-button :href="route('bookings', ['view' => 'agenda'])" variant="secondary" size="sm" icon="calendar-days">
+                    {{ __('Open agenda') }}
+                </x-ts-button>
+            </div>
+
+            <div
+                class="border-brand-green/10 divide-brand-green/10 mt-4 divide-y overflow-hidden rounded-2xl border bg-white shadow-xs dark:divide-white/10 dark:border-white/10 dark:bg-white/5"
+            >
+                @foreach ($this->pendingBookings as $booking)
+                    <a
+                        href="{{ route('bookings', ['view' => 'agenda']) }}"
+                        wire:navigate
+                        class="hover:bg-brand-sage-soft/50 flex flex-wrap items-center gap-3 px-4 py-3 transition dark:hover:bg-white/5"
+                    >
+                        <span class="w-20 shrink-0 text-sm font-semibold">
+                            {{ $booking->starts_at->setTimezone($this->bookingTimezone)->translatedFormat('d M') }}
+                        </span>
+                        <span class="w-12 shrink-0 text-sm tabular-nums">
+                            {{ $booking->starts_at->setTimezone($this->bookingTimezone)->format('H:i') }}
+                        </span>
+                        <span class="min-w-0 flex-1">
+                            <span class="text-brand-ink block truncate text-sm font-medium dark:text-white">
+                                {{ $booking->product_name }}
+                            </span>
+                            <span class="block truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $booking->customer_name }}
+                            </span>
+                        </span>
+                        <span class="shrink-0 text-sm font-semibold tabular-nums">
+                            {{ \Laravel\Cashier\Cashier::formatAmount(
+                                $booking->payment_kind === \App\Enums\PaymentKind::Deposit
+                                    ? $booking->deposit_amount
+                                    : $booking->total_amount,
+                                $booking->currency,
+                            ) }}
+                        </span>
+                        <x-ts-badge :color="$booking->status->color()" size="sm">
+                            {{ $booking->status->label() }}
+                        </x-ts-badge>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     @if ($this->hasUpcomingEventsOrReminders())
         @php
