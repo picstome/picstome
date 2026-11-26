@@ -544,15 +544,20 @@ new class extends Component
         @else
             <x-ts-callout icon="banknotes" variant="secondary" class="mt-8">
                 <x-ts-callout-heading>
-                    {{ __('Complete Stripe onboarding to accept payments') }}
+                    {{ __('Accept payments with card or Bizum') }}
                 </x-ts-callout-heading>
                 <x-ts-callout-text>
-                    {{ __('Before you can accept payments, you must complete your Stripe Connect onboarding process.') }}
+                    {{ __('Connect Stripe for card payments, or enable Bizum in your payment settings. Bizum does not require Stripe.') }}
                 </x-ts-callout-text>
                 <x-slot name="actions">
-                    <x-ts-button :href="route('stripe.connect')" variant="primary">
-                        {{ __('Begin Stripe Onboarding') }}
-                    </x-ts-button>
+                    <div class="flex flex-wrap gap-2">
+                        <x-ts-button :href="route('stripe.connect')" variant="primary">
+                            {{ __('Begin Stripe Onboarding') }}
+                        </x-ts-button>
+                        <x-ts-button :href="route('branding.payments')" variant="secondary">
+                            {{ __('Enable Bizum') }}
+                        </x-ts-button>
+                    </div>
                 </x-slot>
             </x-ts-callout>
         @endif

@@ -257,3 +257,10 @@ it('cannot invoice a payment of another team', function () {
 
     expect(Invoice::count())->toBe(0);
 });
+
+it('offers Bizum when Stripe onboarding is missing', function () {
+    Livewire::actingAs($this->user)->test('pages::payments')
+        ->assertSee('Accept payments with card or Bizum')
+        ->assertSee('Enable Bizum')
+        ->assertSee('Bizum does not require Stripe');
+});
