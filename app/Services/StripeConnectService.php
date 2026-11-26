@@ -131,7 +131,7 @@ class StripeConnectService
      * Create a Stripe Checkout Session for $15 using the connected account.
      * Returns the session URL.
      */
-    public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description, array $metadata = []): string
+    public function createCheckoutSession(Team $team, string $successUrl, string $cancelUrl, int $amount, string $description, array $metadata = [], bool $collectPhone = false): string
     {
         $accountId = $this->getStripeAccountIdForTeam($team);
 
@@ -151,6 +151,7 @@ class StripeConnectService
             ])
             ->post('https://api.stripe.com/v1/checkout/sessions', [
                 'payment_method_types[]' => 'card',
+                ...($collectPhone ? ['phone_number_collection[enabled]' => 'true'] : []),
                 ...collect($metadata)->mapWithKeys(fn ($v, $k) => ["metadata[$k]" => $v])->all(),
                 'mode' => 'payment',
                 'success_url' => $successUrl,

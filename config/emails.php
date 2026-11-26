@@ -16,6 +16,9 @@ use App\Notifications\GalleryArchiveReady;
 use App\Notifications\GalleryExpirationReminder;
 use App\Notifications\GuestPhotoCommented;
 use App\Notifications\LoginLink;
+use App\Notifications\PaymentLinkBizumConfirmed;
+use App\Notifications\PaymentLinkBizumPending;
+use App\Notifications\PaymentLinkBizumPendingForPhotographer;
 use App\Notifications\SelectionLimitReached;
 use App\Notifications\StorageAlmostFull;
 use App\Notifications\SubscriptionExpiredWarning;
@@ -330,7 +333,7 @@ return [
         'fields' => [
             ['key' => 'Complete your booking with Bizum: :name', 'label' => 'Subject', 'type' => 'text'],
             ['key' => 'Your slot is reserved. Send the payment to confirm it:', 'label' => 'Body', 'type' => 'textarea'],
-            ['key' => 'Bizum phone: :phone', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Send the Bizum to this phone:', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'The reservation is confirmed as soon as the photographer checks the payment.', 'label' => 'Body', 'type' => 'textarea'],
         ],
@@ -719,6 +722,109 @@ return [
             ['key' => 'This link expires in 15 minutes. If you did not request it, you can ignore this email.', 'label' => 'Body', 'type' => 'textarea'],
             ['key' => 'Best regards, Picstome Team', 'label' => 'Salutation', 'type' => 'text'],
             ['key' => 'You can also [log in directly](:url) without a password.', 'label' => 'Body', 'type' => 'textarea'],
+        ],
+    ],
+
+    'payment_link_bizum_pending' => [
+        'notification' => PaymentLinkBizumPendingForPhotographer::class,
+        'label' => [
+            'en' => 'Bizum payment pending',
+            'es' => 'Pago por Bizum pendiente',
+        ],
+        'description' => [
+            'en' => 'Tells the photographer that a client chose Bizum on a payment link and is waiting for confirmation.',
+            'es' => 'Avisa al fotógrafo de que un cliente eligió Bizum en un enlace de pago y espera confirmación.',
+        ],
+        'trigger' => [
+            'en' => 'A client submits the Bizum form of a payment link.',
+            'es' => 'Un cliente envía el formulario de Bizum de un enlace de pago.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'New Bizum payment pending: :reference', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'New payment', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Customer', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Email', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Phone', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Description', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Amount', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Confirm it from the payments page when the transfer arrives.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Open payments', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'payment_link_bizum_pending_client' => [
+        'notification' => PaymentLinkBizumPending::class,
+        'label' => [
+            'en' => 'Bizum instructions',
+            'es' => 'Instrucciones de Bizum',
+        ],
+        'description' => [
+            'en' => 'Sends the Bizum phone and reference to the client of a payment link.',
+            'es' => 'Envía el teléfono y la referencia de Bizum al cliente de un enlace de pago.',
+        ],
+        'trigger' => [
+            'en' => 'A client chooses Bizum on a payment link.',
+            'es' => 'Un cliente elige Bizum en un enlace de pago.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'The client',
+            'es' => 'El cliente',
+        ],
+        'fields' => [
+            ['key' => 'Complete your payment with Bizum: :reference', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello!', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Send the Bizum to complete your payment.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Description', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Amount', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Send the Bizum to this phone:', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'The payment is confirmed as soon as the photographer checks the transfer.', 'label' => 'Body', 'type' => 'textarea'],
+        ],
+    ],
+
+    'payment_link_bizum_confirmed' => [
+        'notification' => PaymentLinkBizumConfirmed::class,
+        'label' => [
+            'en' => 'Bizum payment confirmed',
+            'es' => 'Pago por Bizum confirmado',
+        ],
+        'description' => [
+            'en' => 'Confirms to the client that the photographer checked the Bizum transfer of a payment link.',
+            'es' => 'Confirma al cliente que el fotógrafo comprobó la transferencia Bizum de un enlace de pago.',
+        ],
+        'trigger' => [
+            'en' => 'The photographer confirms a pending Bizum payment.',
+            'es' => 'El fotógrafo confirma un pago por Bizum pendiente.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'The client',
+            'es' => 'El cliente',
+        ],
+        'fields' => [
+            ['key' => 'Payment confirmed: :reference', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello!', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'We have received your payment.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Description', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Amount', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Thank you!', 'label' => 'Body', 'type' => 'text'],
         ],
     ],
 

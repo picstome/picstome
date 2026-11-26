@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Team;
@@ -49,6 +51,8 @@ class FakePaymentService
             'customer_email' => $email,
             'stripe_payment_intent_id' => 'fake_'.uniqid(),
             'completed_at' => now(),
+            'status' => PaymentStatus::Completed,
+            'payment_method' => PaymentMethod::Card,
             ...collect($attributes)->except('email')->all(),
         ]);
     }

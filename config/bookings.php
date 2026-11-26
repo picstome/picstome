@@ -51,7 +51,6 @@ return [
         'min_notice_hours' => 24,
         'horizon_days' => 90,
         'max_sessions_per_day' => null,
-        'phone_required' => false,
         'default_deposit_type' => 'none',
         'default_deposit_value' => 0,
         'auto_issue_invoices' => false,
@@ -60,7 +59,6 @@ return [
         'reminder_second_enabled' => true,
         'reminder_second_hours' => 24,
         'card_enabled' => true,
-        'bizum_enabled' => false,
     ],
 
 ];

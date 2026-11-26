@@ -67,7 +67,7 @@ class extends Component
 
         $settings = $this->settings;
 
-        $this->form->phoneRequired = (bool) $settings->phone_required;
+        $this->form->phoneRequired = (bool) $this->team->phone_required;
         $this->form->hasPolicy = filled($settings->cancellation_policy);
 
         $today = CarbonImmutable::now($settings->timezone);
@@ -115,7 +115,7 @@ class extends Component
     #[Computed]
     public function canPayWithBizum(): bool
     {
-        return app(BookingPageGate::class)->canPayWithBizum($this->settings);
+        return app(BookingPageGate::class)->canPayWithBizum($this->team);
     }
 
     #[Computed]
@@ -436,7 +436,7 @@ class extends Component
 
     public function reference(): string
     {
-        return strtoupper(substr((string) $this->booking?->ulid, -6));
+        return $this->booking?->bizumReference() ?? '';
     }
 
     public function rendering(View $view): void
@@ -765,26 +765,35 @@ class extends Component
     @if ($step === 'bizum' && $this->booking)
         <x-ts-card :heading="__('Pay by Bizum')">
             <div class="space-y-4 text-sm">
+                <div class="rounded-lg bg-zinc-50 p-4 dark:bg-white/5">
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Session') }}</p>
+                    <p class="mt-1 text-base font-semibold">
+                        {{ $this->booking->starts_at->setTimezone($this->booking->timezone)->isoFormat('LL') }}
+                        · {{ $this->booking->starts_at->setTimezone($this->booking->timezone)->format('H:i') }}
+                        - {{ $this->booking->ends_at->setTimezone($this->booking->timezone)->format('H:i') }}
+                    </p>
+                </div>
+
                 <p>{{ __('Send the amount to this phone number and the photographer will confirm your booking.') }}</p>
 
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="rounded-lg bg-zinc-50 p-4 dark:bg-white/5">
                         <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Bizum phone') }}</p>
-                        <p class="text-lg font-semibold">{{ $this->settings->bizum_phone }}</p>
+                        <p class="text-3xl font-black tracking-tight sm:text-4xl">{{ $this->team->bizum_phone }}</p>
                     </div>
                     <div class="rounded-lg bg-zinc-50 p-4 dark:bg-white/5">
                         <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Amount') }}</p>
-                        <p class="text-lg font-semibold">{{ $this->formatAmount($this->amountToPay) }}</p>
+                        <p class="text-2xl font-bold">{{ $this->formatAmount($this->amountToPay) }}</p>
                     </div>
                 </div>
 
                 <div class="rounded-lg border border-dashed border-zinc-300 p-4 text-center dark:border-white/15">
                     <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Reference') }}</p>
-                    <p class="text-2xl font-bold tracking-widest">{{ $this->reference() }}</p>
+                    <p class="text-3xl font-black tracking-widest sm:text-4xl">{{ $this->reference() }}</p>
                 </div>
 
-                @if (filled($this->settings->bizum_instructions))
-                    <p class="whitespace-pre-line text-zinc-500 dark:text-zinc-400">{{ $this->settings->bizum_instructions }}</p>
+                @if (filled($this->team->bizum_instructions))
+                    <p class="whitespace-pre-line text-zinc-500 dark:text-zinc-400">{{ $this->team->bizum_instructions }}</p>
                 @endif
 
                 <x-ts-callout variant="warning" icon="clock">

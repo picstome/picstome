@@ -41,6 +41,10 @@ Route::get('/@{handle}/pay/', function ($handle) {
 })->where('handle', '[a-zA-Z0-9_]+');
 Route::livewire('/@{handle}/pay/success', 'pages::pay.success')->where('handle', '[a-zA-Z0-9_]+')->name('handle.pay.success');
 Route::livewire('/@{handle}/pay/cancel', 'pages::pay.cancel')->where('handle', '[a-zA-Z0-9_]+')->name('handle.pay.cancel');
+Route::livewire('/@{handle}/pay/request/{reference}', 'pages::pay.request')
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->where('reference', '[A-Za-z0-9-]+')
+    ->name('handle.pay.request');
 
 Route::livewire('/@{handle}/book/success', 'pages::handle.book-success')
     ->where('handle', '[a-zA-Z0-9_]+')

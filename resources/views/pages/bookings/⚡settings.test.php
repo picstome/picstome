@@ -227,10 +227,11 @@ it('saves the cancellation policy and the Bizum details', function () {
         ->assertHasNoErrors();
 
     $settings = BookingSetting::forTeam($this->team);
+    $team = $this->team->fresh();
 
     expect($settings->cancellation_policy)->toBe('The deposit is not refundable.')
-        ->and($settings->bizum_enabled)->toBeTrue()
-        ->and($settings->bizum_phone)->toBe('+34 600 000 000');
+        ->and($team->bizum_enabled)->toBeTrue()
+        ->and($team->bizum_phone)->toBe('+34 600 000 000');
 });
 
 it('saves the payment methods and the required phone', function () {
@@ -245,10 +246,11 @@ it('saves the payment methods and the required phone', function () {
         ->assertHasNoErrors();
 
     $settings = BookingSetting::forTeam($this->team);
+    $team = $this->team->fresh();
 
     expect($settings->card_enabled)->toBeFalse()
-        ->and($settings->bizum_enabled)->toBeTrue()
-        ->and($settings->phone_required)->toBeTrue()
+        ->and($team->bizum_enabled)->toBeTrue()
+        ->and($team->phone_required)->toBeTrue()
         ->and($settings->auto_issue_invoices)->toBeTrue();
 });
 

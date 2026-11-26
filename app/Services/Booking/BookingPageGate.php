@@ -34,7 +34,7 @@ class BookingPageGate
 
         $settings = BookingSetting::forTeam($team);
 
-        return $this->canPayWithCard($team, $settings) || $this->canPayWithBizum($settings);
+        return $this->canPayWithCard($team, $settings) || $this->canPayWithBizum($team);
     }
 
     public function canPayWithCard(Team $team, BookingSetting $settings): bool
@@ -54,8 +54,8 @@ class BookingPageGate
         return (bool) $onboarded;
     }
 
-    public function canPayWithBizum(BookingSetting $settings): bool
+    public function canPayWithBizum(Team $team): bool
     {
-        return $settings->bizum_enabled && filled($settings->bizum_phone);
+        return $team->canAcceptBizumPayments();
     }
 }

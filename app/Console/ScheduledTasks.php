@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Services\Booking\BookingService;
+use App\Services\PaymentLinkService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 
@@ -41,6 +42,12 @@ class ScheduledTasks
             ->everyFifteenMinutes()
             ->withoutOverlapping()
             ->name('bookings:send-reminders');
+
+        // Payment-link Bizum requests that were never paid stop being
+        // actionable after their window, so they leave the pending list.
+        $schedule->call(fn () => app(PaymentLinkService::class)->expirePendingBizum())
+            ->everyFiveMinutes()
+            ->name('payments:expire-pending-bizum');
 
         $schedule->command('subscriptions:cleanup --force')
             ->dailyAt('00:10')

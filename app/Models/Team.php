@@ -84,6 +84,8 @@ class Team extends Model
             'portfolio_public_disabled' => 'boolean',
             'stripe_onboarded' => 'boolean',
             'show_pay_button' => 'boolean',
+            'bizum_enabled' => 'boolean',
+            'phone_required' => 'boolean',
             'stripe_test_mode' => 'boolean',
             'stripe_test_onboarded' => 'boolean',
             'dismissed_setup_steps' => 'array',
@@ -654,6 +656,15 @@ class Team extends Model
         }
 
         return $this->hasStripeAccountOnboarded();
+    }
+
+    /**
+     * Whether a payment link can offer Bizum. Independent from the booking
+     * flags and settings, so payment links keep working when bookings are off.
+     */
+    public function canAcceptBizumPayments(): bool
+    {
+        return (bool) $this->bizum_enabled && filled($this->bizum_phone);
     }
 
     /**

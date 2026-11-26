@@ -23,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $min_notice_hours
  * @property int $horizon_days
  * @property int|null $max_sessions_per_day
- * @property bool $phone_required
  * @property DepositType $default_deposit_type
  * @property int $default_deposit_value
  * @property string|null $cancellation_policy
@@ -33,9 +32,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $reminder_second_enabled
  * @property int $reminder_second_hours
  * @property bool $card_enabled
- * @property bool $bizum_enabled
- * @property string|null $bizum_phone
- * @property string|null $bizum_instructions
  */
 class BookingSetting extends Model
 {
@@ -52,7 +48,6 @@ class BookingSetting extends Model
             'min_notice_hours' => 'integer',
             'horizon_days' => 'integer',
             'max_sessions_per_day' => 'integer',
-            'phone_required' => 'boolean',
             'default_deposit_type' => DepositType::class,
             'default_deposit_value' => 'integer',
             'auto_issue_invoices' => 'boolean',
@@ -61,7 +56,6 @@ class BookingSetting extends Model
             'reminder_second_enabled' => 'boolean',
             'reminder_second_hours' => 'integer',
             'card_enabled' => 'boolean',
-            'bizum_enabled' => 'boolean',
         ];
     }
 

@@ -104,7 +104,7 @@ class extends Component
             @if ($booking->status === \App\Enums\BookingStatus::PendingBizum)
                 <div class="flex justify-between gap-4">
                     <span class="text-zinc-500 dark:text-zinc-400">{{ __('Reference') }}</span>
-                    <span class="text-right font-mono font-bold tracking-widest">{{ strtoupper(substr($booking->ulid, -6)) }}</span>
+                    <span class="text-right text-2xl font-black tracking-widest">{{ $booking->bizumReference() }}</span>
                 </div>
             @endif
         </div>

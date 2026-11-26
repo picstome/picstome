@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Livewire\Forms\Concerns\ManagesClientPaymentSettings;
 use App\Models\Team;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Validation\Rule;
@@ -9,6 +10,8 @@ use Livewire\Form;
 
 class PosSettingsForm extends Form
 {
+    use ManagesClientPaymentSettings;
+
     public Team $team;
 
     public $stripe_currency = 'eur';
@@ -22,6 +25,7 @@ class PosSettingsForm extends Form
         $currencies = array_map('strtolower', StripeConnectService::supportedCurrencies());
 
         return [
+            ...$this->clientPaymentRules(),
             'stripe_currency' => ['required', 'string', 'size:3', Rule::in($currencies)],
             'show_pay_button' => ['boolean'],
             'stripe_test_mode' => ['boolean'],
@@ -35,6 +39,8 @@ class PosSettingsForm extends Form
         $this->stripe_currency = $team->stripe_currency ?? 'eur';
         $this->show_pay_button = $team->show_pay_button ?? true;
         $this->stripe_test_mode = $team->stripe_test_mode ?? false;
+
+        $this->fillClientPayment($team);
     }
 
     public function update(): void
@@ -46,5 +52,7 @@ class PosSettingsForm extends Form
             'show_pay_button' => $this->show_pay_button,
             'stripe_test_mode' => $this->stripe_test_mode,
         ]);
+
+        $this->updateTeamClientPayment($this->team);
     }
 }

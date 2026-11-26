@@ -43,7 +43,6 @@ beforeEach(function () {
         'slot_step_minutes' => 30,
         'buffer_minutes' => 15,
         'card_enabled' => true,
-        'bizum_enabled' => false,
         'cancellation_policy' => 'The deposit is not refundable.',
     ]);
 
@@ -142,7 +141,7 @@ it('lets the client choose the deposit and pays it with a card in fake mode', fu
 });
 
 it('requires the phone number when the photographer enabled it', function () {
-    BookingSetting::forTeam($this->team)->update(['phone_required' => true]);
+    $this->team->update(['phone_required' => true]);
 
     Livewire::test('pages::handle.book', ['handle' => $this->team->handle])
         ->call('selectDate', '2026-06-01')
@@ -160,6 +159,9 @@ it('keeps the booking pending when only Bizum is available', function () {
 
     BookingSetting::forTeam($this->team)->update([
         'card_enabled' => false,
+    ]);
+
+    $this->team->update([
         'bizum_enabled' => true,
         'bizum_phone' => '+34 600 000 000',
     ]);
@@ -181,7 +183,8 @@ it('keeps the booking pending when only Bizum is available', function () {
     $booking = Booking::query()->sole();
 
     expect($booking->status)->toBe(BookingStatus::PendingBizum)
-        ->and($booking->payment_method)->toBe(PaymentMethod::Bizum);
+        ->and($booking->payment_method)->toBe(PaymentMethod::Bizum)
+        ->and($booking->bizum_reference)->toBe('Ana-1');
 
     Notification::assertSentOnDemand(BookingPendingBizum::class);
     Notification::assertSentTo($this->user, BookingPendingBizumForPhotographer::class);

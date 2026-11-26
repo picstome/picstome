@@ -55,7 +55,7 @@ class BookingPendingBizumForPhotographer extends Notification
             ->line($this->row(__('Date'), $startsAt->isoFormat('LL')))
             ->line($this->row(__('Time'), $startsAt->format('H:i').' - '.$endsAt->format('H:i')))
             ->line($this->row(__('Expected'), Cashier::formatAmount($expected, $booking->currency)))
-            ->line($this->row(__('Reference'), strtoupper(substr($booking->ulid, -6))))
+            ->line($this->row(__('Reference'), $booking->bizumReference()))
             ->line(__('Payment method: :method', ['method' => __('Bizum')]))
             ->line(__('Confirm it from the agenda when the payment arrives.'))
             ->action(__('Open the agenda'), route('bookings', ['view' => 'agenda']));

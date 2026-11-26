@@ -2,7 +2,9 @@
 
 use App\Models\Team;
 use App\Services\FakePaymentService;
+use App\Services\PaymentLinkService;
 use App\Services\PaymentPlanLimitService;
+use Carbon\CarbonImmutable;
 use Facades\App\Services\StripeConnectService;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -44,19 +46,33 @@ class extends Component
      */
     public bool $paymentUnavailable = false;
 
-    public int $amount;
+    public int $amount = 0;
 
-    public string $description;
+    public string $description = '';
 
     public ?string $email = null;
 
-    public function mount(string $handle)
+    public ?string $name = null;
+
+    public ?string $phone = null;
+
+    public bool $bizumFormVisible = false;
+
+    public function mount(string $handle, ?int $amount = null, ?string $description = null)
     {
+        if ($amount !== null) {
+            $this->amount = $amount;
+        }
+
+        if ($description !== null) {
+            $this->description = $description;
+        }
+
         $this->team = Team::where('handle', $handle)->firstOrFail();
 
-        abort_unless($this->team->hasCompletedOnboarding(), 404);
+        abort_unless($this->team->hasCompletedOnboarding() || $this->team->canAcceptBizumPayments(), 404);
 
-        $this->formattedAmount = Cashier::formatAmount($this->amount * 100, $this->team->stripe_currency);
+        $this->formattedAmount = Cashier::formatAmount($this->amount * 100, $this->team->stripe_currency ?: 'eur');
 
         if (! app(PaymentPlanLimitService::class)->canReceive($this->team)) {
             $this->paymentUnavailable = true;
@@ -65,6 +81,12 @@ class extends Component
         }
 
         if (FakePaymentService::enabled()) {
+            return;
+        }
+
+        // When Bizum is available the visitor chooses the method first. Teams
+        // without Bizum keep the original direct redirect to Stripe.
+        if ($this->team->canAcceptBizumPayments()) {
             return;
         }
 
@@ -97,6 +119,81 @@ class extends Component
         ]);
     }
 
+    /**
+     * Reveal the Bizum form only when the photographer configured a phone.
+     */
+    public function showBizumForm(): void
+    {
+        abort_unless($this->team->canAcceptBizumPayments(), 404);
+
+        $this->bizumFormVisible = true;
+    }
+
+    /**
+     * Create a pending Bizum payment and show the transfer instructions.
+     */
+    public function payWithBizum()
+    {
+        $this->guardPaymentLimit();
+
+        abort_unless($this->team->canAcceptBizumPayments(), 404);
+
+        $this->validate([
+            'amount' => ['required', 'integer', 'min:1'],
+            'description' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => [$this->team->phone_required ? 'required' : 'nullable', 'string', 'max:50'],
+            'photoshoot_id' => [
+                'nullable',
+                'integer',
+                'exists:photoshoots,id,team_id,'.$this->team->id,
+            ],
+            'booking' => ['nullable', 'boolean'],
+            'booking_date' => ['nullable', 'required_if:booking,true', 'date'],
+            'booking_start_time' => ['nullable', 'required_if:booking,true', 'date_format:H:i'],
+            'booking_end_time' => ['nullable', 'required_if:booking,true', 'date_format:H:i'],
+            'timezone' => ['nullable', 'required_if:booking,true', 'string', 'max:64'],
+        ]);
+
+        $metadata = array_filter([
+            'booking' => $this->booking ? true : null,
+            'description' => $this->description,
+            'booking_date' => $this->booking_date,
+            'booking_start_time' => $this->booking_start_time,
+            'booking_end_time' => $this->booking_end_time,
+            'timezone' => $this->timezone,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        $payment = app(PaymentLinkService::class)->startBizum($this->team, [
+            'amount' => $this->amount * 100,
+            'currency' => $this->team->stripe_currency ?: 'eur',
+            'description' => $this->description,
+            'customer_name' => $this->name,
+            'customer_email' => $this->email,
+            'customer_phone' => $this->phone,
+            'photoshoot_id' => $this->photoshoot_id,
+            'metadata' => $metadata,
+        ]);
+
+        return redirect()->route('handle.pay.request', [
+            'handle' => $this->team->handle,
+            'reference' => $payment->reference,
+        ]);
+    }
+
+    public function sessionLabel(): ?string
+    {
+        if (! $this->booking || blank($this->booking_date)) {
+            return null;
+        }
+
+        $date = CarbonImmutable::parse($this->booking_date, $this->timezone ?: config('app.timezone'));
+        $time = collect([$this->booking_start_time, $this->booking_end_time])->filter()->implode(' - ');
+
+        return $date->isoFormat('LL').($time !== '' ? ' · '.$time : '');
+    }
+
     public function rendering(View $view): void
     {
         $view->title($this->team->name.' - Pay');
@@ -120,6 +217,8 @@ class extends Component
 
     public function checkout()
     {
+        abort_unless($this->team->hasCompletedOnboarding(), 404);
+
         $this->guardPaymentLimit();
 
         $rules = [
@@ -152,7 +251,8 @@ class extends Component
                 'booking_start_time' => $this->booking_start_time,
                 'booking_end_time' => $this->booking_end_time,
                 'timezone' => $this->timezone,
-            ]
+            ],
+            $this->team->phone_required,
         );
 
         return redirect()->away($checkoutUrl);
@@ -178,12 +278,72 @@ class extends Component
                 </x-ts-callout-text>
             </x-ts-callout>
         @else
-            <x-ts-text>{{ $this->description }} · {{ $this->formattedAmount }}</x-ts-text>
+            <div class="text-center">
+                <x-ts-heading size="xl" level="1">{{ $this->description }}</x-ts-heading>
 
-            <form wire:submit="pay" class="space-y-6">
-                <x-ts-input wire:model="email" type="email" :label="__('Email (optional)')" />
-                <x-ts-button type="submit" variant="primary" class="w-full">{{ __('Pay (simulated)') }}</x-ts-button>
-            </form>
+                @if ($this->sessionLabel())
+                    <p class="mt-1 text-sm font-medium text-zinc-600 dark:text-zinc-300">{{ $this->sessionLabel() }}</p>
+                @endif
+
+                <p class="text-brand-ink dark:text-brand-cream mt-3 text-3xl font-black tabular-nums">{{ $this->formattedAmount }}</p>
+            </div>
+
+            @if ($this->bizumFormVisible)
+                <form wire:submit="payWithBizum" class="space-y-6">
+                    <x-ts-input wire:model="name" :label="__('Name')" required />
+                    <x-ts-input wire:model="email" type="email" :label="__('Email')" required />
+                    <x-ts-input wire:model="phone" type="tel" :label="$this->team->phone_required ? __('Phone') : __('Phone (optional)')" :required="$this->team->phone_required" />
+
+                    <div class="flex flex-col gap-2">
+                        <x-ts-button type="submit" variant="primary" class="w-full">
+                            {{ __('Continue with Bizum') }}
+                        </x-ts-button>
+                        <x-ts-button type="button" variant="secondary" class="w-full" wire:click="$set('bizumFormVisible', false)">
+                            {{ __('Back') }}
+                        </x-ts-button>
+                    </div>
+                </form>
+            @else
+                @if (FakePaymentService::enabled())
+                    <form wire:submit="pay" class="space-y-4">
+                        <x-ts-input wire:model="email" type="email" :label="__('Email (optional)')" />
+
+                        <div @class(['grid gap-2', 'sm:grid-cols-2' => $this->team->canAcceptBizumPayments()])>
+                            @if ($this->team->canAcceptBizumPayments())
+                                <x-ts-button type="button" variant="secondary" class="w-full" wire:click="showBizumForm">
+                                    {{ __('Pay with Bizum') }}
+                                </x-ts-button>
+                            @endif
+
+                            <x-ts-button type="submit" variant="primary" class="w-full">{{ __('Pay (simulated)') }}</x-ts-button>
+                        </div>
+                    </form>
+                @else
+                    @php
+                        $hasCard = $this->team->hasCompletedOnboarding();
+                        $hasBizum = $this->team->canAcceptBizumPayments();
+                    @endphp
+
+                    @if ($hasCard && $hasBizum)
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <x-ts-button type="button" variant="secondary" class="w-full" wire:click="showBizumForm">
+                                {{ __('Pay with Bizum') }}
+                            </x-ts-button>
+                            <x-ts-button type="button" variant="primary" class="w-full" wire:click="checkout">
+                                {{ __('Pay by card') }}
+                            </x-ts-button>
+                        </div>
+                    @elseif ($hasBizum)
+                        <x-ts-button type="button" variant="secondary" class="w-full" wire:click="showBizumForm">
+                            {{ __('Pay with Bizum') }}
+                        </x-ts-button>
+                    @elseif ($hasCard)
+                        <x-ts-button type="button" variant="primary" class="w-full" wire:click="checkout">
+                            {{ __('Pay by card') }}
+                        </x-ts-button>
+                    @endif
+                @endif
+            @endif
         @endif
     </div>
 </div>
