@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Payment;
 use App\Models\Photoshoot;
+use App\Notifications\Concerns\FormatsBookingEmail;
 use App\Notifications\Concerns\IncludesMagicLoginLink;
 use App\Support\MailBranding;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Notifications\Notification;
 
 class BookingCreated extends Notification
 {
+    use FormatsBookingEmail;
     use IncludesMagicLoginLink, Queueable;
 
     public function __construct(
@@ -44,12 +46,12 @@ class BookingCreated extends Notification
             ->subject(__('Booking Confirmed: :name', ['name' => $name]))
             ->greeting(__('Hello!'))
             ->line(__('A new booking has been made.'))
-            ->line(__('Session: :name', ['name' => $name]))
-            ->line(__('Date: :date', ['date' => $date]))
+            ->line($this->row(__('Session'), $name))
+            ->line($this->row(__('Date'), $date))
             ->line(__('Start Time: :start', ['start' => $this->startTime->format('g:i A')]))
             ->line(__('End Time: :end', ['end' => $this->endTime->format('g:i A')]))
-            ->line(__('Customer: :customer', ['customer' => $customer]))
-            ->line(__('Amount: :amount', ['amount' => $amount]))
+            ->line($this->row(__('Customer'), $customer))
+            ->line($this->row(__('Amount'), $amount))
             ->action(__('Add to Google Calendar'), $calendarUrl);
 
         // The payer is the photographer's client, so their copy carries the

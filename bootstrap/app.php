@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'stripe/connect/webhook',
             'webhooks/sftpgo',
         ]);
     })

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Invoice;
 use App\Models\Team;
+use Carbon\CarbonInterface;
 
 /**
  * Revenue collected by a team in a period.
@@ -30,16 +31,23 @@ class RevenueService
      */
     public function lastDays(Team $team, int $days = 30): float
     {
-        $start = now()->subDays($days);
+        return $this->between($team, now()->subDays($days), now());
+    }
+
+    /**
+     * Revenue collected between two moments, both included.
+     */
+    public function between(Team $team, CarbonInterface $start, CarbonInterface $end): float
+    {
         $currency = strtoupper((string) ($team->stripe_currency ?: 'EUR'));
 
         $payments = (float) $team->payments()
-            ->where('completed_at', '>=', $start)
+            ->whereBetween('completed_at', [$start, $end])
             ->sum('amount') / 100;
 
         $invoices = $team->invoices()
             ->whereNotNull('paid_at')
-            ->where('paid_at', '>=', $start)
+            ->whereBetween('paid_at', [$start, $end])
             ->where('status', Invoice::STATUS_ISSUED)
             ->whereDoesntHave('payments', fn ($query) => $query->whereNotNull('completed_at'))
             ->get(['currency', 'total', 'exchange_rate'])

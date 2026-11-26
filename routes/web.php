@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookingCalendarController;
 use App\Http\Controllers\ContractPdfController;
 use App\Http\Controllers\ExternalAuthorizationController;
 use App\Http\Controllers\GalleryDownloadController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\SharedGalleryDownloadController;
 use App\Http\Controllers\SignatureImageController;
 use App\Http\Controllers\Webhooks\SftpgoWebhookController;
+use App\Http\Controllers\Webhooks\StripeConnectWebhookController;
+use App\Http\Middleware\EnsureBookingsFeature;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\NoIndex;
 use App\Http\Middleware\PasswordProtectGallery;
@@ -38,6 +41,23 @@ Route::get('/@{handle}/pay/', function ($handle) {
 })->where('handle', '[a-zA-Z0-9_]+');
 Route::livewire('/@{handle}/pay/success', 'pages::pay.success')->where('handle', '[a-zA-Z0-9_]+')->name('handle.pay.success');
 Route::livewire('/@{handle}/pay/cancel', 'pages::pay.cancel')->where('handle', '[a-zA-Z0-9_]+')->name('handle.pay.cancel');
+
+Route::livewire('/@{handle}/book/success', 'pages::handle.book-success')
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->name('handle.book.success');
+
+Route::livewire('/@{handle}/products', 'pages::handle.products')
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->name('handle.products');
+
+Route::livewire('/@{handle}/book/{productUlid?}', 'pages::handle.book')
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->where('productUlid', '[0-9A-Za-z]{26}')
+    ->name('handle.book');
+
+Route::get('/@{handle}/book/{booking:ulid}/calendar.ics', BookingCalendarController::class)
+    ->where('handle', '[a-zA-Z0-9_]+')
+    ->name('handle.book.ics');
 
 Route::livewire('/@{handle}/portfolio', 'pages::portfolio.index')->where('handle', '[a-zA-Z0-9_]+')->name('portfolio.index');
 Route::livewire('/@{handle}/portfolio/{gallery:ulid}', 'pages::portfolio.show')->where('handle', '[a-zA-Z0-9_]+')->name('portfolio.show');
@@ -227,6 +247,8 @@ Route::get('/verify-email/{id}/{hash}', function (EmailVerificationRequest $requ
 })->name('verification.verify')->middleware(['auth', 'signed', 'throttle:6,1']);
 
 Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard')->middleware(['auth', 'verified']);
+
+Route::livewire('/finance', 'pages::finance')->name('finance')->middleware(['auth', 'verified']);
 Route::livewire('/forgot-password', 'pages::forgot-password')->name('password.request')->middleware('guest');
 Route::livewire('/login', 'pages::login')->name('login')->middleware('guest');
 Route::get('/auth/magic/{token}', MagicLoginController::class)->name('login.magic')->middleware('throttle:20,1');
@@ -244,6 +266,18 @@ Route::get('/authorize/cancel', [ExternalAuthorizationController::class, 'cancel
     ->middleware('auth');
 
 Route::livewire('/payments', 'pages::payments')->name('payments')->middleware(['auth', 'verified']);
+
+Route::livewire('/bookings/coming-soon', 'pages::bookings.coming-soon')
+    ->name('bookings.coming-soon')
+    ->middleware(['auth', 'verified']);
+
+Route::livewire('/bookings', 'pages::bookings.index')
+    ->name('bookings')
+    ->middleware(['auth', 'verified', EnsureBookingsFeature::class]);
+
+Route::livewire('/bookings/settings', 'pages::bookings.settings')
+    ->name('bookings.settings')
+    ->middleware(['auth', 'verified', EnsureBookingsFeature::class]);
 Route::livewire('/portfolio', 'pages::portfolio')->name('portfolio')->middleware(['auth', 'verified']);
 Route::livewire('/public-profile', 'pages::public-profile')->name('public-profile')->middleware('auth');
 Route::livewire('/register', 'pages::register')->name('register')->middleware('guest');
@@ -289,3 +323,9 @@ Route::get('/galleries/{gallery}/photos/{photo}/pdf', function (Gallery $gallery
 
 Route::post('/webhooks/sftpgo', SftpgoWebhookController::class)
     ->name('webhooks.sftpgo');
+
+// Booking payments are direct charges on each photographer's connected
+// account, so Stripe signs them with the Connect endpoint secret. Cashier keeps
+// `/stripe/webhook` (platform subscriptions) untouched.
+Route::post('/stripe/connect/webhook', StripeConnectWebhookController::class)
+    ->name('webhooks.stripe.connect');

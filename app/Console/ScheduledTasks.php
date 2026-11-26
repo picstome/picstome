@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Services\Booking\BookingService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 
@@ -28,6 +29,18 @@ class ScheduledTasks
         $schedule->command('galleries:send-expiration-reminders')
             ->dailyAt('09:00')
             ->name('galleries:send-expiration-reminders');
+
+        // Release the slots of bookings whose payment window closed. The
+        // availability query already ignores expired holds, so this only
+        // keeps the state readable in the agenda.
+        $schedule->call(fn () => app(BookingService::class)->expirePending())
+            ->everyFiveMinutes()
+            ->name('bookings:expire-pending');
+
+        $schedule->command('bookings:send-reminders')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->name('bookings:send-reminders');
 
         $schedule->command('subscriptions:cleanup --force')
             ->dailyAt('00:10')

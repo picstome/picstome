@@ -31,6 +31,14 @@ it('lists the invoices of the team', function () {
         ->assertSee(route('customers.show', $invoice->customer), false);
 });
 
+it('marks a draft invoice created from a collected payment as paid', function () {
+    draftInvoice($this->team, ['paid_at' => now()]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::invoices')
+        ->assertSee(__('Paid invoice'));
+});
+
 it('does not show the status or actions labels in the table header', function () {
     draftInvoice($this->team);
 

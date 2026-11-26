@@ -40,6 +40,7 @@ return [
         'es_pricing_table_id' => env('STRIPE_ES_PRICING_TABLE_ID'),
         'test_secret' => env('STRIPE_TEST_SECRET'),
         'live_secret' => env('STRIPE_LIVE_SECRET'),
+        'connect_webhook_secret' => env('STRIPE_CONNECT_WEBHOOK_SECRET'),
     ],
 
     'acumbamail' => [

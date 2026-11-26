@@ -1,6 +1,13 @@
 <?php
 
+use App\Notifications\BookingCancelled;
+use App\Notifications\BookingCancelledForPhotographer;
+use App\Notifications\BookingConfirmed;
 use App\Notifications\BookingCreated;
+use App\Notifications\BookingPaid;
+use App\Notifications\BookingPendingBizum;
+use App\Notifications\BookingPendingBizumForPhotographer;
+use App\Notifications\BookingReminder;
 use App\Notifications\CameraUploadsPaused;
 use App\Notifications\ContractExecuted;
 use App\Notifications\ContractPdfFailed;
@@ -91,14 +98,241 @@ return [
             ['key' => 'Booking Confirmed: :name', 'label' => 'Subject', 'type' => 'text'],
             ['key' => 'Hello!', 'label' => 'Greeting', 'type' => 'text'],
             ['key' => 'A new booking has been made.', 'label' => 'Body', 'type' => 'textarea'],
-            ['key' => 'Session: :name', 'label' => 'Body', 'type' => 'text'],
-            ['key' => 'Date: :date', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Session', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Date', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'Start Time: :start', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'End Time: :end', 'label' => 'Body', 'type' => 'text'],
-            ['key' => 'Customer: :customer', 'label' => 'Body', 'type' => 'text'],
-            ['key' => 'Amount: :amount', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Customer', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Amount', 'label' => 'Body', 'type' => 'text'],
             ['key' => 'Add to Google Calendar', 'label' => 'Button', 'type' => 'text'],
             ['key' => 'Photoshoot with :customer', 'label' => 'Calendar event', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_confirmed' => [
+        'notification' => BookingConfirmed::class,
+        'label' => [
+            'en' => 'Booking paid',
+            'es' => 'Reserva pagada',
+        ],
+        'description' => [
+            'en' => 'Confirms the session to the client and the studio after a card payment.',
+            'es' => 'Confirma la sesión al cliente y al estudio tras el pago con tarjeta.',
+        ],
+        'trigger' => [
+            'en' => 'Stripe checkout completed or a card payment fulfilled.',
+            'es' => 'Pago de Stripe completado o pago con tarjeta confirmado.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Client and team owner',
+            'es' => 'Cliente y dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'Booking confirmed: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Hello!', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Your session is booked.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Time', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Total', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Paid now', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Pending', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'View booking', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Add it to your calendar:', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Google Calendar', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'Outlook Calendar', 'label' => 'Button', 'type' => 'text'],
+            ['key' => 'iCloud Calendar', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_paid' => [
+        'notification' => BookingPaid::class,
+        'label' => [
+            'en' => 'New booking paid',
+            'es' => 'Nueva reserva pagada',
+        ],
+        'description' => [
+            'en' => 'Tells the photographer that a booking has been paid.',
+            'es' => 'Avisa al fotógrafo de que una reserva se ha pagado.',
+        ],
+        'trigger' => [
+            'en' => 'A card payment is fulfilled or the photographer confirms a Bizum.',
+            'es' => 'Se completa un pago con tarjeta o el fotógrafo confirma un Bizum.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'New booking paid: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'New booking', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Customer', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Email', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Phone', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Notes', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Open the agenda', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_pending_bizum_photographer' => [
+        'notification' => BookingPendingBizumForPhotographer::class,
+        'label' => [
+            'en' => 'New booking pending payment (photographer)',
+            'es' => 'Nueva reserva pendiente de pago (fotógrafo)',
+        ],
+        'description' => [
+            'en' => 'Tells the photographer that a new booking is waiting for a Bizum.',
+            'es' => 'Avisa al fotógrafo de que una reserva nueva espera un Bizum.',
+        ],
+        'trigger' => [
+            'en' => 'The client chooses Bizum on the public booking page.',
+            'es' => 'El cliente elige Bizum en la página pública de reserva.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'New booking pending payment: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'New booking', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Customer', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Email', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Phone', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Expected', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Payment method: :method', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Confirm it from the agenda when the payment arrives.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Open the agenda', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_reminder' => [
+        'notification' => BookingReminder::class,
+        'label' => [
+            'en' => 'Booking reminder',
+            'es' => 'Recordatorio de reserva',
+        ],
+        'description' => [
+            'en' => 'Reminds the client before the session.',
+            'es' => 'Recuerda al cliente la sesión.',
+        ],
+        'trigger' => [
+            'en' => 'The bookings:send-reminders command.',
+            'es' => 'El comando bookings:send-reminders.',
+        ],
+        'when' => [
+            'en' => 'At the configured hours before the session',
+            'es' => 'A las horas configuradas antes de la sesión',
+        ],
+        'recipients' => [
+            'en' => 'Client',
+            'es' => 'Cliente',
+        ],
+        'fields' => [
+            ['key' => 'Reminder: your session is on :date', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'This is a reminder of your session.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Location', 'label' => 'Body', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_cancelled' => ['notification' => BookingCancelled::class,        'label' => [
+        'en' => 'Booking cancelled (client)',
+        'es' => 'Reserva cancelada (cliente)',
+    ],
+        'description' => [
+            'en' => 'Tells the client that the session has been cancelled.',
+            'es' => 'Avisa al cliente de que la sesión se ha cancelado.',
+        ],
+        'trigger' => [
+            'en' => 'The photographer cancels a booking from the agenda.',
+            'es' => 'El fotógrafo cancela una reserva desde la agenda.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Client',
+            'es' => 'Cliente',
+        ],
+        'fields' => [
+            ['key' => 'Booking cancelled: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Your session has been cancelled.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Reason', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Cancellation policy: :policy', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'If a refund applies, the photographer will handle it separately.', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Book another session', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_cancelled_photographer' => [
+        'notification' => BookingCancelledForPhotographer::class,
+        'label' => [
+            'en' => 'Booking cancelled (photographer)',
+            'es' => 'Reserva cancelada (fotógrafo)',
+        ],
+        'description' => [
+            'en' => 'Sends the photographer a record of the cancellation with the client contact.',
+            'es' => 'Envía al fotógrafo un registro de la cancelación con el contacto del cliente.',
+        ],
+        'trigger' => [
+            'en' => 'The photographer cancels a booking from the agenda.',
+            'es' => 'El fotógrafo cancela una reserva desde la agenda.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Team owner',
+            'es' => 'Dueño del equipo',
+        ],
+        'fields' => [
+            ['key' => 'Booking cancelled by you: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Booking cancelled', 'label' => 'Greeting', 'type' => 'text'],
+            ['key' => 'Reason', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Open the agenda', 'label' => 'Button', 'type' => 'text'],
+        ],
+    ],
+
+    'booking_pending_bizum' => [
+        'notification' => BookingPendingBizum::class,
+        'label' => [
+            'en' => 'Booking pending Bizum',
+            'es' => 'Reserva pendiente de Bizum',
+        ],
+        'description' => [
+            'en' => 'Sends the Bizum instructions and the reference to the client.',
+            'es' => 'Envía al cliente las instrucciones de Bizum y la referencia.',
+        ],
+        'trigger' => [
+            'en' => 'The client chooses Bizum on the public booking page.',
+            'es' => 'El cliente elige Bizum en la página pública de reserva.',
+        ],
+        'when' => [
+            'en' => 'Immediately',
+            'es' => 'Inmediato',
+        ],
+        'recipients' => [
+            'en' => 'Client',
+            'es' => 'Cliente',
+        ],
+        'fields' => [
+            ['key' => 'Complete your booking with Bizum: :name', 'label' => 'Subject', 'type' => 'text'],
+            ['key' => 'Your slot is reserved. Send the payment to confirm it:', 'label' => 'Body', 'type' => 'textarea'],
+            ['key' => 'Bizum phone: :phone', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'Reference', 'label' => 'Body', 'type' => 'text'],
+            ['key' => 'The reservation is confirmed as soon as the photographer checks the payment.', 'label' => 'Body', 'type' => 'textarea'],
         ],
     ],
 

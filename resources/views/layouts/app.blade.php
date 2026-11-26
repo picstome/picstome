@@ -189,6 +189,16 @@
                             {{ __('Manage') }}
                         </p>
 
+                        @if (auth()->user()?->canSeeBookingsFeature())
+                            <x-app-nav-link
+                                :href="route('bookings')"
+                                icon="calendar-days"
+                                :current="request()->routeIs('bookings*')"
+                            >
+                                {{ __('Bookings') }}
+                            </x-app-nav-link>
+                        @endif
+
                         <x-app-nav-link
                             :href="route('customers')"
                             icon="user-group"
@@ -203,6 +213,14 @@
                             :current="request()->routeIs('contracts*') || request()->routeIs('contract-templates*')"
                         >
                             {{ __('Contracts') }}
+                        </x-app-nav-link>
+
+                        <x-app-nav-link
+                            :href="route('finance')"
+                            icon="chart-bar"
+                            :current="request()->routeIs('finance*')"
+                        >
+                            {{ __('Finance') }}
                         </x-app-nav-link>
 
                         <x-app-nav-link

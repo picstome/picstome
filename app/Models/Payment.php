@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentKind;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ class Payment extends Model
     protected $casts = [
         'amount' => 'integer',
         'completed_at' => 'datetime',
+        'payment_kind' => PaymentKind::class,
     ];
 
     public function team()
@@ -26,6 +28,14 @@ class Payment extends Model
     public function photoshoot()
     {
         return $this->belongsTo(Photoshoot::class);
+    }
+
+    /**
+     * The booking this payment settles, if it came from the booking flow.
+     */
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
     }
 
     /**

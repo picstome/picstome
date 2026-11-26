@@ -88,6 +88,10 @@ class InvoiceFromPaymentService
             'base_amount' => $totals['base_amount'],
             'total' => $totals['total'],
             'amount_due' => $totals['amount_due'],
+            // A booking payment is money that has already been collected, so
+            // its invoice starts as paid. Manual payment-link invoices keep the
+            // previous behaviour: the photographer reviews and issues them.
+            'paid_at' => $payment->booking_id !== null ? $payment->completed_at : null,
             'invoice_data' => [
                 'line_items' => $lineItems,
                 'issuer' => $this->snapshots->issuerSnapshot($settings),
