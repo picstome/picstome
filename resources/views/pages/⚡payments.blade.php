@@ -5,6 +5,7 @@ use App\Livewire\Forms\PaymentLinkForm;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\InvoiceFromPaymentService;
+use App\Services\PaymentLinkService;
 use App\Services\PaymentPlanLimitService;
 use App\Traits\InteractsWithTallStackModals;
 use Illuminate\Support\Facades\Auth;
@@ -83,8 +84,24 @@ new class extends Component
     public function payments()
     {
         return $this->team->payments()
+            ->completed()
             ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(25);
+    }
+
+    /**
+     * Payment links waiting for a Bizum transfer. The photographer checks the
+     * bank app and confirms or cancels each one.
+     *
+     * @return \Illuminate\Support\Collection<int, Payment>
+     */
+    #[Computed]
+    public function pendingBizumPayments()
+    {
+        return $this->team->payments()
+            ->pendingBizum()
+            ->latest('created_at')
+            ->get();
     }
 
     /**
@@ -114,6 +131,13 @@ new class extends Component
     public function mount()
     {
         $this->onboardingComplete = $this->team ? $this->team->hasCompletedOnboarding() : false;
+    }
+
+    #[Computed]
+    public function canGeneratePaymentLinks(): bool
+    {
+        return $this->canReceivePayment
+            && ($this->onboardingComplete || (bool) $this->team?->canAcceptBizumPayments());
     }
 
     #[Computed]
@@ -153,6 +177,46 @@ new class extends Component
         $invoice = app(InvoiceFromPaymentService::class)->createFromPayment($payment, Auth::user());
 
         $this->redirect(route('invoices.create', ['invoice' => $invoice->ulid]), navigate: true);
+    }
+
+    /**
+     * The photographer checked the transfer and confirms it.
+     */
+    public function confirmBizum(int $paymentId)
+    {
+        $payment = $this->team->payments()->findOrFail($paymentId);
+
+        $this->authorize('update', $payment);
+
+        $payment = app(PaymentLinkService::class)->confirmBizum($payment);
+
+        unset($this->pendingBizumPayments, $this->payments);
+
+        $invoice = $payment->invoice()->first();
+
+        if ($invoice !== null) {
+            return $this->redirectRoute('invoices.show', [
+                'invoice' => $invoice,
+                'created' => 1,
+            ], navigate: true);
+        }
+
+        $this->toast()->success(__('Bizum payment confirmed.'))->send();
+
+        return null;
+    }
+
+    public function cancelBizum(int $paymentId): void
+    {
+        $payment = $this->team->payments()->findOrFail($paymentId);
+
+        $this->authorize('update', $payment);
+
+        app(PaymentLinkService::class)->cancelBizum($payment);
+
+        unset($this->pendingBizumPayments, $this->payments);
+
+        $this->toast()->success(__('Bizum payment cancelled.'))->send();
     }
 
     public function sort($column)
@@ -202,7 +266,7 @@ new class extends Component
             <x-ts-button :href="route('branding.payments')" variant="primary" class="btn-ink">
                 {{ __('Settings') }}
             </x-ts-button>
-            @if ($this->onboardingComplete && $this->canReceivePayment)
+            @if ($this->canGeneratePaymentLinks)
                 <x-ts-modal-trigger :name="auth()->check() ? 'generate-payment-link' : 'login'">
                     <x-ts-button variant="primary">{{ __('Generate Payment Link') }}</x-ts-button>
                 </x-ts-modal-trigger>
@@ -210,7 +274,63 @@ new class extends Component
         </div>
     </div>
 
-    @if ($this->onboardingComplete)
+    @if ($this->pendingBizumPayments->isNotEmpty())
+        <section class="mt-8">
+            <x-ts-card :heading="__('Pending Bizum payments')">
+                <div class="divide-y divide-zinc-100 dark:divide-white/10">
+                    @foreach ($this->pendingBizumPayments as $payment)
+                        <div class="flex flex-wrap items-center gap-4 py-3" wire:key="pending-bizum-{{ $payment->id }}">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-mono text-sm font-semibold">{{ $payment->reference }}</span>
+                                    <x-ts-badge size="sm" :color="$payment->status->color()">
+                                        {{ $payment->status->label() }}
+                                    </x-ts-badge>
+                                </div>
+                                <p class="text-brand-ink mt-1 truncate text-sm font-medium dark:text-white">
+                                    {{ $payment->description }}
+                                </p>
+                                <p class="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ $payment->customer_name ?: '—' }}
+                                    @if ($payment->customer_email)
+                                        · {{ $payment->customer_email }}
+                                    @endif
+                                    @if ($payment->customer_phone)
+                                        · {{ $payment->customer_phone }}
+                                    @endif
+                                </p>
+                            </div>
+
+                            <div class="shrink-0 text-end">
+                                <p class="text-sm font-semibold tabular-nums">{{ $payment->formattedAmount }}</p>
+                                @if ($payment->expires_at)
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                        {{ __('Expires :date', ['date' => $payment->expires_at->isoFormat('LLL')]) }}
+                                    </p>
+                                @endif
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-2">
+                                <x-ts-button size="sm" variant="primary" wire:click="confirmBizum({{ $payment->id }})">
+                                    {{ __('Confirm') }}
+                                </x-ts-button>
+                                <x-ts-button
+                                    size="sm"
+                                    variant="secondary"
+                                    wire:click="cancelBizum({{ $payment->id }})"
+                                    wire:confirm="{{ __('Cancel this Bizum payment request?') }}"
+                                >
+                                    {{ __('Cancel') }}
+                                </x-ts-button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-ts-card>
+        </section>
+    @endif
+
+    @if ($this->onboardingComplete || $this->team?->canAcceptBizumPayments())
             @if ($this->payments?->count())
                 <x-data-table id="table" class="mt-8">
                     <x-data-table.columns>

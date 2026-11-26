@@ -31,7 +31,7 @@ class BookingPendingBizum extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $booking = $this->booking;
-        $settings = $booking->team->bookingSetting;
+        $team = $booking->team;
         $timezone = $booking->timezone;
         $startsAt = $booking->starts_at->setTimezone($timezone);
         $endsAt = $booking->ends_at->setTimezone($timezone);
@@ -48,11 +48,12 @@ class BookingPendingBizum extends Notification
             ->line($this->row(__('Date'), $startsAt->isoFormat('LL')))
             ->line($this->row(__('Time'), $startsAt->format('H:i').' - '.$endsAt->format('H:i')))
             ->line($this->row(__('Amount'), Cashier::formatAmount($amount, $booking->currency)))
-            ->line(__('Bizum phone: :phone', ['phone' => $settings?->bizum_phone ?: '—']))
-            ->line($this->row(__('Reference'), strtoupper(substr($booking->ulid, -6))));
+            ->line(__('Send the Bizum to this phone:'))
+            ->line('### '.($team->bizum_phone ?: '—'))
+            ->line($this->row(__('Reference'), $booking->bizumReference()));
 
-        if (filled($settings?->bizum_instructions)) {
-            $mail->line($settings->bizum_instructions);
+        if (filled($team->bizum_instructions)) {
+            $mail->line($team->bizum_instructions);
         }
 
         $mail->line(__('The reservation is confirmed as soon as the photographer checks the payment.'));

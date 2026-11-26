@@ -5,6 +5,7 @@ namespace App\Services\Booking;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentKind;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\BookingSetting;
 use App\Models\InvoiceSetting;
@@ -14,6 +15,7 @@ use App\Notifications\BookingConfirmed;
 use App\Notifications\BookingPaid;
 use App\Notifications\BookingPendingBizum;
 use App\Notifications\BookingPendingBizumForPhotographer;
+use App\Services\BizumReference;
 use App\Services\InvoiceFromPaymentService;
 use App\Services\InvoiceIssuanceService;
 use Illuminate\Support\Facades\DB;
@@ -72,6 +74,8 @@ class BookingFulfilmentService
                 'stripe_payment_intent_id' => $stripePaymentIntentId,
                 'completed_at' => now(),
                 'payment_kind' => $kind,
+                'payment_method' => $method,
+                'status' => PaymentStatus::Completed,
             ]);
 
             $photoshoot = $booking->photoshoot ?? $this->createPhotoshoot($booking);
@@ -105,6 +109,8 @@ class BookingFulfilmentService
             'status' => BookingStatus::PendingBizum,
             'payment_method' => PaymentMethod::Bizum,
             'payment_kind' => $kind,
+            'bizum_reference' => $booking->bizum_reference
+                ?: app(BizumReference::class)->forBooking($booking),
             'hold_expires_at' => now()->addHours(config('bookings.bizum_expiry_hours')),
         ]);
 
@@ -172,7 +178,7 @@ class BookingFulfilmentService
      */
     private function shouldAutoIssue(Payment $payment): bool
     {
-        $settings = BookingSetting::forTeam($payment->team()->firstOrFail());
+        $settings = BookingSetting::forTeam($payment->team);
 
         if (! $settings->auto_issue_invoices) {
             return false;

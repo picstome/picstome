@@ -94,6 +94,11 @@ new class extends Component
                                 :description="__('Enable or disable accept payments button on your public profile.')"
                             />
                         </x-ts-field>
+
+                        <x-ts-separator class="my-8" />
+
+                        @include('partials.client-payment-settings-fields', ['model' => 'form'])
+
                         <x-ts-button type="submit" variant="primary">{{ __('Save') }}</x-ts-button>
                     </form>
 

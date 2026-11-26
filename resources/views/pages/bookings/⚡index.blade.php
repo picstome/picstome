@@ -1034,6 +1034,13 @@ new class extends Component
                     </div>
                 </div>
 
+                @if ($booking->status === \App\Enums\BookingStatus::PendingBizum)
+                    <div class="rounded-lg border border-dashed border-zinc-300 p-4 text-center dark:border-white/15">
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('Reference') }}</p>
+                        <p class="text-2xl font-black tracking-widest">{{ $booking->bizumReference() }}</p>
+                    </div>
+                @endif
+
                 @php($invoice = $booking->payments->pluck('invoice')->filter()->first())
 
                 @if ($invoice)

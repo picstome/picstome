@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentKind;
 use App\Enums\PaymentMethod;
+use App\Services\BizumReference;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\BookingFactory;
@@ -47,6 +48,7 @@ use Illuminate\Support\Str;
  * @property string|null $notes
  * @property string $source
  * @property PaymentMethod|null $payment_method
+ * @property string|null $bizum_reference
  * @property PaymentKind|null $payment_kind
  * @property CarbonImmutable|null $hold_expires_at
  * @property CarbonImmutable|null $confirmed_at
@@ -151,6 +153,26 @@ class Booking extends Model
     public function photoshoot(): BelongsTo
     {
         return $this->belongsTo(Photoshoot::class);
+    }
+
+    /**
+     * @return HasMany<Payment, $this>
+     */
+    /**
+     * Human-friendly reference sent with the Bizum. Existing pending bookings
+     * generated before the column existed get one lazily.
+     */
+    public function bizumReference(): string
+    {
+        if (filled($this->bizum_reference)) {
+            return $this->bizum_reference;
+        }
+
+        $reference = app(BizumReference::class)->forBooking($this);
+
+        $this->forceFill(['bizum_reference' => $reference])->saveQuietly();
+
+        return $reference;
     }
 
     /**

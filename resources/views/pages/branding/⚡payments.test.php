@@ -140,3 +140,66 @@ it('can toggle stripe_test_mode', function () {
     $team->refresh();
     expect($team->stripe_test_mode)->toBeFalse();
 });
+
+it('saves Bizum settings independently from the booking feature flags', function () {
+    config([
+        'picstome.bookings_feature_enabled' => false,
+        'picstome.bookings_feature_admin_only' => true,
+    ]);
+
+    $user = User::factory()->withPersonalTeam()->create();
+    $team = $user->currentTeam;
+
+    Livewire::actingAs($user)->test('pages::branding.payments')
+        ->set('form.bizum_enabled', true)
+        ->set('form.bizum_phone', '600123123')
+        ->set('form.bizum_instructions', 'Send the Bizum and wait for confirmation.')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $team->refresh();
+
+    expect($team->canAcceptBizumPayments())->toBeTrue()
+        ->and($team->bizum_phone)->toBe('600123123')
+        ->and($team->bizum_instructions)->toBe('Send the Bizum and wait for confirmation.');
+});
+
+it('requires a phone when Bizum is enabled', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    Livewire::actingAs($user)->test('pages::branding.payments')
+        ->set('form.bizum_enabled', true)
+        ->set('form.bizum_phone', '')
+        ->call('save')
+        ->assertHasErrors(['form.bizum_phone']);
+});
+
+it('uses the same Bizum configuration as the booking settings', function () {
+    config([
+        'picstome.bookings_feature_enabled' => true,
+        'picstome.bookings_feature_admin_only' => true,
+        'picstome.admin_emails' => ['admin@example.com'],
+    ]);
+
+    $user = User::factory()->withPersonalTeam()->create(['email' => 'admin@example.com']);
+    $team = $user->currentTeam;
+    $team->update([
+        'bizum_enabled' => true,
+        'bizum_phone' => '600123123',
+        'bizum_instructions' => 'Send the Bizum.',
+        'phone_required' => true,
+    ]);
+
+    Livewire::actingAs($user)->test('pages::branding.payments')
+        ->assertSee('These details are shared by bookings and payment links. Change them here for both.')
+        ->assertSet('form.bizum_enabled', true)
+        ->assertSet('form.bizum_phone', '600123123')
+        ->assertSet('form.phone_required', true);
+
+    Livewire::actingAs($user)->test('pages::bookings.settings')
+        ->call('setTab', 'payments')
+        ->assertSee('These details are shared by bookings and payment links. Change them here for both.')
+        ->assertSet('settingsForm.bizum_enabled', true)
+        ->assertSet('settingsForm.bizum_phone', '600123123')
+        ->assertSet('settingsForm.phone_required', true);
+});

@@ -436,37 +436,12 @@ new class extends Component
                     :label="__('Card payments (Stripe)')"
                     :description="__('The client pays online with a card. The money goes to your connected Stripe account.')"
                 />
-                <x-ts-switch
-                    wire:model.live="settingsForm.bizum_enabled"
-                    :label="__('Bizum (manual confirmation)')"
-                    :description="__('The client sends the money to your phone and you confirm it from the calendar.')"
-                />
-                <x-ts-switch
-                    wire:model.live="settingsForm.phone_required"
-                    :label="__('Require the phone number')"
-                    :description="__('The client must enter a phone number when booking.')"
-                />
+                @include('partials.client-payment-settings-fields', ['model' => 'settingsForm'])
             </div>
 
             @error('settingsForm.card_enabled')
                 <p class="mt-3 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
             @enderror
-
-            @if ($settingsForm->bizum_enabled)
-                <div class="mt-5 grid gap-5 sm:grid-cols-2">
-                    <x-ts-input
-                        wire:model="settingsForm.bizum_phone"
-                        :label="__('Bizum phone')"
-                        :description="__('The number your clients send the deposit to.')"
-                    />
-                    <x-ts-textarea
-                        wire:model="settingsForm.bizum_instructions"
-                        :label="__('Instructions')"
-                        :description="__('Optional note shown after choosing Bizum.')"
-                        rows="3"
-                    />
-                </div>
-            @endif
 
             <div class="mt-6 flex justify-end">
                 <x-ts-button type="button" variant="primary" wire:click="saveSettings">

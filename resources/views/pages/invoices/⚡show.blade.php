@@ -264,7 +264,7 @@ new class extends Component
 
     @if (request()->boolean('created'))
         <x-ts-callout variant="secondary" icon="document-text" class="mb-6">
-            <x-ts-callout-heading>{{ __('Invoice created from a booking') }}</x-ts-callout-heading>
+            <x-ts-callout-heading>{{ __('Invoice created from a payment') }}</x-ts-callout-heading>
             <x-ts-callout-text>
                 {{ __('Review the data and issue it when it is ready. If you do not need it, you can delete the draft.') }}
             </x-ts-callout-text>

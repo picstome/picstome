@@ -49,6 +49,20 @@ client closes the tab before Stripe calls the webhook.
 - `bookings:send-reminders` every 15 minutes: sends the 72 h and 24 h reminders
   toggled per photographer. Requires the scheduler to be running.
 
+## Bizum
+
+The Bizum phone and instructions live on the team and are shared with
+payment links. They can be edited from **Bookings → Settings → Payments** or
+from **Payment settings**; both screens write the same fields. This keeps the
+configuration working when the booking feature flags are disabled.
+
+
+- The Bizum reference is the client first name plus the session day (`Bea-27`),
+  with a suffix if it is already taken.
+- A payment link with a date creates a `Booking` with `source = payment_link`, so it appears in this agenda and blocks the slot.
+- The shared "require phone" option and the Bizum phone/instructions are edited
+  from this page or Payment settings.
+
 ## Plan limit
 
 Free plans use `teams.monthly_payment_limit` as a monthly allowance for public

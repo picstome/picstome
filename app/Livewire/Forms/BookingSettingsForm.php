@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Enums\DepositType;
+use App\Livewire\Forms\Concerns\ManagesClientPaymentSettings;
 use App\Livewire\Forms\Concerns\NormalizesMoneyInput;
 use App\Models\AvailabilityWindow;
 use App\Models\BookingSetting;
@@ -21,6 +22,7 @@ use Livewire\Form;
  */
 class BookingSettingsForm extends Form
 {
+    use ManagesClientPaymentSettings;
     use NormalizesMoneyInput;
 
     public int $team_id = 0;
@@ -34,8 +36,6 @@ class BookingSettingsForm extends Form
     public string $min_notice_hours = '24';
 
     public string $horizon_days = '90';
-
-    public bool $phone_required = false;
 
     public string $max_sessions_per_day = '';
 
@@ -55,13 +55,7 @@ class BookingSettingsForm extends Form
 
     public string $reminder_second_hours = '24';
 
-    public bool $bizum_enabled = false;
-
     public bool $card_enabled = true;
-
-    public string $bizum_phone = '';
-
-    public string $bizum_instructions = '';
 
     /**
      * One row per ISO weekday (1 = Monday, 7 = Sunday).
@@ -81,7 +75,6 @@ class BookingSettingsForm extends Form
             'buffer_minutes' => ['required', 'integer', 'min:0', 'max:240'],
             'min_notice_hours' => ['required', 'integer', 'min:0', 'max:720'],
             'horizon_days' => ['required', 'integer', 'min:1', 'max:365'],
-            'phone_required' => ['boolean'],
             'max_sessions_per_day' => ['nullable', 'integer', 'min:1', 'max:50'],
             'default_deposit_type' => ['required', Rule::in(['none', 'fixed', 'percent'])],
             'default_deposit_value' => ['required', 'numeric', 'min:0', 'max:1000000'],
@@ -91,7 +84,7 @@ class BookingSettingsForm extends Form
             'reminder_first_hours' => ['required', 'integer', 'min:1', 'max:720'],
             'reminder_second_enabled' => ['boolean'],
             'reminder_second_hours' => ['required', 'integer', 'min:1', 'max:720'],
-            'bizum_enabled' => ['boolean'],
+            ...$this->clientPaymentRules(),
             'card_enabled' => [
                 'boolean',
                 function (string $attribute, mixed $value, $fail): void {
@@ -100,8 +93,6 @@ class BookingSettingsForm extends Form
                     }
                 },
             ],
-            'bizum_phone' => ['nullable', 'required_if:bizum_enabled,true', 'string', 'max:32'],
-            'bizum_instructions' => ['nullable', 'string', 'max:2000'],
             'windows' => ['array'],
             'windows.*.enabled' => ['boolean'],
             'windows.*.start' => ['nullable', 'date_format:H:i'],
@@ -141,7 +132,6 @@ class BookingSettingsForm extends Form
         $this->buffer_minutes = (string) $settings->buffer_minutes;
         $this->min_notice_hours = (string) $settings->min_notice_hours;
         $this->horizon_days = (string) $settings->horizon_days;
-        $this->phone_required = (bool) $settings->phone_required;
         $this->max_sessions_per_day = $settings->max_sessions_per_day === null
             ? ''
             : (string) $settings->max_sessions_per_day;
@@ -155,10 +145,9 @@ class BookingSettingsForm extends Form
         $this->reminder_first_hours = (string) $settings->reminder_first_hours;
         $this->reminder_second_enabled = (bool) $settings->reminder_second_enabled;
         $this->reminder_second_hours = (string) $settings->reminder_second_hours;
-        $this->bizum_enabled = (bool) $settings->bizum_enabled;
         $this->card_enabled = (bool) $settings->card_enabled;
-        $this->bizum_phone = (string) $settings->bizum_phone;
-        $this->bizum_instructions = (string) $settings->bizum_instructions;
+
+        $this->fillClientPayment($team);
 
         $this->windows = $this->windowsFor($team);
     }
@@ -194,7 +183,6 @@ class BookingSettingsForm extends Form
                 'max_sessions_per_day' => $this->max_sessions_per_day === ''
                     ? null
                     : (int) $this->max_sessions_per_day,
-                'phone_required' => $this->phone_required,
                 'default_deposit_type' => $this->default_deposit_type,
                 'default_deposit_value' => $depositValue,
                 'cancellation_policy' => $this->cancellation_policy !== '' ? $this->cancellation_policy : null,
@@ -204,12 +192,11 @@ class BookingSettingsForm extends Form
                 'reminder_second_enabled' => $this->reminder_second_enabled,
                 'reminder_second_hours' => (int) $this->reminder_second_hours,
                 'card_enabled' => $this->card_enabled,
-                'bizum_enabled' => $this->bizum_enabled,
-                'bizum_phone' => $this->bizum_phone !== '' ? $this->bizum_phone : null,
-                'bizum_instructions' => $this->bizum_instructions !== '' ? $this->bizum_instructions : null,
             ]);
 
             $team->availabilityWindows()->delete();
+
+            $this->updateTeamClientPayment($team);
 
             foreach ($this->windows as $weekday => $window) {
                 if (! ($window['enabled'] ?? false)) {

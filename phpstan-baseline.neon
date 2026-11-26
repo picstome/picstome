@@ -1081,18 +1081,6 @@ parameters:
 			path: app/Services/InvoiceFingerprintService.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$invoice\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/InvoiceFromPaymentService.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Payment\:\:\$team\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/InvoiceFromPaymentService.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\Invoice\:\:\$full_number\.$#'
 			identifier: property.notFound
 			count: 4
