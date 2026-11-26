@@ -1755,5 +1755,9 @@
     "The client must enter a phone number for bookings and Bizum payments.": "The client must enter a phone number for bookings and Bizum payments.",
     "Send the Bizum to this phone:": "Send the Bizum to this phone:",
     "Invoice created from a payment": "Invoice created from a payment",
-    "Created from a payment link.": "Created from a payment link."
+    "Created from a payment link.": "Created from a payment link.",
+    "Connect Stripe for card payments": "Connect Stripe for card payments",
+    "Card payments need Stripe Connect. If you only want Bizum, enable it above and skip this step.": "Card payments need Stripe Connect. If you only want Bizum, enable it above and skip this step.",
+    "Accept payments with card or Bizum": "Accept payments with card or Bizum",
+    "Connect Stripe for card payments, or enable Bizum in your payment settings. Bizum does not require Stripe.": "Connect Stripe for card payments, or enable Bizum in your payment settings. Bizum does not require Stripe."
 }

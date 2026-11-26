@@ -116,6 +116,20 @@ new class extends Component
                                 {{ __('Disconnecting will remove your Stripe account for current mode (test or live). You can reconnect at any time.') }}
                             </x-ts-description>
                         </div>
+                    @else
+                        <x-ts-callout icon="credit-card" variant="secondary" class="mt-8">
+                            <x-ts-callout-heading>
+                                {{ __('Connect Stripe for card payments') }}
+                            </x-ts-callout-heading>
+                            <x-ts-callout-text>
+                                {{ __('Card payments need Stripe Connect. If you only want Bizum, enable it above and skip this step.') }}
+                            </x-ts-callout-text>
+                            <x-slot name="actions">
+                                <x-ts-button :href="route('stripe.connect')" variant="primary">
+                                    {{ __('Begin Stripe Onboarding') }}
+                                </x-ts-button>
+                            </x-slot>
+                        </x-ts-callout>
                     @endif
                 </div>
         </div>
