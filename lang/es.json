@@ -2181,5 +2181,9 @@
     "The client must enter a phone number for bookings and Bizum payments.": "El cliente debe introducir un teléfono para reservas y pagos por Bizum.",
     "Send the Bizum to this phone:": "Envía el Bizum a este teléfono:",
     "Invoice created from a payment": "Factura creada desde un pago",
-    "Created from a payment link.": "Creada desde un enlace de pago."
+    "Created from a payment link.": "Creada desde un enlace de pago.",
+    "Connect Stripe for card payments": "Conecta Stripe para pagos con tarjeta",
+    "Card payments need Stripe Connect. If you only want Bizum, enable it above and skip this step.": "Los pagos con tarjeta necesitan Stripe Connect. Si solo quieres Bizum, actívalo arriba y sáltate este paso.",
+    "Accept payments with card or Bizum": "Acepta pagos con tarjeta o Bizum",
+    "Connect Stripe for card payments, or enable Bizum in your payment settings. Bizum does not require Stripe.": "Conecta Stripe para pagos con tarjeta o activa Bizum en los ajustes de pago. Bizum no necesita Stripe."
 }

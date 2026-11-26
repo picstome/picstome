@@ -203,3 +203,12 @@ it('uses the same Bizum configuration as the booking settings', function () {
         ->assertSet('settingsForm.bizum_phone', '600123123')
         ->assertSet('settingsForm.phone_required', true);
 });
+
+it('offers Stripe onboarding when the team has not connected an account', function () {
+    $user = User::factory()->withPersonalTeam()->create();
+
+    Livewire::actingAs($user)->test('pages::branding.payments')
+        ->assertSee('Connect Stripe for card payments')
+        ->assertSee('Begin Stripe Onboarding')
+        ->assertSee('If you only want Bizum');
+});
