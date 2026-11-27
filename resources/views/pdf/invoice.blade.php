@@ -184,7 +184,7 @@
 
     @if (filled($invoice->vat_exemption_reason))
         <tr>
-            <td class="muted" colspan="2">{{ __('Exempt') }}: {{ $invoice->vat_exemption_reason }}</td>
+            <td class="muted" colspan="2">{{ __('Not subject to VAT') }}: {{ $invoice->vat_exemption_reason }}</td>
         </tr>
     @endif
 

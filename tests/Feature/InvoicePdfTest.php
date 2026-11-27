@@ -63,6 +63,27 @@ it('does not issue an invoice when there is no storage space', function () {
         ->and($this->team->invoices()->first()->number)->toBeNull();
 });
 
+it('renders an html preview of a draft invoice', function () {
+    $draft = draftInvoice($this->team);
+
+    $this->actingAs($this->user)
+        ->get(route('invoices.preview', ['invoice' => $draft, 'number' => 'INV-0042']))
+        ->assertOk()
+        ->assertSee('INV-0042')
+        ->assertSee('Acme Studio SL')
+        ->assertSee('Photo session');
+});
+
+it('does not preview the invoice of another team', function () {
+    $otherTeam = User::factory()->withPersonalTeam()->create()->currentTeam;
+
+    $invoice = draftInvoice($otherTeam);
+
+    $this->actingAs($this->user)
+        ->get(route('invoices.preview', $invoice))
+        ->assertForbidden();
+});
+
 it('downloads the pdf of an issued invoice', function () {
     $invoice = $this->issuance->issue(draftInvoice($this->team));
 

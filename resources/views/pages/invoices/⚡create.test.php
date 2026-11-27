@@ -177,6 +177,37 @@ it('saves a draft without consuming a number', function () {
         ->and($invoice->pdf_path)->toBeNull();
 });
 
+it('previews the invoice as a draft before issuing it', function () {
+    $component = Livewire::actingAs($this->user)->test('pages::invoices.create');
+
+    $component->set('form.customer_id', $this->customer->id)
+        ->submit([
+            'form.lineItems.0.description' => 'Photo session',
+            'form.lineItems.0.quantity' => 1,
+            'form.lineItems.0.unit_price' => 150,
+        ], 'nextStep')
+        ->call('nextStep')
+        ->assertSet('step', 3)
+        ->call('preview')
+        ->assertHasNoErrors()
+        ->assertSee('Invoice preview')
+        ->assertSee('This is a preview. The invoice is still a draft and has not been issued.');
+
+    $draft = $this->team->invoices()->first();
+
+    expect($draft->status)->toBe(Invoice::STATUS_DRAFT)
+        ->and($draft->number)->toBeNull()
+        ->and($draft->full_number)->toBeNull()
+        ->and($draft->pdf_path)->toBeNull()
+        ->and($component->get('previewUrl'))->toContain(route('invoices.preview', $draft));
+
+    $this->actingAs($this->user)
+        ->get($component->get('previewUrl'))
+        ->assertOk()
+        ->assertSee('Acme Studio SL')
+        ->assertSee('Photo session');
+});
+
 it('does not block saving a draft with a full number that is already used', function () {
     $this->issuance = app(InvoiceIssuanceService::class);
     $this->issuance->issue(draftInvoice($this->team), null, 'INV-0042');
@@ -238,6 +269,14 @@ it('does not leave the line items step with an invalid line', function () {
         ->assertHasErrors(['form.lineItems.0.description' => 'required'])
         ->assertSet('step', 2)
         ->assertSee('field is required');
+});
+
+it('labels the zero vat rate as not subject to vat', function () {
+    expect(Blade::render('<x-vat-rate-label :rate="0" />'))->toContain('Not subject to VAT (0%)');
+
+    app()->setLocale('es');
+
+    expect(Blade::render('<x-vat-rate-label :rate="0" />'))->toContain('No sujeta a IVA (0%)');
 });
 
 it('asks for the exemption reason when the VAT is zero', function () {

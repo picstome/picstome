@@ -1,12 +1,13 @@
 @props([
     'name' => 'modal',
     'variant' => null,
+    'size' => null,
 ])
 
 @php
     $event = str($name)->slug()->kebab();
     $classes = $attributes->get('class', '');
-    $size = match (true) {
+    $size ??= match (true) {
         str_contains($classes, 'max-w-7xl') => '7xl',
         str_contains($classes, 'max-w-6xl') => '6xl',
         str_contains($classes, 'max-w-5xl') => '5xl',

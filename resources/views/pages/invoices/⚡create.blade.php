@@ -35,6 +35,16 @@ new class extends Component
 
     public bool $editingCustomer = false;
 
+    /**
+     * URL of the HTML preview shown in the review step.
+     */
+    public ?string $previewUrl = null;
+
+    /**
+     * Bumped on every preview so the iframe reloads with the saved draft.
+     */
+    public int $previewVersion = 0;
+
     public function mount(): void
     {
         $this->authorize('create', Invoice::class);
@@ -466,13 +476,44 @@ new class extends Component
 
     public function saveDraft(): void
     {
+        $this->persistDraft();
+
+        $this->toast()->success(__('The invoice has been saved as a draft.'))->send();
+    }
+
+    /**
+     * Preview the invoice document before issuing it.
+     *
+     * The form is saved as a draft first, so the preview shows exactly the
+     * data that will be issued. Drafts never consume a number.
+     */
+    public function preview(): void
+    {
+        $invoice = $this->persistDraft();
+
+        $this->previewVersion++;
+
+        $this->previewUrl = route('invoices.preview', [
+            'invoice' => $invoice,
+            'number' => filled($this->form->full_number) ? $this->form->full_number : $this->suggestedFullNumber,
+            'version' => $this->previewVersion,
+        ]);
+
+        $this->openModal('invoice-preview');
+    }
+
+    /**
+     * Save the form as a draft, without validating or consuming a number.
+     */
+    private function persistDraft(): Invoice
+    {
         $this->authorize('create', Invoice::class);
 
         $invoice = $this->form->persist(Auth::user()->currentTeam, validateFullNumber: false);
 
         $this->form->setInvoice($invoice);
 
-        $this->toast()->success(__('The invoice has been saved as a draft.'))->send();
+        return $invoice;
     }
 
     public function issue(): void
@@ -870,12 +911,41 @@ new class extends Component
             @if ($this->step < 3)
                 <x-ts-button variant="primary" wire:click="nextStep">{{ __('Continue') }}</x-ts-button>
             @else
+                <x-ts-button variant="outline" icon="eye" wire:click="preview">
+                    {{ __('Preview') }}
+                </x-ts-button>
+
                 <x-ts-button variant="primary" wire:click="issue" :disabled="! $this->canIssue">
                     {{ __('Issue') }}
                 </x-ts-button>
             @endif
         </div>
     </div>
+
+    <x-ts-modal name="invoice-preview" size="full" variant="bare">
+        <div class="flex flex-col gap-4 p-4" style="height: calc(100vh - 2rem); height: calc(100dvh - 2rem);">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <x-ts-heading size="lg">{{ __('Invoice preview') }}</x-ts-heading>
+                    <x-ts-subheading>
+                        {{ __('This is a preview. The invoice is still a draft and has not been issued.') }}
+                    </x-ts-subheading>
+                </div>
+
+                <x-ts-modal-close>
+                    <x-ts-button variant="primary">{{ __('Close') }}</x-ts-button>
+                </x-ts-modal-close>
+            </div>
+
+            @if ($previewUrl)
+                <iframe
+                    src="{{ $previewUrl }}"
+                    title="{{ __('Invoice preview') }}"
+                    class="min-h-0 w-full flex-1 rounded-lg border border-zinc-200 bg-white dark:border-white/10"
+                ></iframe>
+            @endif
+        </div>
+    </x-ts-modal>
 
     <x-ts-modal name="edit-invoice-number" class="w-full sm:max-w-lg">
         <div class="space-y-6">
