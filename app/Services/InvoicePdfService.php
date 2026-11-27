@@ -39,26 +39,58 @@ class InvoicePdfService
      */
     public function render(Invoice $invoice): string
     {
+        return $this->withInvoiceLocale($invoice, fn (): string => Pdf::setOption([
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'defaultFont' => 'DejaVu Sans',
+        ])->loadView('pdf.invoice', $this->viewData($invoice))->output());
+    }
+
+    /**
+     * Render the invoice document as HTML, so a draft can be previewed
+     * before it is issued. The preview never stores a PDF.
+     */
+    public function renderHtml(Invoice $invoice): string
+    {
+        return $this->withInvoiceLocale(
+            $invoice,
+            fn (): string => view('pdf.invoice', $this->viewData($invoice))->render(),
+        );
+    }
+
+    /**
+     * Data shared by the PDF and the HTML preview.
+     *
+     * @return array<string, mixed>
+     */
+    private function viewData(Invoice $invoice): array
+    {
+        return [
+            'invoice' => $invoice,
+            'issuer' => $invoice->invoice_data['issuer'] ?? [],
+            'customer' => $invoice->invoice_data['customer'] ?? [],
+            'lineItems' => $invoice->invoice_data['line_items'] ?? [],
+            'paymentTerms' => $invoice->invoice_data['payment_terms'] ?? null,
+            'notes' => $invoice->invoice_data['notes'] ?? null,
+            'accentColor' => $this->accentColor($invoice),
+            'logo' => $this->logo($invoice),
+            'publicUrl' => $invoice->public_token ? route('invoices.public.show', $invoice->public_token) : null,
+        ];
+    }
+
+    /**
+     * Run a rendering callback with the language of the team.
+     *
+     * @param  callable(): string  $callback
+     */
+    private function withInvoiceLocale(Invoice $invoice, callable $callback): string
+    {
         $previousLocale = app()->getLocale();
 
         app()->setLocale($invoice->team->owner?->language ?? config('app.locale'));
 
         try {
-            return Pdf::setOption([
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'DejaVu Sans',
-            ])->loadView('pdf.invoice', [
-                'invoice' => $invoice,
-                'issuer' => $invoice->invoice_data['issuer'] ?? [],
-                'customer' => $invoice->invoice_data['customer'] ?? [],
-                'lineItems' => $invoice->invoice_data['line_items'] ?? [],
-                'paymentTerms' => $invoice->invoice_data['payment_terms'] ?? null,
-                'notes' => $invoice->invoice_data['notes'] ?? null,
-                'accentColor' => $this->accentColor($invoice),
-                'logo' => $this->logo($invoice),
-                'publicUrl' => $invoice->public_token ? route('invoices.public.show', $invoice->public_token) : null,
-            ])->output();
+            return $callback();
         } finally {
             app()->setLocale($previousLocale);
         }

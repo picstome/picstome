@@ -6,6 +6,7 @@ use App\Http\Controllers\ExternalAuthorizationController;
 use App\Http\Controllers\GalleryDownloadController;
 use App\Http\Controllers\GalleryUploadController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\InvoicePreviewController;
 use App\Http\Controllers\MagicLoginController;
 use App\Http\Controllers\PublicInvoicePdfController;
 use App\Http\Controllers\SharedGalleryDownloadController;
@@ -149,6 +150,10 @@ Route::livewire('/invoices/create', 'pages::invoices.create')->name('invoices.cr
 Route::livewire('/invoices/settings', 'pages::invoices.settings')->name('invoices.settings')->middleware(['auth', 'verified']);
 
 Route::livewire('/invoices/{invoice:ulid}', 'pages::invoices.show')->name('invoices.show')->middleware(['auth', 'verified']);
+
+Route::get('/invoices/{invoice:ulid}/preview', InvoicePreviewController::class)
+    ->name('invoices.preview')
+    ->middleware(['auth', 'verified']);
 
 Route::get('/invoices/{invoice:ulid}/pdf', InvoicePdfController::class)
     ->name('invoices.pdf')

@@ -146,9 +146,9 @@ invoice shows the amount the client pays. The net amount before VAT
 
 ## VAT rates and exemptions
 
-An invoice uses one VAT rate. The 0% rate means the invoice is **exempt**, and
-the Spanish invoicing rules require the document to state the legal reason for
-the exemption, so the reason is mandatory and is printed on the PDF. For
+An invoice uses one VAT rate. The 0% rate is shown as **not subject to VAT** in
+the interface, and the Spanish invoicing rules require the document to state
+the legal reason, so the reason is mandatory and is printed on the PDF. For
 example: «Operación exenta por el artículo 20 de la LIVA».
 
 ## Complete and simplified invoices
@@ -170,6 +170,13 @@ the issuer is Spanish and the invoice is not in euros:
 - The exchange rate and its date are required.
 - `vat_amount_eur` and `irpf_amount_eur` store the taxes in euros, as required
   by article 12 of RD 1619/2012.
+
+## Preview
+
+Before issuing, the create flow can render the invoice document as HTML from
+the saved draft (`invoices.preview`). The preview shows the same document as
+the PDF, including the number that will be assigned, but never stores a file
+and never consumes a number.
 
 ## PDF
 
