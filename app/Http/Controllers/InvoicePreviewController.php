@@ -27,7 +27,7 @@ class InvoicePreviewController extends Controller
         Gate::authorize('view', $invoice);
 
         if ($invoice->isDraft()) {
-            $invoice->full_number = $this->previewNumber($request, $invoice, $numbering);
+            $invoice->setAttribute('full_number', $this->previewNumber($request, $invoice, $numbering));
         }
 
         return response($pdf->renderHtml($invoice), 200, [
@@ -57,12 +57,9 @@ class InvoicePreviewController extends Controller
         );
 
         $series = $invoice->isRectificative() ? $settings->rectification_series : $settings->series;
+        $issueDate = $invoice->getAttribute('issue_date');
+        $year = $issueDate instanceof \DateTimeInterface ? (int) $issueDate->format('Y') : now()->year;
 
-        return $numbering->suggestFullNumber(
-            $settings,
-            $series,
-            $invoice->issue_date?->year ?? now()->year,
-            $invoice->id,
-        );
+        return $numbering->suggestFullNumber($settings, $series, $year, $invoice->id);
     }
 }
