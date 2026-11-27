@@ -11,11 +11,13 @@ class GalleryIndexController extends Controller
 {
     /**
      * List the galleries of the token owner's current team. Clients use the
-     * optional `search` filter to find a gallery before adding it locally.
+     * optional `search` and `photoshoot_id` filters to find a gallery before
+     * adding it locally.
      */
     public function __invoke(GalleryIndexRequest $request): JsonResponse
     {
         $search = trim((string) $request->string('search'));
+        $photoshootId = $request->integer('photoshoot_id');
         $perPage = (int) $request->input('per_page', 25);
 
         $galleries = $request->user()
@@ -23,10 +25,11 @@ class GalleryIndexController extends Controller
             ->galleries()
             ->with(['coverPhoto', 'firstImagePhoto'])
             ->when($search !== '', fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
+            ->when($request->filled('photoshoot_id'), fn ($query) => $query->where('photoshoot_id', $photoshootId))
             ->latest('updated_at')
             ->orderByDesc('id')
             ->paginate($perPage)
-            ->appends($request->only(['search', 'per_page']));
+            ->appends($request->only(['search', 'photoshoot_id', 'per_page']));
 
         return GalleryResource::collection($galleries)->response();
     }

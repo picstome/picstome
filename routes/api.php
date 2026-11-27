@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\GalleryIndexController;
+use App\Http\Controllers\Api\V1\GalleryStoreController;
 use App\Http\Controllers\Api\V1\ManifestController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\PhotoDeleteController;
@@ -28,6 +29,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/tokens/revoke', TokenRevokeController::class);
         Route::get('/me', MeController::class);
         Route::get('/galleries', GalleryIndexController::class);
+        Route::post('/galleries', GalleryStoreController::class)
+            ->middleware('throttle:30,1');
         Route::get('/manifest', ManifestController::class);
         Route::post('/photos', PhotoUploadController::class);
         Route::delete('/photos', PhotoDeleteController::class)

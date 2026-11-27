@@ -18,7 +18,7 @@ function createAuthorization(User $user, string $code, array $overrides = []): E
 }
 
 it('exchanges a valid code for a working Sanctum token', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->withPersonalTeam()->create();
     $code = 'valid-code-'.str()->random(32);
 
     createAuthorization($user, $code);
