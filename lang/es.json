@@ -1118,6 +1118,7 @@
     "Your payment link is ready!": "¡Tu enlace de pago está listo!",
     "Your payment was cancelled. No charges were made.": "Tu pago fue cancelado. No se realizó ningún cargo.",
     "Your plan allows one invoice per month. Upgrade to issue more invoices.": "Tu plan permite una factura al mes. Mejora tu plan para emitir más facturas.",
+    "Your plan does not allow galleries without an expiration date. The latest date is :date.": "Tu plan no permite galerías sin fecha de caducidad. La fecha máxima es :date.",
     "Your subscription expires in :days days.": "Tu suscripción expira en :days días.",
     "Your subscription has expired.": "Tu suscripción ha expirado.",
     "Your subscription is cancelled immediately. The remaining paid time is not refunded.": "Tu suscripción se cancela inmediatamente. El tiempo pagado que queda no se reembolsa.",

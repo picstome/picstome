@@ -60,6 +60,34 @@ When a subscription ends, `StripeEventListener::handleSubscriptionDeleted()`
 gives every private gallery without a date a year from its creation, or one
 month from now if that already passed, so nothing is deleted overnight.
 
+## External API (v1)
+
+`POST /api/v1/galleries` creates a private gallery for the token owner's current
+team. The retention rules are exposed without making clients guess the plan:
+
+- If `expiration_date` is omitted, the gallery expires **one month** from now,
+  on every plan, including active subscriptions.
+- An explicit date must be between today and one year from now. A later or past
+  date returns `422` and includes `max_expiration_date` in the JSON.
+- An explicit `null` keeps the gallery forever, but only when
+  `Team::hasUnlimitedRetention()` is true. Free and lifetime teams get `422`.
+- `keep_original_size` defaults to the owner's saved preference; the endpoint
+  does not change that preference.
+
+`GET /api/v1/me` returns the current team, its plan and the raw limits:
+storage bytes, retention, and contracts/invoices/payments with `limit`, `used`,
+`remaining` and `unlimited` for the current month. The monthly counters are
+resolved through `ContractPlanLimitService`, `InvoicePlanLimitService` and
+`PaymentPlanLimitService`, so subscribed and lifetime teams report `null`/`true`
+even when the team row still stores the free-plan limit.
+
+`GET /api/v1/galleries` exposes `photoshoot_id`, `expiration_date` and
+`is_public`, and accepts `photoshoot_id` as a filter scoped to the current team.
+
+The user-facing contract lives in the documentation site
+(`developers/api-v1`), in English and Spanish.
+
+
 ## Reminders and deletion
 
 - `galleries:send-expiration-reminders` runs daily at 09:00 and emails the

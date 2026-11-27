@@ -1035,6 +1035,7 @@
     "Your payment link is ready!": "Your payment link is ready!",
     "Your payment was cancelled. No charges were made.": "Your payment was cancelled. No charges were made.",
     "Your plan allows one invoice per month. Upgrade to issue more invoices.": "Your plan allows one invoice per month. Upgrade to issue more invoices.",
+    "Your plan does not allow galleries without an expiration date. The latest date is :date.": "Your plan does not allow galleries without an expiration date. The latest date is :date.",
     "Your subscription is cancelled immediately. The remaining paid time is not refunded.": "Your subscription is cancelled immediately. The remaining paid time is not refunded.",
     "Your unique @handle for sharing.": "Your unique @handle for sharing.",
     "Zinc": "Zinc",
